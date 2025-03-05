@@ -1,8 +1,11 @@
 
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, LogIn, UserPlus } from 'lucide-react';
 import { Button } from '../ui/button';
+import { useAuth } from '@/context/AuthContext';
 
 const Hero = () => {
+  const { isLoggedIn, user } = useAuth();
+  
   return (
     <section className="pt-28 pb-20 md:pt-36 md:pb-28 bg-gradient-to-b from-haluna-primary-light to-white overflow-hidden">
       <div className="container mx-auto px-4">
@@ -19,14 +22,32 @@ const Hero = () => {
               Connect with authentic Muslim businesses and discover ethically sourced products that align with your values.
             </p>
             
-            <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start animate-fade-in animate-delay-300">
-              <Button href="/shop" size="lg" className="flex items-center">
-                Start Shopping <ArrowRight size={18} className="ml-2" />
-              </Button>
-              <Button href="/sellers" variant="outline" size="lg">
-                Sell Your Products
-              </Button>
-            </div>
+            {isLoggedIn ? (
+              <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start animate-fade-in animate-delay-300">
+                <Button 
+                  href={user?.role === 'business' ? '/dashboard' : '/shop'} 
+                  size="lg" 
+                  className="flex items-center"
+                >
+                  {user?.role === 'business' ? 'Go to Dashboard' : 'Start Shopping'} 
+                  <ArrowRight size={18} className="ml-2" />
+                </Button>
+              </div>
+            ) : (
+              <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start animate-fade-in animate-delay-300">
+                <Button href="/signup" size="lg" className="flex items-center">
+                  <UserPlus size={18} className="mr-2" />
+                  Sign Up
+                </Button>
+                <Button href="/login" variant="outline" size="lg" className="flex items-center">
+                  <LogIn size={18} className="mr-2" />
+                  Log In
+                </Button>
+                <Button href="/sellers" variant="secondary" size="lg">
+                  Sell Your Products
+                </Button>
+              </div>
+            )}
             
             <div className="mt-10 grid grid-cols-3 gap-8 max-w-lg mx-auto lg:mx-0 animate-fade-in animate-delay-400">
               <div className="text-center">

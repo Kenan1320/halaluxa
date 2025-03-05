@@ -14,7 +14,7 @@ interface User {
 interface AuthContextType {
   user: User | null;
   isLoggedIn: boolean;
-  login: (email: string, password: string) => Promise<boolean>;
+  login: (email: string, password: string) => Promise<UserRole | false>;
   signup: (name: string, email: string, password: string, role: UserRole) => Promise<boolean>;
   logout: () => void;
 }
@@ -47,7 +47,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     checkLoggedIn();
   }, []);
   
-  const login = async (email: string, password: string): Promise<boolean> => {
+  const login = async (email: string, password: string): Promise<UserRole | false> => {
     // Here you would typically call your authentication API
     // For now, we'll use localStorage as a simple demo
     
@@ -63,7 +63,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setUser(storedUser);
           setIsLoggedIn(true);
           localStorage.setItem('isLoggedIn', 'true');
-          return true;
+          return storedUser.role;
         }
       } catch (error) {
         console.error('Failed to parse stored user data', error);

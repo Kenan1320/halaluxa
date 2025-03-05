@@ -1,17 +1,24 @@
 
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
+import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
+import { LogIn, ArrowLeft } from 'lucide-react';
 
 const LoginPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { login } = useAuth();
   const { toast } = useToast();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   });
   const [loading, setLoading] = useState(false);
+
+  // Get the intended destination, if any
+  const from = location.state?.from?.pathname || '/';
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -23,42 +30,23 @@ const LoginPage = () => {
     setLoading(true);
     
     try {
-      // Here we would integrate with authentication provider
-      // For now, we'll simulate a login
-
-      // For demo purposes, check if user exists in localStorage
-      const storedUserJson = localStorage.getItem('user');
+      const success = await login(formData.email, formData.password);
       
-      if (storedUserJson) {
-        const storedUser = JSON.parse(storedUserJson);
+      if (success) {
+        toast({
+          title: "Success",
+          description: "Logged in successfully",
+        });
         
-        // In a real app, we would validate the password
-        // Here we're just checking if the email matches
-        if (storedUser.email === formData.email) {
-          // Update the user's login status
-          localStorage.setItem('isLoggedIn', 'true');
-          
-          toast({
-            title: "Success",
-            description: "Logged in successfully",
-          });
-          
-          // Redirect based on role
-          if (storedUser.role === 'business') {
-            navigate('/dashboard');
-          } else {
-            navigate('/shop');
-          }
-          return;
-        }
+        // Navigate to the intended destination or role-specific page
+        navigate(from === '/' ? (success === 'business' ? '/dashboard' : '/shop') : from);
+      } else {
+        toast({
+          title: "Error",
+          description: "Invalid email or password",
+          variant: "destructive",
+        });
       }
-      
-      // If we get here, login failed
-      toast({
-        title: "Error",
-        description: "Invalid email or password",
-        variant: "destructive",
-      });
     } catch (error) {
       toast({
         title: "Error",
@@ -73,6 +61,11 @@ const LoginPage = () => {
   return (
     <div className="min-h-screen bg-haluna-secondary flex items-center justify-center p-4">
       <div className="max-w-md w-full bg-white rounded-2xl shadow-sm p-6 md:p-8">
+        <Link to="/" className="inline-flex items-center text-haluna-text-light hover:text-haluna-primary mb-6">
+          <ArrowLeft size={16} className="mr-2" />
+          Back to Home
+        </Link>
+        
         <div className="text-center mb-6">
           <h1 className="text-3xl font-serif font-bold text-haluna-text">Welcome Back</h1>
           <p className="text-haluna-text-light mt-2">Log in to your Haluna account</p>
@@ -125,8 +118,13 @@ const LoginPage = () => {
             </a>
           </div>
           
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? 'Logging in...' : 'Log In'}
+          <Button type="submit" className="w-full flex items-center justify-center" disabled={loading}>
+            {loading ? 'Logging in...' : (
+              <>
+                <LogIn size={18} className="mr-2" />
+                Log In
+              </>
+            )}
           </Button>
         </form>
         

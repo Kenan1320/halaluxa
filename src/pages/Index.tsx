@@ -1,5 +1,6 @@
 
 import { useEffect } from 'react';
+import { useAuth } from '@/context/AuthContext';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import Hero from '@/components/home/Hero';
@@ -7,9 +8,11 @@ import Features from '@/components/home/Features';
 import CategoryCard from '@/components/home/CategoryCard';
 import Stats from '@/components/home/Stats';
 import { Button } from '@/components/ui/button';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, LogIn, UserPlus } from 'lucide-react';
 
 const Index = () => {
+  const { isLoggedIn, user } = useAuth();
+  
   // Scroll to top on page load
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -94,14 +97,30 @@ const Index = () => {
                 Whether you're looking to shop ethically sourced halal products or grow your business reach, Haluna is the platform for you.
               </p>
               
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button href="/shop" size="lg">
-                  Start Shopping
-                </Button>
-                <Button href="/sellers" variant="outline" size="lg">
-                  Become a Seller
-                </Button>
-              </div>
+              {isLoggedIn ? (
+                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                  <Button 
+                    href={user?.role === 'business' ? '/dashboard' : '/shop'} 
+                    size="lg"
+                  >
+                    {user?.role === 'business' ? 'Go to Dashboard' : 'Start Shopping'}
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                  <Button href="/signup" size="lg" className="flex items-center">
+                    <UserPlus size={18} className="mr-2" />
+                    Sign Up
+                  </Button>
+                  <Button href="/login" variant="outline" size="lg" className="flex items-center">
+                    <LogIn size={18} className="mr-2" />
+                    Log In
+                  </Button>
+                  <Button href="/sellers" variant="secondary" size="lg">
+                    Become a Seller
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         </section>
