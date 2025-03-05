@@ -6,7 +6,7 @@ import Hero from '@/components/home/Hero';
 import Features from '@/components/home/Features';
 import CategoryCard from '@/components/home/CategoryCard';
 import Stats from '@/components/home/Stats';
-import Button from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
 
 const Index = () => {

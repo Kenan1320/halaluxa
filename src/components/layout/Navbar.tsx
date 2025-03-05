@@ -1,8 +1,7 @@
-
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, ShoppingCart, Search, User } from 'lucide-react';
-import Button from '../ui/Button';
+import { Button } from '../ui/button';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -22,7 +21,6 @@ const Navbar = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
   
-  // Close mobile menu when changing routes
   useEffect(() => {
     setIsMenuOpen(false);
   }, [location]);
@@ -34,7 +32,6 @@ const Navbar = () => {
       }`}
     >
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-        {/* Logo */}
         <Link 
           to="/" 
           className="flex items-center"
@@ -43,7 +40,6 @@ const Navbar = () => {
           <span className="ml-1 h-3 w-3 rounded-full bg-haluna-accent inline-block mt-1"></span>
         </Link>
         
-        {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center space-x-8">
           <Link 
             to="/" 
@@ -79,7 +75,6 @@ const Navbar = () => {
           </Link>
         </nav>
         
-        {/* Desktop Icons */}
         <div className="hidden md:flex items-center space-x-4">
           <button 
             className="p-2 rounded-full hover:bg-haluna-primary-light transition-colors"
@@ -101,7 +96,6 @@ const Navbar = () => {
           </button>
         </div>
         
-        {/* Mobile Menu Button */}
         <button 
           onClick={() => setIsMenuOpen(!isMenuOpen)} 
           className="md:hidden p-2 rounded-full bg-haluna-secondary"
@@ -115,7 +109,6 @@ const Navbar = () => {
         </button>
       </div>
       
-      {/* Mobile Menu */}
       {isMenuOpen && (
         <div className="fixed inset-0 bg-white z-40 pt-20 animate-slide-in-right md:hidden">
           <div className="container mx-auto px-6 py-8 space-y-8">

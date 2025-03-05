@@ -1,6 +1,6 @@
 
 import { ArrowRight } from 'lucide-react';
-import Button from '../ui/Button';
+import { Button } from '../ui/button';
 
 const Hero = () => {
   return (
@@ -44,33 +44,15 @@ const Hero = () => {
             </div>
           </div>
           
-          {/* Hero Image */}
+          {/* Hero Image - Placeholder */}
           <div className="lg:w-1/2 relative">
             <div className="relative">
               {/* Main image */}
-              <div className="rounded-2xl overflow-hidden shadow-xl animate-float">
-                <img 
-                  src="/lovable-uploads/d4ab324c-23f0-4fcc-9069-0afbc77d1c3e.png" 
-                  alt="Haluna Marketplace" 
-                  className="w-full h-auto object-cover"
-                />
-              </div>
-              
-              {/* Floating elements */}
-              <div className="absolute -top-8 -left-8 bg-white rounded-lg p-3 shadow-lg animate-float-slow">
-                <img 
-                  src="/lovable-uploads/8d386384-3944-48e3-922c-2edb81fa1631.png" 
-                  alt="Product category" 
-                  className="w-16 h-16 object-cover rounded"
-                />
-              </div>
-              
-              <div className="absolute -bottom-6 -right-6 bg-white rounded-lg p-3 shadow-lg animate-float-slow">
-                <img 
-                  src="/lovable-uploads/0780684a-9c7f-4f32-affc-6f9ea641b814.png" 
-                  alt="Shopping cart" 
-                  className="w-16 h-16 object-cover rounded"
-                />
+              <div className="rounded-2xl overflow-hidden shadow-xl animate-float bg-haluna-secondary h-80 md:h-96 flex items-center justify-center">
+                <div className="text-center p-6">
+                  <h3 className="text-2xl font-serif font-bold text-haluna-primary mb-2">Haluna Marketplace</h3>
+                  <p className="text-haluna-text">Your one-stop destination for halal products</p>
+                </div>
               </div>
             </div>
           </div>
