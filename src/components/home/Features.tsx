@@ -1,5 +1,5 @@
 
-import { ShoppingBag, Certificate, Users, CreditCard } from 'lucide-react';
+import { ShoppingBag, Award, Users, CreditCard } from 'lucide-react';
 
 const features = [
   {
@@ -8,7 +8,7 @@ const features = [
     description: "Discover a wide range of halal-certified products across multiple categories, carefully curated for quality and authenticity."
   },
   {
-    icon: <Certificate className="w-10 h-10 text-haluna-primary" />,
+    icon: <Award className="w-10 h-10 text-haluna-primary" />,
     title: "Verified Halal Certification",
     description: "Every business on our platform undergoes a thorough verification process to ensure authentic halal certification."
   },
