@@ -1,14 +1,17 @@
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { Upload, X, CheckCircle, Plus, Image as ImageIcon } from 'lucide-react';
 import { productCategories } from '@/models/product';
+import { saveProduct, getProductById, updateProduct } from '@/services/productService';
+import { useAuth } from '@/context/AuthContext';
 
 const AddEditProductPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { id } = useParams();
+  const { user } = useAuth();
   
   const [formData, setFormData] = useState({
     name: '',
@@ -24,6 +27,36 @@ const AddEditProductPage = () => {
   const [detailFields, setDetailFields] = useState<{key: string, value: string}[]>([
     { key: '', value: '' }
   ]);
+  
+  useEffect(() => {
+    if (id) {
+      const product = getProductById(id);
+      if (product) {
+        setFormData({
+          name: product.name,
+          description: product.description,
+          price: product.price.toString(),
+          stock: product.stock.toString(),
+          category: product.category,
+          isHalalCertified: product.isHalalCertified,
+          details: product.details || {}
+        });
+        
+        setImagePreviews(product.images);
+        
+        if (product.details) {
+          const detailsArray = Object.entries(product.details).map(([key, value]) => ({
+            key,
+            value
+          }));
+          
+          if (detailsArray.length > 0) {
+            setDetailFields(detailsArray);
+          }
+        }
+      }
+    }
+  }, [id]);
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -62,7 +95,6 @@ const AddEditProductPage = () => {
     newDetails[index][field] = value;
     setDetailFields(newDetails);
     
-    // Update formData.details
     const details: Record<string, string> = {};
     newDetails.forEach(detail => {
       if (detail.key && detail.value) {
@@ -81,7 +113,6 @@ const AddEditProductPage = () => {
     const newDetails = detailFields.filter((_, i) => i !== index);
     setDetailFields(newDetails);
     
-    // Update formData.details
     const details: Record<string, string> = {};
     newDetails.forEach(detail => {
       if (detail.key && detail.value) {
@@ -95,7 +126,6 @@ const AddEditProductPage = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate form data
     if (!formData.name || !formData.description || !formData.price || !formData.stock || !formData.category) {
       toast({
         title: "Error",
@@ -114,18 +144,46 @@ const AddEditProductPage = () => {
       return;
     }
     
-    // Here you would typically send the data to your backend
-    console.log('Form submitted:', formData);
-    console.log('Images:', imagePreviews);
-    console.log('Details:', detailFields);
-    
-    toast({
-      title: "Success",
-      description: "Product added successfully",
-    });
-    
-    // Navigate back to products page
-    navigate('/dashboard/products');
+    try {
+      const productData = {
+        name: formData.name,
+        description: formData.description,
+        price: parseFloat(formData.price),
+        stock: parseInt(formData.stock),
+        category: formData.category,
+        images: imagePreviews,
+        isHalalCertified: formData.isHalalCertified,
+        sellerId: user?.id || 'unknown-seller',
+        details: formData.details
+      };
+      
+      if (id) {
+        updateProduct({
+          ...productData,
+          id,
+          createdAt: getProductById(id)?.createdAt || new Date().toISOString()
+        });
+        toast({
+          title: "Success",
+          description: "Product updated successfully",
+        });
+      } else {
+        saveProduct(productData);
+        toast({
+          title: "Success",
+          description: "Product added successfully",
+        });
+      }
+      
+      navigate('/dashboard/products');
+    } catch (error) {
+      console.error('Error saving product:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save product. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
   
   return (

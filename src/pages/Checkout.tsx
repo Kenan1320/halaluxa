@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Check, CreditCard, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,7 @@ import Footer from '@/components/layout/Footer';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { processPayment } from '@/services/paymentService';
 
 interface CheckoutFormData {
   fullName: string;
@@ -46,7 +47,7 @@ const Checkout = () => {
   const { toast } = useToast();
   
   // Pre-fill form with user data if available
-  useState(() => {
+  useEffect(() => {
     if (user) {
       setFormData(prev => ({
         ...prev,
@@ -54,14 +55,14 @@ const Checkout = () => {
         email: user.email
       }));
     }
-  });
+  }, [user]);
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
   
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Basic validation
@@ -74,13 +75,31 @@ const Checkout = () => {
       return;
     }
     
-    // Process payment (in a real app, this would call a payment API)
+    // Process payment
     setIsProcessing(true);
     
-    // Simulate payment processing
-    setTimeout(() => {
-      // Create order in database (in a real app)
-      const orderId = `ORD-${Math.floor(Math.random() * 1000000)}`;
+    try {
+      // Prepare shipping details
+      const shippingDetails = {
+        fullName: formData.fullName,
+        email: formData.email,
+        address: formData.address,
+        city: formData.city,
+        state: formData.state,
+        zipCode: formData.zipCode,
+        country: formData.country
+      };
+      
+      // Prepare payment method
+      const paymentMethod = {
+        cardNumber: formData.cardNumber,
+        cardName: formData.cardName,
+        expiryDate: formData.expiryDate,
+        cvv: formData.cvv
+      };
+      
+      // Process payment
+      const result = await processPayment(cart, paymentMethod, shippingDetails);
       
       // Clear cart and redirect to confirmation
       clearCart();
@@ -88,20 +107,27 @@ const Checkout = () => {
       // Show success message
       toast({
         title: "Order Placed Successfully",
-        description: `Your order #${orderId} has been placed.`,
+        description: `Your order #${result.orderId} has been placed.`,
       });
       
       // Redirect to confirmation page
       navigate('/order-confirmation', { 
         state: { 
-          orderId,
-          orderDate: new Date().toISOString(),
+          orderId: result.orderId,
+          orderDate: result.orderDate,
           total: cart.totalPrice
         } 
       });
-      
+    } catch (error) {
+      console.error('Payment error:', error);
+      toast({
+        title: "Payment Failed",
+        description: "There was an error processing your payment. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
       setIsProcessing(false);
-    }, 2000);
+    }
   };
   
   if (cart.items.length === 0) {

@@ -1,83 +1,100 @@
 
-import { Home, Package, Users, ShoppingBag, Settings, LogOut, Menu } from 'lucide-react';
-import { Link, useLocation } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
+import { 
+  LayoutDashboard, Package, ShoppingBag, Users, Settings, 
+  ChevronDown, CreditCard
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useState } from 'react';
 
-interface NavItemProps {
-  icon: React.ElementType;
-  label: string;
-  href: string;
-  active?: boolean;
+interface SidebarLinkProps {
+  to: string;
+  icon: React.ReactNode;
+  children: React.ReactNode;
+  end?: boolean;
 }
 
-const NavItem = ({ icon: Icon, label, href, active }: NavItemProps) => (
-  <Link
-    to={href}
-    className={cn(
-      "flex items-center gap-3 rounded-lg px-3 py-2 transition-all",
-      active ? "bg-haluna-primary text-white" : "text-haluna-text hover:bg-haluna-primary-light"
+const SidebarLink = ({ to, icon, children, end = false }: SidebarLinkProps) => (
+  <NavLink
+    to={to}
+    end={end}
+    className={({ isActive }) => cn(
+      'flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors',
+      isActive 
+        ? 'bg-haluna-primary text-white' 
+        : 'text-haluna-text hover:bg-haluna-primary-light hover:text-haluna-primary'
     )}
   >
-    <Icon className="h-5 w-5" />
-    <span>{label}</span>
-  </Link>
+    {icon}
+    <span>{children}</span>
+  </NavLink>
 );
 
 const DashboardSidebar = () => {
-  const location = useLocation();
-  const [collapsed, setCollapsed] = useState(false);
+  const [isProductsOpen, setIsProductsOpen] = useState(false);
   
-  const navItems = [
-    { icon: Home, label: "Dashboard", href: "/dashboard" },
-    { icon: Package, label: "Products", href: "/dashboard/products" },
-    { icon: ShoppingBag, label: "Orders", href: "/dashboard/orders" },
-    { icon: Users, label: "Customers", href: "/dashboard/customers" },
-    { icon: Settings, label: "Settings", href: "/dashboard/settings" },
-  ];
-
   return (
-    <div className={cn(
-      "h-screen fixed left-0 top-0 z-30 flex flex-col border-r bg-white transition-all duration-300",
-      collapsed ? "w-20" : "w-64"
-    )}>
-      <div className="flex items-center justify-between border-b p-4">
-        {!collapsed && (
-          <Link to="/dashboard" className="flex items-center gap-2">
-            <span className="text-xl font-serif font-bold text-haluna-primary">Haluna</span>
-            <span className="text-xs bg-haluna-primary text-white px-1 rounded">Seller</span>
-          </Link>
-        )}
-        <button 
-          className="p-2 rounded-lg hover:bg-haluna-primary-light text-haluna-text"
-          onClick={() => setCollapsed(!collapsed)}
+    <aside className="w-64 bg-white h-full border-r shadow-sm">
+      <div className="p-4">
+        <h2 className="font-serif text-xl font-bold">Seller Dashboard</h2>
+      </div>
+      
+      <nav className="px-3 py-2 space-y-1">
+        <SidebarLink to="/dashboard" icon={<LayoutDashboard className="h-5 w-5" />} end>
+          Overview
+        </SidebarLink>
+        
+        <Collapsible 
+          open={isProductsOpen} 
+          onOpenChange={setIsProductsOpen}
+          className="space-y-1"
         >
-          <Menu size={20} />
-        </button>
-      </div>
-      
-      <div className="flex-1 overflow-auto p-4">
-        <nav className="flex flex-col gap-1">
-          {navItems.map((item) => (
-            <NavItem
-              key={item.href}
-              icon={item.icon}
-              label={collapsed ? "" : item.label}
-              href={item.href}
-              active={location.pathname === item.href}
-            />
-          ))}
-        </nav>
-      </div>
-      
-      <div className="border-t p-4">
-        <NavItem
-          icon={LogOut}
-          label={collapsed ? "" : "Sign Out"}
-          href="/"
-        />
-      </div>
-    </div>
+          <CollapsibleTrigger asChild>
+            <Button 
+              variant="ghost" 
+              className="w-full justify-between text-haluna-text hover:bg-haluna-primary-light hover:text-haluna-primary px-3 py-2 h-auto"
+            >
+              <div className="flex items-center gap-3">
+                <Package className="h-5 w-5" />
+                <span>Products</span>
+              </div>
+              <ChevronDown 
+                className={cn(
+                  "h-4 w-4 transition-transform", 
+                  isProductsOpen && "transform rotate-180"
+                )} 
+              />
+            </Button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="pl-8 space-y-1">
+            <SidebarLink to="/dashboard/products" icon={<Package className="h-4 w-4" />}>
+              All Products
+            </SidebarLink>
+            <SidebarLink to="/dashboard/products/new" icon={<Package className="h-4 w-4" />}>
+              Add New
+            </SidebarLink>
+          </CollapsibleContent>
+        </Collapsible>
+        
+        <SidebarLink to="/dashboard/orders" icon={<ShoppingBag className="h-5 w-5" />}>
+          Orders
+        </SidebarLink>
+        
+        <SidebarLink to="/dashboard/customers" icon={<Users className="h-5 w-5" />}>
+          Customers
+        </SidebarLink>
+        
+        <SidebarLink to="/dashboard/payment-account" icon={<CreditCard className="h-5 w-5" />}>
+          Payment Account
+        </SidebarLink>
+        
+        <SidebarLink to="/dashboard/settings" icon={<Settings className="h-5 w-5" />}>
+          Settings
+        </SidebarLink>
+      </nav>
+    </aside>
   );
 };
 

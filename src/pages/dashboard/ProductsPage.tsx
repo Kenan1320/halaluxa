@@ -1,15 +1,22 @@
 
-import { useState } from 'react';
-import { mockProducts, Product } from '@/models/product';
+import { useState, useEffect } from 'react';
+import { Product } from '@/models/product';
 import { Search, Plus, Edit, Trash2, Tag, Package } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
+import { getProducts, deleteProduct } from '@/services/productService';
 
 const ProductsPage = () => {
-  const [products, setProducts] = useState<Product[]>(mockProducts);
+  const [products, setProducts] = useState<Product[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const { toast } = useToast();
+  const navigate = useNavigate();
+
+  // Load products on component mount
+  useEffect(() => {
+    setProducts(getProducts());
+  }, []);
 
   const filteredProducts = products.filter(
     (product) => 
@@ -19,7 +26,8 @@ const ProductsPage = () => {
   );
 
   const handleDeleteProduct = (id: string) => {
-    setProducts(products.filter(product => product.id !== id));
+    deleteProduct(id);
+    setProducts(getProducts());
     toast({
       title: "Product deleted",
       description: "The product has been deleted successfully.",

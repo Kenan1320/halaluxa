@@ -30,6 +30,7 @@ import AddEditProductPage from "./pages/dashboard/AddEditProductPage";
 import OrdersPage from "./pages/dashboard/OrdersPage";
 import CustomersPage from "./pages/dashboard/CustomersPage";
 import SettingsPage from "./pages/dashboard/SettingsPage";
+import PaymentAccountPage from "./pages/dashboard/PaymentAccountPage";
 
 const queryClient = new QueryClient();
 
@@ -87,6 +88,7 @@ const AppRoutes = () => (
       <Route path="orders" element={<OrdersPage />} />
       <Route path="customers" element={<CustomersPage />} />
       <Route path="settings" element={<SettingsPage />} />
+      <Route path="payment-account" element={<PaymentAccountPage />} />
     </Route>
     
     {/* 404 route */}
