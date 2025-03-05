@@ -3,7 +3,8 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, X, CheckCircle } from 'lucide-react';
+import { Upload, X, CheckCircle, Plus, Image as ImageIcon } from 'lucide-react';
+import { productCategories } from '@/models/product';
 
 const AddEditProductPage = () => {
   const navigate = useNavigate();
@@ -15,10 +16,14 @@ const AddEditProductPage = () => {
     price: '',
     stock: '',
     category: '',
-    isHalalCertified: true
+    isHalalCertified: true,
+    details: {} as Record<string, string>
   });
   
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [detailFields, setDetailFields] = useState<{key: string, value: string}[]>([
+    { key: '', value: '' }
+  ]);
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -31,18 +36,60 @@ const AddEditProductPage = () => {
   };
   
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      const newPreviews: string[] = [];
+      
+      Array.from(files).forEach(file => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          newPreviews.push(reader.result as string);
+          if (newPreviews.length === files.length) {
+            setImagePreviews(prev => [...prev, ...newPreviews]);
+          }
+        };
+        reader.readAsDataURL(file);
+      });
     }
   };
   
-  const handleRemoveImage = () => {
-    setImagePreview(null);
+  const handleRemoveImage = (index: number) => {
+    setImagePreviews(prev => prev.filter((_, i) => i !== index));
+  };
+  
+  const handleDetailChange = (index: number, field: 'key' | 'value', value: string) => {
+    const newDetails = [...detailFields];
+    newDetails[index][field] = value;
+    setDetailFields(newDetails);
+    
+    // Update formData.details
+    const details: Record<string, string> = {};
+    newDetails.forEach(detail => {
+      if (detail.key && detail.value) {
+        details[detail.key] = detail.value;
+      }
+    });
+    
+    setFormData(prev => ({ ...prev, details }));
+  };
+  
+  const addDetailField = () => {
+    setDetailFields(prev => [...prev, { key: '', value: '' }]);
+  };
+  
+  const removeDetailField = (index: number) => {
+    const newDetails = detailFields.filter((_, i) => i !== index);
+    setDetailFields(newDetails);
+    
+    // Update formData.details
+    const details: Record<string, string> = {};
+    newDetails.forEach(detail => {
+      if (detail.key && detail.value) {
+        details[detail.key] = detail.value;
+      }
+    });
+    
+    setFormData(prev => ({ ...prev, details }));
   };
   
   const handleSubmit = (e: React.FormEvent) => {
@@ -58,9 +105,19 @@ const AddEditProductPage = () => {
       return;
     }
     
+    if (imagePreviews.length === 0) {
+      toast({
+        title: "Error",
+        description: "Please upload at least one product image",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     // Here you would typically send the data to your backend
     console.log('Form submitted:', formData);
-    console.log('Image:', imagePreview);
+    console.log('Images:', imagePreviews);
+    console.log('Details:', detailFields);
     
     toast({
       title: "Success",
@@ -108,10 +165,9 @@ const AddEditProductPage = () => {
               required
             >
               <option value="">Select a category</option>
-              <option value="Food">Food</option>
-              <option value="Clothing">Clothing</option>
-              <option value="Beauty">Beauty</option>
-              <option value="Home">Home</option>
+              {productCategories.map(category => (
+                <option key={category} value={category}>{category}</option>
+              ))}
             </select>
           </div>
           
@@ -165,10 +221,51 @@ const AddEditProductPage = () => {
           
           <div className="md:col-span-2">
             <label className="block text-sm font-medium text-haluna-text mb-3">
-              Product Image
+              Product Images *
             </label>
             
-            {!imagePreview ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+              {imagePreviews.map((preview, index) => (
+                <div key={index} className="relative rounded-lg overflow-hidden border h-32">
+                  <img 
+                    src={preview} 
+                    alt={`Product preview ${index + 1}`} 
+                    className="w-full h-full object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveImage(index)}
+                    className="absolute top-2 right-2 bg-white rounded-full p-1 shadow-md"
+                  >
+                    <X className="h-4 w-4 text-red-500" />
+                  </button>
+                </div>
+              ))}
+              
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 h-32 flex flex-col items-center justify-center text-center">
+                <ImageIcon className="h-8 w-8 text-haluna-text-light mb-2" />
+                <p className="text-sm text-haluna-text-light mb-2">Add more images</p>
+                <input
+                  type="file"
+                  id="images"
+                  name="images"
+                  onChange={handleImageChange}
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => document.getElementById('images')?.click()}
+                >
+                  Browse
+                </Button>
+              </div>
+            </div>
+            
+            {imagePreviews.length === 0 && (
               <div className="border-2 border-dashed border-gray-300 rounded-lg p-8">
                 <div className="text-center">
                   <Upload className="h-12 w-12 text-haluna-text-light mx-auto mb-2" />
@@ -178,37 +275,70 @@ const AddEditProductPage = () => {
                   </p>
                   <input
                     type="file"
-                    id="image"
-                    name="image"
+                    id="initial-images"
+                    name="initial-images"
                     onChange={handleImageChange}
                     accept="image/*"
+                    multiple
                     className="hidden"
                   />
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => document.getElementById('image')?.click()}
+                    onClick={() => document.getElementById('initial-images')?.click()}
                   >
                     Browse Files
                   </Button>
                 </div>
               </div>
-            ) : (
-              <div className="relative rounded-lg overflow-hidden">
-                <img 
-                  src={imagePreview} 
-                  alt="Product preview" 
-                  className="w-full max-h-60 object-contain border rounded-lg"
-                />
+            )}
+          </div>
+          
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-haluna-text mb-3">
+              Product Details
+            </label>
+            
+            {detailFields.map((detail, index) => (
+              <div key={index} className="flex gap-4 items-start mb-3">
+                <div className="flex-1">
+                  <input
+                    type="text"
+                    placeholder="Property (e.g., Weight, Size)"
+                    value={detail.key}
+                    onChange={(e) => handleDetailChange(index, 'key', e.target.value)}
+                    className="w-full border rounded-lg p-2.5 mb-2 focus:ring-1 focus:ring-haluna-primary focus:border-haluna-primary"
+                  />
+                </div>
+                <div className="flex-1">
+                  <input
+                    type="text"
+                    placeholder="Value (e.g., 1kg, Medium)"
+                    value={detail.value}
+                    onChange={(e) => handleDetailChange(index, 'value', e.target.value)}
+                    className="w-full border rounded-lg p-2.5 mb-2 focus:ring-1 focus:ring-haluna-primary focus:border-haluna-primary"
+                  />
+                </div>
                 <button
                   type="button"
-                  onClick={handleRemoveImage}
-                  className="absolute top-2 right-2 bg-white rounded-full p-1 shadow-md"
+                  onClick={() => removeDetailField(index)}
+                  className="mt-2 p-1 text-red-500 hover:text-red-700"
                 >
-                  <X className="h-5 w-5 text-red-500" />
+                  <X className="h-5 w-5" />
                 </button>
               </div>
-            )}
+            ))}
+            
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={addDetailField}
+              className="mt-2"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add Detail
+            </Button>
           </div>
           
           <div className="md:col-span-2">

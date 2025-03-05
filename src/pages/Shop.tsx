@@ -1,8 +1,9 @@
 
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
-import { mockProducts, Product } from '@/models/product';
+import { mockProducts, Product, productCategories } from '@/models/product';
 import { useCart } from '@/context/CartContext';
 import { Search, ShoppingBag, Filter, Heart, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -25,8 +26,6 @@ const Shop = () => {
     
     return matchesSearch && matchesCategory;
   });
-  
-  const categories = ['Food', 'Clothing', 'Beauty', 'Home'];
   
   return (
     <div className="min-h-screen">
@@ -67,7 +66,7 @@ const Shop = () => {
                   All Products
                 </button>
                 
-                {categories.map(category => (
+                {productCategories.map(category => (
                   <button
                     key={category}
                     className={`px-4 py-2 rounded-full text-sm ${
@@ -97,9 +96,9 @@ const Shop = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {filteredProducts.map(product => (
                 <div key={product.id} className="bg-white rounded-xl shadow-sm overflow-hidden group">
-                  <div className="relative h-48 overflow-hidden">
+                  <Link to={`/product/${product.id}`} className="block relative h-48 overflow-hidden">
                     <img
-                      src={product.image}
+                      src={product.images[0]}
                       alt={product.name}
                       className="w-full h-full object-cover transition-transform group-hover:scale-105"
                     />
@@ -113,12 +112,14 @@ const Shop = () => {
                         Halal Certified
                       </div>
                     )}
-                  </div>
+                  </Link>
                   
                   <div className="p-4">
                     <div className="flex justify-between items-start mb-2">
                       <div>
-                        <h3 className="font-medium text-haluna-text">{product.name}</h3>
+                        <Link to={`/product/${product.id}`} className="font-medium text-haluna-text hover:text-haluna-primary transition-colors">
+                          {product.name}
+                        </Link>
                         <p className="text-xs text-haluna-text-light">{product.category}</p>
                       </div>
                       <p className="font-bold text-haluna-primary">${product.price.toFixed(2)}</p>

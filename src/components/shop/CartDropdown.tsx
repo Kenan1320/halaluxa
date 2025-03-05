@@ -59,7 +59,7 @@ const CartDropdown = () => {
                   <div key={item.product.id} className="flex gap-3">
                     <div className="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
                       <img
-                        src={item.product.image}
+                        src={item.product.images[0]}
                         alt={item.product.name}
                         className="w-full h-full object-cover"
                       />
@@ -107,21 +107,20 @@ const CartDropdown = () => {
                 </div>
                 
                 <div className="flex gap-2">
-                  <Button
-                    href="/cart"
-                    variant="outline"
-                    className="flex-1"
+                  <Link
+                    to="/cart"
+                    className="flex-1 py-2 px-4 border border-gray-300 rounded-md text-center hover:bg-gray-50 transition-colors font-medium"
                     onClick={() => setIsOpen(false)}
                   >
                     View Cart
-                  </Button>
-                  <Button 
-                    href="/checkout"
-                    className="flex-1"
+                  </Link>
+                  <Link
+                    to="/checkout"
+                    className="flex-1 py-2 px-4 bg-haluna-primary text-white rounded-md text-center hover:bg-haluna-primary-dark transition-colors font-medium"
                     onClick={() => setIsOpen(false)}
                   >
                     Checkout
-                  </Button>
+                  </Link>
                 </div>
               </div>
             </>

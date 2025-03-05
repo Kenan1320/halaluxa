@@ -11,6 +11,11 @@ import ProtectedRoute from "@/components/auth/ProtectedRoute";
 // Pages
 import Index from "./pages/Index";
 import Shop from "./pages/Shop";
+import ProductDetail from "./pages/ProductDetail";
+import Cart from "./pages/Cart";
+import Checkout from "./pages/Checkout";
+import OrderConfirmation from "./pages/OrderConfirmation";
+import Orders from "./pages/Orders";
 import Sellers from "./pages/Sellers";
 import About from "./pages/About";
 import NotFound from "./pages/NotFound";
@@ -41,6 +46,31 @@ const AppRoutes = () => (
     <Route path="/shop" element={
       <ProtectedRoute requiredRole="shopper">
         <Shop />
+      </ProtectedRoute>
+    } />
+    <Route path="/product/:productId" element={
+      <ProtectedRoute requiredRole="shopper">
+        <ProductDetail />
+      </ProtectedRoute>
+    } />
+    <Route path="/cart" element={
+      <ProtectedRoute requiredRole="shopper">
+        <Cart />
+      </ProtectedRoute>
+    } />
+    <Route path="/checkout" element={
+      <ProtectedRoute requiredRole="shopper">
+        <Checkout />
+      </ProtectedRoute>
+    } />
+    <Route path="/order-confirmation" element={
+      <ProtectedRoute requiredRole="shopper">
+        <OrderConfirmation />
+      </ProtectedRoute>
+    } />
+    <Route path="/orders" element={
+      <ProtectedRoute requiredRole="shopper">
+        <Orders />
       </ProtectedRoute>
     } />
     
