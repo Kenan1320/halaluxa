@@ -2,9 +2,19 @@
 import { ArrowRight, LogIn, UserPlus } from 'lucide-react';
 import { Button } from '../ui/button';
 import { useAuth } from '@/context/AuthContext';
+import { useState, useEffect } from 'react';
+import { getProducts } from '@/services/productService';
+import { Product } from '@/models/product';
 
 const Hero = () => {
   const { isLoggedIn, user } = useAuth();
+  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
+  
+  useEffect(() => {
+    // Get featured products (just using the first 4 products for now)
+    const products = getProducts();
+    setFeaturedProducts(products.slice(0, 4));
+  }, []);
   
   return (
     <section className="pt-28 pb-20 md:pt-36 md:pb-28 bg-gradient-to-b from-haluna-primary-light to-white overflow-hidden">
@@ -13,7 +23,7 @@ const Hero = () => {
           {/* Text Content */}
           <div className="lg:w-1/2 mb-12 lg:mb-0 text-center lg:text-left">
             <span className="inline-block px-4 py-1 rounded-full bg-haluna-accent text-haluna-text text-sm font-medium mb-4 animate-fade-in">
-              Discover Halal Treasures
+              Shop Muslim Businesses and Shops
             </span>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif font-bold leading-tight mb-6 animate-fade-in animate-delay-100">
               The Premier <span className="text-haluna-primary">Halal</span> Marketplace
@@ -65,15 +75,46 @@ const Hero = () => {
             </div>
           </div>
           
-          {/* Hero Image - Placeholder */}
+          {/* Featured Products - Replacing the plain placeholder */}
           <div className="lg:w-1/2 relative">
-            <div className="relative">
-              {/* Main image */}
-              <div className="rounded-2xl overflow-hidden shadow-xl animate-float bg-haluna-secondary h-80 md:h-96 flex items-center justify-center">
-                <div className="text-center p-6">
-                  <h3 className="text-2xl font-serif font-bold text-haluna-primary mb-2">Haluna Marketplace</h3>
-                  <p className="text-haluna-text">Your one-stop destination for halal products</p>
+            <div className="bg-white rounded-2xl shadow-xl p-6 animate-float">
+              <h3 className="text-xl font-serif font-bold text-haluna-primary mb-4 text-center">Featured Products</h3>
+              
+              {featuredProducts.length > 0 ? (
+                <div className="grid grid-cols-2 gap-4">
+                  {featuredProducts.map((product) => (
+                    <div key={product.id} className="bg-gray-50 rounded-lg p-3 hover:shadow-md transition-shadow">
+                      <div className="aspect-square rounded-md overflow-hidden bg-gray-100 mb-2">
+                        <img 
+                          src={product.images[0] || '/placeholder.svg'} 
+                          alt={product.name} 
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <h4 className="font-medium text-sm line-clamp-1">{product.name}</h4>
+                      <p className="text-haluna-primary font-medium text-sm mt-1">${product.price.toFixed(2)}</p>
+                      <div className="flex justify-between items-center mt-2">
+                        <span className="text-xs px-2 py-1 bg-haluna-primary-light text-haluna-primary rounded-full">
+                          {product.category}
+                        </span>
+                        {product.isHalalCertified && (
+                          <span className="text-xs text-green-600 font-medium">Halal</span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
                 </div>
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-haluna-text-light mb-4">Start exploring our marketplace!</p>
+                  <Button href="/shop" size="sm">Browse Products</Button>
+                </div>
+              )}
+              
+              <div className="text-center mt-4">
+                <Button href="/shop" variant="link" className="text-sm">
+                  View All Products <ArrowRight size={14} className="ml-1 inline" />
+                </Button>
               </div>
             </div>
           </div>
