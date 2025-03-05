@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { mockProducts, Product } from '@/models/product';
 import { Search, Plus, Edit, Trash2, Tag, Package } from 'lucide-react';
-import Button from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 

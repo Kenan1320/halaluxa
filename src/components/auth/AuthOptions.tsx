@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { ShoppingBag, Store, ChevronRight } from 'lucide-react';
-import Button from '../ui/Button';
+import { Button } from '../ui/button';
 
 interface AuthOptionsProps {
   onRoleSelect: (role: 'shopper' | 'seller') => void;

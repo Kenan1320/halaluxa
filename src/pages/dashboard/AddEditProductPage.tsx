@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import Button from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { Upload, X, CheckCircle } from 'lucide-react';
