@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Product, mapDbProductToModel, mapModelToDbProduct } from '@/models/product';
 
@@ -83,14 +84,56 @@ export async function saveProduct(product: Partial<Product>): Promise<Product | 
   }
 }
 
-// Add a new product - alias for saveProduct for AddEditProductPage
+// Add a new product - implemented function that was previously just an alias
 export async function addProduct(product: Partial<Product>): Promise<Product | undefined> {
-  return saveProduct(product);
+  try {
+    const dbProduct = mapModelToDbProduct(product);
+    
+    const { data, error } = await supabase
+      .from('products')
+      .insert(dbProduct)
+      .select()
+      .single();
+    
+    if (error) {
+      console.error('Error creating product:', error);
+      return undefined;
+    }
+    
+    return mapDbProductToModel(data);
+  } catch (err) {
+    console.error('Error in addProduct:', err);
+    return undefined;
+  }
 }
 
-// Update an existing product - alias for saveProduct for AddEditProductPage
+// Update an existing product - implemented function that was previously just an alias
 export async function updateProduct(product: Partial<Product>): Promise<Product | undefined> {
-  return saveProduct(product);
+  try {
+    if (!product.id) {
+      console.error('Cannot update product without id');
+      return undefined;
+    }
+    
+    const dbProduct = mapModelToDbProduct(product);
+    
+    const { data, error } = await supabase
+      .from('products')
+      .update(dbProduct)
+      .eq('id', product.id)
+      .select()
+      .single();
+    
+    if (error) {
+      console.error('Error updating product:', error);
+      return undefined;
+    }
+    
+    return mapDbProductToModel(data);
+  } catch (err) {
+    console.error('Error in updateProduct:', err);
+    return undefined;
+  }
 }
 
 // Delete a product
@@ -197,7 +240,6 @@ export function getMockProducts(): Product[] {
         servings: "4 patties",
         ingredients: "100% grass-fed beef, salt, black pepper"
       }
-    },
-    // ... other mock products
+    }
   ];
 }

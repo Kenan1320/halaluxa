@@ -14,11 +14,10 @@ export interface Shop {
   rating: number;
   productCount: number;
   isVerified?: boolean;
-  // Add missing properties for geolocation
   latitude?: number;
   longitude?: number;
   distance?: number;
-  category?: string; // Add category field for Browse.tsx
+  category?: string;
 }
 
 // Mapping function for shop data
@@ -172,7 +171,6 @@ export function getMockShops(): Shop[] {
       category: "Food & Groceries",
       latitude: 40.7128,
       longitude: -74.0060
-    },
-    // ... other mock shops
+    }
   ];
 }
