@@ -1,4 +1,5 @@
 
+import { useState, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -10,6 +11,7 @@ import { LanguageProvider } from "@/context/LanguageContext";
 import { LocationProvider } from "@/context/LocationContext";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import AuthMiddleware from "@/components/auth/AuthMiddleware";
+import SplashScreen from "@/components/SplashScreen";
 
 // Pages
 import Index from "./pages/Index";
@@ -116,24 +118,49 @@ const AppRoutes = () => (
   </>
 );
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <LanguageProvider>
-          <AuthProvider>
-            <CartProvider>
-              <LocationProvider>
-                <AppRoutes />
-              </LocationProvider>
-            </CartProvider>
-          </AuthProvider>
-        </LanguageProvider>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  const [showSplash, setShowSplash] = useState(true);
+  
+  // Check if user has seen the splash screen recently
+  useEffect(() => {
+    const lastSplashTime = localStorage.getItem('lastSplashTime');
+    const now = new Date().getTime();
+    
+    // Show splash screen only if user hasn't seen it in the last hour
+    if (lastSplashTime && now - parseInt(lastSplashTime) < 3600000) {
+      setShowSplash(false);
+    }
+  }, []);
+  
+  const handleSplashComplete = () => {
+    setShowSplash(false);
+    // Save the current time to localStorage
+    localStorage.setItem('lastSplashTime', new Date().getTime().toString());
+  };
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <LanguageProvider>
+            <AuthProvider>
+              <CartProvider>
+                <LocationProvider>
+                  {showSplash ? (
+                    <SplashScreen onComplete={handleSplashComplete} />
+                  ) : (
+                    <AppRoutes />
+                  )}
+                </LocationProvider>
+              </CartProvider>
+            </AuthProvider>
+          </LanguageProvider>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
