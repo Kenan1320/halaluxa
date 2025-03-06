@@ -1,4 +1,3 @@
-
 import { useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -6,12 +5,12 @@ import { ShoppingCart, ShoppingBag, Home, BookOpen, Utensils, HeartPulse, Gift, 
 
 const categories = [
   { id: 1, name: 'Groceries', icon: ShoppingCart, color: '#2A866A' },
-  { id: 2, name: 'Modest Clothing', icon: Shirt, color: '#2A866A' },
-  { id: 3, name: 'Home', icon: Home, color: '#2A866A' },
-  { id: 4, name: 'Electronics', icon: Laptop, color: '#2A866A' },
-  { id: 5, name: 'Books', icon: BookOpen, color: '#2A866A' },
-  { id: 6, name: 'Health', icon: HeartPulse, color: '#2A866A' },
-  { id: 7, name: 'Food', icon: Utensils, color: '#2A866A' },
+  { id: 2, name: 'Food', icon: Utensils, color: '#2A866A' },
+  { id: 3, name: 'Modest Clothing', icon: Shirt, color: '#2A866A' },
+  { id: 4, name: 'Home', icon: Home, color: '#2A866A' },
+  { id: 5, name: 'Electronics', icon: Laptop, color: '#2A866A' },
+  { id: 6, name: 'Books', icon: BookOpen, color: '#2A866A' },
+  { id: 7, name: 'Health', icon: HeartPulse, color: '#2A866A' },
   { id: 8, name: 'Toys', icon: Baby, color: '#2A866A' },
   { id: 9, name: 'Gifts', icon: Gift, color: '#2A866A' },
   { id: 10, name: 'Art', icon: Palette, color: '#2A866A' },
@@ -23,14 +22,13 @@ const CategoryScroll = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   
-  // Auto-scroll functionality
   useEffect(() => {
     const scrollContainer = scrollRef.current;
     if (!scrollContainer) return;
     
     let animationId: number;
     let scrollPosition = 0;
-    let scrollDirection = 1; // 1 for right, -1 for left
+    let scrollDirection = 1;
     let isPaused = false;
     
     const autoScroll = () => {
@@ -42,7 +40,6 @@ const CategoryScroll = () => {
       scrollPosition += 0.5 * scrollDirection;
       scrollContainer.scrollLeft = scrollPosition;
       
-      // Change direction when reaching ends
       if (scrollPosition >= scrollContainer.scrollWidth - scrollContainer.clientWidth) {
         scrollDirection = -1;
       } else if (scrollPosition <= 0) {
@@ -52,10 +49,8 @@ const CategoryScroll = () => {
       animationId = requestAnimationFrame(autoScroll);
     };
     
-    // Start auto-scrolling
     animationId = requestAnimationFrame(autoScroll);
     
-    // Pause on hover/touch
     const handlePause = () => { isPaused = true; };
     const handleResume = () => { isPaused = false; };
     
@@ -82,13 +77,12 @@ const CategoryScroll = () => {
       <div
         ref={scrollRef}
         className="flex overflow-x-auto scrollbar-hide py-2 space-x-3"
-        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
         {categories.map((category) => (
           <motion.button
             key={category.id}
-            className="flex-shrink-0 flex flex-col items-center justify-center bg-white rounded-lg shadow-sm p-3 border border-gray-100"
-            style={{ minWidth: '80px', height: '80px' }}
+            className="flex-shrink-0 flex flex-col items-center justify-center bg-white rounded-lg shadow-sm p-2 border border-gray-100"
+            style={{ minWidth: '70px', height: '70px' }}
             whileHover={{ scale: 1.05, backgroundColor: '#F8F8F8' }}
             whileTap={{ scale: 0.95 }}
             onClick={() => handleCategoryClick(category.name)}

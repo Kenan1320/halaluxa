@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, Search, ShoppingCart, User, MapPin } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -59,15 +58,14 @@ const Navbar = () => {
   
   return (
     <header 
-      className={`fixed top-0 w-full z-50 transition-all duration-300 ${
-        isScrolled ? 'py-2' : 'py-3'
-      } shadow-md bg-[#E4F5F0]`}
+      className="fixed top-0 w-full z-50 transition-all duration-300 bg-[#E4F5F0]"
+      style={{ height: '70px' }}
     >
-      <div className="container mx-auto px-4 flex justify-between items-center">
+      <div className="container mx-auto px-4 h-full flex justify-between items-center">
         {/* Menu Button */}
         <button
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="p-2 rounded-lg text-[#2A866A] hover:bg-[#d5efe8] transition"
+          className="p-2 text-[#2A866A]"
           aria-label="Toggle menu"
         >
           {mobileMenuOpen ? (
@@ -77,30 +75,15 @@ const Navbar = () => {
           )}
         </button>
         
-        {/* Logo */}
-        <Link to="/" className="flex items-center absolute left-1/2 transform -translate-x-1/2">
+        {/* Logo with animated balls */}
+        <Link to="/" className="absolute left-16 transform -translate-x-1/2">
           <div className="flex items-center">
-            <motion.span 
-              className="text-2xl font-serif font-bold flex text-[#2A866A]"
-              variants={letterVariants}
-              initial="initial"
-              animate="animate"
-            >
-              {Array.from("Haluna").map((letter, index) => (
-                <motion.span
-                  key={index}
-                  variants={letterChildVariants}
-                  style={{ display: 'inline-block' }}
-                >
-                  {letter}
-                </motion.span>
-              ))}
-            </motion.span>
+            <span className="text-2xl font-serif font-bold text-[#2A866A]">Haluna</span>
             
             {/* Enhanced logo design with pulsing ball */}
             <div className="relative ml-1">
               <motion.div 
-                className="w-8 h-8 bg-[#FF7A45] rounded-full shadow-md"
+                className="w-8 h-8 bg-[#FF7A45] rounded-full"
                 animate={{
                   scale: [1, 1.1, 1],
                   rotate: [0, 5, 0, -5, 0],
@@ -127,31 +110,19 @@ const Navbar = () => {
           </div>
         </Link>
         
-        {/* Right side buttons: Location and Cart */}
-        <div className="flex items-center gap-3">
+        {/* Right side buttons */}
+        <div className="flex items-center gap-4">
           {/* Location Button */}
           <button 
             onClick={requestLocation}
-            className="relative p-2 rounded-full hover:bg-[#d5efe8] text-[#2A866A] transition-colors"
-            aria-label="Set Location"
+            className="p-2 rounded-full text-[#2A866A] hover:bg-[#d5efe8] transition-colors"
           >
             <MapPin className="h-6 w-6" />
-            {isLocationEnabled && userLocation?.city && (
-              <motion.span 
-                className="absolute -bottom-1 -right-1 bg-[#2A866A] text-white text-xs rounded-full h-2 w-2"
-                animate={{ scale: [1, 1.5, 1] }}
-                transition={{ 
-                  duration: 2,
-                  repeat: Infinity,
-                  repeatType: "reverse"
-                }}
-              />
-            )}
           </button>
           
           {/* Cart Button */}
           <Link 
-            to={isLoggedIn && user?.role !== 'business' ? '/cart' : '/login'} 
+            to="/cart" 
             className="relative p-2 rounded-lg bg-[#FF7A45] text-white"
           >
             <ShoppingCart className="h-6 w-6" />
@@ -162,10 +133,10 @@ const Navbar = () => {
             )}
           </Link>
           
-          {/* User Profile or Login */}
+          {/* User Profile */}
           <Link
             to={isLoggedIn ? '/profile' : '/login'}
-            className="relative p-2 rounded-full bg-[#2A866A] text-white"
+            className="p-2 rounded-full bg-[#2A866A] text-white"
           >
             <User className="h-6 w-6" />
           </Link>

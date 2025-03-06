@@ -1,10 +1,9 @@
-
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { getFeaturedProducts } from '@/services/productService';
 import { Product } from '@/models/product';
 import { Link } from 'react-router-dom';
-import { ShoppingCart, Info } from 'lucide-react';
+import { ShoppingCart, Info, Heart } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { Card, CardContent } from '@/components/ui/card';
 
@@ -63,10 +62,10 @@ const ProductGrid = () => {
           transition={{ delay: index * 0.05 }}
         >
           <Card 
-            className="h-full overflow-hidden hover:shadow-md transition-shadow duration-200"
+            className="h-full overflow-hidden hover:shadow-md transition-shadow"
             onClick={() => handleCardClick(product.id)}
           >
-            <div className={`relative ${expandedProduct === product.id ? 'h-48' : 'h-36'} overflow-hidden`}>
+            <div className={`relative ${expandedProduct === product.id ? 'h-48' : 'h-36'}`}>
               {product.images && product.images[0] ? (
                 <img 
                   src={product.images[0]} 
@@ -79,47 +78,44 @@ const ProductGrid = () => {
                 </div>
               )}
               
-              {product.isHalalCertified && (
-                <div className="absolute top-2 right-2 bg-[#2A866A]/10 text-[#2A866A] text-xs font-medium px-2 py-0.5 rounded-full">
-                  Halal
-                </div>
-              )}
+              <motion.button
+                className="absolute top-2 right-2 text-[#FF7A45] p-1.5 rounded-full hover:bg-white/80"
+                whileTap={{ scale: 0.9 }}
+              >
+                <Heart className="h-4 w-4" />
+              </motion.button>
             </div>
             
-            <CardContent className={`p-3 ${expandedProduct === product.id ? 'pb-4' : 'pb-2'}`}>
-              <h3 className={`font-medium ${expandedProduct === product.id ? 'text-base' : 'text-sm'} line-clamp-2 mb-1`}>
+            <CardContent className="p-3">
+              <h3 className="font-medium text-sm line-clamp-2 mb-1">
                 {product.name}
               </h3>
               
-              {expandedProduct === product.id && (
-                <p className="text-xs text-gray-600 mb-2 line-clamp-3">{product.description}</p>
-              )}
-              
               <div className="flex justify-between items-center mt-1">
-                <span className="text-[#2A866A] font-medium text-sm">${product.price.toFixed(2)}</span>
+                <span className="text-[#2A866A] font-bold">${product.price.toFixed(2)}</span>
                 
-                <motion.button
-                  className="text-[#FF7A45] p-1.5 rounded-full hover:bg-orange-50"
-                  whileTap={{ scale: 0.9 }}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-[#FF7A45] p-1.5 hover:bg-orange-50"
                   onClick={(e) => {
                     e.stopPropagation();
                     addToCart(product, 1);
                   }}
                 >
                   <ShoppingCart className="h-4 w-4" />
-                </motion.button>
+                </Button>
               </div>
               
               {expandedProduct === product.id && (
-                <div className="mt-3 pt-2 border-t border-gray-100">
-                  <Link 
-                    to={`/product/${product.id}`} 
-                    className="flex items-center justify-center text-xs text-[#2A866A] hover:underline"
-                  >
-                    <Info className="h-3 w-3 mr-1" />
-                    View details
-                  </Link>
-                </div>
+                <Button 
+                  variant="default"
+                  size="sm"
+                  className="w-full mt-3"
+                  asChild
+                >
+                  <Link to={`/product/${product.id}`}>View Details</Link>
+                </Button>
               )}
             </CardContent>
           </Card>
