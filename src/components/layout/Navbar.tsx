@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, Search, ShoppingCart, User, MapPin } from 'lucide-react';
@@ -33,29 +34,10 @@ const Navbar = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
   
-  // Filter out cart for business users if needed
   const isActive = (path: string) => {
     return location.pathname === path;
   };
 
-  // Animation variants for the logo text
-  const letterVariants = {
-    initial: { opacity: 1 },
-    animate: { opacity: 1, transition: { staggerChildren: 0.1 } }
-  };
-
-  const letterChildVariants = {
-    initial: { color: "#2A866A" },
-    animate: { 
-      color: ["#2A866A", "#3A9E7E", "#2F9173", "#1F7A5C", "#2A866A"],
-      transition: { 
-        duration: 8, 
-        repeat: Infinity,
-        repeatType: "reverse" as const
-      } 
-    }
-  };
-  
   return (
     <header 
       className="fixed top-0 w-full z-50 transition-all duration-300 bg-[#E4F5F0]"
@@ -75,21 +57,21 @@ const Navbar = () => {
           )}
         </button>
         
-        {/* Logo with animated balls */}
-        <Link to="/" className="absolute left-16 transform -translate-x-1/2">
-          <div className="flex items-center">
-            <span className="text-2xl font-serif font-bold text-[#2A866A]">Haluna</span>
+        {/* Logo - centered with animated elements */}
+        <div className="absolute left-1/2 transform -translate-x-1/2 flex items-center">
+          <Link to="/" className="flex items-center">
+            <span className="text-xl font-serif font-bold text-[#2A866A]">Haluna</span>
             
-            {/* Enhanced logo design with pulsing ball */}
+            {/* Animated logo design */}
             <div className="relative ml-1">
               <motion.div 
-                className="w-8 h-8 bg-[#FF7A45] rounded-full"
+                className="w-7 h-7 bg-[#FF7A45] rounded-full"
                 animate={{
                   scale: [1, 1.1, 1],
-                  rotate: [0, 5, 0, -5, 0],
+                  rotate: [0, 10, 0, -10, 0],
                 }}
                 transition={{
-                  duration: 4,
+                  duration: 6,
                   repeat: Infinity,
                   repeatType: "reverse"
                 }}
@@ -97,18 +79,20 @@ const Navbar = () => {
               <motion.div
                 className="w-3 h-3 bg-[#2A866A] rounded-full absolute -bottom-1 -right-1"
                 animate={{
-                  scale: [1, 1.2, 1],
+                  scale: [1, 1.3, 1],
+                  y: [0, -2, 0, 2, 0],
+                  x: [0, 2, 0, -2, 0],
                 }}
                 transition={{
-                  duration: 3,
+                  duration: 4,
                   repeat: Infinity,
                   repeatType: "reverse",
                   delay: 1
                 }}
               />
             </div>
-          </div>
-        </Link>
+          </Link>
+        </div>
         
         {/* Right side buttons */}
         <div className="flex items-center gap-4">
@@ -135,7 +119,7 @@ const Navbar = () => {
           
           {/* User Profile */}
           <Link
-            to={isLoggedIn ? '/profile' : '/login'}
+            to={isLoggedIn ? (user?.role === 'business' ? '/dashboard' : '/profile') : '/login'}
             className="p-2 rounded-full bg-[#2A866A] text-white"
           >
             <User className="h-6 w-6" />
@@ -185,6 +169,17 @@ const Navbar = () => {
             >
               <span>Browse</span>
             </Link>
+            {user?.role === 'business' && (
+              <Link
+                to="/dashboard"
+                className={`flex items-center gap-3 p-3 rounded-lg transition ${
+                  isActive('/dashboard') ? 'bg-[#E4F5F0] text-[#2A866A]' : 'text-gray-700 hover:bg-gray-100'
+                }`}
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <span>Seller Dashboard</span>
+              </Link>
+            )}
             <Link
               to={isLoggedIn ? '/profile' : '/login'}
               className={`flex items-center gap-3 p-3 rounded-lg transition ${

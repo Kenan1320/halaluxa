@@ -37,43 +37,42 @@ const Index = () => {
   return (
     <div className="min-h-screen pt-16 pb-20">
       {/* Top container with lighter mint background */}
-      <div className="bg-[#E4F5F0] pt-4 pb-6">
+      <div className="bg-[#E4F5F0] pt-3 pb-4">
         <div className="container mx-auto px-4">
           {/* Search bar */}
-          <div className="mb-5">
+          <div className="mb-3">
             <SearchBar />
           </div>
           
-          {/* Personalized greeting for user */}
+          {/* Personalized greeting for user - more compact */}
           <motion.div
-            className="mb-4"
+            className="mb-2"
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            <h2 className="text-2xl font-semibold text-[#2A866A]">
+            <h2 className="text-lg font-semibold text-[#2A866A]">
               {greeting}, {isLoggedIn && user ? user.name : 'Guest'}
             </h2>
-            <p className="text-gray-600">Discover products you'll love</p>
           </motion.div>
           
-          {/* Category scroll inside mint background */}
-          <div className="mt-3">
+          {/* Category scroll inside mint background - made more compact */}
+          <div className="mt-1">
             <CategoryScroll />
           </div>
         </div>
       </div>
       
       {/* Main content with white background */}
-      <div className="container mx-auto px-4 pt-6">
-        {/* Nearby Shops Section with new horizontal product cards */}
-        <section className="mt-4">
-          <h2 className="text-xl font-semibold mb-4 text-gray-800">Nearby Shops</h2>
+      <div className="container mx-auto px-4 pt-4">
+        {/* Nearby Shops Section */}
+        <section className="mt-2">
+          <h2 className="text-lg font-semibold mb-3 text-gray-800">Nearby Shops</h2>
           <NearbyShops />
         </section>
         
         {/* Featured Products Section */}
-        <section className="mt-8">
-          <h2 className="text-xl font-semibold mb-4 text-gray-800">Featured Products</h2>
+        <section className="mt-6">
+          <h2 className="text-lg font-semibold mb-3 text-gray-800">Featured Products</h2>
           <ProductGrid />
         </section>
       </div>

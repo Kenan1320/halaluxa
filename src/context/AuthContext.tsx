@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -92,7 +93,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           return;
         }
         
-        // Ensure role is of type UserRole
+        // Ensure role is of type UserRole and preserve it exactly as stored
         const userRole: UserRole = (userData.role === 'business' || userData.role === 'shopper') 
           ? userData.role as UserRole 
           : 'shopper';
@@ -114,10 +115,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           shopLocation: userData.shop_location,
         };
         
+        // Store the fresh data from database
         setUser(userObj);
         setIsLoggedIn(true);
-        
         localStorage.setItem(USER_DATA_KEY, JSON.stringify(userObj));
+        
+        console.log('Session refreshed, user role:', userObj.role);
       }
     } catch (error) {
       console.error('Refresh session error:', error);
@@ -195,7 +198,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
         
         if (userData) {
-          // Ensure role is of type UserRole
+          // Explicitly preserve the business role if that's what's in the database
           const userRole: UserRole = (userData.role === 'business' || userData.role === 'shopper') 
             ? userData.role as UserRole 
             : 'shopper';
@@ -204,7 +207,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             id: userData.id,
             name: userData.name || data.session.user.email?.split('@')[0] || 'User',
             email: data.session.user.email || '',
-            role: userRole,
+            role: userRole, // Use the exact role from the database
             phone: userData.phone,
             address: userData.address,
             city: userData.city,
@@ -216,6 +219,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             shopCategory: userData.shop_category,
             shopLocation: userData.shop_location,
           };
+          
+          console.log('User logged in with role:', userRole);
           
           setUser(userObj);
           setIsLoggedIn(true);

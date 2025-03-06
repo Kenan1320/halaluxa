@@ -1,3 +1,4 @@
+
 import { useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -73,22 +74,22 @@ const CategoryScroll = () => {
   };
   
   return (
-    <div className="relative w-full my-2">
+    <div className="relative w-full my-1">
       <div
         ref={scrollRef}
-        className="flex overflow-x-auto scrollbar-hide py-2 space-x-3"
+        className="flex overflow-x-auto scrollbar-hide py-1 space-x-3"
       >
         {categories.map((category) => (
           <motion.button
             key={category.id}
-            className="flex-shrink-0 flex flex-col items-center justify-center bg-white rounded-lg shadow-sm p-2 border border-gray-100"
-            style={{ minWidth: '70px', height: '70px' }}
+            className="flex-shrink-0 flex flex-col items-center justify-center bg-white rounded-lg shadow-sm p-1 border border-gray-100"
+            style={{ minWidth: '62px', height: '62px' }}
             whileHover={{ scale: 1.05, backgroundColor: '#F8F8F8' }}
             whileTap={{ scale: 0.95 }}
             onClick={() => handleCategoryClick(category.name)}
           >
             <category.icon className="h-5 w-5 text-[#2A866A] mb-1" />
-            <span className="text-gray-800 text-xs font-medium text-center">{category.name}</span>
+            <span className="text-gray-800 text-xs font-medium text-center line-clamp-1">{category.name}</span>
           </motion.button>
         ))}
       </div>

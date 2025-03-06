@@ -1,6 +1,6 @@
 
 import { useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -11,15 +11,18 @@ import { supabase } from '@/integrations/supabase/client';
  */
 const AuthMiddleware = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { isLoggedIn, user, refreshSession } = useAuth();
   const { toast } = useToast();
   
   // Set up auth state listener
   useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
+        console.log('Auth state change:', event);
+        
         if (event === 'SIGNED_IN' && session) {
-          refreshSession();
+          await refreshSession();
           toast({
             title: "Logged in",
             description: "You have been successfully logged in",
@@ -58,7 +61,7 @@ const AuthMiddleware = () => {
         // If we have a session but the app state doesn't reflect it,
         // this can happen on refreshes or in certain browser conditions
         if (data.session && !isLoggedIn) {
-          refreshSession();
+          await refreshSession();
           console.log('Auth refresh triggered due to route change');
         }
       } catch (err) {
@@ -69,12 +72,13 @@ const AuthMiddleware = () => {
     verifyAuth();
   }, [location.pathname, isLoggedIn, refreshSession]);
   
-  // Log dashboard access
+  // Ensure business users can access dashboard
   useEffect(() => {
-    if (location.pathname.startsWith('/dashboard') && isLoggedIn && user) {
-      console.log(`Business user ${user.name} accessed dashboard at ${new Date().toISOString()}`);
+    if (isLoggedIn && user?.role === 'business' && location.pathname.startsWith('/dashboard')) {
+      console.log('Business user accessing dashboard:', user.name);
+      // This is intentionally left empty as we're making sure business users can stay on dashboard pages
     }
-  }, [location.pathname, isLoggedIn, user]);
+  }, [location.pathname, isLoggedIn, user, navigate]);
   
   return null; // This is a middleware component, it doesn't render anything
 };
