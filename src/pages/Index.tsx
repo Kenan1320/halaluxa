@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useLocation } from '@/context/LocationContext';
 import { Link } from 'react-router-dom';
@@ -8,7 +8,7 @@ import SearchBar from '@/components/home/SearchBar';
 import CategoryScroll from '@/components/home/CategoryScroll';
 import ProductGrid from '@/components/home/ProductGrid';
 import NearbyShops from '@/components/home/NearbyShops';
-import { motion } from 'framer-motion';
+import { motion, useAnimationControls } from 'framer-motion';
 import { getShopById, Shop } from '@/services/shopService';
 
 const Index = () => {
@@ -18,6 +18,7 @@ const Index = () => {
   const [nearbyShops, setNearbyShops] = useState<Shop[]>([]);
   const [isLoadingShops, setIsLoadingShops] = useState(false);
   const [activeShopIndex, setActiveShopIndex] = useState(0);
+  const shopScrollRef = useRef<HTMLDivElement>(null);
   
   // Scroll to top on page load
   useEffect(() => {
@@ -125,55 +126,137 @@ const Index = () => {
           </div>
           
           {/* Enhanced carousel with scaling effect */}
-          <div className="relative h-24 overflow-hidden">
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="w-full h-full flex items-center">
-                {/* This is the visible container for the continuous flowing shops */}
-                <motion.div
-                  className="flex absolute"
-                  initial={{ x: "100%" }}
-                  animate={{ x: "-100%" }}
-                  transition={{
-                    repeat: Infinity,
-                    duration: 20,
-                    ease: "linear",
-                    repeatType: "loop"
-                  }}
-                >
-                  {/* Duplicate the shops array twice to create a continuous loop */}
-                  {[...selectedShops, ...selectedShops, ...selectedShops].map((shop, index) => (
-                    <motion.div
-                      key={`${shop.id}-${index}`}
-                      className="flex flex-col items-center mx-6 relative"
-                      animate={{
-                        scale: activeShopIndex % selectedShops.length === index % selectedShops.length ? 1.15 : 1,
-                        y: activeShopIndex % selectedShops.length === index % selectedShops.length ? -5 : 0,
-                        zIndex: activeShopIndex % selectedShops.length === index % selectedShops.length ? 10 : 1,
-                      }}
-                      transition={{
-                        duration: 0.5,
-                        ease: "easeInOut"
-                      }}
-                    >
-                      <Link to={`/shop/${shop.id}`}>
-                        <div className="w-14 h-14 rounded-full bg-white shadow-sm flex items-center justify-center overflow-hidden">
-                          {shop.logo ? (
-                            <img src={shop.logo} alt={shop.name} className="w-10 h-10 object-contain" />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center bg-[#F9F5EB] text-[#29866B] font-semibold">
-                              {shop.name.charAt(0)}
-                            </div>
-                          )}
-                        </div>
-                        <span className="text-xs text-center mt-1 block font-medium tracking-tight">
-                          {shop.name.length > 10 ? `${shop.name.substring(0, 10)}...` : shop.name}
-                        </span>
-                      </Link>
-                    </motion.div>
-                  ))}
-                </motion.div>
+          <div ref={shopScrollRef} className="relative h-28 overflow-hidden">
+            {selectedShops.length > 0 && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-full h-full flex items-center">
+                  {/* Create a continuous flow of logos - first set */}
+                  <motion.div
+                    className="flex absolute"
+                    initial={{ x: "0%" }}
+                    animate={{ x: "-100%" }}
+                    transition={{
+                      repeat: Infinity,
+                      duration: 20,
+                      ease: "linear",
+                      repeatType: "loop"
+                    }}
+                  >
+                    {/* Double the shops array for continuous animation */}
+                    {[...selectedShops, ...selectedShops, ...selectedShops].map((shop, index) => (
+                      <motion.div
+                        key={`${shop.id}-flow1-${index}`}
+                        className="flex flex-col items-center mx-6 relative"
+                        animate={{
+                          scale: activeShopIndex % selectedShops.length === index % selectedShops.length ? 1.15 : 1,
+                          y: activeShopIndex % selectedShops.length === index % selectedShops.length ? -5 : 0,
+                          zIndex: activeShopIndex % selectedShops.length === index % selectedShops.length ? 10 : 1,
+                        }}
+                        transition={{
+                          duration: 0.5,
+                          ease: "easeInOut"
+                        }}
+                      >
+                        <Link to={`/shop/${shop.id}`}>
+                          <motion.div 
+                            className="w-14 h-14 rounded-full bg-white shadow-sm flex items-center justify-center overflow-hidden"
+                            whileHover={{ scale: 1.1, boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}
+                            transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                          >
+                            {shop.logo ? (
+                              <img src={shop.logo} alt={shop.name} className="w-10 h-10 object-contain" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center bg-[#F9F5EB] text-[#29866B] font-semibold">
+                                {shop.name.charAt(0)}
+                              </div>
+                            )}
+                          </motion.div>
+                          <motion.span 
+                            className="text-xs text-center mt-1 block font-medium tracking-tight"
+                            initial={{ opacity: 0.8 }}
+                            whileHover={{ opacity: 1, scale: 1.05, color: "#29866B" }}
+                            animate={{
+                              y: [0, -2, 0],
+                              transition: {
+                                duration: 2,
+                                repeat: Infinity,
+                                repeatType: "mirror",
+                                ease: "easeInOut",
+                                delay: index * 0.2 % 1,
+                              }
+                            }}
+                          >
+                            {shop.name.length > 10 ? `${shop.name.substring(0, 10)}...` : shop.name}
+                          </motion.span>
+                        </Link>
+                      </motion.div>
+                    ))}
+                  </motion.div>
+
+                  {/* Second identical motion div that follows the first to create seamless transition */}
+                  <motion.div
+                    className="flex absolute"
+                    initial={{ x: "100%" }}
+                    animate={{ x: "0%" }}
+                    transition={{
+                      repeat: Infinity,
+                      duration: 20,
+                      ease: "linear",
+                      repeatType: "loop"
+                    }}
+                  >
+                    {[...selectedShops, ...selectedShops, ...selectedShops].map((shop, index) => (
+                      <motion.div
+                        key={`${shop.id}-flow2-${index}`}
+                        className="flex flex-col items-center mx-6 relative"
+                        animate={{
+                          scale: activeShopIndex % selectedShops.length === index % selectedShops.length ? 1.15 : 1,
+                          y: activeShopIndex % selectedShops.length === index % selectedShops.length ? -5 : 0,
+                          zIndex: activeShopIndex % selectedShops.length === index % selectedShops.length ? 10 : 1,
+                        }}
+                        transition={{
+                          duration: 0.5,
+                          ease: "easeInOut"
+                        }}
+                      >
+                        <Link to={`/shop/${shop.id}`}>
+                          <motion.div 
+                            className="w-14 h-14 rounded-full bg-white shadow-sm flex items-center justify-center overflow-hidden"
+                            whileHover={{ scale: 1.1, boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}
+                            transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                          >
+                            {shop.logo ? (
+                              <img src={shop.logo} alt={shop.name} className="w-10 h-10 object-contain" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center bg-[#F9F5EB] text-[#29866B] font-semibold">
+                                {shop.name.charAt(0)}
+                              </div>
+                            )}
+                          </motion.div>
+                          <motion.span 
+                            className="text-xs text-center mt-1 block font-medium tracking-tight"
+                            initial={{ opacity: 0.8 }}
+                            whileHover={{ opacity: 1, scale: 1.05, color: "#29866B" }}
+                            animate={{
+                              y: [0, -2, 0],
+                              transition: {
+                                duration: 2,
+                                repeat: Infinity,
+                                repeatType: "mirror",
+                                ease: "easeInOut",
+                                delay: index * 0.2 % 1,
+                              }
+                            }}
+                          >
+                            {shop.name.length > 10 ? `${shop.name.substring(0, 10)}...` : shop.name}
+                          </motion.span>
+                        </Link>
+                      </motion.div>
+                    ))}
+                  </motion.div>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </section>
         

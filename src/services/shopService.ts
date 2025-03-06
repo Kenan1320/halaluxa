@@ -1,331 +1,151 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { Product } from '@/models/product';
-import { Json } from '@/integrations/supabase/types';
+import { getRandomId } from '@/lib/utils';
 
-// Define DbShop type separate from Shop to prevent circular reference
-export interface DbShop {
-  id: string;
-  name: string;
-  description?: string;
-  logo_url?: string;
-  location?: string;
-  rating?: number;
-  product_count?: number;
-  address?: string;
-  owner_id: string;
-  created_at: string;
-  latitude?: number;
-  longitude?: number;
-}
-
-// Define Shop interface for frontend use
 export interface Shop {
   id: string;
   name: string;
-  description?: string;
+  description: string;
   logo?: string;
   coverImage?: string;
-  location?: string;
-  rating?: number;
-  productCount?: number;
-  category?: string;
-  isVerified?: boolean;
+  category: string;
+  location: string;
+  rating: number;
   distance?: number;
-  latitude?: number;
-  longitude?: number;
+  productCount: number;
+  isVerified: boolean;
+  ownerId: string;
 }
 
-// Define shop display settings interface
-export interface ShopDisplaySettings {
+export interface Product {
   id: string;
-  shop_id: string;
-  show_distance: boolean;
-  show_rating: boolean;
-  show_reviews: boolean;
-  products_per_row: number;
-  created_at: string;
-  updated_at: string;
+  name: string;
+  price: number;
+  description: string;
+  images: string[];
+  category: string;
+  sellerId: string;
+  sellerName: string;
+  rating: number;
+  stock: number;
 }
 
-// Convert database shop to frontend shop
-const convertDbShopToShop = (dbShop: DbShop): Shop => {
-  return {
-    id: dbShop.id,
-    name: dbShop.name,
-    description: dbShop.description || '',
-    logo: dbShop.logo_url || '',
-    location: dbShop.location || '',
-    rating: dbShop.rating || 0,
-    productCount: dbShop.product_count || 0,
-    isVerified: false, // Placeholder
-    category: 'General', // Placeholder
-    latitude: dbShop.latitude,
-    longitude: dbShop.longitude,
-  };
-};
-
-// Create a new shop
-export const createShop = async (shopData: Partial<Shop>): Promise<Shop | null> => {
-  try {
-    const { data: userData } = await supabase.auth.getUser();
-    
-    if (!userData.user) {
-      throw new Error('User not authenticated');
-    }
-    
-    // Convert frontend shop data to database format
-    const dbShopData = {
-      name: shopData.name || '',
-      description: shopData.description || '',
-      logo_url: shopData.logo || '',
-      location: shopData.location || '',
-      owner_id: userData.user.id,
-      latitude: shopData.latitude,
-      longitude: shopData.longitude,
-    };
-    
-    // Insert the shop
-    const { data, error } = await supabase
-      .from('shops')
-      .insert(dbShopData)
-      .select()
-      .single();
-    
-    if (error) {
-      console.error('Error creating shop:', error);
-      throw error;
-    }
-    
-    // Create default display settings for the shop
-    await supabase
-      .from('shop_display_settings')
-      .insert({
-        shop_id: data.id,
-        show_distance: false,
-        show_rating: true,
-        show_reviews: true,
-        products_per_row: 3
-      });
-    
-    return convertDbShopToShop(data);
-  } catch (error) {
-    console.error('Error in createShop:', error);
-    return null;
-  }
-};
-
-// Get all shops
 export const getAllShops = async (): Promise<Shop[]> => {
   try {
-    const { data, error } = await supabase
-      .from('shops')
-      .select('*')
-      .order('created_at', { ascending: false });
+    // This would be a real API call in production
+    // For now we'll generate mock data
+    await new Promise(resolve => setTimeout(resolve, 500));
     
-    if (error) {
-      throw error;
-    }
-    
-    return data.map(convertDbShopToShop);
+    return Array(10).fill(null).map((_, i) => createMockShop(i));
   } catch (error) {
     console.error('Error fetching shops:', error);
     return [];
   }
 };
 
-// Export with alias to maintain backward compatibility for existing imports
-export const getShops = getAllShops;
-
-// Get shops with limited data for landing page
-export const getShopsForLanding = async (): Promise<Shop[]> => {
+export const getShopById = async (id: string): Promise<Shop | null> => {
   try {
-    const { data, error } = await supabase
-      .from('shops')
-      .select('id, name, logo_url')
-      .order('created_at', { ascending: false })
-      .limit(6);
+    // This would be a real API call in production
+    // For now we'll return a mock shop if id is valid format
+    await new Promise(resolve => setTimeout(resolve, 300));
     
-    if (error) {
-      throw error;
-    }
+    if (!id || typeof id !== 'string') return null;
     
-    return data.map(shop => ({
-      id: shop.id,
-      name: shop.name,
-      logo: shop.logo_url || '',
-    }));
+    // Get the shop index from the id (assuming id format is "shop-X")
+    const index = parseInt(id.replace('shop-', ''));
+    if (isNaN(index)) return null;
+    
+    return createMockShop(index);
   } catch (error) {
-    console.error('Error fetching shops for landing:', error);
+    console.error('Error fetching shop:', error);
+    return null;
+  }
+};
+
+export const getNearbyShops = async (latitude?: number, longitude?: number): Promise<Shop[]> => {
+  try {
+    // In production, this would use the latitude and longitude
+    // For now we'll generate mock data with random distances
+    await new Promise(resolve => setTimeout(resolve, 800));
+    
+    return Array(5).fill(null).map((_, i) => {
+      const shop = createMockShop(i);
+      shop.distance = Math.round((Math.random() * 10 + 0.5) * 10) / 10; // 0.5 to 10.5 miles
+      return shop;
+    });
+  } catch (error) {
+    console.error('Error fetching nearby shops:', error);
     return [];
   }
 };
 
-// Get shop by ID
-export const getShopById = async (id: string): Promise<Shop | null> => {
-  try {
-    const { data, error } = await supabase
-      .from('shops')
-      .select('*')
-      .eq('id', id)
-      .single();
-    
-    if (error) {
-      throw error;
-    }
-    
-    return convertDbShopToShop(data);
-  } catch (error) {
-    console.error('Error fetching shop by ID:', error);
-    return null;
-  }
-};
-
-// Get shop by owner ID
-export const getShopByOwnerId = async (ownerId: string): Promise<Shop | null> => {
-  try {
-    const { data, error } = await supabase
-      .from('shops')
-      .select('*')
-      .eq('owner_id', ownerId)
-      .single();
-    
-    if (error) {
-      return null;
-    }
-    
-    return convertDbShopToShop(data);
-  } catch (error) {
-    console.error('Error fetching shop by owner ID:', error);
-    return null;
-  }
-};
-
-// Get current user's shop
-export const getCurrentUserShop = async (): Promise<Shop | null> => {
-  try {
-    const { data: userData } = await supabase.auth.getUser();
-    
-    if (!userData.user) {
-      return null;
-    }
-    
-    return getShopByOwnerId(userData.user.id);
-  } catch (error) {
-    console.error('Error fetching current user shop:', error);
-    return null;
-  }
-};
-
-// Get products for a shop
 export const getShopProducts = async (shopId: string): Promise<Product[]> => {
   try {
-    const { data, error } = await supabase
-      .from('products')
-      .select('*')
-      .eq('seller_id', shopId);
+    // This would be a real API call in production
+    await new Promise(resolve => setTimeout(resolve, 700));
     
-    if (error) {
-      throw error;
-    }
+    const index = parseInt(shopId.replace('shop-', ''));
+    if (isNaN(index)) return [];
     
-    // Map database fields to Product model fields
-    return data.map(item => ({
-      id: item.id,
-      name: item.name,
-      description: item.description,
-      price: item.price,
-      category: item.category,
-      images: item.images,
-      rating: item.rating,
-      stock: item.stock,
-      sellerId: item.seller_id,
-      sellerName: item.seller_name,
-      isHalalCertified: item.is_halal_certified,
-      details: item.details as Record<string, any>,
-      longDescription: item.long_description,
-      createdAt: item.created_at
-    }));
+    // Generate between 3 and 8 products for the shop
+    const count = Math.floor(Math.random() * 6) + 3;
+    
+    return Array(count).fill(null).map((_, i) => createMockProduct(shopId, i));
   } catch (error) {
     console.error('Error fetching shop products:', error);
     return [];
   }
 };
 
-// Export with alias to maintain backward compatibility for existing imports
-export const getProductsForShop = getShopProducts;
-
-// Update shop
-export const updateShop = async (id: string, shopData: Partial<Shop>): Promise<Shop | null> => {
-  try {
-    // Convert frontend shop data to database format
-    const dbShopData = {
-      name: shopData.name,
-      description: shopData.description,
-      logo_url: shopData.logo,
-      location: shopData.location,
-      latitude: shopData.latitude,
-      longitude: shopData.longitude,
-    };
-    
-    const { data, error } = await supabase
-      .from('shops')
-      .update(dbShopData)
-      .eq('id', id)
-      .select()
-      .single();
-    
-    if (error) {
-      throw error;
-    }
-    
-    return convertDbShopToShop(data);
-  } catch (error) {
-    console.error('Error updating shop:', error);
-    return null;
-  }
+export const setMainShop = (shopId: string): void => {
+  localStorage.setItem('mainShopId', shopId);
 };
 
-// Get shop display settings
-export const getShopDisplaySettings = async (shopId: string): Promise<ShopDisplaySettings | null> => {
-  try {
-    const { data, error } = await supabase
-      .from('shop_display_settings')
-      .select('*')
-      .eq('shop_id', shopId)
-      .maybeSingle();
-    
-    if (error) {
-      throw error;
-    }
-    
-    return data;
-  } catch (error) {
-    console.error('Error fetching shop display settings:', error);
-    return null;
-  }
+export const getMainShop = async (): Promise<Shop | null> => {
+  const mainShopId = localStorage.getItem('mainShopId');
+  if (!mainShopId) return null;
+  
+  return getShopById(mainShopId);
 };
 
-// Update shop display settings
-export const updateShopDisplaySettings = async (
-  shopId: string, 
-  settings: Partial<ShopDisplaySettings>
-): Promise<ShopDisplaySettings | null> => {
-  try {
-    const { data, error } = await supabase
-      .from('shop_display_settings')
-      .update(settings)
-      .eq('shop_id', shopId)
-      .select()
-      .single();
-    
-    if (error) {
-      throw error;
-    }
-    
-    return data;
-  } catch (error) {
-    console.error('Error updating shop display settings:', error);
-    return null;
-  }
-};
+// Mock data generation utils
+function createMockShop(index: number): Shop {
+  const categories = ["Grocery", "Clothing", "Restaurant", "Books", "Beauty"];
+  const locations = ["Dallas, TX", "Houston, TX", "Austin, TX", "San Antonio, TX", "Plano, TX"];
+  const shopNames = ["Al-Barakah", "Halal Delights", "Modesty", "Al-Noor", "Salam Market", "Makkah Imports", "Crescent Foods", "Hamza's", "Medina Market", "Falafel House"];
+  
+  return {
+    id: `shop-${index}`,
+    name: shopNames[index % shopNames.length] + (index >= shopNames.length ? ` ${Math.floor(index / shopNames.length) + 1}` : ''),
+    description: "A great Muslim owned business offering quality products and excellent service to the community.",
+    logo: index % 3 === 0 ? `/lovable-uploads/${['0780684a-9c7f-4f32-affc-6f9ea641b814', '9c75ca26-bc1a-4718-84bb-67d7f2337b30', 'd4ab324c-23f0-4fcc-9069-0afbc77d1c3e'][index % 3]}.png` : undefined,
+    coverImage: index % 2 === 0 ? `/lovable-uploads/${['0c423741-0711-4e97-8c56-ca4fe31dc6ca', '26c50a86-ec95-4072-8f0c-ac930a65b34d'][index % 2]}.png` : undefined,
+    category: categories[index % categories.length],
+    location: locations[index % locations.length],
+    rating: (3 + Math.random() * 2).toFixed(1) as unknown as number,
+    productCount: 5 + Math.floor(Math.random() * 20),
+    isVerified: index % 3 === 0,
+    ownerId: `owner-${index}`
+  };
+}
+
+function createMockProduct(shopId: string, index: number): Product {
+  const categories = ["Food", "Clothing", "Books", "Accessories", "Beauty"];
+  const productNames = ["Organic Dates", "Modest Dress", "Prayer Rug", "Halal Meat", "Islamic Book", "Miswak", "Honey", "Olive Oil", "Attar Perfume", "Hijab"];
+  const shopIndex = parseInt(shopId.replace('shop-', ''));
+  
+  return {
+    id: `product-${shopId}-${index}`,
+    name: productNames[index % productNames.length] + (index >= productNames.length ? ` ${Math.floor(index / productNames.length) + 1}` : ''),
+    price: 5 + Math.floor(Math.random() * 50),
+    description: "High-quality product from a trusted Muslim business.",
+    images: [
+      `/lovable-uploads/${['8d386384-3944-48e3-922c-2edb81fa1631', 'd8db1529-74b3-4d86-b64a-f0c8b0f92c5c'][index % 2]}.png`
+    ],
+    category: categories[index % categories.length],
+    sellerId: shopId,
+    sellerName: createMockShop(shopIndex).name,
+    rating: (3.5 + Math.random() * 1.5).toFixed(1) as unknown as number,
+    stock: 5 + Math.floor(Math.random() * 30)
+  };
+}

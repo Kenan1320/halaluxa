@@ -2,6 +2,7 @@
 import { motion } from 'framer-motion';
 import { Store } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
 
 interface ShopCardProps {
   shop: any;
@@ -19,7 +20,7 @@ const ShopCard = ({ shop, index, featured = false, minimal = false }: ShopCardPr
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, delay: index * 0.1 }}
       >
-        <div className="h-32 bg-gray-100 relative flex items-center justify-center">
+        <div className="h-32 bg-white relative flex items-center justify-center">
           {shop.logo ? (
             <img 
               src={shop.logo} 
@@ -36,13 +37,14 @@ const ShopCard = ({ shop, index, featured = false, minimal = false }: ShopCardPr
         <div className="p-4 text-center">
           <h3 className="text-lg font-medium mb-2">{shop.name}</h3>
           
-          <Button 
-            to={`/shop/${shop.id}`}
-            className="w-full text-sm"
-            size="sm"
-          >
-            Visit Shop
-          </Button>
+          <Link to={`/shop/${shop.id}`}>
+            <Button 
+              className="w-full text-sm"
+              size="sm"
+            >
+              Visit Shop
+            </Button>
+          </Link>
         </div>
       </motion.div>
     );
@@ -54,8 +56,9 @@ const ShopCard = ({ shop, index, featured = false, minimal = false }: ShopCardPr
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: index * 0.1 }}
+      whileHover={{ y: -5 }}
     >
-      <div className={`${featured ? 'lg:w-2/5 h-48 lg:h-auto' : 'h-48'} bg-gray-100 relative`}>
+      <div className={`${featured ? 'lg:w-2/5 h-48 lg:h-auto' : 'h-48'} bg-white relative`}>
         {shop.coverImage ? (
           <img 
             src={shop.coverImage} 
@@ -114,12 +117,11 @@ const ShopCard = ({ shop, index, featured = false, minimal = false }: ShopCardPr
           )}
         </div>
         
-        <Button 
-          to={`/shop/${shop.id}`}
-          className="w-full flex items-center justify-center"
-        >
-          Visit Shop
-        </Button>
+        <Link to={`/shop/${shop.id}`}>
+          <Button className="w-full flex items-center justify-center">
+            Visit Shop
+          </Button>
+        </Link>
       </div>
     </motion.div>
   );

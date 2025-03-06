@@ -9,7 +9,7 @@ import { useCart } from '@/context/CartContext';
 import { useLocation as useLocationContext } from '@/context/LocationContext';
 import { motion } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
-import { getShopById, Shop } from '@/services/shopService';
+import { getShopById, getMainShop, Shop } from '@/services/shopService';
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -42,14 +42,11 @@ const Navbar = () => {
   // Load main shop from localStorage
   useEffect(() => {
     const loadMainShop = async () => {
-      const mainShopId = localStorage.getItem('mainShopId');
-      if (mainShopId) {
-        try {
-          const shop = await getShopById(mainShopId);
-          setMainShop(shop);
-        } catch (error) {
-          console.error('Error loading main shop:', error);
-        }
+      try {
+        const shop = await getMainShop();
+        setMainShop(shop);
+      } catch (error) {
+        console.error('Error loading main shop:', error);
       }
     };
     
@@ -133,17 +130,21 @@ const Navbar = () => {
         {/* Right side buttons */}
         <div className="flex items-center gap-4">
           {/* Location Button */}
-          <button 
+          <motion.button 
             onClick={requestLocation}
             className="p-2 rounded-full text-[#2A866A] hover:bg-[#d5efe8] transition-colors"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
           >
             <MapPin className="h-6 w-6" />
-          </button>
+          </motion.button>
           
           {/* Main Shop Button */}
-          <button 
+          <motion.button 
             onClick={handleMainShopClick}
             className="relative p-2 rounded-full text-[#2A866A] hover:bg-[#d5efe8] transition-colors"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
           >
             {mainShop ? (
               <>
@@ -181,36 +182,51 @@ const Navbar = () => {
                 />
               </div>
             )}
-          </button>
+          </motion.button>
           
           {/* Select Shops Button */}
-          <Link 
-            to="/select-shops" 
-            className="p-2 rounded-full text-[#2A866A] hover:bg-[#d5efe8] transition-colors"
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
           >
-            <Store className="h-6 w-6" />
-          </Link>
+            <Link 
+              to="/select-shops" 
+              className="p-2 rounded-full text-[#2A866A] hover:bg-[#d5efe8] transition-colors block"
+            >
+              <Store className="h-6 w-6" />
+            </Link>
+          </motion.div>
           
           {/* Cart Button */}
-          <Link 
-            to="/cart" 
-            className="relative p-2 rounded-lg bg-[#FF7A45] text-white"
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
           >
-            <ShoppingCart className="h-6 w-6" />
-            {cart.items.length > 0 && (
-              <span className="absolute -top-2 -right-2 bg-[#2A866A] text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                {cart.items.length}
-              </span>
-            )}
-          </Link>
+            <Link 
+              to="/cart" 
+              className="relative p-2 rounded-lg bg-[#FF7A45] text-white block"
+            >
+              <ShoppingCart className="h-6 w-6" />
+              {cart.items.length > 0 && (
+                <span className="absolute -top-2 -right-2 bg-[#2A866A] text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                  {cart.items.length}
+                </span>
+              )}
+            </Link>
+          </motion.div>
           
           {/* User Profile */}
-          <Link
-            to={isLoggedIn ? (user?.role === 'business' ? '/dashboard' : '/profile') : '/login'}
-            className="p-2 rounded-full bg-[#2A866A] text-white"
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
           >
-            <User className="h-6 w-6" />
-          </Link>
+            <Link
+              to={isLoggedIn ? (user?.role === 'business' ? '/dashboard' : '/profile') : '/login'}
+              className="p-2 rounded-full bg-[#2A866A] text-white block"
+            >
+              <User className="h-6 w-6" />
+            </Link>
+          </motion.div>
         </div>
       </div>
       
@@ -256,7 +272,7 @@ const Navbar = () => {
             >
               <span>Browse</span>
             </Link>
-            {/* New Select Shops link */}
+            {/* Select Shops link */}
             <Link
               to="/select-shops"
               className={`flex items-center gap-3 p-3 rounded-lg transition ${

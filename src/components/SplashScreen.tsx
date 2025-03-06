@@ -122,13 +122,13 @@ const SplashScreen = ({ onFinished }: SplashScreenProps) => {
                   }}
                   animate={{
                     backgroundPosition: ['0% center', '200% center'],
-                  }}
-                  transition={{
-                    duration: 3,
-                    repeat: Infinity,
-                    repeatType: 'reverse',
-                    ease: 'linear',
-                    delay: 1.5 + (i * 0.2)
+                    transition: {
+                      duration: 3,
+                      repeat: Infinity,
+                      repeatType: 'reverse',
+                      ease: 'linear',
+                      delay: 1.5 + (i * 0.2)
+                    }
                   }}
                 >
                   {letter}
