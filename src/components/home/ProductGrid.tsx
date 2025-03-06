@@ -4,10 +4,9 @@ import { motion } from 'framer-motion';
 import { getFeaturedProducts } from '@/services/productService';
 import { Product } from '@/models/product';
 import { Link } from 'react-router-dom';
-import { ShoppingCart, Info, Heart, ChevronRight } from 'lucide-react';
+import { ShoppingCart, Eye, Heart, ChevronRight } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { useToast } from '@/hooks/use-toast';
-import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
 const ProductGrid = () => {
@@ -64,7 +63,7 @@ const ProductGrid = () => {
   };
   
   return (
-    <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-3 gap-3 my-4">
+    <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-3 gap-4 my-4">
       {products.map((product, index) => (
         <motion.div
           key={product.id}
@@ -77,7 +76,7 @@ const ProductGrid = () => {
         >
           {expandedProduct === product.id ? (
             // Expanded product view
-            <Card className="shadow-md overflow-hidden">
+            <div className="bg-white shadow-sm overflow-hidden rounded-lg">
               <div className="h-48 relative">
                 {product.images && product.images[0] ? (
                   <img 
@@ -104,7 +103,7 @@ const ProductGrid = () => {
                 </Button>
               </div>
               
-              <CardContent className="p-4">
+              <div className="p-4">
                 <h3 className="font-medium mb-1">{product.name}</h3>
                 <p className="text-sm text-gray-600 mb-3 line-clamp-2">{product.description}</p>
                 
@@ -135,14 +134,15 @@ const ProductGrid = () => {
                   className="w-full mt-3 border-[#2A866A] text-[#2A866A] hover:bg-[#2A866A] hover:text-white"
                 >
                   <Link to={`/product/${product.id}`} className="w-full h-full flex items-center justify-center">
-                    View Details
+                    <Eye className="h-4 w-4 mr-1" />
+                    View
                   </Link>
                 </Button>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           ) : (
-            // Collapsed product view - sleek and borderless
-            <div className="group">
+            // Collapsed product view - clean and borderless
+            <div className="group bg-transparent hover:bg-white hover:shadow-sm p-2 rounded-lg transition-all duration-200">
               <div className="relative h-32 sm:h-36 rounded-lg overflow-hidden mb-2">
                 {product.images && product.images[0] ? (
                   <img 
@@ -185,12 +185,22 @@ const ProductGrid = () => {
                   )}
                 </div>
                 
-                <button
-                  className="text-[#FF7A45] p-1 rounded-full hover:bg-[#FF7A45]/10 transition-colors"
-                  onClick={(e) => handleAddToCart(product, e)}
-                >
-                  <ShoppingCart className="h-4 w-4" />
-                </button>
+                <div className="flex gap-1">
+                  <button
+                    className="text-[#FF7A45] p-1 rounded-full hover:bg-[#FF7A45]/10 transition-colors"
+                    onClick={(e) => handleAddToCart(product, e)}
+                  >
+                    <ShoppingCart className="h-4 w-4" />
+                  </button>
+                  
+                  <Link
+                    to={`/product/${product.id}`}
+                    className="text-[#2A866A] p-1 rounded-full hover:bg-[#2A866A]/10 transition-colors"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Eye className="h-4 w-4" />
+                  </Link>
+                </div>
               </div>
             </div>
           )}

@@ -37,20 +37,20 @@ const Index = () => {
   return (
     <div className="min-h-screen pt-16 pb-20">
       {/* Top container with lighter mint background */}
-      <div className="bg-[#E4F5F0] pt-3 pb-4">
+      <div className="bg-[#E4F5F0] pt-2 pb-3">
         <div className="container mx-auto px-4">
           {/* Search bar */}
-          <div className="mb-3">
+          <div className="mb-2">
             <SearchBar />
           </div>
           
-          {/* Personalized greeting for user - more compact */}
+          {/* Personalized greeting for user - smaller text */}
           <motion.div
-            className="mb-2"
+            className="mb-1"
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            <h2 className="text-lg font-semibold text-[#2A866A]">
+            <h2 className="text-base font-medium text-[#2A866A]">
               {greeting}, {isLoggedIn && user ? user.name : 'Guest'}
             </h2>
           </motion.div>
@@ -63,16 +63,16 @@ const Index = () => {
       </div>
       
       {/* Main content with white background */}
-      <div className="container mx-auto px-4 pt-4">
+      <div className="container mx-auto px-4 pt-3">
         {/* Nearby Shops Section */}
-        <section className="mt-2">
-          <h2 className="text-lg font-semibold mb-3 text-gray-800">Nearby Shops</h2>
+        <section className="mt-1">
+          <h2 className="text-lg font-semibold mb-2 text-gray-800">Nearby Shops</h2>
           <NearbyShops />
         </section>
         
         {/* Featured Products Section */}
-        <section className="mt-6">
-          <h2 className="text-lg font-semibold mb-3 text-gray-800">Featured Products</h2>
+        <section className="mt-4">
+          <h2 className="text-lg font-semibold mb-2 text-gray-800">Featured Products</h2>
           <ProductGrid />
         </section>
       </div>
