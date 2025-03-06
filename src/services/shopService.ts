@@ -104,13 +104,16 @@ export async function getProductsForShop(shopId: string): Promise<Product[]> {
 // Update shop details
 export async function updateShop(shop: Partial<Shop>): Promise<Shop | undefined> {
   try {
+    // Create a simplified object for the database update
+    // Only include the fields we want to update to avoid circular references
     const dbShop = {
       name: shop.name,
       description: shop.description,
       logo_url: shop.logo,
       cover_image: shop.coverImage,
       location: shop.location,
-      is_verified: shop.isVerified
+      is_verified: shop.isVerified,
+      category: shop.category
     };
     
     const { data, error } = await supabase
