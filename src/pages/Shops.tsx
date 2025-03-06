@@ -4,7 +4,7 @@ import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { Store, Search, MapPin, Filter } from 'lucide-react';
-import { getShops } from '@/services/shopService';
+import { getAllShops } from '@/services/shopService';
 import { useLocation } from '@/context/LocationContext';
 import ShopCard from '@/components/shop/ShopCard';
 
@@ -25,7 +25,7 @@ const Shops = () => {
           const nearbyShops = await getNearbyShops();
           setShops(nearbyShops);
         } else {
-          const fetchedShops = await getShops();
+          const fetchedShops = await getAllShops();
           setShops(fetchedShops);
         }
       } catch (error) {

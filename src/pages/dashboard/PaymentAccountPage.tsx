@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -6,7 +5,7 @@ import { CreditCard, Building, User, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from '@/context/AuthContext';
-import { getSellerAccounts, saveSellerAccount, SellerAccount } from '@/services/paymentService';
+import { getSellerAccount, createSellerAccount, SellerAccount } from '@/services/paymentService';
 
 const PaymentAccountPage = () => {
   const navigate = useNavigate();
@@ -33,32 +32,28 @@ const PaymentAccountPage = () => {
     const loadAccountData = async () => {
       if (user) {
         // Load existing account data if available
-        const accounts = await getSellerAccounts();
+        const existingAccount = await getSellerAccount();
         
-        // Find account for current user
-        const existingBankAccount = accounts.find(acc => acc.sellerId === user.id && acc.accountType === 'bank');
-        const existingPaypalAccount = accounts.find(acc => acc.sellerId === user.id && acc.accountType === 'paypal');
-        const existingStripeAccount = accounts.find(acc => acc.sellerId === user.id && acc.accountType === 'stripe');
-        
-        if (existingBankAccount) {
-          setBankData({
-            accountName: existingBankAccount.accountName,
-            accountNumber: existingBankAccount.accountNumber,
-            bankName: existingBankAccount.bankName,
-            routingNumber: '',
-          });
-        }
-        
-        if (existingPaypalAccount && existingPaypalAccount.paypalEmail) {
-          setPaypalData({
-            paypalEmail: existingPaypalAccount.paypalEmail,
-          });
-        }
-        
-        if (existingStripeAccount && existingStripeAccount.stripeAccountId) {
-          setStripeData({
-            stripeAccountId: existingStripeAccount.stripeAccountId,
-          });
+        if (existingAccount) {
+          if (existingAccount.account_type === 'bank') {
+            setBankData({
+              accountName: existingAccount.account_name,
+              accountNumber: existingAccount.account_number,
+              bankName: existingAccount.bank_name,
+              routingNumber: '',
+            });
+            setActiveTab('bank');
+          } else if (existingAccount.account_type === 'paypal' && existingAccount.paypal_email) {
+            setPaypalData({
+              paypalEmail: existingAccount.paypal_email,
+            });
+            setActiveTab('paypal');
+          } else if (existingAccount.account_type === 'stripe' && existingAccount.stripe_account_id) {
+            setStripeData({
+              stripeAccountId: existingAccount.stripe_account_id,
+            });
+            setActiveTab('stripe');
+          }
         }
       }
     };
@@ -106,12 +101,12 @@ const PaymentAccountPage = () => {
         }
         
         // Save bank account details
-        await saveSellerAccount({
-          sellerId: user.id,
-          accountName: bankData.accountName,
-          accountNumber: bankData.accountNumber,
-          bankName: bankData.bankName,
-          accountType: 'bank'
+        await createSellerAccount({
+          seller_id: user.id,
+          account_name: bankData.accountName,
+          account_number: bankData.accountNumber,
+          bank_name: bankData.bankName,
+          account_type: 'bank'
         });
       } else if (activeTab === "paypal") {
         // Validate PayPal email
@@ -125,13 +120,13 @@ const PaymentAccountPage = () => {
         }
         
         // Save PayPal account details
-        await saveSellerAccount({
-          sellerId: user.id,
-          accountName: user.name || 'PayPal Account',
-          accountNumber: 'paypal-account',
-          bankName: 'PayPal',
-          accountType: 'paypal',
-          paypalEmail: paypalData.paypalEmail
+        await createSellerAccount({
+          seller_id: user.id,
+          account_name: user.name || 'PayPal Account',
+          account_number: 'paypal-account',
+          bank_name: 'PayPal',
+          account_type: 'paypal',
+          paypal_email: paypalData.paypalEmail
         });
       } else if (activeTab === "stripe") {
         // Validate Stripe account ID
@@ -145,13 +140,13 @@ const PaymentAccountPage = () => {
         }
         
         // Save Stripe account details
-        await saveSellerAccount({
-          sellerId: user.id,
-          accountName: user.name || 'Stripe Account',
-          accountNumber: 'stripe-account',
-          bankName: 'Stripe',
-          accountType: 'stripe',
-          stripeAccountId: stripeData.stripeAccountId
+        await createSellerAccount({
+          seller_id: user.id,
+          account_name: user.name || 'Stripe Account',
+          account_number: 'stripe-account',
+          bank_name: 'Stripe',
+          account_type: 'stripe',
+          stripe_account_id: stripeData.stripeAccountId
         });
       }
       

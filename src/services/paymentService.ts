@@ -1,7 +1,7 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { CartItem } from '@/models/cart';
 import { Product } from '@/models/product';
+import { Json } from '@/integrations/supabase/types';
 
 // Update the interface to include the new fields added to the seller_accounts table
 export interface SellerAccount {
@@ -40,7 +40,15 @@ export const processPayment = async (
   
   // Create an order in the database
   try {
-    // Serialize cart items for storage
+    // Get current user
+    const { data: userData } = await supabase.auth.getUser();
+    const userId = userData.user?.id;
+    
+    if (!userId) {
+      throw new Error('User not authenticated');
+    }
+    
+    // Serialize cart items for storage as JSON
     const serializedItems = cart.items.map(item => ({
       productId: item.product.id,
       quantity: item.quantity,
@@ -49,14 +57,14 @@ export const processPayment = async (
       image: item.product.images[0]
     }));
     
-    // Store order in database
+    // Store order in database with proper JSON typing
     const { data, error } = await supabase
       .from('orders')
       .insert({
-        items: serializedItems,
+        items: serializedItems as unknown as Json,
         total: cart.totalPrice,
-        user_id: supabase.auth.getUser().then(response => response.data.user?.id),
-        shipping_details: shippingDetails,
+        user_id: userId,
+        shipping_details: shippingDetails as unknown as Json,
         status: 'Processing'
       })
       .select()
@@ -120,12 +128,21 @@ export const createSellerAccount = async (
       throw new Error('User not authenticated');
     }
     
+    // Ensure required fields are present
+    const completeAccountData = {
+      seller_id: user.user.id,
+      account_name: accountData.account_name || 'Default Account',
+      account_number: accountData.account_number || 'N/A',
+      bank_name: accountData.bank_name || 'N/A',
+      account_type: accountData.account_type || 'bank',
+      paypal_email: accountData.paypal_email,
+      stripe_account_id: accountData.stripe_account_id,
+      applepay_merchant_id: accountData.applepay_merchant_id
+    };
+    
     const { data, error } = await supabase
       .from('seller_accounts')
-      .insert({
-        ...accountData,
-        seller_id: user.user.id
-      })
+      .insert(completeAccountData)
       .select()
       .single();
     
@@ -163,6 +180,51 @@ export const getSellerAccount = async (): Promise<SellerAccount | null> => {
   } catch (error) {
     console.error('Error fetching seller account:', error);
     return null;
+  }
+};
+
+// Get all seller accounts for current user
+export const getSellerAccounts = async (): Promise<SellerAccount[]> => {
+  try {
+    const { data: user } = await supabase.auth.getUser();
+    
+    if (!user.user) {
+      throw new Error('User not authenticated');
+    }
+    
+    const { data, error } = await supabase
+      .from('seller_accounts')
+      .select('*')
+      .eq('seller_id', user.user.id);
+    
+    if (error) {
+      throw error;
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Error fetching seller accounts:', error);
+    return [];
+  }
+};
+
+// Save seller account - for backward compatibility
+export const saveSellerAccount = async (
+  accountData: any
+): Promise<SellerAccount | null> => {
+  // If id exists, update, otherwise create
+  if (accountData.id) {
+    return updateSellerAccount(accountData);
+  } else {
+    return createSellerAccount({
+      account_name: accountData.accountName || 'Default Account',
+      account_number: accountData.accountNumber || 'N/A',
+      bank_name: accountData.bankName || 'N/A',
+      account_type: accountData.accountType || 'bank',
+      paypal_email: accountData.paypalEmail,
+      stripe_account_id: accountData.stripeAccountId,
+      applepay_merchant_id: accountData.applepayMerchantId
+    });
   }
 };
 

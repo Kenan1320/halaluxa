@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { Product } from '@/models/product';
+import { Json } from '@/integrations/supabase/types';
 
 // Define DbShop type separate from Shop to prevent circular reference
 export interface DbShop {
@@ -125,6 +126,9 @@ export const getAllShops = async (): Promise<Shop[]> => {
   }
 };
 
+// Export with alias to maintain backward compatibility for existing imports
+export const getShops = getAllShops;
+
 // Get shops with limited data for landing page
 export const getShopsForLanding = async (): Promise<Shop[]> => {
   try {
@@ -217,12 +221,31 @@ export const getShopProducts = async (shopId: string): Promise<Product[]> => {
       throw error;
     }
     
-    return data;
+    // Map database fields to Product model fields
+    return data.map(item => ({
+      id: item.id,
+      name: item.name,
+      description: item.description,
+      price: item.price,
+      category: item.category,
+      images: item.images,
+      rating: item.rating,
+      stock: item.stock,
+      sellerId: item.seller_id,
+      sellerName: item.seller_name,
+      isHalalCertified: item.is_halal_certified,
+      details: item.details,
+      longDescription: item.long_description,
+      createdAt: item.created_at
+    }));
   } catch (error) {
     console.error('Error fetching shop products:', error);
     return [];
   }
 };
+
+// Export with alias to maintain backward compatibility for existing imports
+export const getProductsForShop = getShopProducts;
 
 // Update shop
 export const updateShop = async (id: string, shopData: Partial<Shop>): Promise<Shop | null> => {

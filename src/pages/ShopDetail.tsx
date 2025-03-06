@@ -8,7 +8,7 @@ import Footer from '@/components/layout/Footer';
 import { useCart } from '@/context/CartContext';
 import { useToast } from '@/hooks/use-toast';
 import { motion } from 'framer-motion';
-import { getShopById, getProductsForShop } from '@/services/shopService';
+import { getShopById, getShopProducts } from '@/services/shopService';
 import { Product } from '@/models/product';
 
 const ShopDetail = () => {
@@ -29,7 +29,7 @@ const ShopDetail = () => {
         setShop(shopData);
         
         if (shopData) {
-          const shopProducts = await getProductsForShop(shopId);
+          const shopProducts = await getShopProducts(shopId);
           setProducts(shopProducts);
         }
       }

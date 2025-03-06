@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useLocation as useRouterLocation, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -6,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { useLocation } from '@/context/LocationContext';
-import { getShops, Shop } from '@/services/shopService';
+import { getAllShops, Shop } from '@/services/shopService';
 import ShopCard from '@/components/shop/ShopCard';
 import { Store } from 'lucide-react';
 
@@ -30,14 +31,16 @@ const Browse = () => {
     const loadShops = async () => {
       setIsLoading(true);
       try {
-        const allShops = await getShops();
+        const allShops = await getAllShops();
         setShops(allShops);
         
-        // Extract unique categories
+        // Extract unique categories and ensure they are strings
         const uniqueCategories = [...new Set(allShops
           .filter(shop => shop.category)
           .map(shop => shop.category as string)
+          .filter(Boolean)
         )];
+        
         setCategories(uniqueCategories);
         
         // Initial filtering
