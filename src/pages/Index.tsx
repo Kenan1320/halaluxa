@@ -65,7 +65,7 @@ const Index = () => {
       
       {/* Main content with white background */}
       <div className="container mx-auto px-4 pt-6">
-        {/* Nearby Shops Section - now with animated flowing cards */}
+        {/* Nearby Shops Section with new horizontal product cards */}
         <section className="mt-4">
           <h2 className="text-xl font-semibold mb-4 text-gray-800">Nearby Shops</h2>
           <NearbyShops />
