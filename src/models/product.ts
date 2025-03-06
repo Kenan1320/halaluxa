@@ -5,6 +5,7 @@ export interface Product {
   description: string;
   longDescription?: string;
   price: number;
+  compareAtPrice?: number;
   stock: number;
   category: string;
   images: string[];

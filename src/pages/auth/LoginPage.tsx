@@ -46,11 +46,14 @@ const LoginPage = () => {
       const role = await login(formData.email, formData.password);
       
       if (role) {
+        console.log('Login successful with role:', role);
+        console.log('User selected type:', userType);
+        
         // Check if the role matches the selected type
         if ((role === 'shopper' && userType === 'business') || (role === 'business' && userType === 'shopper')) {
           toast({
             title: "Account Type Mismatch",
-            description: `You're trying to log in as a ${userType} but your account is registered as a ${role}. Please select the correct account type.`,
+            description: `The account for ${formData.email} is registered as a ${role}, not as a ${userType}. Please select the correct account type.`,
             variant: "destructive",
           });
           setLoading(false);

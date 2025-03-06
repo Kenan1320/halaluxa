@@ -23,6 +23,7 @@ const AuthMiddleware = () => {
         
         if (event === 'SIGNED_IN' && session) {
           await refreshSession();
+          
           toast({
             title: "Logged in",
             description: "You have been successfully logged in",
@@ -72,11 +73,19 @@ const AuthMiddleware = () => {
     verifyAuth();
   }, [location.pathname, isLoggedIn, refreshSession]);
   
-  // Ensure business users can access dashboard
+  // Direct business users to dashboard if they log in and try to access shopper pages
   useEffect(() => {
-    if (isLoggedIn && user?.role === 'business' && location.pathname.startsWith('/dashboard')) {
-      console.log('Business user accessing dashboard:', user.name);
-      // This is intentionally left empty as we're making sure business users can stay on dashboard pages
+    if (isLoggedIn && user?.role === 'business') {
+      // Check if the user is on the homepage or other consumer pages
+      const isOnConsumerPage = !location.pathname.startsWith('/dashboard') && 
+                               !['/login', '/signup'].includes(location.pathname);
+      
+      if (isOnConsumerPage) {
+        console.log('Business user detected on consumer page, redirecting to dashboard');
+        navigate('/dashboard');
+      } else if (location.pathname.startsWith('/dashboard')) {
+        console.log('Business user accessing dashboard:', user.name);
+      }
     }
   }, [location.pathname, isLoggedIn, user, navigate]);
   

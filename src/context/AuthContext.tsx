@@ -93,10 +93,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           return;
         }
         
-        // Ensure role is of type UserRole and preserve it exactly as stored
-        const userRole: UserRole = (userData.role === 'business' || userData.role === 'shopper') 
-          ? userData.role as UserRole 
-          : 'shopper';
+        // FIXED: Ensure role is preserved exactly as stored in the database
+        const userRole: UserRole = userData.role === 'business' ? 'business' : 'shopper';
+        
+        console.log('Refreshed user role from database:', userRole);
         
         const userObj: User = {
           id: userData.id,
@@ -198,16 +198,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
         
         if (userData) {
-          // Explicitly preserve the business role if that's what's in the database
-          const userRole: UserRole = (userData.role === 'business' || userData.role === 'shopper') 
-            ? userData.role as UserRole 
-            : 'shopper';
+          // FIXED: Always respect the exact role from the database
+          const userRole: UserRole = userData.role === 'business' ? 'business' : 'shopper';
+            
+          console.log('User logging in with role from database:', userRole);
             
           const userObj: User = {
             id: userData.id,
             name: userData.name || data.session.user.email?.split('@')[0] || 'User',
             email: data.session.user.email || '',
-            role: userRole, // Use the exact role from the database
+            role: userRole,
             phone: userData.phone,
             address: userData.address,
             city: userData.city,
