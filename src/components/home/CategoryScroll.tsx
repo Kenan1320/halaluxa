@@ -1,82 +1,103 @@
 
-import { useRef } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 
 const categories = [
-  { id: 1, name: 'Groceries', icon: '🛒' },
-  { id: 2, name: 'Modest Clothing', icon: '👚' },
-  { id: 3, name: 'Home', icon: '🏠' },
-  { id: 4, name: 'Electronics', icon: '📱' },
-  { id: 5, name: 'Books', icon: '📚' },
-  { id: 6, name: 'Health', icon: '💊' },
-  { id: 7, name: 'Food', icon: '🍲' },
-  { id: 8, name: 'Toys', icon: '🧸' },
-  { id: 9, name: 'Gifts', icon: '🎁' },
-  { id: 10, name: 'Art', icon: '🎨' },
-  { id: 11, name: 'Baby', icon: '👶' },
-  { id: 12, name: 'Halal Meat', icon: '🥩' }
+  { id: 1, name: 'Groceries', color: '#4F46E5' },
+  { id: 2, name: 'Modest Clothing', color: '#EC4899' },
+  { id: 3, name: 'Home', color: '#10B981' },
+  { id: 4, name: 'Electronics', color: '#F59E0B' },
+  { id: 5, name: 'Books', color: '#8B5CF6' },
+  { id: 6, name: 'Health', color: '#06B6D4' },
+  { id: 7, name: 'Food', color: '#EF4444' },
+  { id: 8, name: 'Toys', color: '#3B82F6' },
+  { id: 9, name: 'Gifts', color: '#F97316' },
+  { id: 10, name: 'Art', color: '#14B8A6' },
+  { id: 11, name: 'Baby', color: '#A855F7' },
+  { id: 12, name: 'Halal Meat', color: '#D946EF' }
 ];
 
 const CategoryScroll = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   
-  const scroll = (direction: 'left' | 'right') => {
-    if (scrollRef.current) {
-      const { current } = scrollRef;
-      const scrollAmount = 300;
-      
-      if (direction === 'left') {
-        current.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
-      } else {
-        current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+  // Auto-scroll functionality
+  useEffect(() => {
+    const scrollContainer = scrollRef.current;
+    if (!scrollContainer) return;
+    
+    let animationId: number;
+    let scrollPosition = 0;
+    let scrollDirection = 1; // 1 for right, -1 for left
+    let isPaused = false;
+    
+    const autoScroll = () => {
+      if (!scrollContainer || isPaused) {
+        animationId = requestAnimationFrame(autoScroll);
+        return;
       }
-    }
-  };
+      
+      scrollPosition += 0.5 * scrollDirection;
+      scrollContainer.scrollLeft = scrollPosition;
+      
+      // Change direction when reaching ends
+      if (scrollPosition >= scrollContainer.scrollWidth - scrollContainer.clientWidth) {
+        scrollDirection = -1;
+      } else if (scrollPosition <= 0) {
+        scrollDirection = 1;
+      }
+      
+      animationId = requestAnimationFrame(autoScroll);
+    };
+    
+    // Start auto-scrolling
+    animationId = requestAnimationFrame(autoScroll);
+    
+    // Pause on hover/touch
+    const handlePause = () => { isPaused = true; };
+    const handleResume = () => { isPaused = false; };
+    
+    scrollContainer.addEventListener('mouseenter', handlePause);
+    scrollContainer.addEventListener('mouseleave', handleResume);
+    scrollContainer.addEventListener('touchstart', handlePause);
+    scrollContainer.addEventListener('touchend', handleResume);
+    
+    return () => {
+      cancelAnimationFrame(animationId);
+      scrollContainer.removeEventListener('mouseenter', handlePause);
+      scrollContainer.removeEventListener('mouseleave', handleResume);
+      scrollContainer.removeEventListener('touchstart', handlePause);
+      scrollContainer.removeEventListener('touchend', handleResume);
+    };
+  }, []);
   
   const handleCategoryClick = (category: string) => {
     navigate(`/browse?category=${encodeURIComponent(category)}`);
   };
   
   return (
-    <div className="relative w-full my-3">
-      <div className="absolute left-0 top-1/2 -translate-y-1/2 z-10">
-        <button
-          onClick={() => scroll('left')}
-          className="p-1 bg-white/60 rounded-full shadow-sm backdrop-blur-sm"
-        >
-          <ChevronLeft className="h-5 w-5 text-gray-700" />
-        </button>
-      </div>
-      
+    <div className="relative w-full my-2">
       <div
         ref={scrollRef}
-        className="flex overflow-x-auto scrollbar-hide py-2 px-6 space-x-3"
+        className="flex overflow-x-auto scrollbar-hide py-2 space-x-2"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
         {categories.map((category) => (
           <motion.button
             key={category.id}
-            className="flex items-center space-x-2 whitespace-nowrap px-4 py-2 bg-white rounded-full flex-shrink-0 shadow-sm border border-[#2A866A]/10"
-            whileHover={{ scale: 1.05, backgroundColor: 'rgba(42, 134, 106, 0.1)' }}
+            className="flex-shrink-0 px-4 py-1.5 rounded-full shadow-sm border border-white/10"
+            style={{ 
+              background: `linear-gradient(135deg, ${category.color}, ${category.color}CC)`,
+              minWidth: 'max-content' 
+            }}
+            whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => handleCategoryClick(category.name)}
           >
-            <span className="text-lg">{category.icon}</span>
-            <span className="text-[#2A866A] font-medium">{category.name}</span>
+            <span className="text-white text-sm font-medium">{category.name}</span>
           </motion.button>
         ))}
-      </div>
-      
-      <div className="absolute right-0 top-1/2 -translate-y-1/2 z-10">
-        <button
-          onClick={() => scroll('right')}
-          className="p-1 bg-white/60 rounded-full shadow-sm backdrop-blur-sm"
-        >
-          <ChevronRight className="h-5 w-5 text-gray-700" />
-        </button>
       </div>
     </div>
   );

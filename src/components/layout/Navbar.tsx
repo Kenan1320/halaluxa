@@ -1,11 +1,12 @@
 
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Search, ShoppingCart, User, Home, Store } from 'lucide-react';
+import { Menu, X, Search, ShoppingCart, User, Home, Store, MapPin } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
+import { useLocation as useLocationContext } from '@/context/LocationContext';
 import { motion } from 'framer-motion';
 
 const Navbar = () => {
@@ -16,6 +17,7 @@ const Navbar = () => {
   const location = useLocation();
   const { isLoggedIn, user } = useAuth();
   const { cart } = useCart();
+  const { isLocationEnabled, requestLocation, location: userLocation } = useLocationContext();
   
   // Close mobile menu when route changes
   useEffect(() => {
@@ -60,7 +62,7 @@ const Navbar = () => {
     }
   ];
 
-  // Filter out cart for business users if needed (fixed the hideForBusiness error)
+  // Filter out cart for business users if needed
   const filteredNavItems = user?.role === 'business' 
     ? navItems.filter(item => item.label !== 'Cart') 
     : navItems;
@@ -76,9 +78,9 @@ const Navbar = () => {
   };
 
   const letterChildVariants = {
-    initial: { color: "#2A866A" },
+    initial: { color: "#3a9e7e" },
     animate: { 
-      color: ["#2A866A", "#3A9E7E", "#2F9173", "#1F7A5C", "#2A866A"],
+      color: ["#3a9e7e", "#3A9E7E", "#2F9173", "#1F7A5C", "#3a9e7e"],
       transition: { 
         duration: 8, 
         repeat: Infinity,
@@ -100,14 +102,14 @@ const Navbar = () => {
     <header 
       className={`fixed top-0 w-full z-50 transition-all duration-300 ${
         isScrolled ? 'py-2' : 'py-3'
-      } shadow-md bg-[#2A866A]`}
+      } shadow-md bg-[#3a9e7e]`}
     >
       <div className="container mx-auto px-4 flex justify-between items-center">
         {/* Menu and Logo */}
         <div className="flex items-center gap-3">
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="p-2 rounded-lg text-white hover:bg-[#2A866A]/80 transition"
+            className="p-2 rounded-lg text-white hover:bg-[#3a9e7e]/80 transition"
             aria-label="Toggle menu"
           >
             {mobileMenuOpen ? (
@@ -167,17 +169,38 @@ const Navbar = () => {
             <input
               type="text"
               placeholder="Search your shop and products"
-              className="w-full py-2 px-4 pl-10 bg-white border border-[#2A866A]/20 rounded-full focus:outline-none focus:ring-2 focus:ring-[#2A866A]/30"
+              className="w-full py-2 px-4 pl-10 bg-white border border-[#3a9e7e]/20 rounded-full focus:outline-none focus:ring-2 focus:ring-[#3a9e7e]/30"
             />
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[#2A866A]" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[#3a9e7e]" />
           </div>
         </div>
         
-        {/* Cart and User - always visible */}
+        {/* Location, Cart and User - always visible */}
         <div className="flex items-center gap-3">
+          {/* Location Button */}
+          <button 
+            onClick={requestLocation}
+            className="relative p-2 rounded-full hover:bg-[#3a9e7e]/80 text-white"
+            aria-label="Set Location"
+          >
+            <MapPin className="h-6 w-6" />
+            {isLocationEnabled && userLocation?.city && (
+              <motion.span 
+                className="absolute -bottom-1 -right-1 bg-white text-[#3a9e7e] text-xs rounded-full h-2 w-2"
+                animate={{ scale: [1, 1.5, 1] }}
+                transition={{ 
+                  duration: 2,
+                  repeat: Infinity,
+                  repeatType: "reverse"
+                }}
+              />
+            )}
+          </button>
+          
+          {/* Cart Button */}
           <Link 
             to={isLoggedIn && user?.role !== 'business' ? '/cart' : '/login'} 
-            className="relative p-2 rounded-full hover:bg-[#2A866A]/80"
+            className="relative p-2 rounded-full hover:bg-[#3a9e7e]/80"
           >
             <ShoppingCart className="h-6 w-6 text-white" />
             {cart.items.length > 0 && (
@@ -197,9 +220,9 @@ const Navbar = () => {
               <input
                 type="text"
                 placeholder="Search your shop and products"
-                className="w-full py-2 px-4 pl-10 bg-[#2A866A]/10 border border-[#2A866A]/20 rounded-full focus:outline-none focus:ring-2 focus:ring-[#2A866A]/30"
+                className="w-full py-2 px-4 pl-10 bg-[#3a9e7e]/10 border border-[#3a9e7e]/20 rounded-full focus:outline-none focus:ring-2 focus:ring-[#3a9e7e]/30"
               />
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[#2A866A]" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[#3a9e7e]" />
             </div>
           </div>
           
@@ -212,11 +235,11 @@ const Navbar = () => {
                   key={item.label}
                   to={item.path}
                   className={`flex items-center gap-3 p-3 rounded-lg transition ${
-                    active ? 'bg-[#2A866A]/10 text-[#2A866A]' : 'text-gray-700 hover:bg-gray-100'
+                    active ? 'bg-[#3a9e7e]/10 text-[#3a9e7e]' : 'text-gray-700 hover:bg-gray-100'
                   }`}
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  <span className={active ? 'text-[#2A866A]' : 'text-gray-500'}>
+                  <span className={active ? 'text-[#3a9e7e]' : 'text-gray-500'}>
                     {item.icon}
                   </span>
                   <span className={active ? 'font-medium' : ''}>

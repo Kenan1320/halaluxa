@@ -4,7 +4,6 @@ import { useAuth } from '@/context/AuthContext';
 import { useLocation } from '@/context/LocationContext';
 import Footer from '@/components/layout/Footer';
 import SearchBar from '@/components/home/SearchBar';
-import LocationBar from '@/components/home/LocationBar';
 import CategoryScroll from '@/components/home/CategoryScroll';
 import ProductGrid from '@/components/home/ProductGrid';
 import NearbyShops from '@/components/home/NearbyShops';
@@ -37,16 +36,13 @@ const Index = () => {
 
   return (
     <div className="min-h-screen pt-16 pb-20">
-      {/* Top container with mint background */}
-      <div className="bg-[#2A866A] pt-4 pb-6">
+      {/* Top container with lighter mint background */}
+      <div className="bg-[#3a9e7e] pt-4 pb-6">
         <div className="container mx-auto px-4">
           {/* Search bar */}
           <div className="mb-4">
             <SearchBar />
           </div>
-          
-          {/* Location bar */}
-          <LocationBar />
           
           {/* Category scroll inside mint background */}
           <div className="mt-4">
@@ -69,14 +65,14 @@ const Index = () => {
           <p className="text-gray-500">Discover products you'll love</p>
         </motion.div>
         
+        {/* Nearby Shops - now displayed before products */}
+        <NearbyShops />
+        
         {/* Featured Section */}
         <section className="mt-8">
           <h2 className="text-xl font-semibold mb-4">Featured Products</h2>
           <ProductGrid />
         </section>
-        
-        {/* Nearby Shops */}
-        <NearbyShops />
       </div>
       
       <Footer />

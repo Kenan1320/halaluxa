@@ -15,7 +15,7 @@ const NearbyShops = () => {
       if (isLocationEnabled) {
         try {
           const nearbyShops = await getNearbyShops();
-          setShops(nearbyShops.slice(0, 3)); // Show top 3 shops
+          setShops(nearbyShops.slice(0, 4)); // Show top 4 shops
         } catch (error) {
           console.error('Error loading shops:', error);
         } finally {
@@ -29,31 +29,29 @@ const NearbyShops = () => {
     loadShops();
   }, [isLocationEnabled, getNearbyShops]);
   
-  const getShopPrimaryColor = (shop: any) => {
-    // This is a placeholder for a color extraction function
-    // In a real app, you'd extract the dominant color from the shop's logo
-    const shopColors: Record<string, string> = {
-      1: 'bg-blue-500',
-      2: 'bg-green-500',
-      3: 'bg-orange-500',
-      4: 'bg-purple-500',
-      5: 'bg-pink-500',
-      6: 'bg-yellow-500',
-    };
+  const getShopGradient = (index: number) => {
+    const gradients = [
+      'linear-gradient(135deg, #6366F1, #8B5CF6)',
+      'linear-gradient(135deg, #10B981, #059669)',
+      'linear-gradient(135deg, #F59E0B, #D97706)',
+      'linear-gradient(135deg, #EF4444, #DC2626)',
+      'linear-gradient(135deg, #EC4899, #DB2777)',
+      'linear-gradient(135deg, #3B82F6, #2563EB)',
+    ];
     
-    return shopColors[shop.id] || 'bg-gray-500';
+    return gradients[index % gradients.length];
   };
   
   if (isLoading) {
     return (
       <div className="mt-8">
         <h2 className="text-xl font-semibold mb-4">Nearby Shops</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="bg-white rounded-lg shadow-sm h-40 animate-pulse">
-              <div className="h-full bg-gray-200 rounded-lg"></div>
-            </div>
-          ))}
+        <div className="overflow-hidden">
+          <div className="flex space-x-4 py-2">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="w-64 h-48 flex-shrink-0 rounded-xl bg-gray-200 animate-pulse"></div>
+            ))}
+          </div>
         </div>
       </div>
     );
@@ -99,40 +97,74 @@ const NearbyShops = () => {
   
   return (
     <div className="mt-8">
-      <h2 className="text-xl font-semibold mb-4">
-        Shops Near {location?.city || 'You'}
-      </h2>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-        {shops.map((shop, index) => {
-          const colorClass = getShopPrimaryColor(shop);
-          
-          return (
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-xl font-semibold">
+          Shops Near {location?.city || 'You'}
+        </h2>
+        <Link 
+          to="/shops" 
+          className="text-[#3a9e7e] text-sm font-medium hover:underline"
+        >
+          View All
+        </Link>
+      </div>
+      
+      <div className="relative overflow-hidden">
+        <motion.div 
+          className="flex space-x-4 py-2"
+          animate={{ x: [-20, 0] }}
+          transition={{ 
+            repeat: Infinity, 
+            repeatType: "mirror", 
+            duration: 25,
+            ease: "linear"
+          }}
+        >
+          {shops.map((shop, index) => (
             <motion.div
               key={shop.id}
-              className={`rounded-xl shadow-md overflow-hidden ${colorClass} text-white`}
+              className="relative w-64 h-48 flex-shrink-0 rounded-xl overflow-hidden shadow-lg"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
-              whileHover={{ y: -5 }}
+              whileHover={{ y: -5, scale: 1.02 }}
             >
-              <Link to={`/shop/${shop.id}`} className="block h-full">
-                <div className="p-5 flex flex-col h-full">
+              {/* Background gradient with animation */}
+              <motion.div 
+                className="absolute inset-0 z-0"
+                style={{ background: getShopGradient(index) }}
+                animate={{ 
+                  background: [
+                    getShopGradient(index),
+                    getShopGradient((index + 2) % 6),
+                    getShopGradient(index)
+                  ] 
+                }}
+                transition={{ 
+                  duration: 10, 
+                  repeat: Infinity,
+                  repeatType: "mirror"
+                }}
+              />
+              
+              <Link to={`/shop/${shop.id}`} className="block relative z-10 h-full">
+                <div className="p-5 flex flex-col h-full text-white">
                   <div className="mb-4">
                     {shop.logo ? (
                       <img 
                         src={shop.logo} 
                         alt={shop.name} 
-                        className="w-16 h-16 object-cover rounded-full bg-white p-1"
+                        className="w-14 h-14 object-cover rounded-full bg-white p-1"
                       />
                     ) : (
-                      <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center">
-                        <Store className="h-8 w-8 text-white" />
+                      <div className="w-14 h-14 rounded-full bg-white/30 flex items-center justify-center">
+                        <Store className="h-7 w-7 text-white" />
                       </div>
                     )}
                   </div>
                   
-                  <h3 className="text-xl font-bold mb-1">{shop.name}</h3>
-                  <p className="text-white/80 text-sm line-clamp-2 mb-3">{shop.description}</p>
+                  <h3 className="text-xl font-bold mb-1 truncate">{shop.name}</h3>
+                  <p className="text-white/90 text-sm line-clamp-2 mb-2">{shop.description}</p>
                   
                   <div className="mt-auto flex items-center justify-between">
                     <div className="text-sm text-white/90">
@@ -150,8 +182,69 @@ const NearbyShops = () => {
                 </div>
               </Link>
             </motion.div>
-          );
-        })}
+          ))}
+          
+          {/* Repeat the first set of shops to create a seamless loop effect */}
+          {shops.map((shop, index) => (
+            <motion.div
+              key={`repeat-${shop.id}`}
+              className="relative w-64 h-48 flex-shrink-0 rounded-xl overflow-hidden shadow-lg"
+              whileHover={{ y: -5, scale: 1.02 }}
+            >
+              <motion.div 
+                className="absolute inset-0 z-0"
+                style={{ background: getShopGradient(index + shops.length) }}
+                animate={{ 
+                  background: [
+                    getShopGradient(index + shops.length),
+                    getShopGradient((index + 2) % 6 + shops.length),
+                    getShopGradient(index + shops.length)
+                  ] 
+                }}
+                transition={{ 
+                  duration: 10, 
+                  repeat: Infinity,
+                  repeatType: "mirror"
+                }}
+              />
+              
+              <Link to={`/shop/${shop.id}`} className="block relative z-10 h-full">
+                <div className="p-5 flex flex-col h-full text-white">
+                  <div className="mb-4">
+                    {shop.logo ? (
+                      <img 
+                        src={shop.logo} 
+                        alt={shop.name} 
+                        className="w-14 h-14 object-cover rounded-full bg-white p-1"
+                      />
+                    ) : (
+                      <div className="w-14 h-14 rounded-full bg-white/30 flex items-center justify-center">
+                        <Store className="h-7 w-7 text-white" />
+                      </div>
+                    )}
+                  </div>
+                  
+                  <h3 className="text-xl font-bold mb-1 truncate">{shop.name}</h3>
+                  <p className="text-white/90 text-sm line-clamp-2 mb-2">{shop.description}</p>
+                  
+                  <div className="mt-auto flex items-center justify-between">
+                    <div className="text-sm text-white/90">
+                      {shop.distance && (
+                        <span>{shop.distance.toFixed(1)} miles away</span>
+                      )}
+                    </div>
+                    
+                    {shop.isVerified && (
+                      <span className="bg-white/30 text-white text-xs px-2 py-0.5 rounded-full">
+                        Verified
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </Link>
+            </motion.div>
+          ))}
+        </motion.div>
       </div>
     </div>
   );
