@@ -33,7 +33,7 @@ function mapDbShopToModel(dbShop: any): Shop {
     rating: dbShop.rating || 5.0,
     productCount: dbShop.product_count || 0,
     isVerified: dbShop.is_verified || false,
-    category: dbShop.category || 'General', // Map category
+    category: dbShop.category || 'General',
     latitude: dbShop.latitude,
     longitude: dbShop.longitude
   };

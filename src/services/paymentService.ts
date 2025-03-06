@@ -45,24 +45,15 @@ export const processPayment = async (
       if (sessionData.session?.user?.id) {
         const userId = sessionData.session.user.id;
         
-        // Try to save the order to Supabase
+        // Instead of trying to directly access tables that might not exist,
+        // we'll store orders in localStorage only
         try {
-          await supabase.from('orders').insert({
-            id: orderId,
-            user_id: userId,
-            order_date: orderDate,
-            items: cart.items,
-            total: cart.totalPrice,
-            shipping_details: shippingDetails,
-            status: 'Processing'
-          });
-        } catch (dbError) {
-          console.error('Failed to save order to database:', dbError);
-          
-          // Fallback to localStorage
+          // Note: In a production environment, you should create these tables in Supabase
+          // For now, we're using localStorage as fallback for all users
           const orders = JSON.parse(localStorage.getItem('orders') || '[]');
           orders.push({
             id: orderId,
+            user_id: userId,
             date: orderDate,
             items: cart.items,
             total: cart.totalPrice,
@@ -70,6 +61,8 @@ export const processPayment = async (
             status: 'Processing'
           });
           localStorage.setItem('orders', JSON.stringify(orders));
+        } catch (dbError) {
+          console.error('Failed to save order:', dbError);
         }
       } else {
         // Fallback to localStorage if no user is signed in
@@ -102,7 +95,7 @@ export const processPayment = async (
 // Get seller payment accounts
 export const getSellerAccounts = (): SellerAccount[] => {
   try {
-    // Try to fetch from Supabase first
+    // Try to fetch from localStorage
     const accounts = localStorage.getItem('sellerAccounts');
     if (accounts) {
       return JSON.parse(accounts);
@@ -128,17 +121,9 @@ export const saveSellerAccount = (account: SellerAccount): void => {
     
     localStorage.setItem('sellerAccounts', JSON.stringify(accounts));
     
-    // Try to save to Supabase if possible
-    supabase.from('seller_accounts').upsert({
-      seller_id: account.sellerId,
-      account_name: account.accountName,
-      account_number: account.accountNumber,
-      bank_name: account.bankName
-    }).then(({ error }) => {
-      if (error) {
-        console.error('Failed to save seller account to database:', error);
-      }
-    });
+    // Note: In a production environment, you should create these tables in Supabase
+    // For now, we're using localStorage for all users
+    console.log('Saved seller account to localStorage');
   } catch (error) {
     console.error('Error saving seller account:', error);
   }
