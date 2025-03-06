@@ -1,147 +1,227 @@
 
-import { Product, mockProducts } from '@/models/product';
-import { mockShops } from '@/services/shopService';
+import { Product } from '@/models/product';
+import { updateShopProductCount, notifyShopUpdate } from '@/services/shopService';
 
-// Cache mechanism for products
-let cachedProducts = null;
-let lastFetchTime = 0;
-const CACHE_DURATION = 1000; // 1 second cache duration
+// Custom event for product updates
+const PRODUCT_UPDATE_EVENT = 'haluna-product-updated';
 
-// Get products from localStorage or use the mock products
-export const getProducts = (): Product[] => {
-  const currentTime = Date.now();
-  
-  // Use cache if it's recent enough
-  if (cachedProducts && currentTime - lastFetchTime < CACHE_DURATION) {
-    return cachedProducts;
-  }
-  
+// Listen for product updates
+window.addEventListener(PRODUCT_UPDATE_EVENT, () => {
+  // Invalidate any product caches we might have
+  console.log('Product update detected, refreshing data...');
+});
+
+// Notify product updates
+export const notifyProductUpdate = () => {
+  window.dispatchEvent(new Event(PRODUCT_UPDATE_EVENT));
+};
+
+// Get all products
+export const getProducts = async (): Promise<Product[]> => {
   try {
-    const storedProducts = localStorage.getItem('products');
-    let customProducts = [];
+    // Get products from localStorage
+    const localProductsJson = localStorage.getItem('products');
+    const localProducts = localProductsJson ? JSON.parse(localProductsJson) : [];
     
-    if (storedProducts) {
-      customProducts = JSON.parse(storedProducts);
-    }
-    
-    // Ensure all products have seller information
-    const allProducts = [...mockProducts, ...customProducts].map(product => {
-      const shopData = mockShops.find(shop => shop.id === product.sellerId);
-      
-      return {
-        ...product,
-        sellerName: product.sellerName || (shopData ? shopData.name : "Haluna Seller")
-      };
-    });
-    
-    // Update cache
-    cachedProducts = allProducts;
-    lastFetchTime = currentTime;
+    // Get mock products from model
+    const allProducts = [...localProducts];
     
     return allProducts;
   } catch (error) {
-    console.error('Failed to load products:', error);
-    return mockProducts;
-  }
-};
-
-// Invalidate the product cache to force fresh data
-export const invalidateProductCache = () => {
-  cachedProducts = null;
-  lastFetchTime = 0;
-};
-
-// Save a new product
-export const saveProduct = (product: Omit<Product, 'id' | 'createdAt'>): Product => {
-  try {
-    const products = getProducts().filter(p => !mockProducts.some(mp => mp.id === p.id));
-    
-    const newProduct: Product = {
-      ...product,
-      id: `product-${Date.now()}`,
-      createdAt: new Date().toISOString(),
-    };
-    
-    const updatedProducts = [...products, newProduct];
-    localStorage.setItem('products', JSON.stringify(updatedProducts));
-    
-    // Invalidate cache to ensure fresh data
-    invalidateProductCache();
-    
-    return newProduct;
-  } catch (error) {
-    console.error('Failed to save product:', error);
-    throw new Error('Failed to save product');
-  }
-};
-
-// Update an existing product
-export const updateProduct = (product: Product): Product => {
-  try {
-    const products = getProducts().filter(p => !mockProducts.some(mp => mp.id === p.id));
-    const updatedProducts = products.map(p => 
-      p.id === product.id ? product : p
-    );
-    
-    localStorage.setItem('products', JSON.stringify(updatedProducts));
-    
-    // Invalidate cache to ensure fresh data
-    invalidateProductCache();
-    
-    return product;
-  } catch (error) {
-    console.error('Failed to update product:', error);
-    throw new Error('Failed to update product');
-  }
-};
-
-// Delete a product
-export const deleteProduct = (productId: string): void => {
-  try {
-    const products = getProducts().filter(p => !mockProducts.some(mp => mp.id === p.id));
-    const updatedProducts = products.filter(p => p.id !== productId);
-    localStorage.setItem('products', JSON.stringify(updatedProducts));
-    
-    // Invalidate cache to ensure fresh data
-    invalidateProductCache();
-  } catch (error) {
-    console.error('Failed to delete product:', error);
-    throw new Error('Failed to delete product');
+    console.error('Error fetching products:', error);
+    return [];
   }
 };
 
 // Get a product by ID
-export const getProductById = (productId: string): Product | undefined => {
+export const getProductById = async (productId: string): Promise<Product | null> => {
   try {
-    // First try to find it in mock products
-    const mockProduct = mockProducts.find(p => p.id === productId);
-    if (mockProduct) {
-      const shopData = mockShops.find(shop => shop.id === mockProduct.sellerId);
-      return {
-        ...mockProduct,
-        sellerName: mockProduct.sellerName || (shopData ? shopData.name : "Haluna Seller")
-      };
+    // First check local storage
+    const localProductsJson = localStorage.getItem('products');
+    const localProducts = localProductsJson ? JSON.parse(localProductsJson) : [];
+    const localProduct = localProducts.find((p: Product) => p.id === productId);
+    
+    if (localProduct) {
+      return localProduct;
     }
     
-    // Then look in localStorage
-    const storedProducts = localStorage.getItem('products');
-    if (storedProducts) {
-      const products = JSON.parse(storedProducts);
-      const product = products.find(p => p.id === productId);
-      
-      if (product) {
-        // Add seller name if available
-        const shopData = mockShops.find(shop => shop.id === product.sellerId);
-        return {
-          ...product,
-          sellerName: product.sellerName || (shopData ? shopData.name : "Haluna Seller")
-        };
-      }
-    }
-    
-    return undefined;
+    return null;
   } catch (error) {
-    console.error('Failed to get product by ID:', error);
-    return undefined;
+    console.error('Error fetching product:', error);
+    return null;
+  }
+};
+
+// Add a new product
+export const addProduct = async (product: Partial<Product>): Promise<Product> => {
+  try {
+    // Generate a unique ID
+    const productId = Math.random().toString(36).substr(2, 9);
+    
+    // Get existing products
+    const localProductsJson = localStorage.getItem('products');
+    const localProducts = localProductsJson ? JSON.parse(localProductsJson) : [];
+    
+    // Create new product object
+    const newProduct: Product = {
+      id: productId,
+      name: product.name || 'Untitled Product',
+      description: product.description || '',
+      price: product.price || 0,
+      salePrice: product.salePrice,
+      imageUrl: product.imageUrl || '',
+      category: product.category || 'Uncategorized',
+      tags: product.tags || [],
+      rating: product.rating || 0,
+      reviewCount: product.reviewCount || 0,
+      isAvailable: product.isAvailable !== undefined ? product.isAvailable : true,
+      sellerId: product.sellerId || 'unknown',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      quantity: product.quantity || 1,
+    };
+    
+    // Add to local products
+    localProducts.push(newProduct);
+    
+    // Save back to localStorage
+    localStorage.setItem('products', JSON.stringify(localProducts));
+    
+    // Update shop product count
+    if (newProduct.sellerId) {
+      await updateShopProductCount(newProduct.sellerId);
+      notifyShopUpdate();
+    }
+    
+    // Notify product update
+    notifyProductUpdate();
+    
+    return newProduct;
+  } catch (error) {
+    console.error('Error adding product:', error);
+    throw new Error('Failed to add product');
+  }
+};
+
+// Update a product
+export const updateProduct = async (productId: string, updates: Partial<Product>): Promise<Product | null> => {
+  try {
+    // Get existing products
+    const localProductsJson = localStorage.getItem('products');
+    const localProducts = localProductsJson ? JSON.parse(localProductsJson) : [];
+    
+    // Find product index
+    const productIndex = localProducts.findIndex((p: Product) => p.id === productId);
+    
+    if (productIndex === -1) {
+      return null;
+    }
+    
+    // Update product
+    const updatedProduct = {
+      ...localProducts[productIndex],
+      ...updates,
+      updatedAt: new Date().toISOString()
+    };
+    
+    // Save updated product
+    localProducts[productIndex] = updatedProduct;
+    localStorage.setItem('products', JSON.stringify(localProducts));
+    
+    // Update shop product count if sellerId changed
+    if (updates.sellerId && updates.sellerId !== localProducts[productIndex].sellerId) {
+      // Update old shop
+      await updateShopProductCount(localProducts[productIndex].sellerId);
+      // Update new shop
+      await updateShopProductCount(updates.sellerId);
+      notifyShopUpdate();
+    }
+    
+    // Notify product update
+    notifyProductUpdate();
+    
+    return updatedProduct;
+  } catch (error) {
+    console.error('Error updating product:', error);
+    return null;
+  }
+};
+
+// Delete a product
+export const deleteProduct = async (productId: string): Promise<boolean> => {
+  try {
+    // Get existing products
+    const localProductsJson = localStorage.getItem('products');
+    const localProducts = localProductsJson ? JSON.parse(localProductsJson) : [];
+    
+    // Find product to get sellerId
+    const product = localProducts.find((p: Product) => p.id === productId);
+    
+    if (!product) {
+      return false;
+    }
+    
+    // Filter out the product
+    const updatedProducts = localProducts.filter((p: Product) => p.id !== productId);
+    
+    // Save back to localStorage
+    localStorage.setItem('products', JSON.stringify(updatedProducts));
+    
+    // Update shop product count
+    if (product.sellerId) {
+      await updateShopProductCount(product.sellerId);
+      notifyShopUpdate();
+    }
+    
+    // Notify product update
+    notifyProductUpdate();
+    
+    return true;
+  } catch (error) {
+    console.error('Error deleting product:', error);
+    return false;
+  }
+};
+
+// Get products by seller ID
+export const getProductsBySellerId = async (sellerId: string): Promise<Product[]> => {
+  try {
+    const allProducts = await getProducts();
+    return allProducts.filter(product => product.sellerId === sellerId);
+  } catch (error) {
+    console.error('Error fetching seller products:', error);
+    return [];
+  }
+};
+
+// Get products by category
+export const getProductsByCategory = async (category: string): Promise<Product[]> => {
+  try {
+    const allProducts = await getProducts();
+    return allProducts.filter(product => product.category === category);
+  } catch (error) {
+    console.error('Error fetching products by category:', error);
+    return [];
+  }
+};
+
+// Search products
+export const searchProducts = async (query: string): Promise<Product[]> => {
+  try {
+    const allProducts = await getProducts();
+    
+    if (!query) return allProducts;
+    
+    const lowerQuery = query.toLowerCase();
+    
+    return allProducts.filter(product => 
+      product.name.toLowerCase().includes(lowerQuery) ||
+      product.description.toLowerCase().includes(lowerQuery) ||
+      product.category.toLowerCase().includes(lowerQuery) ||
+      product.tags.some(tag => tag.toLowerCase().includes(lowerQuery))
+    );
+  } catch (error) {
+    console.error('Error searching products:', error);
+    return [];
   }
 };

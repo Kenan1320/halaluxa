@@ -10,27 +10,25 @@ import ShopCard from '../shop/ShopCard';
 
 const Hero = () => {
   const { isLoggedIn, user } = useAuth();
-  const { isLocationEnabled, location, requestLocation, getNearbyShops } = useLocation();
+  const { isLocationEnabled, location, getNearbyShops } = useLocation();
   const [searchTerm, setSearchTerm] = useState('');
   const [featuredShop, setFeaturedShop] = useState<any>(null);
   const navigate = useNavigate();
   
   useEffect(() => {
     const loadFeaturedShop = async () => {
-      if (isLocationEnabled) {
-        try {
-          const shops = await getNearbyShops();
-          if (shops && shops.length > 0) {
-            setFeaturedShop(shops[0]);
-          }
-        } catch (error) {
-          console.error('Error loading featured shop:', error);
+      try {
+        const shops = await getNearbyShops();
+        if (shops && shops.length > 0) {
+          setFeaturedShop(shops[0]);
         }
+      } catch (error) {
+        console.error('Error loading featured shop:', error);
       }
     };
     
     loadFeaturedShop();
-  }, [isLocationEnabled, getNearbyShops]);
+  }, [getNearbyShops]);
   
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,33 +75,22 @@ const Hero = () => {
               </form>
             </motion.div>
             
-            {/* Location Button */}
-            <motion.div 
-              className="mb-6"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-            >
-              {isLocationEnabled ? (
+            {/* Location Display */}
+            {isLocationEnabled && location && (
+              <motion.div 
+                className="mb-6"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.3 }}
+              >
                 <div className="inline-flex items-center justify-center gap-2 text-haluna-primary bg-haluna-primary-light/50 py-2 px-4 rounded-full">
                   <MapPin className="h-4 w-4" />
                   <span>
                     Showing shops near {location?.city || 'your location'}
                   </span>
                 </div>
-              ) : (
-                <Button 
-                  onClick={requestLocation}
-                  className="group relative overflow-hidden bg-gradient-to-r from-haluna-primary to-purple-600 hover:from-purple-600 hover:to-haluna-primary transition-all duration-500 shadow-lg hover:shadow-xl"
-                >
-                  <div className="absolute inset-0 bg-white/20 rounded-full transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-500"></div>
-                  <div className="flex items-center relative z-10">
-                    <MapPin className="mr-2 h-5 w-5" />
-                    <span>Enable Location</span>
-                  </div>
-                </Button>
-              )}
-            </motion.div>
+              </motion.div>
+            )}
             
             {/* CTA Buttons */}
             <motion.div
@@ -113,7 +100,7 @@ const Hero = () => {
               className="flex flex-wrap gap-4 justify-center lg:justify-start"
             >
               <Button 
-                href="/shops" 
+                to="/shops" 
                 size="lg" 
                 className="flex items-center"
               >
@@ -123,12 +110,12 @@ const Hero = () => {
               
               {!isLoggedIn && (
                 <>
-                  <Button href="/signup" variant="outline" size="lg" className="flex items-center">
+                  <Button to="/signup" variant="outline" size="lg" className="flex items-center">
                     <UserPlus className="mr-2 h-5 w-5" />
                     Sign Up
                   </Button>
                   
-                  <Button href="/login" variant="ghost" size="lg" className="flex items-center">
+                  <Button to="/login" variant="ghost" size="lg" className="flex items-center">
                     <LogIn className="mr-2 h-5 w-5" />
                     Log In
                   </Button>
@@ -169,24 +156,13 @@ const Hero = () => {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.7 }}
               >
-                <div className="h-80 bg-gradient-to-r from-haluna-primary-light to-purple-100 flex items-center justify-center">
+                <div className="h-80 bg-gradient-to-r from-haluna-primary-light to-haluna-primary-light/20 flex items-center justify-center">
                   <div className="text-center p-8">
                     <Store className="h-16 w-16 text-haluna-primary mx-auto mb-4" />
                     <h3 className="text-2xl font-serif font-bold mb-2">Discover Local Muslim Shops</h3>
                     <p className="text-haluna-text-light mb-6">
-                      {isLocationEnabled 
-                        ? "We're finding shops near you..."
-                        : "Enable location to find shops in your area"}
+                      We're finding shops in your area...
                     </p>
-                    {!isLocationEnabled && (
-                      <Button 
-                        onClick={requestLocation}
-                        className="bg-white text-haluna-primary hover:bg-gray-100"
-                      >
-                        <MapPin className="mr-2 h-4 w-4" />
-                        Enable Location
-                      </Button>
-                    )}
                   </div>
                 </div>
               </motion.div>

@@ -46,11 +46,11 @@ const Navbar = () => {
   const letterChildVariants = {
     initial: { color: "#2A866A" },
     animate: { 
-      color: ["#2A866A", "#F7C59F", "#D946EF", "#F97316", "#0EA5E9", "#2A866A"],
+      color: ["#2A866A", "#3A9E7E", "#2F9173", "#1F7A5C", "#2A866A"],
       transition: { 
         duration: 8, 
         repeat: Infinity,
-        repeatType: "reverse" 
+        repeatType: "reverse" as const
       } 
     }
   };
@@ -103,17 +103,6 @@ const Navbar = () => {
                   }}
                 />
               </motion.div>
-              <motion.div 
-                className="absolute -top-1 -right-1 w-3 h-3 bg-haluna-primary rounded-full"
-                animate={{
-                  opacity: [0.4, 1, 0.4],
-                  scale: [1, 1.2, 1],
-                }}
-                transition={{
-                  duration: 3,
-                  repeat: Infinity,
-                }}
-              />
             </div>
           </div>
         </Link>

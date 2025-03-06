@@ -1,3 +1,4 @@
+
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
@@ -34,7 +35,6 @@ export interface ButtonProps
     VariantProps<typeof buttonVariants> {
   href?: string;
   to?: string;
-  className?: string;
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
@@ -44,7 +44,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         <a
           href={href}
           className={cn(buttonVariants({ variant, size, className }))}
-          {...props}
+          {...(props as React.AnchorHTMLAttributes<HTMLAnchorElement>)}
         />
       );
     }
@@ -54,7 +54,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         <Link
           to={to}
           className={cn(buttonVariants({ variant, size, className }))}
-          {...props}
+          {...(props as React.AnchorHTMLAttributes<HTMLAnchorElement>)}
         />
       );
     }

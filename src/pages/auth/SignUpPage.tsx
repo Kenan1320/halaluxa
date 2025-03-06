@@ -1,10 +1,9 @@
-
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { UserPlus, ArrowLeft, User, Mail, Lock, Store, ShoppingBag, MapPin, Tag, FileText } from 'lucide-react';
+import { UserPlus, ArrowLeft, User, Mail, Lock, Store, ShoppingBag, MapPin, Tag, FileText, Upload, X } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const SignUpPage = () => {
@@ -22,15 +21,55 @@ const SignUpPage = () => {
     shopName: '',
     shopDescription: '',
     shopCategory: '',
-    shopLocation: ''
+    shopLocation: '',
+    shopLogo: '',
   });
   
+  const [shopLogoPreview, setShopLogoPreview] = useState<string | null>(null);
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+  
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    // Check file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast({
+        title: "Error",
+        description: "Logo file size should be less than 2MB",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Check file type
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "Error",
+        description: "Please upload an image file",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const result = e.target?.result as string;
+      setShopLogoPreview(result);
+      setFormData(prev => ({ ...prev, shopLogo: result }));
+    };
+    reader.readAsDataURL(file);
+  };
+  
+  const clearLogoUpload = () => {
+    setShopLogoPreview(null);
+    setFormData(prev => ({ ...prev, shopLogo: '' }));
   };
   
   const handleNextStep = () => {
@@ -69,7 +108,8 @@ const SignUpPage = () => {
         shopName: formData.shopName,
         shopDescription: formData.shopDescription,
         shopCategory: formData.shopCategory,
-        shopLocation: formData.shopLocation
+        shopLocation: formData.shopLocation,
+        shopLogo: formData.shopLogo
       } : undefined;
       
       const success = await signup(
@@ -375,6 +415,66 @@ const SignUpPage = () => {
                   placeholder="City, State"
                   required
                 />
+              </div>
+            </motion.div>
+            
+            <motion.div variants={itemVariants}>
+              <label className="block text-sm font-medium text-haluna-text mb-1">
+                Shop Logo
+              </label>
+              <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg relative">
+                {shopLogoPreview ? (
+                  <div className="relative">
+                    <img 
+                      src={shopLogoPreview} 
+                      alt="Shop Logo Preview" 
+                      className="max-h-40 mx-auto"
+                    />
+                    <button
+                      type="button"
+                      onClick={clearLogoUpload}
+                      className="absolute top-0 right-0 -mt-2 -mr-2 bg-red-500 text-white rounded-full p-1"
+                      title="Remove image"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-1 text-center">
+                    <svg
+                      className="mx-auto h-12 w-12 text-haluna-text-light"
+                      stroke="currentColor"
+                      fill="none"
+                      viewBox="0 0 48 48"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+                        strokeWidth={2}
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                    <div className="flex text-sm text-gray-600">
+                      <label
+                        htmlFor="shop-logo-upload"
+                        className="relative cursor-pointer bg-white rounded-md font-medium text-haluna-primary hover:text-haluna-primary-dark"
+                      >
+                        <span>Upload a logo</span>
+                        <input
+                          id="shop-logo-upload"
+                          name="shopLogo"
+                          type="file"
+                          accept="image/*"
+                          className="sr-only"
+                          onChange={handleFileUpload}
+                        />
+                      </label>
+                      <p className="pl-1">or drag and drop</p>
+                    </div>
+                    <p className="text-xs text-gray-500">PNG, JPG, GIF up to 2MB</p>
+                  </div>
+                )}
               </div>
             </motion.div>
             

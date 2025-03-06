@@ -33,12 +33,25 @@ export const LocationProvider = ({ children }: { children: ReactNode }) => {
       } catch (error) {
         console.error('Failed to parse stored location', error);
       }
+    } else {
+      // Automatically request location on first load
+      requestLocation();
     }
   }, []);
   
   const requestLocation = async (): Promise<void> => {
     if (!navigator.geolocation) {
       console.error('Geolocation is not supported by this browser');
+      // Use fallback location
+      const fallbackLocation = {
+        latitude: 40.7128,
+        longitude: -74.0060,
+        city: "New York",
+        state: "NY"
+      };
+      localStorage.setItem('location', JSON.stringify(fallbackLocation));
+      setLocation(fallbackLocation);
+      setIsLocationEnabled(true);
       return;
     }
     
@@ -46,8 +59,8 @@ export const LocationProvider = ({ children }: { children: ReactNode }) => {
       const position = await new Promise<GeolocationPosition>((resolve, reject) => {
         navigator.geolocation.getCurrentPosition(resolve, reject, {
           enableHighAccuracy: true,
-          timeout: 5000,
-          maximumAge: 0
+          timeout: 10000,
+          maximumAge: 600000 // 10 minutes
         });
       });
       
@@ -56,7 +69,7 @@ export const LocationProvider = ({ children }: { children: ReactNode }) => {
       // Get city and state from coordinates using reverse geocoding
       try {
         const response = await fetch(
-          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&accept-language=en`
         );
         const data = await response.json();
         
@@ -79,6 +92,36 @@ export const LocationProvider = ({ children }: { children: ReactNode }) => {
       }
     } catch (error) {
       console.error('Error getting location:', error);
+      // Fallback to approximate location based on IP
+      try {
+        const response = await fetch('https://ipapi.co/json/');
+        const data = await response.json();
+        
+        if (data.latitude && data.longitude) {
+          const locationData = {
+            latitude: data.latitude,
+            longitude: data.longitude,
+            city: data.city || 'Unknown',
+            state: data.region || ''
+          };
+          
+          localStorage.setItem('location', JSON.stringify(locationData));
+          setLocation(locationData);
+          setIsLocationEnabled(true);
+        }
+      } catch (ipError) {
+        console.error('Error getting IP location:', ipError);
+        // Use default fallback
+        const fallbackLocation = {
+          latitude: 40.7128,
+          longitude: -74.0060,
+          city: "New York",
+          state: "NY"
+        };
+        localStorage.setItem('location', JSON.stringify(fallbackLocation));
+        setLocation(fallbackLocation);
+        setIsLocationEnabled(true);
+      }
     }
   };
   
@@ -106,23 +149,26 @@ export const LocationProvider = ({ children }: { children: ReactNode }) => {
   };
   
   const getNearbyShops = async (): Promise<any[]> => {
-    if (!isLocationEnabled || !location) {
-      // If location is not enabled, return all shops without distance
-      return getShops();
+    if (!location) {
+      // If location is not available yet, try to request it
+      await requestLocation();
     }
     
     const shops = await getShops();
     
     // For demo purposes, assign random coordinates to shops without real coordinates
     const shopsWithCoordinates = shops.map(shop => {
-      // Default coordinates (randomly generated for demo)
-      const randomLat = location.latitude + (Math.random() - 0.5) * 0.1;
-      const randomLng = location.longitude + (Math.random() - 0.5) * 0.1;
+      // Default coordinates (randomly generated for demo based on current location)
+      const currentLat = location?.latitude || 40.7128;
+      const currentLng = location?.longitude || -74.0060;
+      
+      const randomLat = currentLat + (Math.random() - 0.5) * 0.1;
+      const randomLng = currentLng + (Math.random() - 0.5) * 0.1;
       
       // Calculate distance from current location
       const distance = calculateDistance(
-        location.latitude,
-        location.longitude,
+        currentLat,
+        currentLng,
         shop.latitude || randomLat,
         shop.longitude || randomLng
       );

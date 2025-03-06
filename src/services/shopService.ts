@@ -29,10 +29,33 @@ export const mockShops = [
   }
 ];
 
-// Get all shops from localStorage with improved caching
+// Cache management
 let cachedShops = null;
 let lastFetchTime = 0;
 const CACHE_DURATION = 1000; // 1 second cache duration
+
+// Custom event for shop updates
+const SHOP_UPDATE_EVENT = 'haluna-shop-updated';
+
+// Listen for shop updates and invalidate cache
+window.addEventListener(SHOP_UPDATE_EVENT, () => {
+  invalidateShopCache();
+});
+
+// Helper method to calculate product count for shops
+const calculateProductCountForShop = (shopId) => {
+  try {
+    // Count products from localStorage
+    const localProducts = JSON.parse(localStorage.getItem('products') || '[]');
+    const mockProductsForShop = mockProducts.filter(p => p.sellerId === shopId);
+    const localProductsForShop = localProducts.filter(p => p.sellerId === shopId);
+    
+    return mockProductsForShop.length + localProductsForShop.length;
+  } catch (error) {
+    console.error('Error calculating product count:', error);
+    return 0;
+  }
+};
 
 // Get all shops from localStorage or use mock shops
 export const getShops = async () => {
@@ -51,14 +74,9 @@ export const getShops = async () => {
       
       // Calculate product count for each shop
       const updatedShops = shops.map(shop => {
-        // Count products from localStorage
-        const localProducts = JSON.parse(localStorage.getItem('products') || '[]');
-        const mockProductsForShop = mockProducts.filter(p => p.sellerId === shop.id);
-        const localProductsForShop = localProducts.filter(p => p.sellerId === shop.id);
-        
         return {
           ...shop,
-          productCount: mockProductsForShop.length + localProductsForShop.length
+          productCount: calculateProductCountForShop(shop.id)
         };
       });
       
@@ -69,11 +87,15 @@ export const getShops = async () => {
       return updatedShops;
     } catch (error) {
       console.error('Failed to parse shops data:', error);
+      
+      // Try to recover by resetting shops in localStorage
+      localStorage.setItem('shops', JSON.stringify(mockShops));
       return mockShops;
     }
   }
   
-  // No shops in localStorage, return mock shops
+  // No shops in localStorage, initialize with mock shops
+  localStorage.setItem('shops', JSON.stringify(mockShops));
   cachedShops = mockShops;
   lastFetchTime = currentTime;
   return mockShops;
@@ -83,6 +105,11 @@ export const getShops = async () => {
 export const invalidateShopCache = () => {
   cachedShops = null;
   lastFetchTime = 0;
+};
+
+// Trigger shop update event to refresh data across components
+export const notifyShopUpdate = () => {
+  window.dispatchEvent(new Event(SHOP_UPDATE_EVENT));
 };
 
 // Get a shop by ID
@@ -113,8 +140,8 @@ export const updateShop = async (shopId: string, shopData: any) => {
   
   localStorage.setItem('shops', JSON.stringify(updatedShops));
   
-  // Invalidate cache to ensure fresh data
-  invalidateShopCache();
+  // Invalidate cache and notify components
+  notifyShopUpdate();
   
   return updatedShops.find(shop => shop.id === shopId) || null;
 };
@@ -138,8 +165,31 @@ export const createShop = async (shopData: any) => {
   const updatedShops = [...shops, newShop];
   localStorage.setItem('shops', JSON.stringify(updatedShops));
   
-  // Invalidate cache to ensure fresh data
-  invalidateShopCache();
+  // Invalidate cache and notify components
+  notifyShopUpdate();
   
   return newShop;
+};
+
+// Update shop product count (called after product operations)
+export const updateShopProductCount = async (shopId: string) => {
+  const shop = await getShopById(shopId);
+  if (!shop) return null;
+  
+  const productCount = calculateProductCountForShop(shopId);
+  
+  return updateShop(shopId, { productCount });
+};
+
+// Delete a shop (for admin purposes)
+export const deleteShop = async (shopId: string) => {
+  const shops = await getShops();
+  const filteredShops = shops.filter(shop => shop.id !== shopId);
+  
+  localStorage.setItem('shops', JSON.stringify(filteredShops));
+  
+  // Invalidate cache and notify components
+  notifyShopUpdate();
+  
+  return true;
 };
