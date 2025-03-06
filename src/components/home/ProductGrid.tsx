@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { getFeaturedProducts } from '@/services/productService';
@@ -6,6 +7,7 @@ import { Link } from 'react-router-dom';
 import { ShoppingCart, Info, Heart } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 
 const ProductGrid = () => {
   const [products, setProducts] = useState<Product[]>([]);
