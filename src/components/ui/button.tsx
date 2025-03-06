@@ -54,7 +54,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         <Link
           to={to}
           className={cn(buttonVariants({ variant, size, className }))}
-          {...(props as React.AnchorHTMLAttributes<HTMLAnchorElement>)}
+          {...(props as unknown as React.AnchorHTMLAttributes<HTMLAnchorElement>)}
         />
       );
     }

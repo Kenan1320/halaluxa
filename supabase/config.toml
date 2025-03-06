@@ -1,1 +1,4 @@
+
 project_id = "iafmcjyqqgmtreeogwqo"
+api_url = "https://iafmcjyqqgmtreeogwqo.supabase.co"
+anon_key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlhZm1janlxcWdtdHJlZW9nd3FvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDEyMzk1MzMsImV4cCI6MjA1NjgxNTUzM30.Sy9NbXDbOhnFalHDdEQf7XKHUo17QdDf_Oz2Y7bnJXY"

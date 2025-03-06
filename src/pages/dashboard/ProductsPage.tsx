@@ -9,6 +9,7 @@ import { useAuth } from '@/context/AuthContext';
 
 const ProductsPage = () => {
   const [products, setProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const { toast } = useToast();
   const { user } = useAuth();
@@ -17,24 +18,47 @@ const ProductsPage = () => {
     loadProducts();
   }, []);
   
-  const loadProducts = () => {
-    const allProducts = getProducts();
-    
-    // Only show products for the current seller
-    if (user) {
-      const sellerProducts = allProducts.filter(product => product.sellerId === user.id);
-      setProducts(sellerProducts);
+  const loadProducts = async () => {
+    setIsLoading(true);
+    try {
+      const allProducts = await getProducts();
+      
+      // Only show products for the current seller
+      if (user) {
+        const sellerProducts = allProducts.filter(product => product.sellerId === user.id);
+        setProducts(sellerProducts);
+      } else {
+        setProducts([]);
+      }
+    } catch (error) {
+      console.error('Error loading products:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load products",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
   
-  const handleDeleteProduct = (productId: string) => {
+  const handleDeleteProduct = async (productId: string) => {
     try {
-      deleteProduct(productId);
-      toast({
-        title: "Success",
-        description: "Product deleted successfully",
-      });
-      loadProducts();
+      const success = await deleteProduct(productId);
+      
+      if (success) {
+        toast({
+          title: "Success",
+          description: "Product deleted successfully",
+        });
+        loadProducts();
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to delete product",
+          variant: "destructive",
+        });
+      }
     } catch (error) {
       toast({
         title: "Error",
@@ -48,6 +72,23 @@ const ProductsPage = () => {
     product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     product.description.toLowerCase().includes(searchQuery.toLowerCase())
   );
+  
+  if (isLoading) {
+    return (
+      <div>
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h1 className="text-2xl font-serif font-bold text-haluna-text">Your Products</h1>
+            <p className="text-haluna-text-light">Manage your products and inventory</p>
+          </div>
+        </div>
+        <div className="animate-pulse">
+          <div className="h-16 bg-gray-200 rounded-lg mb-4"></div>
+          <div className="h-64 bg-gray-200 rounded-lg mb-4"></div>
+        </div>
+      </div>
+    );
+  }
   
   return (
     <div>

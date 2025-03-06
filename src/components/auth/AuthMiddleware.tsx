@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 /**
  * Middleware component to handle authentication persistence
@@ -10,8 +11,32 @@ import { useToast } from '@/hooks/use-toast';
  */
 const AuthMiddleware = () => {
   const location = useLocation();
-  const { isLoggedIn, user } = useAuth();
+  const { isLoggedIn, user, refreshSession } = useAuth();
   const { toast } = useToast();
+  
+  // Set up auth state listener
+  useEffect(() => {
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (event === 'SIGNED_IN' && session) {
+          refreshSession();
+          toast({
+            title: "Logged in",
+            description: "You have been successfully logged in",
+          });
+        } else if (event === 'SIGNED_OUT') {
+          toast({
+            title: "Logged out",
+            description: "You have been logged out",
+          });
+        }
+      }
+    );
+    
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, [toast, refreshSession]);
   
   // Check authentication tokens on route change and validate session
   useEffect(() => {
@@ -21,23 +46,28 @@ const AuthMiddleware = () => {
     }
     
     // Verify the authentication token on route change
-    const verifyAuth = () => {
-      const authToken = localStorage.getItem('haluna_auth_token');
-      const userData = localStorage.getItem('haluna_user_data');
-      
-      // If we have auth data but the app state doesn't reflect it,
-      // this can happen on refreshes or in certain browser conditions
-      if (authToken && userData && !isLoggedIn) {
-        const refreshEvent = new Event('auth-refresh-needed');
-        window.dispatchEvent(refreshEvent);
+    const verifyAuth = async () => {
+      try {
+        const { data, error } = await supabase.auth.getSession();
         
-        // We don't need to show a toast here, the auth provider will handle this
-        console.log('Auth refresh triggered due to route change');
+        if (error) {
+          console.error('Auth error:', error);
+          return;
+        }
+        
+        // If we have a session but the app state doesn't reflect it,
+        // this can happen on refreshes or in certain browser conditions
+        if (data.session && !isLoggedIn) {
+          refreshSession();
+          console.log('Auth refresh triggered due to route change');
+        }
+      } catch (err) {
+        console.error('Error verifying auth:', err);
       }
     };
     
     verifyAuth();
-  }, [location.pathname, isLoggedIn]);
+  }, [location.pathname, isLoggedIn, refreshSession]);
   
   // Log dashboard access
   useEffect(() => {
