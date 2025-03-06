@@ -14,7 +14,7 @@ const SplashScreen = ({ onFinished }: SplashScreenProps) => {
       setIsVisible(false);
       // Give time for exit animation before calling onFinished
       setTimeout(onFinished, 800);
-    }, 2500); // 2.5 seconds display time
+    }, 3000); // 3 seconds display time
 
     return () => clearTimeout(timer);
   }, [onFinished]);
@@ -23,64 +23,77 @@ const SplashScreen = ({ onFinished }: SplashScreenProps) => {
     <AnimatePresence>
       {isVisible && (
         <motion.div
-          className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-gradient-to-b from-[#f9f5eb] to-[#f7f3e8] dark:from-[#0a2f20] dark:to-[#061c13]"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-white"
           initial={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.8, ease: "easeInOut" }}
         >
-          {/* Subtle geometric pattern overlay */}
-          <div className="absolute inset-0 opacity-5 bg-[url('/patterns/geometric-light.svg')] dark:opacity-10 dark:bg-[url('/patterns/geometric-dark.svg')]"></div>
-          
-          {/* Logo container with animation */}
-          <motion.div 
-            className="relative z-10 mb-6"
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.6, ease: "easeOut" }}
-          >
-            <div className="relative w-24 h-24 md:w-32 md:h-32">
-              {/* Logo base */}
-              <img 
-                src="/logo-base.svg" 
-                alt="Haluna Logo" 
-                className="w-full h-full"
-              />
+          <div className="relative flex flex-col items-center justify-center w-full max-w-lg">
+            {/* Haluna Logo and Smile */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5 }}
+              className="flex flex-col items-center"
+            >
+              <div className="text-center mb-3">
+                <motion.h1 
+                  className="text-[4rem] font-bold text-gray-900"
+                  initial={{ y: -20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ duration: 0.4 }}
+                >
+                  Haluna
+                </motion.h1>
+                <motion.div
+                  className="relative"
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ 
+                    delay: 0.3,
+                    duration: 0.5,
+                    type: "spring",
+                    stiffness: 200
+                  }}
+                >
+                  {/* Orange smile with arrow pointing to orange ball */}
+                  <svg width="180" height="70" viewBox="0 0 180 70" className="mx-auto">
+                    <motion.path
+                      d="M10,40 Q90,80 160,40 L170,30"
+                      fill="none"
+                      stroke="#F97316" 
+                      strokeWidth="6"
+                      strokeLinecap="round"
+                      initial={{ pathLength: 0 }}
+                      animate={{ pathLength: 1 }}
+                      transition={{ duration: 0.8, delay: 0.5 }}
+                    />
+                  </svg>
+                </motion.div>
+              </div>
               
-              {/* Animated dots */}
-              <motion.img 
-                src="/logo-dots.svg"
-                alt=""
-                className="absolute top-0 left-0 w-full h-full"
-                initial={{ scale: 1.2, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ delay: 0.3, duration: 0.8, ease: "easeOut" }}
-              />
-            </div>
-          </motion.div>
-          
-          {/* Tagline */}
-          <motion.p 
-            className="mb-8 font-serif text-lg md:text-xl font-medium text-haluna-primary-dark dark:text-haluna-primary-light"
-            initial={{ y: 10, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.6, duration: 0.5 }}
-          >
-            Connecting You to Muslim Businesses & Shops you Love
-          </motion.p>
-          
-          {/* Loading indicator */}
-          <motion.div 
-            className="w-2 h-2 rounded-full bg-haluna-primary"
-            animate={{ 
-              scale: [1, 1.5, 1],
-              opacity: [0.7, 1, 0.7]
-            }}
-            transition={{
-              duration: 1.2,
-              repeat: Infinity,
-              ease: "easeInOut"
-            }}
-          ></motion.div>
+              {/* Orange Ball with Pulse */}
+              <motion.div
+                className="absolute top-0 right-0 mt-4 mr-8"
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 1, duration: 0.4 }}
+              >
+                <motion.div
+                  className="w-8 h-8 bg-orange-400 rounded-full"
+                  animate={{ 
+                    scale: [1, 1.2, 1],
+                    opacity: [0.7, 1, 0.7] 
+                  }}
+                  transition={{
+                    duration: 1.2,
+                    repeat: Infinity,
+                    ease: "easeInOut"
+                  }}
+                />
+              </motion.div>
+            </motion.div>
+          </div>
         </motion.div>
       )}
     </AnimatePresence>

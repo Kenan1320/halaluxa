@@ -35,25 +35,25 @@ const BottomNavigation = () => {
   const navItems = [
     {
       label: 'Home',
-      icon: <Home className="h-5 w-5" />,
+      icon: <Home className="h-6 w-6" />,
       path: '/',
       match: ['/']
     },
     {
       label: 'Shops',
-      icon: <Store className="h-5 w-5" />,
+      icon: <Store className="h-6 w-6" />,
       path: '/shops',
       match: ['/shops', '/shop', '/shop/']
     },
     {
       label: 'Search',
-      icon: <Search className="h-5 w-5" />,
+      icon: <Search className="h-6 w-6" />,
       path: '/browse',
       match: ['/browse', '/browse/']
     },
     {
       label: 'Cart',
-      icon: <ShoppingCart className="h-5 w-5" />,
+      icon: <ShoppingCart className="h-6 w-6" />,
       path: isLoggedIn && user?.role !== 'business' ? '/cart' : '/login',
       match: ['/cart', '/checkout', '/orders', '/order-confirmation'],
       badge: cart.items.length > 0 ? cart.items.length : undefined,
@@ -61,7 +61,7 @@ const BottomNavigation = () => {
     },
     {
       label: 'Account',
-      icon: <User className="h-5 w-5" />,
+      icon: <User className="h-6 w-6" />,
       path: isLoggedIn ? '/profile' : '/login',
       match: ['/profile', '/login', '/signup']
     }
@@ -85,55 +85,59 @@ const BottomNavigation = () => {
           animate={{ y: 0 }}
           exit={{ y: 100 }}
           transition={{ duration: 0.3 }}
-          style={{
-            background: 'rgba(255, 255, 255, 0.85)',
-            backdropFilter: 'blur(10px)',
-            borderTop: '1px solid rgba(229, 231, 235, 0.8)'
-          }}
         >
-          <div className="flex justify-around items-center h-16">
-            {filteredNavItems.map((item) => (
-              <Link
-                key={item.label}
-                to={item.path}
-                className="relative flex flex-col items-center justify-center w-full h-full"
-              >
-                <motion.div 
-                  className={`flex flex-col items-center justify-center ${
-                    isActive(item) 
-                      ? 'text-orange-400 font-medium' 
-                      : 'text-gray-400'
-                  }`}
-                  whileTap={{ scale: 0.9 }}
-                  transition={{ duration: 0.2 }}
+          <div 
+            className="flex justify-around items-center h-16 bg-white/90 backdrop-blur-md border-t border-gray-100 shadow-[0_-2px_10px_rgba(0,0,0,0.05)]"
+            style={{ borderTopLeftRadius: '24px', borderTopRightRadius: '24px' }}
+          >
+            {filteredNavItems.map((item) => {
+              const active = isActive(item);
+              
+              return (
+                <Link
+                  key={item.label}
+                  to={item.path}
+                  className="relative flex flex-col items-center justify-center w-full h-full"
                 >
-                  <div className="relative">
-                    {item.icon}
-                    {item.badge && (
-                      <motion.span 
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        className="absolute -top-1.5 -right-1.5 flex items-center justify-center w-4 h-4 bg-orange-400 text-white text-[10px] rounded-full"
-                      >
-                        {item.badge > 9 ? '9+' : item.badge}
-                      </motion.span>
+                  <motion.div 
+                    className={`flex flex-col items-center justify-center`}
+                    whileTap={{ scale: 0.9 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <div className="relative">
+                      <div className={active ? 'text-orange-400' : 'text-gray-400'}>
+                        {item.icon}
+                      </div>
+                      
+                      {item.badge && (
+                        <motion.span 
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          className="absolute -top-1.5 -right-1.5 flex items-center justify-center w-5 h-5 bg-orange-400 text-white text-[10px] rounded-full"
+                        >
+                          {item.badge > 9 ? '9+' : item.badge}
+                        </motion.span>
+                      )}
+                    </div>
+                    
+                    <span className={`mt-1 text-[10px] ${active ? 'text-orange-400 font-medium' : 'text-gray-500'}`}>
+                      {item.label}
+                    </span>
+                    
+                    {active && (
+                      <motion.div
+                        layoutId="bottomNavIndicator"
+                        className="absolute bottom-0 w-10 h-1 rounded-full bg-orange-400"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.3 }}
+                      />
                     )}
-                  </div>
-                  <span className="mt-1 text-[10px]">{item.label}</span>
-                  
-                  {isActive(item) && (
-                    <motion.div
-                      layoutId="bottomNavIndicator"
-                      className="absolute -bottom-1 w-10 h-1 rounded-full bg-gradient-to-r from-orange-400 to-orange-300"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ type: "spring", bounce: 0.3, duration: 0.5 }}
-                    />
-                  )}
-                </motion.div>
-              </Link>
-            ))}
+                  </motion.div>
+                </Link>
+              );
+            })}
           </div>
         </motion.nav>
       )}

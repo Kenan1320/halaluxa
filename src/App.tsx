@@ -4,7 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AuthProvider } from "@/context/AuthContext";
 import { CartProvider } from "@/context/CartContext";
 import { LanguageProvider } from "@/context/LanguageContext";
@@ -13,6 +13,7 @@ import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import AuthMiddleware from "@/components/auth/AuthMiddleware";
 import SplashScreen from "@/components/SplashScreen";
 import BottomNavigation from "@/components/layout/BottomNavigation";
+import Navbar from "@/components/layout/Navbar";
 
 // Pages
 import Index from "./pages/Index";
@@ -53,9 +54,22 @@ const queryClient = new QueryClient({
   },
 });
 
+// Navbar wrapper that conditionally renders the navbar
+const NavbarWrapper = () => {
+  const location = useLocation();
+  const hideNavbarOn = ['/']; // Routes where navbar should be hidden
+  
+  if (hideNavbarOn.includes(location.pathname)) {
+    return null;
+  }
+  
+  return <Navbar />;
+};
+
 const AppRoutes = () => (
   <>
     <AuthMiddleware />
+    <NavbarWrapper />
     <Routes>
       {/* Public routes */}
       <Route path="/" element={<Index />} />
