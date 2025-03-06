@@ -71,3 +71,37 @@ export function getGradientStyle(startColor: string, endColor: string, direction
 export function createAnimatedGradient(startColor: string, midColor: string, endColor: string) {
   return `linear-gradient(to bottom, ${startColor}, ${midColor}, ${endColor})`;
 }
+
+// New animation helpers
+export function createPremiumGradient(colors: string[]) {
+  return `linear-gradient(to bottom, ${colors.join(', ')})`;
+}
+
+export function getAnimationDelay(index: number, baseDelay = 0.1): number {
+  return baseDelay * index;
+}
+
+export function getStaggeredAnimation(index: number, type: 'fade' | 'scale' | 'slide' = 'fade') {
+  const delay = getAnimationDelay(index);
+  
+  const animations = {
+    fade: {
+      initial: { opacity: 0 },
+      animate: { opacity: 1 },
+      transition: { duration: 0.5, delay }
+    },
+    scale: {
+      initial: { scale: 0.9, opacity: 0 },
+      animate: { scale: 1, opacity: 1 },
+      transition: { duration: 0.5, delay }
+    },
+    slide: {
+      initial: { y: 10, opacity: 0 },
+      animate: { y: 0, opacity: 1 },
+      transition: { duration: 0.5, delay }
+    }
+  };
+  
+  return animations[type];
+}
+
