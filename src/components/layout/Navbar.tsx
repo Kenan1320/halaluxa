@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Store, MapPin, Search, Globe } from 'lucide-react';
+import { Menu, X, Store, MapPin, Search } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useLanguage } from '@/context/LanguageContext';
 import AuthNavItems from './AuthNavItems';
@@ -9,7 +9,7 @@ import AuthNavItems from './AuthNavItems';
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { language, toggleLanguage, translate } = useLanguage();
+  const { translate } = useLanguage();
   const isMobile = useIsMobile();
   const location = useLocation();
   
@@ -69,25 +69,10 @@ const Navbar = () => {
               ))}
             </nav>
             
-            <button 
-              onClick={toggleLanguage} 
-              className="p-2 rounded-full hover:bg-haluna-primary-light transition flex items-center gap-1 text-haluna-text"
-            >
-              <Globe className="h-4 w-4" />
-              <span className="text-sm">{language === 'en' ? 'العربية' : 'English'}</span>
-            </button>
-            
             <AuthNavItems />
           </div>
         ) : (
           <div className="flex items-center gap-4">
-            <button 
-              onClick={toggleLanguage} 
-              className="p-2 rounded-full hover:bg-haluna-primary-light transition"
-            >
-              <Globe className="h-4 w-4 text-haluna-text" />
-            </button>
-            
             <AuthNavItems />
             
             <button

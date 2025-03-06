@@ -35,12 +35,11 @@ const buttonVariants = cva(
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
-  asChild?: boolean;
   href?: string;
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, href, children, ...props }, ref) => {
+  ({ className, variant, size, href, children, ...props }, ref) => {
     if (href) {
       return (
         <Link

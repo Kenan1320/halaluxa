@@ -69,8 +69,7 @@ const ShopCard = ({ shop, index }: ShopCardProps) => {
         </div>
         
         <Button 
-          as={Link}
-          to={`/shop/${shop.id}`}
+          href={`/shop/${shop.id}`}
           className="w-full"
         >
           View Shop

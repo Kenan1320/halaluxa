@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useLocation as useRouterLocation, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -9,6 +8,7 @@ import Footer from '@/components/layout/Footer';
 import { useLocation } from '@/context/LocationContext';
 import { getShops } from '@/services/shopService';
 import ShopCard from '@/components/shop/ShopCard';
+import { Store } from 'lucide-react';
 
 const Browse = () => {
   const { isLocationEnabled, location, requestLocation } = useLocation();

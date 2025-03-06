@@ -8,6 +8,16 @@ import Footer from '@/components/layout/Footer';
 import { useCart } from '@/context/CartContext';
 import { useToast } from '@/hooks/use-toast';
 import { motion } from 'framer-motion';
+import { CartItem } from '@/models/cart';
+import { Product } from '@/models/product';
+
+// Define a type for grouped cart items by seller
+interface GroupedCartItems {
+  [sellerId: string]: {
+    sellerName: string;
+    items: CartItem[];
+  };
+}
 
 const Cart = () => {
   const { cart, removeFromCart, updateQuantity, clearCart } = useCart();
@@ -15,19 +25,21 @@ const Cart = () => {
   const navigate = useNavigate();
   
   // Group cart items by sellerId for a better display
-  const groupedItems = cart.items.reduce((groups, item) => {
-    const sellerId = item.product.sellerId || 'unknown';
+  const groupedItems: GroupedCartItems = cart.items.reduce((groups, item) => {
+    const product = item.product as Product;
+    const sellerId = product.sellerId || 'unknown';
+    
     if (!groups[sellerId]) {
       groups[sellerId] = {
-        sellerName: item.product.sellerName || 'Unknown Seller',
+        sellerName: product.sellerName || 'Unknown Seller',
         items: []
       };
     }
     groups[sellerId].items.push(item);
     return groups;
-  }, {});
+  }, {} as GroupedCartItems);
   
-  const handleRemoveItem = (productId) => {
+  const handleRemoveItem = (productId: string) => {
     removeFromCart(productId);
     toast({
       title: "Item removed",
@@ -35,7 +47,7 @@ const Cart = () => {
     });
   };
   
-  const handleQuantityChange = (productId, newQuantity, maxStock) => {
+  const handleQuantityChange = (productId: string, newQuantity: number, maxStock?: number) => {
     if (newQuantity < 1) {
       handleRemoveItem(productId);
       return;
@@ -118,76 +130,80 @@ const Cart = () => {
                         <p className="text-sm font-medium text-haluna-primary">{group.sellerName}</p>
                       </div>
                       
-                      {group.items.map((item, index) => (
-                        <motion.div 
-                          key={item.product.id}
-                          className="p-4 px-6 border-t first:border-t-0 flex gap-4"
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ duration: 0.3, delay: index * 0.1 }}
-                        >
-                          <Link to={`/product/${item.product.id}`} className="w-24 h-24 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
-                            {item.product.images && item.product.images.length > 0 ? (
-                              <img
-                                src={item.product.images[0]}
-                                alt={item.product.name}
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center text-gray-400">
-                                No Image
-                              </div>
-                            )}
-                          </Link>
-                          
-                          <div className="flex-1">
-                            <div className="flex justify-between">
-                              <div>
-                                <Link 
-                                  to={`/product/${item.product.id}`}
-                                  className="font-medium hover:text-haluna-primary transition-colors"
-                                >
-                                  {item.product.name}
-                                </Link>
-                                <p className="text-sm text-haluna-text-light">
-                                  Category: {item.product.category}
+                      {group.items.map((item, index) => {
+                        const product = item.product as Product;
+                        
+                        return (
+                          <motion.div 
+                            key={product.id}
+                            className="p-4 px-6 border-t first:border-t-0 flex gap-4"
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.3, delay: index * 0.1 }}
+                          >
+                            <Link to={`/product/${product.id}`} className="w-24 h-24 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                              {product.images && product.images.length > 0 ? (
+                                <img
+                                  src={product.images[0]}
+                                  alt={product.name}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center text-gray-400">
+                                  No Image
+                                </div>
+                              )}
+                            </Link>
+                            
+                            <div className="flex-1">
+                              <div className="flex justify-between">
+                                <div>
+                                  <Link 
+                                    to={`/product/${product.id}`}
+                                    className="font-medium hover:text-haluna-primary transition-colors"
+                                  >
+                                    {product.name}
+                                  </Link>
+                                  <p className="text-sm text-haluna-text-light">
+                                    Category: {product.category}
+                                  </p>
+                                </div>
+                                <p className="font-medium text-haluna-primary">
+                                  ${product.price.toFixed(2)}
                                 </p>
                               </div>
-                              <p className="font-medium text-haluna-primary">
-                                ${item.product.price.toFixed(2)}
-                              </p>
-                            </div>
-                            
-                            <div className="flex items-center justify-between mt-4">
-                              <div className="flex items-center border rounded-md">
-                                <button 
-                                  onClick={() => handleQuantityChange(item.product.id, item.quantity - 1)}
-                                  className="px-3 py-1 border-r hover:bg-gray-100"
-                                  aria-label="Decrease quantity"
+                              
+                              <div className="flex items-center justify-between mt-4">
+                                <div className="flex items-center border rounded-md">
+                                  <button 
+                                    onClick={() => handleQuantityChange(product.id, item.quantity - 1)}
+                                    className="px-3 py-1 border-r hover:bg-gray-100"
+                                    aria-label="Decrease quantity"
+                                  >
+                                    <Minus className="h-3 w-3" />
+                                  </button>
+                                  <span className="px-4 py-1">{item.quantity}</span>
+                                  <button 
+                                    onClick={() => handleQuantityChange(product.id, item.quantity + 1, product.stock)}
+                                    className="px-3 py-1 border-l hover:bg-gray-100"
+                                    aria-label="Increase quantity"
+                                  >
+                                    <Plus className="h-3 w-3" />
+                                  </button>
+                                </div>
+                                
+                                <button
+                                  onClick={() => handleRemoveItem(product.id)}
+                                  className="text-red-500 hover:text-red-700 p-2"
+                                  aria-label="Remove item"
                                 >
-                                  <Minus className="h-3 w-3" />
-                                </button>
-                                <span className="px-4 py-1">{item.quantity}</span>
-                                <button 
-                                  onClick={() => handleQuantityChange(item.product.id, item.quantity + 1, item.product.stock)}
-                                  className="px-3 py-1 border-l hover:bg-gray-100"
-                                  aria-label="Increase quantity"
-                                >
-                                  <Plus className="h-3 w-3" />
+                                  <Trash2 className="h-4 w-4" />
                                 </button>
                               </div>
-                              
-                              <button
-                                onClick={() => handleRemoveItem(item.product.id)}
-                                className="text-red-500 hover:text-red-700 p-2"
-                                aria-label="Remove item"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </button>
                             </div>
-                          </div>
-                        </motion.div>
-                      ))}
+                          </motion.div>
+                        );
+                      })}
                     </div>
                   ))}
                 </div>
