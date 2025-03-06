@@ -44,13 +44,13 @@ const Index = () => {
             <SearchBar />
           </div>
           
-          {/* Personalized greeting for user - smaller text */}
+          {/* Personalized greeting for user - smaller text (reduced by 20%) */}
           <motion.div
             className="mb-1"
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            <h2 className="text-base font-medium text-[#2A866A]">
+            <h2 className="text-sm font-medium text-[#2A866A]">
               {greeting}, {isLoggedIn && user ? user.name : 'Guest'}
             </h2>
           </motion.div>

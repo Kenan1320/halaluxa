@@ -89,10 +89,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         
         if (userError) {
           console.error('Error fetching user profile:', userError);
+          setIsLoggedIn(false);
+          setUser(null);
           return;
         }
         
-        const userRole: UserRole = userData.role === 'business' ? 'business' : 'shopper';
+        const userRole: UserRole = userData.role || 'shopper';
         
         console.log('Refreshed user role from database:', userRole);
         
@@ -118,9 +120,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         localStorage.setItem(USER_DATA_KEY, JSON.stringify(userObj));
         
         console.log('Session refreshed, user role:', userObj.role);
+      } else {
+        setIsLoggedIn(false);
+        setUser(null);
+        localStorage.removeItem(USER_DATA_KEY);
       }
     } catch (error) {
       console.error('Refresh session error:', error);
+      setIsLoggedIn(false);
+      setUser(null);
     }
   };
 
@@ -137,15 +145,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (data.session) {
           await refreshSession();
         } else {
-          const storedUserJson = localStorage.getItem(USER_DATA_KEY);
-          
-          if (storedUserJson) {
-            try {
-              localStorage.removeItem(USER_DATA_KEY);
-            } catch (error) {
-              console.error('Failed to parse stored user data', error);
-            }
-          }
+          localStorage.removeItem(USER_DATA_KEY);
         }
       } catch (error) {
         console.error('Initial auth check error:', error);
@@ -178,70 +178,43 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           .eq('id', data.session.user.id)
           .single();
           
-        if (userError && userError.code !== 'PGRST116') {
+        if (userError) {
           console.error('Error fetching user profile:', userError);
-          
-          const basicUser: User = {
-            id: data.session.user.id,
-            name: data.session.user.email?.split('@')[0] || 'User',
-            email: data.session.user.email || '',
-            role: 'shopper',
-          };
-          
-          setUser(basicUser);
-          setIsLoggedIn(true);
-          localStorage.setItem(USER_DATA_KEY, JSON.stringify(basicUser));
-          return 'shopper';
+          toast({
+            title: "Login Warning",
+            description: "We couldn't load your profile. Some features may be limited.",
+            variant: "destructive",
+          });
+          return false;
         }
         
-        if (userData) {
-          const userRole: UserRole = userData.role === 'business' ? 'business' : 'shopper';
+        const userRole: UserRole = userData.role === 'business' ? 'business' : 'shopper';
             
-          console.log('User logging in with role from database:', userRole);
+        console.log('User logging in with role from database:', userRole);
             
-          const userObj: User = {
-            id: userData.id,
-            name: userData.name || data.session.user.email?.split('@')[0] || 'User',
-            email: data.session.user.email || '',
-            role: userRole,
-            phone: userData.phone,
-            address: userData.address,
-            city: userData.city,
-            state: userData.state,
-            zip: userData.zip,
-            shopName: userData.shop_name,
-            shopDescription: userData.shop_description,
-            shopLogo: userData.shop_logo,
-            shopCategory: userData.shop_category,
-            shopLocation: userData.shop_location,
-          };
-          
-          console.log('User logged in with role:', userRole);
-          
-          setUser(userObj);
-          setIsLoggedIn(true);
-          localStorage.setItem(USER_DATA_KEY, JSON.stringify(userObj));
-          return userObj.role;
-        } else {
-          const basicUser: User = {
-            id: data.session.user.id,
-            name: data.session.user.email?.split('@')[0] || 'User',
-            email: data.session.user.email || '',
-            role: 'shopper',
-          };
-          
-          await supabase.from('profiles').insert({
-            id: data.session.user.id,
-            name: basicUser.name,
-            email: basicUser.email,
-            role: 'shopper',
-          });
-          
-          setUser(basicUser);
-          setIsLoggedIn(true);
-          localStorage.setItem(USER_DATA_KEY, JSON.stringify(basicUser));
-          return 'shopper';
-        }
+        const userObj: User = {
+          id: userData.id,
+          name: userData.name || data.session.user.email?.split('@')[0] || 'User',
+          email: data.session.user.email || '',
+          role: userRole,
+          phone: userData.phone,
+          address: userData.address,
+          city: userData.city,
+          state: userData.state,
+          zip: userData.zip,
+          shopName: userData.shop_name,
+          shopDescription: userData.shop_description,
+          shopLogo: userData.shop_logo,
+          shopCategory: userData.shop_category,
+          shopLocation: userData.shop_location,
+        };
+        
+        console.log('User logged in with role:', userRole);
+        
+        setUser(userObj);
+        setIsLoggedIn(true);
+        localStorage.setItem(USER_DATA_KEY, JSON.stringify(userObj));
+        return userRole;
       }
       
       toast({
@@ -316,37 +289,39 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       const { error: profileError } = await supabase
         .from('profiles')
-        .insert(profileData);
+        .upsert(profileData, { onConflict: 'id' });
       
       if (profileError) {
         console.error('Profile creation error:', profileError);
         
         toast({
           title: "Profile Creation Warning",
-          description: "Your account was created but we couldn't set up your profile completely. Some features may be limited.",
+          description: "Your account was created but we couldn't set up your profile completely. Please try logging in again.",
           variant: "destructive",
         });
+        return false;
       }
       
       if (role === 'business' && shopDetails?.shopName) {
         const { error: shopError } = await supabase
           .from('shops')
-          .insert({
+          .upsert({
             id: authData.user.id,
             name: shopDetails.shopName,
             description: shopDetails.shopDescription || 'New shop on Haluna',
             owner_id: authData.user.id,
             location: shopDetails.shopLocation || 'Online',
             logo_url: shopDetails.shopLogo || null,
-          });
+          }, { onConflict: 'owner_id' });
         
         if (shopError) {
           console.error('Shop creation error:', shopError);
           toast({
             title: "Shop Creation Warning",
-            description: "Your account was created but there was an issue setting up your shop. You can set it up later in your dashboard.",
+            description: "Your account was created but there was an issue setting up your shop. Please try logging in again.",
             variant: "destructive",
           });
+          return false;
         }
       }
       

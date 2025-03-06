@@ -25,15 +25,22 @@ const AuthMiddleware = () => {
           // Force refresh the session to get the latest user data
           await refreshSession();
           
+          // Check if the user is a business user and redirect appropriately
+          const { data } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', session.user.id)
+            .single();
+            
+          if (data?.role === 'business') {
+            console.log('Business user signed in, redirecting to dashboard');
+            navigate('/dashboard');
+          }
+          
           toast({
             title: "Logged in",
             description: "You have been successfully logged in",
           });
-          
-          // Redirect business users to dashboard right after sign-in
-          if (user?.role === 'business') {
-            navigate('/dashboard');
-          }
         } else if (event === 'SIGNED_OUT') {
           toast({
             title: "Logged out",
@@ -46,7 +53,7 @@ const AuthMiddleware = () => {
     return () => {
       authListener.subscription.unsubscribe();
     };
-  }, [toast, refreshSession, navigate, user]);
+  }, [toast, refreshSession, navigate]);
   
   // Check authentication tokens on route change and validate session
   useEffect(() => {
@@ -70,6 +77,18 @@ const AuthMiddleware = () => {
         if (data.session && !isLoggedIn) {
           await refreshSession();
           console.log('Auth refresh triggered due to route change');
+          
+          // Check if the user is a business user after refresh
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', data.session.user.id)
+            .single();
+            
+          if (profileData?.role === 'business' && !location.pathname.startsWith('/dashboard')) {
+            console.log('Business user detected after session refresh, redirecting to dashboard');
+            navigate('/dashboard');
+          }
         }
       } catch (err) {
         console.error('Error verifying auth:', err);
@@ -77,7 +96,7 @@ const AuthMiddleware = () => {
     };
     
     verifyAuth();
-  }, [location.pathname, isLoggedIn, refreshSession]);
+  }, [location.pathname, isLoggedIn, refreshSession, navigate]);
   
   // Direct business users to dashboard if they try to access shopper pages
   useEffect(() => {
