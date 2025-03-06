@@ -1,6 +1,5 @@
 
 import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
 import { Star, Store, MapPin, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
