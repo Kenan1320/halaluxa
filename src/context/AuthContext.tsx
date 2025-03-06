@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -309,6 +308,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       });
       
       if (authError) {
+        console.error('Auth signup error:', authError);
         toast({
           title: "Signup Failed",
           description: authError.message,
@@ -346,12 +346,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       if (profileError) {
         console.error('Profile creation error:', profileError);
+        
         toast({
-          title: "Profile Creation Failed",
-          description: "Your account was created but we couldn't set up your profile. Please contact support.",
-          variant: "destructive",
+          title: "Profile Creation Warning",
+          description: "Your account was created but we couldn't set up your profile completely. Some features may be limited.",
+          variant: "warning",
         });
-        return false;
       }
       
       if (role === 'business' && shopDetails?.shopName) {
@@ -371,7 +371,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           toast({
             title: "Shop Creation Warning",
             description: "Your account was created but there was an issue setting up your shop. You can set it up later in your dashboard.",
-            variant: "destructive",
+            variant: "warning",
           });
         }
       }

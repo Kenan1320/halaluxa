@@ -9,6 +9,39 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      orders: {
+        Row: {
+          created_at: string | null
+          date: string | null
+          id: string
+          items: Json
+          shipping_details: Json | null
+          status: string | null
+          total: number
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          date?: string | null
+          id?: string
+          items: Json
+          shipping_details?: Json | null
+          status?: string | null
+          total: number
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          date?: string | null
+          id?: string
+          items?: Json
+          shipping_details?: Json | null
+          status?: string | null
+          total?: number
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       products: {
         Row: {
           category: string
@@ -114,6 +147,33 @@ export type Database = {
           state?: string | null
           updated_at?: string
           zip?: string | null
+        }
+        Relationships: []
+      }
+      seller_accounts: {
+        Row: {
+          account_name: string
+          account_number: string
+          bank_name: string
+          created_at: string | null
+          id: string
+          seller_id: string | null
+        }
+        Insert: {
+          account_name: string
+          account_number: string
+          bank_name: string
+          created_at?: string | null
+          id?: string
+          seller_id?: string | null
+        }
+        Update: {
+          account_name?: string
+          account_number?: string
+          bank_name?: string
+          created_at?: string | null
+          id?: string
+          seller_id?: string | null
         }
         Relationships: []
       }

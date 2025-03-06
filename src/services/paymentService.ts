@@ -45,11 +45,37 @@ export const processPayment = async (
       if (sessionData.session?.user?.id) {
         const userId = sessionData.session.user.id;
         
-        // Instead of trying to directly access tables that might not exist,
-        // we'll store orders in localStorage only
         try {
-          // Note: In a production environment, you should create these tables in Supabase
-          // For now, we're using localStorage as fallback for all users
+          // Insert into orders table
+          const { error } = await supabase
+            .from('orders')
+            .insert({
+              user_id: userId,
+              date: orderDate,
+              items: cart.items,
+              total: cart.totalPrice,
+              shipping_details: shippingDetails,
+              status: 'Processing'
+            });
+            
+          if (error) {
+            console.error('Failed to save order to database:', error);
+            // Fallback to localStorage
+            const orders = JSON.parse(localStorage.getItem('orders') || '[]');
+            orders.push({
+              id: orderId,
+              user_id: userId,
+              date: orderDate,
+              items: cart.items,
+              total: cart.totalPrice,
+              shippingDetails,
+              status: 'Processing'
+            });
+            localStorage.setItem('orders', JSON.stringify(orders));
+          }
+        } catch (dbError) {
+          console.error('Failed to save order:', dbError);
+          // Fallback to localStorage
           const orders = JSON.parse(localStorage.getItem('orders') || '[]');
           orders.push({
             id: orderId,
@@ -61,8 +87,6 @@ export const processPayment = async (
             status: 'Processing'
           });
           localStorage.setItem('orders', JSON.stringify(orders));
-        } catch (dbError) {
-          console.error('Failed to save order:', dbError);
         }
       } else {
         // Fallback to localStorage if no user is signed in
@@ -93,9 +117,41 @@ export const processPayment = async (
 };
 
 // Get seller payment accounts
-export const getSellerAccounts = (): SellerAccount[] => {
+export const getSellerAccounts = async (): Promise<SellerAccount[]> => {
   try {
-    // Try to fetch from localStorage
+    // Check if user is authenticated
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (sessionData.session?.user?.id) {
+      const sellerId = sessionData.session.user.id;
+      
+      // Try to fetch from Supabase first
+      const { data, error } = await supabase
+        .from('seller_accounts')
+        .select('*')
+        .eq('seller_id', sellerId);
+        
+      if (error) {
+        console.error('Error fetching seller accounts from database:', error);
+        // Fallback to localStorage
+        const localAccounts = localStorage.getItem('sellerAccounts');
+        if (localAccounts) {
+          return JSON.parse(localAccounts);
+        }
+        return [];
+      }
+      
+      if (data && data.length > 0) {
+        // Map from DB format to our interface
+        return data.map(account => ({
+          sellerId: account.seller_id,
+          accountName: account.account_name,
+          accountNumber: account.account_number,
+          bankName: account.bank_name
+        }));
+      }
+    }
+    
+    // If not authenticated or no data, try localStorage
     const accounts = localStorage.getItem('sellerAccounts');
     if (accounts) {
       return JSON.parse(accounts);
@@ -108,9 +164,54 @@ export const getSellerAccounts = (): SellerAccount[] => {
 };
 
 // Save seller payment account
-export const saveSellerAccount = (account: SellerAccount): void => {
+export const saveSellerAccount = async (account: SellerAccount): Promise<void> => {
   try {
-    const accounts = getSellerAccounts();
+    // Check if user is authenticated
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (sessionData.session?.user?.id) {
+      const sellerId = sessionData.session.user.id;
+      
+      // Try to save to Supabase
+      const { error } = await supabase
+        .from('seller_accounts')
+        .insert({
+          seller_id: sellerId,
+          account_name: account.accountName,
+          account_number: account.accountNumber,
+          bank_name: account.bankName
+        });
+        
+      if (error) {
+        console.error('Error saving seller account to database:', error);
+        // Fallback to localStorage
+        const accounts = getSellerAccounts();
+        const existingIndex = (await accounts).findIndex(a => a.sellerId === account.sellerId);
+        
+        if (existingIndex >= 0) {
+          (await accounts)[existingIndex] = account;
+        } else {
+          (await accounts).push(account);
+        }
+        
+        localStorage.setItem('sellerAccounts', JSON.stringify(await accounts));
+      }
+    } else {
+      // Save to localStorage if not authenticated
+      const accounts = await getSellerAccounts();
+      const existingIndex = accounts.findIndex(a => a.sellerId === account.sellerId);
+      
+      if (existingIndex >= 0) {
+        accounts[existingIndex] = account;
+      } else {
+        accounts.push(account);
+      }
+      
+      localStorage.setItem('sellerAccounts', JSON.stringify(accounts));
+    }
+  } catch (error) {
+    console.error('Error saving seller account:', error);
+    // Ensure we still save to localStorage as a fallback
+    const accounts = await getSellerAccounts();
     const existingIndex = accounts.findIndex(a => a.sellerId === account.sellerId);
     
     if (existingIndex >= 0) {
@@ -120,11 +221,5 @@ export const saveSellerAccount = (account: SellerAccount): void => {
     }
     
     localStorage.setItem('sellerAccounts', JSON.stringify(accounts));
-    
-    // Note: In a production environment, you should create these tables in Supabase
-    // For now, we're using localStorage for all users
-    console.log('Saved seller account to localStorage');
-  } catch (error) {
-    console.error('Error saving seller account:', error);
   }
 };

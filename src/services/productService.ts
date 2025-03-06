@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Product, mapDbProductToModel, mapModelToDbProduct } from '@/models/product';
 
