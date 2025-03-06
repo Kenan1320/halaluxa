@@ -1,10 +1,10 @@
-
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import DashboardSidebar from './DashboardSidebar';
 import DashboardHeader from './DashboardHeader';
 import { Outlet } from 'react-router-dom';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { cn } from '@/lib/utils';
 
 const DashboardLayout = () => {
   const isMobile = useIsMobile();
@@ -12,7 +12,6 @@ const DashboardLayout = () => {
     localStorage.getItem('dashboardViewMode') as 'mobile' | 'desktop' || 'mobile'
   );
   
-  // Check for view mode changes
   useEffect(() => {
     const handleStorageChange = () => {
       setViewMode(localStorage.getItem('dashboardViewMode') as 'mobile' | 'desktop' || 'mobile');
@@ -20,7 +19,6 @@ const DashboardLayout = () => {
     
     window.addEventListener('storage', handleStorageChange);
     
-    // Also poll for changes since localStorage events don't fire in the same window
     const interval = setInterval(() => {
       const currentViewMode = localStorage.getItem('dashboardViewMode') as 'mobile' | 'desktop' || 'mobile';
       if (currentViewMode !== viewMode) {
@@ -34,7 +32,6 @@ const DashboardLayout = () => {
     };
   }, [viewMode]);
   
-  // Scroll to top on page load
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);

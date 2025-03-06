@@ -19,78 +19,76 @@ const SplashScreen = ({ onFinished }: SplashScreenProps) => {
     return () => clearTimeout(timer);
   }, [onFinished]);
 
-  // Animation variants for the logo text
-  const letterVariants = {
-    initial: { opacity: 1 },
-    animate: { opacity: 1, transition: { staggerChildren: 0.1 } }
-  };
-
-  const letterChildVariants = {
-    initial: { color: "#2A866A" },
-    animate: { 
-      color: ["#2A866A", "#3A9E7E", "#2F9173", "#1F7A5C", "#2A866A"],
-      transition: { 
-        duration: 8, 
-        repeat: Infinity,
-        repeatType: "reverse" as const
-      } 
-    }
-  };
-
   return (
     <AnimatePresence>
       {isVisible && (
         <motion.div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-[#2A866A]/10"
+          className="fixed inset-0 z-50 flex items-center justify-center"
           initial={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.8, ease: "easeInOut" }}
         >
-          <div className="relative flex flex-col items-center justify-center w-full max-w-lg">
-            {/* Haluna Logo and Pulse Ball */}
+          {/* Gradient Background */}
+          <div className="absolute inset-0 bg-gradient-to-b from-[#0D5D56] via-[#2A866A] to-[#F97316] overflow-hidden">
+            {/* Animated gradient overlay */}
+            <motion.div 
+              className="absolute inset-0 bg-gradient-to-b from-[#0D5D56] via-[#2A866A] to-[#F97316]"
+              animate={{ 
+                y: [0, 10, 0],
+                opacity: [1, 0.9, 1]
+              }}
+              transition={{
+                duration: 8,
+                repeat: Infinity,
+                repeatType: "reverse"
+              }}
+            />
+          </div>
+
+          <div className="relative flex flex-col items-center justify-center w-full max-w-lg z-10">
+            {/* Haluna Logo */}
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5 }}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ 
+                duration: 0.7, 
+                ease: "easeOut",
+                delay: 0.2
+              }}
               className="flex flex-col items-center"
             >
-              <div className="text-center mb-3">
-                <motion.h1 
-                  className="text-[4rem] font-bold flex"
-                  initial={{ y: -20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ duration: 0.4 }}
-                >
-                  {Array.from("Haluna").map((letter, index) => (
-                    <motion.span
-                      key={index}
-                      variants={letterChildVariants}
-                      initial="initial"
-                      animate="animate"
-                      style={{ display: 'inline-block' }}
-                      className="font-serif"
-                    >
-                      {letter}
-                    </motion.span>
-                  ))}
-                </motion.h1>
-              </div>
+              <motion.h1 
+                className="text-white text-[4rem] font-serif font-bold leading-tight"
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ 
+                  duration: 0.8,
+                  ease: "easeOut",
+                  delay: 0.4
+                }}
+              >
+                Haluna
+              </motion.h1>
               
-              {/* Orange Ball with Pulse */}
+              {/* Orange circle */}
               <motion.div
-                className="mt-3"
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 0.5, duration: 0.4 }}
+                className="mt-5"
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: 1, opacity: 0.85 }}
+                transition={{ 
+                  delay: 0.7, 
+                  duration: 0.6,
+                  ease: "easeOut"
+                }}
               >
                 <motion.div
-                  className="w-10 h-10 bg-orange-400 rounded-full"
+                  className="w-12 h-12 bg-orange-400 rounded-full"
                   animate={{ 
-                    scale: [1, 1.2, 1],
-                    opacity: [0.7, 1, 0.7] 
+                    scale: [1, 1.1, 1],
+                    opacity: [0.85, 1, 0.85] 
                   }}
                   transition={{
-                    duration: 1.2,
+                    duration: 2.5,
                     repeat: Infinity,
                     ease: "easeInOut"
                   }}

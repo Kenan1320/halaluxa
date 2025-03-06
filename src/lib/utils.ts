@@ -63,3 +63,11 @@ export function getRandomId(): string {
 export function getInitialCharacter(name: string): string {
   return name.charAt(0).toUpperCase();
 }
+
+export function getGradientStyle(startColor: string, endColor: string, direction = 'to-b'): string {
+  return `bg-gradient-${direction} from-[${startColor}] to-[${endColor}]`;
+}
+
+export function createAnimatedGradient(startColor: string, midColor: string, endColor: string) {
+  return `linear-gradient(to bottom, ${startColor}, ${midColor}, ${endColor})`;
+}
