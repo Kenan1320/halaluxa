@@ -68,39 +68,46 @@ const SearchBar = ({ onSearch }: SearchBarProps) => {
   };
 
   return (
-    <div className="w-full max-w-5xl mx-auto">
-      <form onSubmit={handleSearch} className="relative flex">
-        <input
-          type="text"
-          placeholder="Search Haluna"
-          className="py-2.5 px-4 w-full rounded-l-md border-none focus:ring-0 flex-1"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-        
-        <div className="absolute right-16 top-0 h-full flex items-center px-2">
-          <button 
-            type="button" 
-            className={`p-1.5 rounded-full ${isRecording ? 'bg-red-100' : ''}`}
-            onClick={startVoiceSearch}
-          >
-            <Mic className={`h-5 w-5 ${isRecording ? 'text-red-500 animate-pulse' : 'text-gray-500'}`} />
-            {isRecording && (
-              <motion.div
-                className="absolute inset-0 rounded-full bg-red-100 z-[-1]"
-                animate={{ scale: [1, 1.2, 1] }}
-                transition={{ duration: 1.5, repeat: Infinity }}
-              />
-            )}
-          </button>
+    <div className="w-full max-w-3xl mx-auto">
+      <form onSubmit={handleSearch} className="relative">
+        <div className="relative flex items-center w-full">
+          <div className="absolute left-4">
+            <Search className="h-5 w-5 text-gray-400" />
+          </div>
+          
+          <input
+            type="text"
+            placeholder="Search or ask a question"
+            className="pl-12 pr-24 py-3.5 w-full rounded-full border-none shadow-md focus:ring-2 focus:ring-orange-300 bg-white text-gray-700"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+          
+          <div className="absolute right-4 flex items-center space-x-2">
+            <button 
+              type="button" 
+              className="bg-transparent p-1.5 rounded-full hover:bg-gray-100"
+              onClick={() => {}}
+            >
+              <Camera className="h-5 w-5 text-gray-500" />
+            </button>
+            
+            <button 
+              type="button" 
+              className={`bg-transparent p-1.5 rounded-full ${isRecording ? 'bg-red-100' : 'hover:bg-gray-100'}`}
+              onClick={startVoiceSearch}
+            >
+              <Mic className={`h-5 w-5 ${isRecording ? 'text-red-500 animate-pulse' : 'text-gray-500'}`} />
+              {isRecording && (
+                <motion.div
+                  className="absolute inset-0 rounded-full bg-red-100 z-[-1]"
+                  animate={{ scale: [1, 1.2, 1] }}
+                  transition={{ duration: 1.5, repeat: Infinity }}
+                />
+              )}
+            </button>
+          </div>
         </div>
-        
-        <button 
-          type="submit" 
-          className="bg-orange-400 hover:bg-orange-500 px-4 flex items-center justify-center rounded-r-md"
-        >
-          <Search className="h-5 w-5 text-zinc-800" />
-        </button>
       </form>
     </div>
   );

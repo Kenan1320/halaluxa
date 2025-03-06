@@ -1,7 +1,4 @@
 
 <svg width="180" height="70" viewBox="0 0 180 70" xmlns="http://www.w3.org/2000/svg">
-  <path d="M10,40 Q90,80 160,40" fill="none" stroke="#F97316" stroke-width="6" stroke-linecap="round" />
-  <circle cx="165" cy="40" r="8" fill="#F97316">
-    <animate attributeName="opacity" values="0.7;1;0.7" dur="2s" repeatCount="indefinite" />
-  </circle>
+  <path d="M10,40 Q90,80 160,40 L170,30" fill="none" stroke="#F97316" stroke-width="6" stroke-linecap="round" />
 </svg>
