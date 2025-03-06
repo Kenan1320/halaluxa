@@ -3,12 +3,13 @@ import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, Store, MapPin, Search, Globe } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useLanguage } from '@/context/LanguageContext';
 import AuthNavItems from './AuthNavItems';
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [language, setLanguage] = useState('en'); // Default language is English
+  const { language, toggleLanguage, translate } = useLanguage();
   const isMobile = useIsMobile();
   const location = useLocation();
   
@@ -26,12 +27,6 @@ const Navbar = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-
-  const toggleLanguage = () => {
-    setLanguage(prev => prev === 'en' ? 'ar' : 'en');
-    // Here you would implement the actual translation logic
-    // This is a placeholder for the language toggle functionality
-  };
   
   const navLinks = [
     { href: '/', label: 'Home' },
@@ -69,7 +64,7 @@ const Navbar = () => {
                     location.pathname === link.href ? 'font-medium text-haluna-primary' : ''
                   }`}
                 >
-                  {link.label}
+                  {translate(link.label)}
                 </Link>
               ))}
             </nav>
@@ -121,7 +116,7 @@ const Navbar = () => {
                   location.pathname === link.href ? 'font-medium text-haluna-primary' : ''
                 }`}
               >
-                {link.label}
+                {translate(link.label)}
               </Link>
             ))}
           </nav>

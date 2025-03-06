@@ -3,19 +3,21 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ShoppingBag, Store, User, LogOut } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { useLanguage } from '@/context/LanguageContext';
 import CartDropdown from '@/components/shop/CartDropdown';
 
 const AuthNavItems = () => {
   const { isLoggedIn, user, logout } = useAuth();
+  const { translate } = useLanguage();
   
   if (!isLoggedIn) {
     return (
       <div className="flex items-center gap-4">
         <Link to="/login" className="text-haluna-text hover:text-haluna-primary transition">
-          Log In
+          {translate('Log In')}
         </Link>
         <Button href="/signup" size="sm">
-          Sign Up
+          {translate('Sign Up')}
         </Button>
       </div>
     );
@@ -26,13 +28,13 @@ const AuthNavItems = () => {
       {user?.role === 'business' ? (
         <Button href="/dashboard" size="sm" variant="outline" className="flex items-center gap-2">
           <Store className="h-4 w-4" />
-          <span className="hidden md:inline">Dashboard</span>
+          <span className="hidden md:inline">{translate('Dashboard')}</span>
         </Button>
       ) : (
         <div className="flex items-center gap-4">
           <Button href="/shop" size="sm" variant="outline" className="flex items-center gap-2">
             <ShoppingBag className="h-4 w-4" />
-            <span className="hidden md:inline">Shop</span>
+            <span className="hidden md:inline">{translate('Shop')}</span>
           </Button>
           
           <CartDropdown />
@@ -53,12 +55,18 @@ const AuthNavItems = () => {
             <p className="text-xs text-haluna-text-light">{user?.email}</p>
           </div>
           <div className="p-2">
+            {user?.role === 'shopper' && (
+              <Link to="/profile" className="block w-full text-left p-2 rounded-md flex items-center gap-2 hover:bg-haluna-primary-light">
+                <User className="h-4 w-4" />
+                <span>{translate('Profile')}</span>
+              </Link>
+            )}
             <button 
               onClick={logout}
               className="w-full text-left p-2 rounded-md flex items-center gap-2 hover:bg-haluna-primary-light text-red-500"
             >
               <LogOut className="h-4 w-4" />
-              <span>Sign Out</span>
+              <span>{translate('Logout')}</span>
             </button>
           </div>
         </div>

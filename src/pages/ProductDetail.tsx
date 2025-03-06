@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Navbar from '@/components/layout/Navbar';
@@ -91,7 +92,7 @@ const ProductDetail = () => {
     const newReview = {
       id: `review-${Date.now()}`,
       userId: user?.id || 'anonymous',
-      username: user?.displayName || user?.email?.split('@')[0] || 'Anonymous User',
+      username: user?.name || (user?.email ? user.email.split('@')[0] : 'Anonymous User'),
       rating: reviewData.rating,
       comment: reviewData.comment,
       createdAt: new Date().toISOString(),

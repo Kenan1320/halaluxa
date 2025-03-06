@@ -6,12 +6,14 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/context/AuthContext";
 import { CartProvider } from "@/context/CartContext";
+import { LanguageProvider } from "@/context/LanguageContext";
+import { LocationProvider } from "@/context/LocationContext";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
 // Pages
 import Index from "./pages/Index";
 import Shop from "./pages/Shop";
-import Browse from "./pages/Browse"; // Add the new Browse page
+import Browse from "./pages/Browse"; 
 import ProductDetail from "./pages/ProductDetail";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
@@ -34,6 +36,7 @@ import OrdersPage from "./pages/dashboard/OrdersPage";
 import CustomersPage from "./pages/dashboard/CustomersPage";
 import SettingsPage from "./pages/dashboard/SettingsPage";
 import PaymentAccountPage from "./pages/dashboard/PaymentAccountPage";
+import UserProfilePage from "./pages/profile/UserProfilePage";
 
 const queryClient = new QueryClient();
 
@@ -46,7 +49,7 @@ const AppRoutes = () => (
     <Route path="/login" element={<LoginPage />} />
     <Route path="/signup" element={<SignUpPage />} />
     <Route path="/shop" element={<Shop />} />
-    <Route path="/browse" element={<Browse />} /> {/* Add the new Browse route */}
+    <Route path="/browse" element={<Browse />} />
     <Route path="/shops" element={<Shops />} />
     <Route path="/shop/:shopId" element={<ShopDetail />} />
     <Route path="/product/:productId" element={<ProductDetail />} />
@@ -70,6 +73,11 @@ const AppRoutes = () => (
     <Route path="/orders" element={
       <ProtectedRoute requiredRole="shopper">
         <Orders />
+      </ProtectedRoute>
+    } />
+    <Route path="/profile" element={
+      <ProtectedRoute requiredRole="shopper">
+        <UserProfilePage />
       </ProtectedRoute>
     } />
     
@@ -100,11 +108,15 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <AuthProvider>
-          <CartProvider>
-            <AppRoutes />
-          </CartProvider>
-        </AuthProvider>
+        <LanguageProvider>
+          <AuthProvider>
+            <CartProvider>
+              <LocationProvider>
+                <AppRoutes />
+              </LocationProvider>
+            </CartProvider>
+          </AuthProvider>
+        </LanguageProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
