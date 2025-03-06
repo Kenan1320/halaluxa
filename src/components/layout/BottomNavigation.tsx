@@ -9,7 +9,7 @@ import { useCart } from '@/context/CartContext';
 const BottomNavigation = () => {
   const location = useLocation();
   const { isLoggedIn, user } = useAuth();
-  const { items } = useCart();
+  const { cart } = useCart();
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
 
@@ -56,7 +56,7 @@ const BottomNavigation = () => {
       icon: <ShoppingCart className="h-5 w-5" />,
       path: isLoggedIn ? '/cart' : '/login',
       match: ['/cart', '/checkout', '/orders', '/order-confirmation'],
-      badge: items.length > 0 ? items.length : undefined
+      badge: cart.items.length > 0 ? cart.items.length : undefined
     },
     {
       label: 'Account',

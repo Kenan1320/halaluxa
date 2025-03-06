@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const CartDropdown = () => {
-  const { items, updateItemQuantity, removeItem, clearCart, getSubtotal } = useCart();
+  const { cart, updateQuantity, removeFromCart, clearCart } = useCart();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -30,6 +30,11 @@ const CartDropdown = () => {
 
   const toggleDropdown = () => setIsOpen(!isOpen);
 
+  // Calculate subtotal from cart
+  const getSubtotal = () => {
+    return cart.totalPrice;
+  };
+
   return (
     <div className="relative" ref={dropdownRef}>
       <button
@@ -37,9 +42,9 @@ const CartDropdown = () => {
         className="flex items-center text-white hover:text-white/80 transition relative"
       >
         <ShoppingCart className="h-5 w-5" />
-        {items.length > 0 && (
+        {cart.items.length > 0 && (
           <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full">
-            {items.length}
+            {cart.items.length}
           </span>
         )}
         <span className="ml-2 hidden md:inline">Cart</span>
@@ -55,13 +60,13 @@ const CartDropdown = () => {
             className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg overflow-hidden z-50"
           >
             <div className="p-4 border-b flex items-center justify-between">
-              <h3 className="font-medium">Shopping Cart ({items.length})</h3>
+              <h3 className="font-medium">Shopping Cart ({cart.items.length})</h3>
               <button onClick={toggleDropdown} className="text-gray-500 hover:text-gray-700">
                 <X className="h-4 w-4" />
               </button>
             </div>
             
-            {items.length === 0 ? (
+            {cart.items.length === 0 ? (
               <div className="p-6 text-center">
                 <ShoppingCart className="h-10 w-10 mx-auto text-gray-300 mb-2" />
                 <p className="text-gray-500 mb-4">Your cart is empty</p>
@@ -72,18 +77,18 @@ const CartDropdown = () => {
             ) : (
               <>
                 <div className="max-h-72 overflow-y-auto">
-                  {items.map((item) => (
-                    <div key={item.id} className="p-3 border-b flex items-center">
+                  {cart.items.map((item) => (
+                    <div key={item.product.id} className="p-3 border-b flex items-center">
                       <div 
                         className="w-14 h-14 bg-cover bg-center rounded mr-3 flex-shrink-0" 
-                        style={{ backgroundImage: `url(${item.image})` }}
+                        style={{ backgroundImage: `url(${item.product.images?.[0] || '/placeholder.svg'})` }}
                       />
                       <div className="flex-grow">
-                        <h4 className="text-sm font-medium line-clamp-1">{item.name}</h4>
-                        <p className="text-xs text-gray-500">${item.price.toFixed(2)} x {item.quantity}</p>
+                        <h4 className="text-sm font-medium line-clamp-1">{item.product.name}</h4>
+                        <p className="text-xs text-gray-500">${item.product.price.toFixed(2)} x {item.quantity}</p>
                         <div className="flex items-center mt-1">
                           <button 
-                            onClick={() => updateItemQuantity(item.id, item.quantity - 1)}
+                            onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
                             className="p-1 rounded-full hover:bg-gray-100"
                             disabled={item.quantity <= 1}
                           >
@@ -91,7 +96,7 @@ const CartDropdown = () => {
                           </button>
                           <span className="mx-2 text-xs">{item.quantity}</span>
                           <button 
-                            onClick={() => updateItemQuantity(item.id, item.quantity + 1)}
+                            onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
                             className="p-1 rounded-full hover:bg-gray-100"
                           >
                             <Plus className="h-3 w-3" />
@@ -99,9 +104,9 @@ const CartDropdown = () => {
                         </div>
                       </div>
                       <div className="flex items-end flex-col">
-                        <p className="font-medium">${(item.price * item.quantity).toFixed(2)}</p>
+                        <p className="font-medium">${(item.product.price * item.quantity).toFixed(2)}</p>
                         <button 
-                          onClick={() => removeItem(item.id)}
+                          onClick={() => removeFromCart(item.product.id)}
                           className="text-xs text-red-500 hover:text-red-700"
                         >
                           Remove
