@@ -12,6 +12,23 @@ if (typeof window !== 'undefined') {
   
   // Prevent FOUC (Flash of Unstyled Content)
   document.documentElement.classList.add('no-fouc');
+  
+  // Additional performance optimizations for wave animations
+  document.documentElement.style.setProperty('--webkit-font-smoothing', 'antialiased');
+  document.documentElement.style.setProperty('--moz-osx-font-smoothing', 'grayscale');
+  
+  // Force GPU acceleration for smoother wave animations
+  const style = document.createElement('style');
+  style.textContent = `
+    .force-gpu {
+      transform: translateZ(0);
+      will-change: transform;
+    }
+    .wave-animation {
+      will-change: transform, opacity;
+    }
+  `;
+  document.head.appendChild(style);
 }
 
 createRoot(document.getElementById("root")!).render(<App />);

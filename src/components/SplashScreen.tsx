@@ -1,6 +1,7 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { createPremiumGradient } from '@/lib/utils';
 
 interface SplashScreenProps {
   onFinished: () => void;
@@ -8,112 +9,148 @@ interface SplashScreenProps {
 
 const SplashScreen = ({ onFinished }: SplashScreenProps) => {
   const [isVisible, setIsVisible] = useState(true);
+  const [taglineVisible, setTaglineVisible] = useState(false);
+  const [waveComplete, setWaveComplete] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // Show tagline after a delay
+    const taglineTimer = setTimeout(() => {
+      setTaglineVisible(true);
+    }, 1800);
+
+    // Hide splash screen after desired duration
     const timer = setTimeout(() => {
       setIsVisible(false);
       // Give time for exit animation before calling onFinished
-      setTimeout(onFinished, 800);
-    }, 3500); // 3.5 seconds display time for better experience
+      setTimeout(onFinished, 900);
+    }, 4500);
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      clearTimeout(taglineTimer);
+    };
   }, [onFinished]);
+
+  // Text reveal animation for each letter
+  const letterVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: (i: number) => ({
+      opacity: 1,
+      y: 0,
+      transition: {
+        delay: 1.2 + (i * 0.1),
+        duration: 0.6,
+        ease: [0.22, 1, 0.36, 1]
+      }
+    })
+  };
+
+  const brandName = "Haluna";
 
   return (
     <AnimatePresence>
       {isVisible && (
         <motion.div
-          className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden"
+          ref={containerRef}
+          className="fixed inset-0 z-50 flex flex-col items-center justify-center overflow-hidden"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.8, ease: "easeInOut" }}
         >
-          {/* Premium Gradient Background with Animation */}
-          <div className="absolute inset-0 bg-gradient-to-b from-[#1A6B64] via-[#2A866A] to-[#F97316] overflow-hidden">
-            {/* Animated gradient overlay for dynamic feel */}
-            <motion.div 
-              className="absolute inset-0 bg-gradient-to-b from-[#1A6B64] via-[#2A866A] to-[#F97316]"
+          {/* Pastel green background (#E5F4EF) */}
+          <div className="absolute inset-0 bg-[#E5F4EF]" />
+          
+          {/* Wave animation container */}
+          <div className="absolute inset-0 flex flex-col justify-end overflow-hidden">
+            {/* First wave - Deep green (#29866B) */}
+            <motion.div
+              className="w-full h-[60%] bg-[#29866B] rounded-t-[100%]"
+              initial={{ y: "100%" }}
               animate={{ 
-                y: [0, 20, 0],
-                opacity: [1, 0.92, 1]
+                y: "0%",
+                transition: { 
+                  duration: 1.8, 
+                  ease: [0.22, 1, 0.36, 1],
+                }
               }}
-              transition={{
-                duration: 10,
-                repeat: Infinity,
-                repeatType: "reverse",
-                ease: "easeInOut"
-              }}
+              onAnimationComplete={() => setWaveComplete(true)}
             />
             
-            {/* Additional subtle pattern overlay for premium feel */}
-            <div className="absolute inset-0 opacity-[0.04] mix-blend-overlay">
-              <div className="w-full h-full bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiMwMDAiIGZpbGwtb3BhY2l0eT0iLjAyIj48cGF0aCBkPSJNMzYgMzRjMC0yLjIxIDEuNzktNCA0LTRzNCAxLjc5IDQgNC0xLjc5IDQtNCA0LTQtMS43OS00LTRtMC0xNGMwLTIuMjEgMS43OS00IDQtNHM0IDEuNzkgNCA0LTEuNzkgNC00IDQtNC0xLjc5LTQtNG0wLTE0YzAtMi4yMSAxLjc5LTQgNC00czQgMS43OSA0IDQtMS43OSA0LTQgNC00LTEuNzktNC00TTIyIDM0YzAtMi4yMSAxLjc5LTQgNC00czQgMS43OSA0IDQtMS43OSA0LTQgNC00LTEuNzktNC00bTAtMTRjMC0yLjIxIDEuNzktNCA0LTRzNCAxLjc5IDQgNC0xLjc5IDQtNCA0LTQtMS43OS00LTRtMC0xNGMwLTIuMjEgMS43OS00IDQtNHM0IDEuNzkgNCA0LTEuNzkgNC00IDQtNC0xLjc5LTQtNE04IDM0YzAtMi4yMSAxLjc5LTQgNC00czQgMS43OSA0IDQtMS43OSA0LTQgNC00LTEuNzktNC00bTAtMTRjMC0yLjIxIDEuNzktNCA0LTRzNCAxLjc5IDQgNC0xLjc5IDQtNCA0LTQtMS43OS00LTRtMC0xNGMwLTIuMjEgMS43OS00IDQtNHM0IDEuNzkgNCA0LTEuNzkgNC00IDQtNC0xLjc5LTQtNCIvPjwvZz48L2c+PC9zdmc+')]"
-               />
-            </div>
+            {/* Second wave - Warm orange (#E4875E) with blend into green */}
+            <motion.div
+              className="absolute bottom-0 w-full h-[45%] bg-gradient-to-t from-[#E4875E] to-[#29866B] rounded-t-[100%]"
+              initial={{ y: "100%" }}
+              animate={{ 
+                y: "0%",
+                transition: { 
+                  duration: 1.8, 
+                  ease: [0.22, 1, 0.36, 1],
+                  delay: 0.2 
+                }
+              }}
+            />
           </div>
 
-          <div className="relative flex flex-col items-center justify-center w-full max-w-lg z-10">
-            {/* App Name with Elegant Typography */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.92 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ 
-                duration: 0.9, 
-                ease: "easeOut",
-                delay: 0.3
-              }}
-              className="flex flex-col items-center"
-            >
-              <motion.h1 
-                className="text-white text-[4.5rem] font-serif font-bold leading-tight tracking-wide"
-                initial={{ y: 15, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ 
-                  duration: 1,
-                  ease: "easeOut",
-                  delay: 0.5
-                }}
-              >
-                Haluna
-              </motion.h1>
-              
-              {/* Subtitle for context - Muslim marketplace */}
-              <motion.p
-                className="text-white text-opacity-90 text-sm tracking-wider mt-1 font-light"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 1, delay: 0.8 }}
-              >
-                Muslim Marketplace
-              </motion.p>
-              
-              {/* Circular Emblem Symbol */}
-              <motion.div
-                className="mt-6"
-                initial={{ scale: 0, opacity: 0 }}
-                animate={{ scale: 1, opacity: 0.85 }}
-                transition={{ 
-                  delay: 0.9, 
-                  duration: 0.7,
-                  ease: "easeOut"
-                }}
-              >
-                <motion.div
-                  className="w-14 h-14 bg-orange-400 rounded-full flex items-center justify-center"
-                  animate={{ 
-                    scale: [1, 1.08, 1],
-                    opacity: [0.85, 0.92, 0.85] 
-                  }}
-                  transition={{
-                    duration: 3,
-                    repeat: Infinity,
-                    ease: "easeInOut"
-                  }}
+          {/* Content container */}
+          <div className="relative z-10 flex flex-col items-center">
+            {/* Brand name with letter-by-letter reveal */}
+            <div className="flex overflow-hidden">
+              {brandName.split('').map((letter, i) => (
+                <motion.span
+                  key={`letter-${i}`}
+                  custom={i}
+                  variants={letterVariants}
+                  initial="hidden"
+                  animate="visible"
+                  className="text-white text-[4.5rem] font-serif font-bold tracking-wide"
                 >
-                  {/* Optional: Add a subtle inner design if desired */}
-                  <div className="w-10 h-10 rounded-full border-2 border-white border-opacity-40"></div>
-                </motion.div>
+                  {letter}
+                </motion.span>
+              ))}
+            </div>
+            
+            {/* Tagline */}
+            <motion.p
+              className="text-white text-opacity-90 text-sm tracking-wider mt-1 font-light"
+              initial={{ opacity: 0, y: 10 }}
+              animate={taglineVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
+              transition={{ 
+                duration: 0.8,
+                ease: "easeOut",
+              }}
+            >
+              Where You Shop Your Muslim Shops Nearby and Beyond
+            </motion.p>
+            
+            {/* Circular element */}
+            <motion.div
+              className="mt-6"
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ 
+                scale: waveComplete ? 1 : 0, 
+                opacity: waveComplete ? 0.85 : 0 
+              }}
+              transition={{ 
+                delay: 0.2, 
+                duration: 0.7,
+                ease: "easeOut"
+              }}
+            >
+              <motion.div
+                className="w-14 h-14 bg-[#E4875E] rounded-full flex items-center justify-center"
+                animate={{ 
+                  scale: [1, 1.08, 1],
+                  opacity: [0.85, 0.92, 0.85] 
+                }}
+                transition={{
+                  duration: 3,
+                  repeat: Infinity,
+                  ease: "easeInOut"
+                }}
+              >
+                <div className="w-10 h-10 rounded-full border-2 border-white border-opacity-40"></div>
               </motion.div>
             </motion.div>
           </div>

@@ -105,3 +105,30 @@ export function getStaggeredAnimation(index: number, type: 'fade' | 'scale' | 's
   return animations[type];
 }
 
+// Wave animation helpers
+export function createWaveGradient(topColor: string, bottomColor: string, percentage = 50) {
+  return `linear-gradient(to bottom, ${topColor} 0%, ${bottomColor} ${percentage}%)`;
+}
+
+export function getWaveTransition(delay = 0, duration = 1.8) {
+  return {
+    duration,
+    delay,
+    ease: [0.22, 1, 0.36, 1] // Custom cubic-bezier for elegant flow
+  };
+}
+
+export function getLetterAnimation(index: number, baseDelay = 1.2, stagger = 0.1) {
+  return {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        delay: baseDelay + (index * stagger),
+        duration: 0.6,
+        ease: [0.22, 1, 0.36, 1]
+      }
+    }
+  };
+}
