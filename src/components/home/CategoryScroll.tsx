@@ -41,7 +41,7 @@ const CategoryScroll = () => {
   };
   
   return (
-    <div className="relative w-full my-3">
+    <div className="relative w-full py-2 bg-zinc-700 -mt-4 mb-4">
       <div className="absolute left-0 top-1/2 -translate-y-1/2 z-10">
         <button
           onClick={() => scroll('left')}
@@ -53,19 +53,19 @@ const CategoryScroll = () => {
       
       <div
         ref={scrollRef}
-        className="flex overflow-x-auto scrollbar-hide py-2 px-6 space-x-3"
+        className="flex overflow-x-auto scrollbar-hide py-1 px-6 space-x-4"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
         {categories.map((category) => (
           <motion.button
             key={category.id}
-            className="flex items-center space-x-2 whitespace-nowrap px-4 py-2 bg-gray-100 rounded-full flex-shrink-0"
-            whileHover={{ scale: 1.05, backgroundColor: '#FEF3C7' }}
+            className="flex flex-col items-center space-y-1 whitespace-nowrap px-3 py-1 text-white flex-shrink-0"
+            whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => handleCategoryClick(category.name)}
           >
-            <span>{category.icon}</span>
-            <span>{category.name}</span>
+            <span className="text-lg">{category.icon}</span>
+            <span className="text-xs">{category.name}</span>
           </motion.button>
         ))}
       </div>
