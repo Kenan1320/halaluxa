@@ -75,11 +75,11 @@ const NearbyShops = () => {
                   </div>
                 )}
               </div>
-              <h3 className="text-xl font-medium">{shop.name}</h3>
+              <h3 className="text-base font-medium">{shop.name}</h3>
             </div>
             <a 
               href={`/shop/${shop.id}`} 
-              className="text-sm font-medium text-black underline"
+              className="text-xs font-medium text-[#29866B] hover:underline"
             >
               View all
             </a>

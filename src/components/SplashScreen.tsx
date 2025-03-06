@@ -1,7 +1,6 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { createPremiumGradient } from '@/lib/utils';
 
 interface SplashScreenProps {
   onFinished: () => void;
@@ -66,8 +65,8 @@ const SplashScreen = ({ onFinished }: SplashScreenProps) => {
           exit={{ opacity: 0 }}
           transition={{ duration: 0.8, ease: "easeInOut" }}
         >
-          {/* Pastel green background (#E5F4EF) */}
-          <div className="absolute inset-0 bg-[#E5F4EF]" />
+          {/* Consistent light green background (#E4F5F0) matching the top nav */}
+          <div className="absolute inset-0 bg-[#E4F5F0]" />
           
           {/* Wave animation container */}
           <div className="absolute inset-0 flex flex-col justify-end overflow-hidden">
@@ -118,7 +117,7 @@ const SplashScreen = ({ onFinished }: SplashScreenProps) => {
               ))}
             </div>
             
-            {/* First Tagline - Bold and elegant */}
+            {/* Primary Tagline - Bold and elegant */}
             <motion.p
               className="text-white text-opacity-95 text-base font-medium tracking-wider mt-1"
               initial={{ opacity: 0, y: 10 }}
@@ -131,7 +130,7 @@ const SplashScreen = ({ onFinished }: SplashScreenProps) => {
               The Muslim Shops and Businesses
             </motion.p>
             
-            {/* Second Tagline - Different color */}
+            {/* Secondary Tagline - Different color */}
             <motion.p
               className="text-[#F9F5EB] text-opacity-90 text-sm tracking-wider mt-0.5 font-light"
               initial={{ opacity: 0, y: 10 }}

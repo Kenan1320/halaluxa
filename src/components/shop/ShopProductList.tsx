@@ -1,11 +1,13 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Heart } from 'lucide-react';
+import { ShoppingCart, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { getShopProducts } from '@/services/shopService';
 import { Product } from '@/models/product';
 import { useCart } from '@/context/CartContext';
+import { Link } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
 
 interface ShopProductListProps {
   shopId: string;
@@ -15,6 +17,9 @@ const ShopProductList = ({ shopId }: ShopProductListProps) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { addToCart } = useCart();
+  const { toast } = useToast();
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [selectedProduct, setSelectedProduct] = useState<string | null>(null);
   
   useEffect(() => {
     const loadProducts = async () => {
@@ -31,6 +36,15 @@ const ShopProductList = ({ shopId }: ShopProductListProps) => {
     
     loadProducts();
   }, [shopId]);
+  
+  const handleAddToCart = (product: Product, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    addToCart(product, 1);
+    toast({
+      title: "Added to cart",
+      description: `${product.name} has been added to your cart`,
+    });
+  };
   
   if (isLoading) {
     return (
@@ -56,68 +70,96 @@ const ShopProductList = ({ shopId }: ShopProductListProps) => {
   }
   
   return (
-    <div className="overflow-x-auto scrollbar-hide -mx-4 px-4">
+    <div className="overflow-x-auto scrollbar-hide -mx-4 px-4" ref={scrollRef}>
       <div className="flex gap-4 pb-4">
         {products.map((product) => (
           <motion.div 
             key={product.id}
-            className="flex-shrink-0 w-40 bg-white rounded-md border border-gray-200 overflow-hidden"
+            className={`flex-shrink-0 w-32 bg-white rounded-md overflow-hidden ${
+              selectedProduct === product.id ? 'scale-105 shadow-md' : ''
+            }`}
+            onClick={() => setSelectedProduct(
+              selectedProduct === product.id ? null : product.id
+            )}
             whileHover={{ y: -5 }}
+            layout
           >
-            {/* Product image */}
-            <div className="h-40 relative">
-              <img 
-                src={product.images[0] || '/placeholder.svg'} 
-                alt={product.name}
-                className="w-full h-full object-cover"
-              />
-              <button 
-                className="absolute top-2 right-2 w-8 h-8 rounded-full bg-white/80 flex items-center justify-center"
-                aria-label="Add to favorites"
-              >
-                <Heart className="w-5 h-5 text-gray-500" />
-              </button>
-            </div>
-            
-            {/* Product details */}
-            <div className="p-3">
-              <h4 className="font-medium text-sm line-clamp-2 mb-1">{product.name}</h4>
-              
-              {/* Price with discount if applicable */}
-              <div className="mb-2">
-                <div className="font-bold text-lg">${product.price.toFixed(2)}</div>
-                {product.price < 20 && (
-                  <div className="flex items-center gap-1">
-                    <span className="text-xs line-through text-gray-500">
-                      ${(product.price * 1.2).toFixed(2)}
-                    </span>
-                    <span className="text-xs font-medium text-green-600">
-                      {Math.round(20)}% off
-                    </span>
+            {selectedProduct === product.id ? (
+              // Expanded product card with details
+              <div className="w-56">
+                <div className="h-36 relative">
+                  <img 
+                    src={product.images[0] || '/placeholder.svg'} 
+                    alt={product.name}
+                    className="w-full h-full object-cover"
+                  />
+                  <button 
+                    className="absolute top-2 right-2 w-7 h-7 rounded-full bg-white/90 flex items-center justify-center shadow-sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedProduct(null);
+                    }}
+                  >
+                    <Heart className="w-4 h-4 text-gray-500" />
+                  </button>
+                </div>
+                
+                <div className="p-3">
+                  <Link to={`/product/${product.id}`}>
+                    <h4 className="font-medium text-sm mb-1">{product.name}</h4>
+                  </Link>
+                  <p className="text-xs text-gray-500 mb-2 line-clamp-2">{product.description}</p>
+                  
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="font-bold text-[#2A866A]">${product.price.toFixed(2)}</span>
                   </div>
-                )}
+                  
+                  <Button 
+                    variant="default"
+                    size="sm"
+                    className="w-full bg-[#29866B] hover:bg-[#1e5c4a] text-white text-xs h-8"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleAddToCart(product);
+                    }}
+                  >
+                    <ShoppingCart className="w-3 h-3 mr-1" />
+                    Add to cart
+                  </Button>
+                </div>
               </div>
-              
-              {/* Buttons */}
-              <div className="space-y-2">
-                <Button 
-                  variant="default"
-                  size="sm"
-                  className="w-full text-xs"
-                  onClick={() => addToCart(product, 1)}
-                >
-                  Add to cart
-                </Button>
-                <Button 
-                  variant="outline"
-                  size="sm"
-                  className="w-full text-xs"
-                  to={`/product/${product.id}`}
-                >
-                  Options
-                </Button>
+            ) : (
+              // Minimalist product card
+              <div>
+                {/* Product image */}
+                <div className="h-32 relative">
+                  <img 
+                    src={product.images[0] || '/placeholder.svg'} 
+                    alt={product.name}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-black/0 hover:bg-black/10 transition-colors flex items-center justify-center opacity-0 hover:opacity-100">
+                    <button 
+                      className="bg-white p-2 rounded-full shadow-sm transform translate-y-4 hover:translate-y-0 transition-transform"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleAddToCart(product, e);
+                      }}
+                    >
+                      <ShoppingCart className="w-3 h-3 text-[#2A866A]" />
+                    </button>
+                  </div>
+                </div>
+                
+                {/* Product details */}
+                <div className="p-2">
+                  <h4 className="font-medium text-xs line-clamp-1">{product.name}</h4>
+                  <div className="mt-1">
+                    <span className="font-bold text-xs text-[#2A866A]">${product.price.toFixed(2)}</span>
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
           </motion.div>
         ))}
       </div>

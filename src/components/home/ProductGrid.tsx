@@ -110,11 +110,6 @@ const ProductGrid = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <span className="text-[#2A866A] font-bold">${product.price.toFixed(2)}</span>
-                    {product.compareAtPrice && (
-                      <span className="text-xs text-gray-500 line-through ml-2">
-                        ${product.compareAtPrice.toFixed(2)}
-                      </span>
-                    )}
                   </div>
                   
                   <Button
@@ -141,14 +136,14 @@ const ProductGrid = () => {
               </div>
             </div>
           ) : (
-            // Collapsed product view - clean and borderless
-            <div className="group bg-transparent hover:bg-white hover:shadow-sm p-2 rounded-lg transition-all duration-200">
-              <div className="relative h-32 sm:h-36 rounded-lg overflow-hidden mb-2">
+            // Collapsed product view - clean, minimalist design with just image, name and price
+            <div className="group overflow-hidden rounded-lg bg-white">
+              <div className="relative h-32 sm:h-36 overflow-hidden">
                 {product.images && product.images[0] ? (
                   <img 
                     src={product.images[0]} 
                     alt={product.name} 
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                   />
                 ) : (
                   <div className="w-full h-full bg-gray-100 flex items-center justify-center">
@@ -156,50 +151,21 @@ const ProductGrid = () => {
                   </div>
                 )}
                 
-                <button
-                  className="absolute top-2 right-2 text-white bg-black/30 p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    // Add to wishlist
-                  }}
-                >
-                  <Heart className="h-3 w-3" />
-                </button>
-                
-                {product.compareAtPrice && (
-                  <div className="absolute top-2 left-2 bg-[#FF7A45] text-white text-xs px-1.5 py-0.5 rounded">
-                    Sale
-                  </div>
-                )}
-              </div>
-              
-              <h3 className="font-medium text-sm line-clamp-1">{product.name}</h3>
-              
-              <div className="flex items-center justify-between mt-1">
-                <div className="flex flex-col">
-                  <span className="text-[#2A866A] font-bold text-sm">${product.price.toFixed(2)}</span>
-                  {product.compareAtPrice && (
-                    <span className="text-xs text-gray-500 line-through">
-                      ${product.compareAtPrice.toFixed(2)}
-                    </span>
-                  )}
-                </div>
-                
-                <div className="flex gap-1">
+                {/* Cart button overlay */}
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
                   <button
-                    className="text-[#FF7A45] p-1 rounded-full hover:bg-[#FF7A45]/10 transition-colors"
+                    className="bg-white rounded-full p-2 shadow-md transform translate-y-4 group-hover:translate-y-0 transition-transform"
                     onClick={(e) => handleAddToCart(product, e)}
                   >
-                    <ShoppingCart className="h-4 w-4" />
+                    <ShoppingCart className="h-4 w-4 text-[#2A866A]" />
                   </button>
-                  
-                  <Link
-                    to={`/product/${product.id}`}
-                    className="text-[#2A866A] p-1 rounded-full hover:bg-[#2A866A]/10 transition-colors"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <Eye className="h-4 w-4" />
-                  </Link>
+                </div>
+              </div>
+              
+              <div className="pt-2 px-1">
+                <h3 className="font-medium text-sm text-gray-800 line-clamp-1">{product.name}</h3>
+                <div className="flex items-center justify-between mt-1">
+                  <span className="text-[#2A866A] font-semibold text-sm">${product.price.toFixed(2)}</span>
                 </div>
               </div>
             </div>
