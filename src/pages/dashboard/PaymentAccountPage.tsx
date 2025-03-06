@@ -114,11 +114,26 @@ const PaymentAccountPage = () => {
       case 'bank':
         return <CreditCard className="h-5 w-5" />;
       case 'paypal':
-        return <span className="font-bold text-blue-500">P</span>;
+        return (
+          <div className="bg-[#0070BA] text-white p-1 rounded-full">
+            <span className="font-bold text-xs">P</span>
+          </div>
+        );
       case 'stripe':
-        return <span className="font-bold text-purple-500">S</span>;
+        return (
+          <div className="bg-purple-600 text-white p-1 rounded-full">
+            <span className="font-bold text-xs">S</span>
+          </div>
+        );
       case 'applepay':
-        return <span className="font-bold">A</span>;
+        return (
+          <div className="bg-black text-white p-1 rounded-full">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M10 17a6 6 0 0 0 5.8-4M15 9a6 6 0 0 0-5.8 4" />
+              <path d="M17 9.3c-.5-.1-1.6-.2-2 .3-.5.7 1-.5 1-1 0-1-.2-1.3-.4-1.7a2 2 0 0 0-2.9-.3c-.2.2-.3.5-.3.800 0 .7 1.2 1 2 1.4.8.2 2 .5 2 1.5s-1 1.7-2 1.7c-.5 0-2 0-2-2"/>
+            </svg>
+          </div>
+        );
       default:
         return <CreditCard className="h-5 w-5" />;
     }
@@ -138,7 +153,7 @@ const PaymentAccountPage = () => {
             setIsFormVisible(!isFormVisible);
             if (!isFormVisible) resetForm();
           }}
-          className="flex items-center"
+          className="flex items-center bg-orange-400 hover:bg-orange-500"
         >
           {isFormVisible ? (
             <>Cancel</>
@@ -162,10 +177,31 @@ const PaymentAccountPage = () => {
             
             <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
               <TabsList className="grid grid-cols-4 mb-6">
-                <TabsTrigger value="bank">Bank Account</TabsTrigger>
-                <TabsTrigger value="paypal">PayPal</TabsTrigger>
-                <TabsTrigger value="stripe">Stripe</TabsTrigger>
-                <TabsTrigger value="applepay">Apple Pay</TabsTrigger>
+                <TabsTrigger value="bank" className="flex items-center gap-2">
+                  <CreditCard className="h-4 w-4" />
+                  <span>Bank</span>
+                </TabsTrigger>
+                <TabsTrigger value="paypal" className="flex items-center gap-2">
+                  <div className="bg-[#0070BA] text-white p-0.5 rounded-full">
+                    <span className="font-bold text-xs">P</span>
+                  </div>
+                  <span>PayPal</span>
+                </TabsTrigger>
+                <TabsTrigger value="stripe" className="flex items-center gap-2">
+                  <div className="bg-purple-600 text-white p-0.5 rounded-full">
+                    <span className="font-bold text-xs">S</span>
+                  </div>
+                  <span>Stripe</span>
+                </TabsTrigger>
+                <TabsTrigger value="applepay" className="flex items-center gap-2">
+                  <div className="bg-black text-white p-0.5 rounded-full">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M10 17a6 6 0 0 0 5.8-4M15 9a6 6 0 0 0-5.8 4" />
+                      <path d="M17 9.3c-.5-.1-1.6-.2-2 .3-.5.7 1-.5 1-1 0-1-.2-1.3-.4-1.7a2 2 0 0 0-2.9-.3c-.2.2-.3.5-.3.800 0 .7 1.2 1 2 1.4.8.2 2 .5 2 1.5s-1 1.7-2 1.7c-.5 0-2 0-2-2"/>
+                    </svg>
+                  </div>
+                  <span>Apple Pay</span>
+                </TabsTrigger>
               </TabsList>
               
               <form onSubmit={handleSubmit}>
@@ -296,7 +332,9 @@ const PaymentAccountPage = () => {
                   >
                     Cancel
                   </Button>
-                  <Button type="submit">Save Payment Method</Button>
+                  <Button type="submit" className="bg-orange-400 hover:bg-orange-500">
+                    Save Payment Method
+                  </Button>
                 </div>
               </form>
             </Tabs>
@@ -359,7 +397,7 @@ const PaymentAccountPage = () => {
             </p>
             <Button
               onClick={() => setIsFormVisible(true)}
-              className="flex items-center mx-auto"
+              className="flex items-center mx-auto bg-orange-400 hover:bg-orange-500"
             >
               <Plus className="mr-2 h-4 w-4" />
               Add Payment Method

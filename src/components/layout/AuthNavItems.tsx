@@ -21,7 +21,7 @@ const AuthNavItems = () => {
               variant="ghost" 
               size="sm" 
               onClick={requestLocation}
-              className="flex items-center gap-2 text-white hover:text-white/80"
+              className="flex items-center gap-2 text-haluna-text hover:text-haluna-primary"
             >
               <MapPin className="h-4 w-4" />
               <span className="hidden md:inline">
@@ -29,20 +29,20 @@ const AuthNavItems = () => {
               </span>
             </Button>
 
-            <Link to="/search" className="text-white hover:text-white/80 flex items-center gap-2 transition">
+            <Link to="/search" className="text-haluna-text hover:text-haluna-primary flex items-center gap-2 transition">
               <Search className="h-4 w-4" />
               <span className="hidden md:inline">Search</span>
             </Link>
           </>
         )}
 
-        <Link to="/login" className="text-white hover:text-white/80 transition">
+        <Link to="/login" className="text-haluna-text hover:text-haluna-primary transition">
           Log In
         </Link>
         <Button 
           href="/signup" 
           size="sm" 
-          className="bg-white text-haluna-primary hover:bg-white/90 hover:text-haluna-primary-dark"
+          className="bg-orange-400 text-white hover:bg-orange-500"
         >
           Sign Up
         </Button>
@@ -50,6 +50,53 @@ const AuthNavItems = () => {
     );
   }
   
+  // Different navigation for business users vs shoppers
+  if (user?.role === 'business') {
+    return (
+      <div className="flex items-center gap-4">
+        <Button 
+          href="/dashboard" 
+          size="sm" 
+          variant="secondary" 
+          className="flex items-center gap-2 bg-orange-400 text-white hover:bg-orange-500"
+        >
+          <Store className="h-4 w-4" />
+          <span className="hidden md:inline">Dashboard</span>
+        </Button>
+        
+        <div className="relative group">
+          <button className="flex items-center gap-2 text-haluna-text hover:text-haluna-primary transition">
+            <div className="w-8 h-8 rounded-full bg-orange-400 text-white flex items-center justify-center">
+              <User className="h-4 w-4" />
+            </div>
+            <span className="hidden md:inline">{user?.name}</span>
+          </button>
+          
+          <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg overflow-hidden z-10 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
+            <div className="p-3 border-b">
+              <p className="font-medium">{user?.name}</p>
+              <p className="text-xs text-haluna-text-light">{user?.email}</p>
+            </div>
+            <div className="p-2">
+              <Link to="/dashboard" className="block w-full text-left p-2 rounded-md flex items-center gap-2 hover:bg-haluna-primary-light">
+                <Store className="h-4 w-4" />
+                <span>Dashboard</span>
+              </Link>
+              <button 
+                onClick={logout}
+                className="w-full text-left p-2 rounded-md flex items-center gap-2 hover:bg-haluna-primary-light text-red-500"
+              >
+                <LogOut className="h-4 w-4" />
+                <span>Logout</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
+  // Shopper navigation
   return (
     <div className="flex items-center gap-4">
       {!isMobile && (
@@ -58,7 +105,7 @@ const AuthNavItems = () => {
             variant="ghost" 
             size="sm" 
             onClick={requestLocation}
-            className="flex items-center gap-2 text-white hover:text-white/80"
+            className="flex items-center gap-2 text-haluna-text hover:text-haluna-primary"
           >
             <MapPin className="h-4 w-4" />
             <span className="hidden md:inline">
@@ -66,44 +113,32 @@ const AuthNavItems = () => {
             </span>
           </Button>
           
-          <Link to="/search" className="text-white hover:text-white/80 flex items-center gap-2 transition">
+          <Link to="/search" className="text-haluna-text hover:text-haluna-primary flex items-center gap-2 transition">
             <Search className="h-4 w-4" />
             <span className="hidden md:inline">Search</span>
           </Link>
         </>
       )}
       
-      {user?.role === 'business' ? (
-        <Button 
-          href="/dashboard" 
-          size="sm" 
-          variant="secondary" 
-          className="flex items-center gap-2 bg-white text-haluna-primary hover:bg-white/90"
-        >
-          <Store className="h-4 w-4" />
-          <span className="hidden md:inline">Dashboard</span>
-        </Button>
-      ) : (
-        <div className="flex items-center gap-4">
-          {!isMobile && (
-            <Button 
-              href="/browse" 
-              size="sm" 
-              variant="ghost" 
-              className="flex items-center gap-2 text-white hover:text-white/80"
-            >
-              <ShoppingBag className="h-4 w-4" />
-              <span className="hidden md:inline">Browse</span>
-            </Button>
-          )}
-          
-          {!isMobile && <CartDropdown />}
-        </div>
-      )}
+      <div className="flex items-center gap-4">
+        {!isMobile && (
+          <Button 
+            href="/browse" 
+            size="sm" 
+            variant="ghost" 
+            className="flex items-center gap-2 text-haluna-text hover:text-haluna-primary"
+          >
+            <ShoppingBag className="h-4 w-4" />
+            <span className="hidden md:inline">Browse</span>
+          </Button>
+        )}
+        
+        {!isMobile && <CartDropdown />}
+      </div>
       
       <div className="relative group">
-        <button className="flex items-center gap-2 text-white hover:text-white/80 transition">
-          <div className="w-8 h-8 rounded-full bg-white text-haluna-primary flex items-center justify-center">
+        <button className="flex items-center gap-2 text-haluna-text hover:text-haluna-primary transition">
+          <div className="w-8 h-8 rounded-full bg-orange-400 text-white flex items-center justify-center">
             <User className="h-4 w-4" />
           </div>
           <span className="hidden md:inline">{user?.name}</span>
@@ -115,18 +150,14 @@ const AuthNavItems = () => {
             <p className="text-xs text-haluna-text-light">{user?.email}</p>
           </div>
           <div className="p-2">
-            {user?.role === 'shopper' && (
-              <>
-                <Link to="/profile" className="block w-full text-left p-2 rounded-md flex items-center gap-2 hover:bg-haluna-primary-light">
-                  <User className="h-4 w-4" />
-                  <span>Profile</span>
-                </Link>
-                <Link to="/orders" className="block w-full text-left p-2 rounded-md flex items-center gap-2 hover:bg-haluna-primary-light">
-                  <ShoppingBag className="h-4 w-4" />
-                  <span>Orders</span>
-                </Link>
-              </>
-            )}
+            <Link to="/profile" className="block w-full text-left p-2 rounded-md flex items-center gap-2 hover:bg-haluna-primary-light">
+              <User className="h-4 w-4" />
+              <span>Profile</span>
+            </Link>
+            <Link to="/orders" className="block w-full text-left p-2 rounded-md flex items-center gap-2 hover:bg-haluna-primary-light">
+              <ShoppingBag className="h-4 w-4" />
+              <span>Orders</span>
+            </Link>
             <button 
               onClick={logout}
               className="w-full text-left p-2 rounded-md flex items-center gap-2 hover:bg-haluna-primary-light text-red-500"

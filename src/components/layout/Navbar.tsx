@@ -37,19 +37,6 @@ const Navbar = () => {
     { href: '/about', label: 'About' },
   ];
 
-  // Animation variants for background gradient
-  const gradientVariants = {
-    animate: {
-      backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
-      transition: {
-        duration: 15,
-        ease: "linear",
-        repeat: Infinity,
-        repeatType: "reverse" as const
-      }
-    }
-  };
-
   // Animation variants for the logo text
   const letterVariants = {
     initial: { opacity: 1 },
@@ -69,22 +56,16 @@ const Navbar = () => {
   };
   
   return (
-    <motion.header 
+    <header 
       className={`fixed top-0 w-full z-50 transition-all duration-300 ${
         isScrolled ? 'py-2' : 'py-4'
-      } backdrop-blur-lg shadow-md`}
-      variants={gradientVariants}
-      animate="animate"
-      style={{
-        backgroundSize: "300% 300%",
-        background: "linear-gradient(-45deg, #E5DEFF 0%, #8cd9a3 25%, #b2f0cb 50%, #E5DEFF 75%, #d6c5ff 100%)"
-      }}
+      } backdrop-blur-lg shadow-md bg-white/80`}
     >
       <div className="container mx-auto px-4 flex justify-between items-center">
         <Link to="/" className="flex items-center gap-2">
           <div className="flex items-center">
             <motion.span 
-              className="text-2xl font-serif font-bold text-white drop-shadow-sm"
+              className="text-2xl font-serif font-bold text-haluna-primary drop-shadow-sm"
               variants={letterVariants}
               initial="initial"
               animate="animate"
@@ -103,7 +84,7 @@ const Navbar = () => {
             {/* Enhanced logo design with animated elements */}
             <div className="relative ml-1">
               <motion.div 
-                className="w-7 h-7 bg-gradient-to-br from-orange-400 to-orange-500 rounded-full shadow-md"
+                className="w-7 h-7 bg-gradient-to-br from-orange-300 to-orange-400 rounded-full shadow-md"
                 animate={{
                   scale: [1, 1.1, 1],
                   rotate: [0, 5, 0, -5, 0],
@@ -137,7 +118,7 @@ const Navbar = () => {
                 <Link
                   key={link.href}
                   to={link.href}
-                  className={`text-white hover:text-white/80 transition whitespace-nowrap ${
+                  className={`text-haluna-text hover:text-haluna-primary transition whitespace-nowrap ${
                     link.href === '/sellers' ? 'text-sm' : ''
                   } ${
                     location.pathname === link.href ? 'font-medium underline decoration-2 underline-offset-4' : ''
@@ -156,7 +137,7 @@ const Navbar = () => {
             
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 rounded-lg text-white hover:bg-white/10 transition"
+              className="p-2 rounded-lg text-haluna-text hover:bg-gray-100 transition"
             >
               {mobileMenuOpen ? (
                 <X className="h-6 w-6" />
@@ -170,13 +151,13 @@ const Navbar = () => {
       
       {/* Mobile menu */}
       {isMobile && mobileMenuOpen && (
-        <div className="container mx-auto px-4 py-4 bg-green-500/95 backdrop-blur-sm border-t border-white/20">
+        <div className="container mx-auto px-4 py-4 bg-white/95 backdrop-blur-sm border-t border-gray-100">
           <nav className="flex flex-col space-y-4">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
                 to={link.href}
-                className={`text-white hover:text-white/80 transition py-2 ${
+                className={`text-haluna-text hover:text-haluna-primary transition py-2 ${
                   location.pathname === link.href ? 'font-medium underline decoration-2 underline-offset-4' : ''
                 }`}
               >
@@ -186,7 +167,7 @@ const Navbar = () => {
           </nav>
         </div>
       )}
-    </motion.header>
+    </header>
   );
 };
 

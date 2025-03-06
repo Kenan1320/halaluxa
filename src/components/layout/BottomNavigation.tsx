@@ -54,9 +54,10 @@ const BottomNavigation = () => {
     {
       label: 'Cart',
       icon: <ShoppingCart className="h-5 w-5" />,
-      path: isLoggedIn ? '/cart' : '/login',
+      path: isLoggedIn && user?.role !== 'business' ? '/cart' : '/login',
       match: ['/cart', '/checkout', '/orders', '/order-confirmation'],
-      badge: cart.items.length > 0 ? cart.items.length : undefined
+      badge: cart.items.length > 0 ? cart.items.length : undefined,
+      hideForBusiness: true
     },
     {
       label: 'Account',
@@ -65,6 +66,11 @@ const BottomNavigation = () => {
       match: ['/profile', '/login', '/signup']
     }
   ];
+
+  // Filter out cart for business users
+  const filteredNavItems = navItems.filter(item => 
+    !(user?.role === 'business' && item.hideForBusiness)
+  );
 
   const isActive = (item: typeof navItems[0]) => {
     return item.match.includes(location.pathname);
@@ -86,7 +92,7 @@ const BottomNavigation = () => {
           }}
         >
           <div className="flex justify-around items-center h-16">
-            {navItems.map((item) => (
+            {filteredNavItems.map((item) => (
               <Link
                 key={item.label}
                 to={item.path}
@@ -95,7 +101,7 @@ const BottomNavigation = () => {
                 <motion.div 
                   className={`flex flex-col items-center justify-center ${
                     isActive(item) 
-                      ? 'text-haluna-primary font-medium' 
+                      ? 'text-orange-400 font-medium' 
                       : 'text-gray-400'
                   }`}
                   whileTap={{ scale: 0.9 }}
@@ -107,7 +113,7 @@ const BottomNavigation = () => {
                       <motion.span 
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
-                        className="absolute -top-1.5 -right-1.5 flex items-center justify-center w-4 h-4 bg-red-500 text-white text-[10px] rounded-full"
+                        className="absolute -top-1.5 -right-1.5 flex items-center justify-center w-4 h-4 bg-orange-400 text-white text-[10px] rounded-full"
                       >
                         {item.badge > 9 ? '9+' : item.badge}
                       </motion.span>
@@ -118,7 +124,7 @@ const BottomNavigation = () => {
                   {isActive(item) && (
                     <motion.div
                       layoutId="bottomNavIndicator"
-                      className="absolute -bottom-1 w-10 h-1 rounded-full bg-gradient-to-r from-haluna-primary to-haluna-primary/70"
+                      className="absolute -bottom-1 w-10 h-1 rounded-full bg-gradient-to-r from-orange-400 to-orange-300"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}

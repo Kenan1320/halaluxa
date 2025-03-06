@@ -5,11 +5,13 @@ import { useAuth } from '@/context/AuthContext';
 interface ProtectedRouteProps {
   children: React.ReactNode;
   requiredRole?: 'shopper' | 'business' | 'any';
+  businessAllowed?: boolean;
 }
 
 const ProtectedRoute = ({ 
   children, 
-  requiredRole = 'any' 
+  requiredRole = 'any',
+  businessAllowed = true
 }: ProtectedRouteProps) => {
   const { isLoggedIn, user } = useAuth();
   const location = useLocation();
@@ -17,6 +19,12 @@ const ProtectedRoute = ({
   if (!isLoggedIn) {
     // Redirect to login if not logged in
     return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+  
+  // Handle business user restrictions
+  if (user?.role === 'business' && !businessAllowed) {
+    // Redirect business users to dashboard if they try to access shopper-only features
+    return <Navigate to="/dashboard" replace />;
   }
   
   if (requiredRole !== 'any' && user?.role !== requiredRole) {
