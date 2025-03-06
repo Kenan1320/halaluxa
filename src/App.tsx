@@ -16,6 +16,8 @@ import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import OrderConfirmation from "./pages/OrderConfirmation";
 import Orders from "./pages/Orders";
+import Shops from "./pages/Shops";
+import ShopDetail from "./pages/ShopDetail";
 import Sellers from "./pages/Sellers";
 import About from "./pages/About";
 import NotFound from "./pages/NotFound";
@@ -42,18 +44,12 @@ const AppRoutes = () => (
     <Route path="/sellers" element={<Sellers />} />
     <Route path="/login" element={<LoginPage />} />
     <Route path="/signup" element={<SignUpPage />} />
+    <Route path="/shop" element={<Shop />} />
+    <Route path="/shops" element={<Shops />} />
+    <Route path="/shop/:shopId" element={<ShopDetail />} />
+    <Route path="/product/:productId" element={<ProductDetail />} />
     
     {/* Protected shopper routes */}
-    <Route path="/shop" element={
-      <ProtectedRoute requiredRole="shopper">
-        <Shop />
-      </ProtectedRoute>
-    } />
-    <Route path="/product/:productId" element={
-      <ProtectedRoute requiredRole="shopper">
-        <ProductDetail />
-      </ProtectedRoute>
-    } />
     <Route path="/cart" element={
       <ProtectedRoute requiredRole="shopper">
         <Cart />

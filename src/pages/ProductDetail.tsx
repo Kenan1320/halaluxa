@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Star, Heart, ShoppingBag, Check } from 'lucide-react';
+import { ArrowLeft, Star, Heart, ShoppingBag, Check, Store, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
@@ -10,31 +10,72 @@ import ImageGallery from '@/components/shop/ImageGallery';
 import { useCart } from '@/context/CartContext';
 import { mockProducts, Product } from '@/models/product';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/context/AuthContext';
+import { motion } from 'framer-motion';
+import { getProductById } from '@/services/productService'; 
+import { addReview, getReviewsForProduct } from '@/services/reviewService';
+import ReviewList from '@/components/shop/ReviewList';
+import AddReviewForm from '@/components/shop/AddReviewForm';
 
 const ProductDetail = () => {
   const { productId } = useParams<{ productId: string }>();
   const [product, setProduct] = useState<Product | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'description' | 'reviews'>('description');
+  const [reviews, setReviews] = useState<any[]>([]);
   const { addToCart } = useCart();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { isLoggedIn, user } = useAuth();
   
   useEffect(() => {
     // Scroll to top when page loads
     window.scrollTo(0, 0);
     
-    // Fetch product data - in a real app, this would be an API call
-    const foundProduct = mockProducts.find((p) => p.id === productId);
+    // Fetch product data - first from localStorage, then fallback to mock data
+    const fetchProduct = () => {
+      setIsLoading(true);
+      // Try to get the product from localStorage first
+      const localProduct = getProductById(productId || '');
+      
+      // If not found in localStorage, check mock data
+      const foundProduct = localProduct || mockProducts.find((p) => p.id === productId);
+      
+      setTimeout(() => {
+        setProduct(foundProduct || null);
+        setIsLoading(false);
+      }, 500);
+    };
     
-    // Simulate loading
-    const timer = setTimeout(() => {
-      setProduct(foundProduct || null);
-      setIsLoading(false);
-    }, 500);
-    
-    return () => clearTimeout(timer);
+    fetchProduct();
+    loadReviews();
   }, [productId]);
+  
+  const loadReviews = () => {
+    if (productId) {
+      const productReviews = getReviewsForProduct(productId);
+      setReviews(productReviews);
+    }
+  };
+  
+  const handleAddReview = (reviewData: any) => {
+    if (product && user) {
+      const newReview = addReview({
+        productId: product.id,
+        userId: user.id,
+        username: user.username || user.email.split('@')[0],
+        ...reviewData
+      });
+      
+      toast({
+        title: "Review Added",
+        description: "Thank you for your feedback!",
+      });
+      
+      loadReviews();
+    }
+  };
   
   const handleAddToCart = () => {
     if (product) {
@@ -107,20 +148,37 @@ const ProductDetail = () => {
           </div>
           
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-            <div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+            >
               <ImageGallery images={product.images} altText={product.name} />
-            </div>
+            </motion.div>
             
-            <div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+            >
               <div className="mb-6">
                 <h1 className="text-3xl font-serif font-bold mb-2">{product.name}</h1>
+                
+                {/* Shop info */}
+                <div className="flex items-center gap-2 mb-4">
+                  <Link to={`/shop/${product.sellerId}`} className="flex items-center text-haluna-text-light hover:text-haluna-primary transition-colors">
+                    <Store className="h-4 w-4 mr-1" />
+                    <span>{product.sellerName || "Haluna Seller"}</span>
+                  </Link>
+                </div>
                 
                 <div className="flex items-center gap-2 mb-4">
                   <div className="flex items-center text-yellow-400">
                     {[...Array(5)].map((_, i) => (
-                      <Star key={i} className="h-4 w-4 fill-current" />
+                      <Star key={i} className={`h-4 w-4 ${i < (product.rating || 5) ? 'fill-current' : ''}`} />
                     ))}
-                    <span className="text-xs text-haluna-text-light ml-1">5.0</span>
+                    <span className="text-xs text-haluna-text-light ml-1">{product.rating || 5.0}</span>
+                    <span className="text-xs text-haluna-text-light ml-1">({reviews.length} reviews)</span>
                   </div>
                   
                   {product.isHalalCertified && (
@@ -210,7 +268,58 @@ const ProductDetail = () => {
                   </Button>
                 </div>
               </div>
+            </motion.div>
+          </div>
+          
+          {/* Tabs for description and reviews */}
+          <div className="mt-16">
+            <div className="border-b mb-8">
+              <div className="flex gap-8">
+                <button
+                  className={`pb-4 px-2 font-medium ${activeTab === 'description' 
+                    ? 'border-b-2 border-haluna-primary text-haluna-primary' 
+                    : 'text-haluna-text-light'}`}
+                  onClick={() => setActiveTab('description')}
+                >
+                  Description
+                </button>
+                <button
+                  className={`pb-4 px-2 font-medium flex items-center ${activeTab === 'reviews' 
+                    ? 'border-b-2 border-haluna-primary text-haluna-primary' 
+                    : 'text-haluna-text-light'}`}
+                  onClick={() => setActiveTab('reviews')}
+                >
+                  Reviews <span className="ml-2 bg-gray-100 px-2 py-0.5 rounded-full text-xs">{reviews.length}</span>
+                </button>
+              </div>
             </div>
+            
+            {activeTab === 'description' ? (
+              <div className="prose max-w-none">
+                <p className="mb-6">{product.description}</p>
+                
+                {product.longDescription && (
+                  <div dangerouslySetInnerHTML={{ __html: product.longDescription }} />
+                )}
+              </div>
+            ) : (
+              <div>
+                <h3 className="text-xl font-medium mb-6">Customer Reviews ({reviews.length})</h3>
+                
+                {isLoggedIn ? (
+                  <AddReviewForm onSubmit={handleAddReview} />
+                ) : (
+                  <div className="bg-gray-50 p-6 rounded-lg mb-8 text-center">
+                    <MessageSquare className="h-8 w-8 mx-auto mb-4 text-haluna-text-light" />
+                    <h4 className="font-medium mb-2">Share Your Thoughts</h4>
+                    <p className="text-haluna-text-light mb-4">Login to leave a review for this product.</p>
+                    <Button href="/login" variant="outline" size="sm">Login to Review</Button>
+                  </div>
+                )}
+                
+                <ReviewList reviews={reviews} />
+              </div>
+            )}
           </div>
         </div>
       </main>

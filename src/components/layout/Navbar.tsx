@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, Store } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import AuthNavItems from './AuthNavItems';
 
@@ -29,7 +29,8 @@ const Navbar = () => {
   const navLinks = [
     { href: '/', label: 'Home' },
     { href: '/shop', label: 'Shop' },
-    { href: '/sellers', label: 'For Businesses' },
+    { href: '/shops', label: 'Businesses' },
+    { href: '/sellers', label: 'For Sellers' },
     { href: '/about', label: 'About' },
   ];
   
@@ -37,10 +38,10 @@ const Navbar = () => {
     <header className={`fixed top-0 w-full z-50 transition-all duration-300 ${isScrolled ? 'bg-white shadow-sm py-2' : 'bg-transparent py-4'}`}>
       <div className="container mx-auto px-4 flex justify-between items-center">
         <Link to="/" className="flex items-center gap-2">
-          <span className="text-2xl font-serif font-bold text-haluna-primary">Haluna</span>
-          <span className="bg-haluna-primary text-white text-xs px-1.5 py-0.5 rounded">
-            Marketplace
-          </span>
+          <div className="flex items-center">
+            <span className="text-2xl font-serif font-bold text-haluna-primary">Haluna</span>
+            <div className="w-6 h-6 bg-orange-300 rounded-full ml-1"></div>
+          </div>
         </Link>
         
         {!isMobile ? (
