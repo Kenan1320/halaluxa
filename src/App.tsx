@@ -27,6 +27,7 @@ import About from "./pages/About";
 import NotFound from "./pages/NotFound";
 import LoginPage from "./pages/auth/LoginPage";
 import SignUpPage from "./pages/auth/SignUpPage";
+import SearchPage from "./pages/SearchPage";
 
 // Dashboard imports
 import DashboardLayout from "./components/layout/DashboardLayout";
@@ -64,6 +65,7 @@ const AppRoutes = () => (
       <Route path="/shops" element={<Shops />} />
       <Route path="/shop/:shopId" element={<ShopDetail />} />
       <Route path="/product/:productId" element={<ProductDetail />} />
+      <Route path="/search" element={<SearchPage />} />
       
       {/* Protected shopper routes */}
       <Route path="/cart" element={

@@ -32,22 +32,25 @@ const NearbyShopsSection = () => {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-8">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         {[...Array(6)].map((_, i) => (
           <motion.div
             key={i}
             initial={{ opacity: 0 }}
             animate={{ opacity: 0.5 }}
             transition={{ duration: 1, repeat: Infinity, repeatType: "reverse" }}
-            className="aspect-square bg-gray-100 rounded-2xl"
-          />
+            className="flex flex-col items-center"
+          >
+            <div className="w-24 h-24 rounded-full bg-gray-100"></div>
+            <div className="h-4 w-16 mt-2 bg-gray-100 rounded"></div>
+          </motion.div>
         ))}
       </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 gap-8">
+    <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-6">
       {shops.map((shop, index) => (
         <motion.div
           key={shop.id}
@@ -59,32 +62,27 @@ const NearbyShopsSection = () => {
             ease: "easeOut"
           }}
           whileHover={{ y: -5, transition: { duration: 0.2 } }}
-          className="group"
+          className="flex flex-col items-center"
         >
           <Link 
-            to={`/shop/${shop.id}`} 
-            className={cn(
-              "block bg-white rounded-2xl p-6 shadow-sm",
-              "transition-shadow duration-300 hover:shadow-md",
-              "flex flex-col items-center justify-center",
-              "aspect-square"
-            )}
+            to={`/shop/${shop.id}`}
+            className="flex flex-col items-center"
           >
-            <div className="w-full h-full relative flex items-center justify-center mb-4">
+            <div className="w-24 h-24 rounded-full bg-white shadow-sm flex items-center justify-center p-1 border border-gray-100">
               {shop.logo ? (
                 <motion.img 
                   src={shop.logo} 
                   alt={shop.name}
-                  className="w-24 h-24 object-contain"
+                  className="w-full h-full object-contain rounded-full p-2"
                   whileHover={{ scale: 1.05 }}
                   transition={{ duration: 0.2 }}
                 />
               ) : (
-                <Store className="w-16 h-16 text-haluna-primary opacity-50" />
+                <Store className="w-12 h-12 text-haluna-primary opacity-50" />
               )}
             </div>
             <motion.p 
-              className="mt-4 text-center font-medium text-gray-700 group-hover:text-haluna-primary transition-colors duration-200"
+              className="mt-2 text-center font-medium text-gray-800 text-sm"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.2 }}

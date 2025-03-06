@@ -15,29 +15,48 @@ const categories = [
 ];
 
 const CategoriesSection = () => {
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0 }
+  };
+
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-      {categories.map((category, index) => (
+    <motion.div 
+      className="grid grid-cols-3 gap-3"
+      variants={containerVariants}
+      initial="hidden"
+      animate="show"
+    >
+      {categories.map((category) => (
         <motion.div
           key={category.id}
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.3, delay: index * 0.1 }}
-          whileHover={{ scale: 1.03 }}
+          variants={itemVariants}
+          whileHover={{ scale: 1.05 }}
           className="group"
+          transition={{ duration: 0.3 }}
         >
           <Link
             to={`/browse?category=${category.id}`}
-            className={`block ${category.color} rounded-xl p-6 text-center transition-all duration-200 hover:shadow-lg`}
+            className={`flex flex-col items-center justify-center p-4 rounded-lg ${category.color} transition-all duration-200 shadow-sm`}
           >
-            <category.icon className="w-8 h-8 mx-auto mb-3" />
-            <span className="text-sm font-medium">
+            <category.icon className="w-8 h-8 mb-2" />
+            <span className="text-xs font-medium text-center">
               {category.name}
             </span>
           </Link>
         </motion.div>
       ))}
-    </div>
+    </motion.div>
   );
 };
 
