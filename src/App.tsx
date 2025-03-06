@@ -12,11 +12,13 @@ import { LocationProvider } from "@/context/LocationContext";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import AuthMiddleware from "@/components/auth/AuthMiddleware";
 import SplashScreen from "@/components/SplashScreen";
+import BottomNavigation from "@/components/layout/BottomNavigation";
 
 // Pages
 import Index from "./pages/Index";
 import Shop from "./pages/Shop";
 import Browse from "./pages/Browse"; 
+import Search from "./pages/Search";
 import ProductDetail from "./pages/ProductDetail";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
@@ -63,6 +65,7 @@ const AppRoutes = () => (
       <Route path="/signup" element={<SignUpPage />} />
       <Route path="/shop" element={<Shop />} />
       <Route path="/browse" element={<Browse />} />
+      <Route path="/search" element={<Search />} />
       <Route path="/shops" element={<Shops />} />
       <Route path="/shop/:shopId" element={<ShopDetail />} />
       <Route path="/product/:productId" element={<ProductDetail />} />
@@ -145,6 +148,7 @@ const App = () => {
                 <CartProvider>
                   <LocationProvider>
                     <AppRoutes />
+                    <BottomNavigation />
                   </LocationProvider>
                 </CartProvider>
               </AuthProvider>

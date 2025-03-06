@@ -56,12 +56,14 @@ const Navbar = () => {
   };
   
   return (
-    <header className={`fixed top-0 w-full z-50 transition-all duration-300 ${isScrolled ? 'bg-white shadow-sm py-2' : 'bg-transparent py-4'}`}>
+    <header className={`fixed top-0 w-full z-50 transition-all duration-300 ${
+      isScrolled ? 'py-2' : 'py-4'
+    } bg-gradient-to-r from-green-500/90 via-purple-200/20 to-green-500/90 backdrop-blur-sm shadow-md`}>
       <div className="container mx-auto px-4 flex justify-between items-center">
         <Link to="/" className="flex items-center gap-2">
           <div className="flex items-center">
             <motion.span 
-              className="text-2xl font-serif font-bold"
+              className="text-2xl font-serif font-bold text-white"
               variants={letterVariants}
               initial="initial"
               animate="animate"
@@ -92,7 +94,7 @@ const Navbar = () => {
                 }}
               >
                 <motion.div 
-                  className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 bg-haluna-primary rounded-full"
+                  className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 bg-white rounded-full"
                   animate={{
                     scale: [1, 0.8, 1],
                   }}
@@ -114,10 +116,10 @@ const Navbar = () => {
                 <Link
                   key={link.href}
                   to={link.href}
-                  className={`text-haluna-text hover:text-haluna-primary transition whitespace-nowrap ${
+                  className={`text-white hover:text-white/80 transition whitespace-nowrap ${
                     link.href === '/sellers' ? 'text-sm' : ''
                   } ${
-                    location.pathname === link.href ? 'font-medium text-haluna-primary' : ''
+                    location.pathname === link.href ? 'font-medium underline decoration-2 underline-offset-4' : ''
                   }`}
                 >
                   {translate(link.label)}
@@ -133,7 +135,7 @@ const Navbar = () => {
             
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 rounded-lg text-haluna-text hover:bg-haluna-primary-light transition"
+              className="p-2 rounded-lg text-white hover:bg-white/10 transition"
             >
               {mobileMenuOpen ? (
                 <X className="h-6 w-6" />
@@ -147,14 +149,14 @@ const Navbar = () => {
       
       {/* Mobile menu */}
       {isMobile && mobileMenuOpen && (
-        <div className="container mx-auto px-4 py-4 bg-white border-t">
+        <div className="container mx-auto px-4 py-4 bg-green-500/95 backdrop-blur-sm border-t border-white/20">
           <nav className="flex flex-col space-y-4">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
                 to={link.href}
-                className={`text-haluna-text hover:text-haluna-primary transition py-2 ${
-                  location.pathname === link.href ? 'font-medium text-haluna-primary' : ''
+                className={`text-white hover:text-white/80 transition py-2 ${
+                  location.pathname === link.href ? 'font-medium underline decoration-2 underline-offset-4' : ''
                 }`}
               >
                 {translate(link.label)}

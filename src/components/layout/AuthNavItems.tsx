@@ -1,34 +1,49 @@
 
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ShoppingBag, Store, User, LogOut, MapPin } from 'lucide-react';
+import { ShoppingBag, Store, User, LogOut, MapPin, Search } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useLocation } from '@/context/LocationContext';
 import CartDropdown from '@/components/shop/CartDropdown';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const AuthNavItems = () => {
   const { isLoggedIn, user, logout } = useAuth();
   const { isLocationEnabled, location, requestLocation } = useLocation();
+  const isMobile = useIsMobile();
   
   if (!isLoggedIn) {
     return (
       <div className="flex items-center gap-4">
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          onClick={requestLocation}
-          className="flex items-center gap-2"
-        >
-          <MapPin className="h-4 w-4" />
-          <span className="hidden md:inline">
-            {isLocationEnabled ? location?.city || 'Location enabled' : 'Enable location'}
-          </span>
-        </Button>
+        {!isMobile && (
+          <>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={requestLocation}
+              className="flex items-center gap-2 text-white hover:text-white/80"
+            >
+              <MapPin className="h-4 w-4" />
+              <span className="hidden md:inline">
+                {isLocationEnabled ? location?.city || 'Location enabled' : 'Enable location'}
+              </span>
+            </Button>
 
-        <Link to="/login" className="text-haluna-text hover:text-haluna-primary transition">
+            <Link to="/search" className="text-white hover:text-white/80 flex items-center gap-2 transition">
+              <Search className="h-4 w-4" />
+              <span className="hidden md:inline">Search</span>
+            </Link>
+          </>
+        )}
+
+        <Link to="/login" className="text-white hover:text-white/80 transition">
           Log In
         </Link>
-        <Button href="/signup" size="sm">
+        <Button 
+          href="/signup" 
+          size="sm" 
+          className="bg-white text-haluna-primary hover:bg-white/90 hover:text-haluna-primary-dark"
+        >
           Sign Up
         </Button>
       </div>
@@ -37,37 +52,58 @@ const AuthNavItems = () => {
   
   return (
     <div className="flex items-center gap-4">
-      <Button 
-        variant="ghost" 
-        size="sm" 
-        onClick={requestLocation}
-        className="flex items-center gap-2"
-      >
-        <MapPin className="h-4 w-4" />
-        <span className="hidden md:inline">
-          {isLocationEnabled ? location?.city || 'Location enabled' : 'Enable location'}
-        </span>
-      </Button>
+      {!isMobile && (
+        <>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={requestLocation}
+            className="flex items-center gap-2 text-white hover:text-white/80"
+          >
+            <MapPin className="h-4 w-4" />
+            <span className="hidden md:inline">
+              {isLocationEnabled ? location?.city || 'Location enabled' : 'Enable location'}
+            </span>
+          </Button>
+          
+          <Link to="/search" className="text-white hover:text-white/80 flex items-center gap-2 transition">
+            <Search className="h-4 w-4" />
+            <span className="hidden md:inline">Search</span>
+          </Link>
+        </>
+      )}
       
       {user?.role === 'business' ? (
-        <Button href="/dashboard" size="sm" variant="outline" className="flex items-center gap-2">
+        <Button 
+          href="/dashboard" 
+          size="sm" 
+          variant="secondary" 
+          className="flex items-center gap-2 bg-white text-haluna-primary hover:bg-white/90"
+        >
           <Store className="h-4 w-4" />
           <span className="hidden md:inline">Dashboard</span>
         </Button>
       ) : (
         <div className="flex items-center gap-4">
-          <Button href="/browse" size="sm" variant="outline" className="flex items-center gap-2">
-            <ShoppingBag className="h-4 w-4" />
-            <span className="hidden md:inline">Browse</span>
-          </Button>
+          {!isMobile && (
+            <Button 
+              href="/browse" 
+              size="sm" 
+              variant="ghost" 
+              className="flex items-center gap-2 text-white hover:text-white/80"
+            >
+              <ShoppingBag className="h-4 w-4" />
+              <span className="hidden md:inline">Browse</span>
+            </Button>
+          )}
           
-          <CartDropdown />
+          {!isMobile && <CartDropdown />}
         </div>
       )}
       
       <div className="relative group">
-        <button className="flex items-center gap-2 text-haluna-text hover:text-haluna-primary transition">
-          <div className="w-8 h-8 rounded-full bg-haluna-primary text-white flex items-center justify-center">
+        <button className="flex items-center gap-2 text-white hover:text-white/80 transition">
+          <div className="w-8 h-8 rounded-full bg-white text-haluna-primary flex items-center justify-center">
             <User className="h-4 w-4" />
           </div>
           <span className="hidden md:inline">{user?.name}</span>
