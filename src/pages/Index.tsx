@@ -2,7 +2,6 @@
 import { useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useLocation } from '@/context/LocationContext';
-import BottomNavigation from '@/components/layout/BottomNavigation';
 import Footer from '@/components/layout/Footer';
 import SearchBar from '@/components/home/SearchBar';
 import LocationBar from '@/components/home/LocationBar';
@@ -28,11 +27,11 @@ const Index = () => {
   }, [isLocationEnabled, requestLocation]);
 
   return (
-    <div className="min-h-screen pt-4 pb-20">
+    <div className="min-h-screen pt-20 pb-20">
       {/* Top container */}
       <div className="container mx-auto px-4">
-        {/* Search and Location Bar */}
-        <div className="space-y-2 mb-6">
+        {/* Mobile only search bar */}
+        <div className="md:hidden space-y-2 mb-6">
           <SearchBar />
           <LocationBar />
         </div>

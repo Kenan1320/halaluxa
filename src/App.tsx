@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -12,7 +11,6 @@ import { LocationProvider } from "@/context/LocationContext";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import AuthMiddleware from "@/components/auth/AuthMiddleware";
 import SplashScreen from "@/components/SplashScreen";
-import BottomNavigation from "@/components/layout/BottomNavigation";
 import Navbar from "@/components/layout/Navbar";
 
 // Pages
@@ -54,22 +52,10 @@ const queryClient = new QueryClient({
   },
 });
 
-// Navbar wrapper that conditionally renders the navbar
-const NavbarWrapper = () => {
-  const location = useLocation();
-  const hideNavbarOn = ['/']; // Routes where navbar should be hidden
-  
-  if (hideNavbarOn.includes(location.pathname)) {
-    return null;
-  }
-  
-  return <Navbar />;
-};
-
 const AppRoutes = () => (
   <>
     <AuthMiddleware />
-    <NavbarWrapper />
+    <Navbar />
     <Routes>
       {/* Public routes */}
       <Route path="/" element={<Index />} />
@@ -162,7 +148,6 @@ const App = () => {
                 <CartProvider>
                   <LocationProvider>
                     <AppRoutes />
-                    <BottomNavigation />
                   </LocationProvider>
                 </CartProvider>
               </AuthProvider>

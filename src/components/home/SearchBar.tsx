@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { Search, Mic, Camera } from 'lucide-react';
+import { Search, Mic } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 
@@ -72,32 +72,24 @@ const SearchBar = ({ onSearch }: SearchBarProps) => {
       <form onSubmit={handleSearch} className="relative">
         <div className="relative flex items-center w-full">
           <div className="absolute left-4">
-            <Search className="h-5 w-5 text-gray-400" />
+            <Search className="h-5 w-5 text-[#2A866A]" />
           </div>
           
           <input
             type="text"
-            placeholder="Search or ask a question"
-            className="pl-12 pr-24 py-3.5 w-full rounded-full border-none shadow-md focus:ring-2 focus:ring-orange-300 bg-white text-gray-700"
+            placeholder="Search your shop and products"
+            className="pl-12 pr-14 py-3 w-full rounded-full border-none shadow-sm focus:ring-2 focus:ring-[#2A866A]/30 bg-[#2A866A]/10 text-gray-700"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
           
-          <div className="absolute right-4 flex items-center space-x-2">
+          <div className="absolute right-4">
             <button 
               type="button" 
-              className="bg-transparent p-1.5 rounded-full hover:bg-gray-100"
-              onClick={() => {}}
-            >
-              <Camera className="h-5 w-5 text-gray-500" />
-            </button>
-            
-            <button 
-              type="button" 
-              className={`bg-transparent p-1.5 rounded-full ${isRecording ? 'bg-red-100' : 'hover:bg-gray-100'}`}
+              className={`bg-transparent p-1.5 rounded-full ${isRecording ? 'bg-red-100' : 'hover:bg-[#2A866A]/20'}`}
               onClick={startVoiceSearch}
             >
-              <Mic className={`h-5 w-5 ${isRecording ? 'text-red-500 animate-pulse' : 'text-gray-500'}`} />
+              <Mic className={`h-5 w-5 ${isRecording ? 'text-red-500 animate-pulse' : 'text-[#2A866A]'}`} />
               {isRecording && (
                 <motion.div
                   className="absolute inset-0 rounded-full bg-red-100 z-[-1]"

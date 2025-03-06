@@ -27,11 +27,11 @@ const LocationBar = () => {
   return (
     <div className="flex items-center justify-center my-2">
       <motion.div 
-        className="flex items-center bg-gray-100 rounded-full px-3 py-1.5 text-sm"
+        className="flex items-center bg-[#2A866A]/10 rounded-full px-3 py-1.5 text-sm"
         whileHover={{ scale: 1.02 }}
         onClick={handleLocationClick}
       >
-        <MapPin className="h-4 w-4 text-gray-600 mr-1" />
+        <MapPin className="h-4 w-4 text-[#2A866A] mr-1" />
         
         {isEditing ? (
           <form onSubmit={handleSubmit} className="flex items-center">
@@ -50,7 +50,7 @@ const LocationBar = () => {
             <span className="text-gray-800">
               {location?.city ? `${location.city}, ${location.state}` : 'Enable location'}
             </span>
-            <ChevronDown className="h-3 w-3 text-gray-600 ml-1" />
+            <ChevronDown className="h-3 w-3 text-[#2A866A] ml-1" />
           </div>
         )}
       </motion.div>
