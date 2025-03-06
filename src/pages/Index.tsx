@@ -37,15 +37,27 @@ const Index = () => {
   return (
     <div className="min-h-screen pt-16 pb-20">
       {/* Top container with lighter mint background */}
-      <div className="bg-[#3a9e7e] pt-4 pb-6">
+      <div className="bg-[#E4F5F0] pt-4 pb-6">
         <div className="container mx-auto px-4">
           {/* Search bar */}
-          <div className="mb-4">
+          <div className="mb-5">
             <SearchBar />
           </div>
           
+          {/* Personalized greeting for user */}
+          <motion.div
+            className="mb-4"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <h2 className="text-2xl font-semibold text-[#2A866A]">
+              {greeting}, {isLoggedIn && user ? user.name : 'Guest'}
+            </h2>
+            <p className="text-gray-600">Discover products you'll love</p>
+          </motion.div>
+          
           {/* Category scroll inside mint background */}
-          <div className="mt-4">
+          <div className="mt-3">
             <CategoryScroll />
           </div>
         </div>
@@ -53,24 +65,15 @@ const Index = () => {
       
       {/* Main content with white background */}
       <div className="container mx-auto px-4 pt-6">
-        {/* Personalized greeting for user */}
-        <motion.div
-          className="mt-2 mb-6"
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          <h2 className="text-2xl font-semibold text-gray-800">
-            {greeting}, {isLoggedIn && user ? user.name : 'Guest'}
-          </h2>
-          <p className="text-gray-500">Discover products you'll love</p>
-        </motion.div>
+        {/* Nearby Shops Section - now with animated flowing cards */}
+        <section className="mt-4">
+          <h2 className="text-xl font-semibold mb-4 text-gray-800">Nearby Shops</h2>
+          <NearbyShops />
+        </section>
         
-        {/* Nearby Shops - now displayed before products */}
-        <NearbyShops />
-        
-        {/* Featured Section */}
+        {/* Featured Products Section */}
         <section className="mt-8">
-          <h2 className="text-xl font-semibold mb-4">Featured Products</h2>
+          <h2 className="text-xl font-semibold mb-4 text-gray-800">Featured Products</h2>
           <ProductGrid />
         </section>
       </div>
