@@ -77,8 +77,8 @@ const SearchBar = ({ onSearch }: SearchBarProps) => {
           
           <input
             type="text"
-            placeholder="Search your shop and products"
-            className="pl-12 pr-14 py-3 w-full rounded-full border-none shadow-sm focus:ring-2 focus:ring-[#2A866A]/30 bg-[#2A866A]/10 text-gray-700"
+            placeholder="Search Haluna"
+            className="pl-12 pr-14 py-3 w-full rounded-full border-none shadow-sm focus:ring-2 focus:ring-[#2A866A]/30 bg-white text-gray-700"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />

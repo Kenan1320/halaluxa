@@ -26,32 +26,48 @@ const Index = () => {
     }
   }, [isLocationEnabled, requestLocation]);
 
+  // Get current hour to determine greeting
+  const currentHour = new Date().getHours();
+  let greeting = "Good morning";
+  if (currentHour >= 12 && currentHour < 18) {
+    greeting = "Good afternoon";
+  } else if (currentHour >= 18) {
+    greeting = "Good evening";
+  }
+
   return (
-    <div className="min-h-screen pt-20 pb-20">
-      {/* Top container */}
-      <div className="container mx-auto px-4">
-        {/* Mobile only search bar */}
-        <div className="md:hidden space-y-2 mb-6">
-          <SearchBar />
+    <div className="min-h-screen pt-16 pb-20">
+      {/* Top container with mint background */}
+      <div className="bg-[#2A866A] pt-4 pb-6">
+        <div className="container mx-auto px-4">
+          {/* Search bar */}
+          <div className="mb-4">
+            <SearchBar />
+          </div>
+          
+          {/* Location bar */}
           <LocationBar />
+          
+          {/* Category scroll inside mint background */}
+          <div className="mt-4">
+            <CategoryScroll />
+          </div>
         </div>
-        
-        {/* Category Scroll */}
-        <CategoryScroll />
-        
-        {/* Welcome message for logged in users */}
-        {isLoggedIn && user && (
-          <motion.div
-            className="mt-6 mb-2"
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            <h2 className="text-2xl font-semibold">
-              Hi, {user.name || 'Welcome back'}!
-            </h2>
-            <p className="text-gray-500">Discover products you'll love</p>
-          </motion.div>
-        )}
+      </div>
+      
+      {/* Main content with white background */}
+      <div className="container mx-auto px-4 pt-6">
+        {/* Personalized greeting for user */}
+        <motion.div
+          className="mt-2 mb-6"
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <h2 className="text-2xl font-semibold text-gray-800">
+            {greeting}, {isLoggedIn && user ? user.name : 'Guest'}
+          </h2>
+          <p className="text-gray-500">Discover products you'll love</p>
+        </motion.div>
         
         {/* Featured Section */}
         <section className="mt-8">
