@@ -29,7 +29,7 @@ const ShopDetail = () => {
         setShop(shopData);
         
         if (shopData) {
-          const shopProducts = getProductsForShop(shopId);
+          const shopProducts = await getProductsForShop(shopId);
           setProducts(shopProducts);
         }
       }

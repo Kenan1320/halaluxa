@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Navbar from '@/components/layout/Navbar';
@@ -33,9 +34,9 @@ const Shop = () => {
   useEffect(() => {
     window.scrollTo(0, 0);
     
-    const fetchProducts = () => {
+    const fetchProducts = async () => {
       setIsLoading(true);
-      const fetchedProducts = getProducts();
+      const fetchedProducts = await getProducts();
       setProducts(fetchedProducts);
       setIsLoading(false);
     };

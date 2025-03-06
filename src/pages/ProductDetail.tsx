@@ -63,12 +63,16 @@ const ProductDetail = () => {
   useEffect(() => {
     window.scrollTo(0, 0);
 
-    if (productId) {
-      setIsLoading(true);
-      const fetchedProduct = getProductById(productId);
-      setProduct(fetchedProduct);
-      setIsLoading(false);
-    }
+    const fetchProduct = async () => {
+      if (productId) {
+        setIsLoading(true);
+        const fetchedProduct = await getProductById(productId);
+        setProduct(fetchedProduct);
+        setIsLoading(false);
+      }
+    };
+
+    fetchProduct();
   }, [productId]);
 
   const handleAddToCart = (product: Product) => {

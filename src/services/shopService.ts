@@ -1,228 +1,166 @@
-
 import { supabase } from '@/integrations/supabase/client';
+import { Product, mapDbProductToModel } from '@/models/product';
 
-// Custom event for shop updates
-const SHOP_UPDATE_EVENT = 'haluna-shop-updated';
+// Interface for shop data
+export interface Shop {
+  id: string;
+  name: string;
+  description: string;
+  ownerId: string;
+  logo?: string;
+  coverImage?: string;
+  location: string;
+  rating: number;
+  productCount: number;
+  isVerified: boolean;
+}
 
-// Listen for shop updates and invalidate cache
-window.addEventListener(SHOP_UPDATE_EVENT, () => {
-  invalidateShopCache();
-});
+// Mapping function for shop data
+function mapDbShopToModel(dbShop: any): Shop {
+  return {
+    id: dbShop.id,
+    name: dbShop.name,
+    description: dbShop.description || '',
+    ownerId: dbShop.owner_id,
+    logo: dbShop.logo_url,
+    coverImage: dbShop.cover_image,
+    location: dbShop.location || 'Online',
+    rating: dbShop.rating || 5.0,
+    productCount: dbShop.product_count || 0,
+    isVerified: dbShop.is_verified || false
+  };
+}
 
-// Cache management
-let cachedShops = null;
-let lastFetchTime = 0;
-const CACHE_DURATION = 1000; // 1 second cache duration
-
-// Helper method to calculate product count for shops
-const calculateProductCountForShop = async (shopId) => {
-  try {
-    const { count, error } = await supabase
-      .from('products')
-      .select('*', { count: 'exact', head: true })
-      .eq('seller_id', shopId);
-    
-    if (error) {
-      console.error('Error calculating product count:', error);
-      return 0;
-    }
-    
-    return count || 0;
-  } catch (error) {
-    console.error('Error calculating product count:', error);
-    return 0;
-  }
-};
-
-// Get all shops from Supabase
-export const getShops = async () => {
-  const currentTime = Date.now();
-  
-  // Use cache if it's recent enough
-  if (cachedShops && currentTime - lastFetchTime < CACHE_DURATION) {
-    return cachedShops;
-  }
-  
-  try {
-    const { data: shops, error } = await supabase
-      .from('shops')
-      .select('*');
-    
-    if (error) {
-      console.error('Failed to fetch shops data:', error);
-      return [];
-    }
-    
-    // Calculate product count for each shop
-    const updatedShops = await Promise.all(shops.map(async (shop) => {
-      return {
-        ...shop,
-        productCount: await calculateProductCountForShop(shop.id)
-      };
-    }));
-    
-    // Update cache
-    cachedShops = updatedShops;
-    lastFetchTime = currentTime;
-    
-    return updatedShops;
-  } catch (error) {
-    console.error('Failed to fetch shops data:', error);
-    return [];
-  }
-};
-
-// Invalidate the shop cache to force fresh data
-export const invalidateShopCache = () => {
-  cachedShops = null;
-  lastFetchTime = 0;
-};
-
-// Trigger shop update event to refresh data across components
-export const notifyShopUpdate = () => {
-  window.dispatchEvent(new Event(SHOP_UPDATE_EVENT));
-};
-
-// Get a shop by ID
-export const getShopById = async (shopId) => {
+// Get all shops
+export async function getShops(): Promise<Shop[]> {
   try {
     const { data, error } = await supabase
       .from('shops')
       .select('*')
-      .eq('id', shopId)
+      .order('name');
+    
+    if (error) {
+      console.error('Error fetching shops:', error);
+      return [];
+    }
+    
+    return data.map(mapDbShopToModel);
+  } catch (err) {
+    console.error('Error in getShops:', err);
+    return [];
+  }
+}
+
+// Get a single shop by ID
+export async function getShopById(id: string): Promise<Shop | undefined> {
+  try {
+    const { data, error } = await supabase
+      .from('shops')
+      .select('*')
+      .eq('id', id)
       .single();
     
     if (error) {
-      console.error('Error fetching shop:', error);
-      return null;
+      console.error(`Error fetching shop with id ${id}:`, error);
+      return undefined;
     }
     
-    return data;
-  } catch (error) {
-    console.error('Error fetching shop:', error);
-    return null;
+    return mapDbShopToModel(data);
+  } catch (err) {
+    console.error(`Error in getShopById for ${id}:`, err);
+    return undefined;
   }
-};
+}
 
-// Get products for a specific shop
-export const getProductsForShop = async (shopId) => {
+// Get all products for a specific shop
+export async function getProductsForShop(shopId: string): Promise<Product[]> {
   try {
     const { data, error } = await supabase
       .from('products')
       .select('*')
-      .eq('seller_id', shopId);
+      .eq('seller_id', shopId)
+      .order('created_at', { ascending: false });
     
     if (error) {
-      console.error('Error fetching shop products:', error);
+      console.error(`Error fetching products for shop ${shopId}:`, error);
       return [];
     }
     
-    return data;
-  } catch (error) {
-    console.error('Error fetching shop products:', error);
+    return data.map(mapDbProductToModel);
+  } catch (err) {
+    console.error(`Error in getProductsForShop for ${shopId}:`, err);
     return [];
   }
-};
+}
 
 // Update shop details
-export const updateShop = async (shopId, shopData) => {
+export async function updateShop(shop: Partial<Shop>): Promise<Shop | undefined> {
   try {
+    const dbShop = {
+      name: shop.name,
+      description: shop.description,
+      logo_url: shop.logo,
+      cover_image: shop.coverImage,
+      location: shop.location,
+      is_verified: shop.isVerified
+    };
+    
     const { data, error } = await supabase
       .from('shops')
-      .update(shopData)
-      .eq('id', shopId)
+      .update(dbShop)
+      .eq('id', shop.id)
       .select()
       .single();
     
     if (error) {
-      console.error('Error updating shop:', error);
-      return null;
+      console.error(`Error updating shop ${shop.id}:`, error);
+      return undefined;
     }
     
-    // Invalidate cache and notify components
-    notifyShopUpdate();
-    
-    return data;
-  } catch (error) {
-    console.error('Error updating shop:', error);
-    return null;
+    return mapDbShopToModel(data);
+  } catch (err) {
+    console.error(`Error in updateShop for ${shop.id}:`, err);
+    return undefined;
   }
-};
+}
 
-// Create a new shop
-export const createShop = async (shopData) => {
+// Get featured shops (for home page)
+export async function getFeaturedShops(): Promise<Shop[]> {
   try {
     const { data, error } = await supabase
       .from('shops')
-      .insert({
-        name: shopData.name,
-        description: shopData.description || '',
-        owner_id: shopData.ownerId,
-        logo_url: shopData.logo || null,
-        location: shopData.location || null,
-        rating: shopData.rating || 0
-      })
-      .select()
-      .single();
+      .select('*')
+      .eq('is_verified', true)
+      .order('rating', { ascending: false })
+      .limit(4);
     
     if (error) {
-      console.error('Error creating shop:', error);
-      return null;
+      console.error('Error fetching featured shops:', error);
+      return [];
     }
     
-    // Invalidate cache and notify components
-    notifyShopUpdate();
-    
-    return data;
-  } catch (error) {
-    console.error('Error creating shop:', error);
-    return null;
+    return data.map(mapDbShopToModel);
+  } catch (err) {
+    console.error('Error in getFeaturedShops:', err);
+    return [];
   }
-};
+}
 
-// Update shop product count (called after product operations)
-export const updateShopProductCount = async (shopId) => {
-  try {
-    const productCount = await calculateProductCountForShop(shopId);
-    
-    const { data, error } = await supabase
-      .from('shops')
-      .update({ product_count: productCount })
-      .eq('id', shopId)
-      .select()
-      .single();
-    
-    if (error) {
-      console.error('Error updating shop product count:', error);
-      return null;
-    }
-    
-    return data;
-  } catch (error) {
-    console.error('Error updating shop product count:', error);
-    return null;
-  }
-};
-
-// Delete a shop (for admin purposes)
-export const deleteShop = async (shopId) => {
-  try {
-    const { error } = await supabase
-      .from('shops')
-      .delete()
-      .eq('id', shopId);
-    
-    if (error) {
-      console.error('Error deleting shop:', error);
-      return false;
-    }
-    
-    // Invalidate cache and notify components
-    notifyShopUpdate();
-    
-    return true;
-  } catch (error) {
-    console.error('Error deleting shop:', error);
-    return false;
-  }
-};
+// Mock function for backward compatibility
+export function getMockShops(): Shop[] {
+  return [
+    {
+      id: "shop1",
+      name: "Halal Meats & More",
+      description: "Premium halal meats and grocery items for your everyday needs.",
+      ownerId: "user1",
+      logo: "/lovable-uploads/8d386384-3944-48e3-922c-2edb81fa1631.png",
+      coverImage: "/lovable-uploads/d4ab324c-23f0-4fcc-9069-0afbc77d1c3e.png",
+      location: "New York",
+      rating: 4.9,
+      productCount: 24,
+      isVerified: true
+    },
+    // ... other mock shops
+  ];
+}
