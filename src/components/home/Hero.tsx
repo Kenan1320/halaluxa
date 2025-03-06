@@ -6,12 +6,31 @@ import { useLocation } from '@/context/LocationContext';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import ShopCard from '../shop/ShopCard';
 
 const Hero = () => {
   const { isLoggedIn, user } = useAuth();
-  const { isLocationEnabled, location, requestLocation } = useLocation();
+  const { isLocationEnabled, location, requestLocation, getNearbyShops } = useLocation();
   const [searchTerm, setSearchTerm] = useState('');
+  const [featuredShop, setFeaturedShop] = useState<any>(null);
   const navigate = useNavigate();
+  
+  useEffect(() => {
+    const loadFeaturedShop = async () => {
+      if (isLocationEnabled) {
+        try {
+          const shops = await getNearbyShops();
+          if (shops && shops.length > 0) {
+            setFeaturedShop(shops[0]);
+          }
+        } catch (error) {
+          console.error('Error loading featured shop:', error);
+        }
+      }
+    };
+    
+    loadFeaturedShop();
+  }, [isLocationEnabled, getNearbyShops]);
   
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,7 +47,7 @@ const Hero = () => {
               Shop Muslim Businesses and Shops
             </span>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif font-bold leading-tight mb-6 animate-fade-in animate-delay-100">
-              The Premier <span className="text-haluna-primary">Halal</span> Marketplace
+              Find your <span className="text-haluna-primary">Local Shop</span> & Beyond
             </h1>
             <p className="text-haluna-text-light text-lg md:text-xl mb-8 max-w-2xl mx-auto lg:mx-0 animate-fade-in animate-delay-200">
               Connect with authentic Muslim businesses and discover ethically sourced products that align with your values.
@@ -94,7 +113,7 @@ const Hero = () => {
               className="flex flex-wrap gap-4 justify-center lg:justify-start"
             >
               <Button 
-                href="/browse" 
+                href="/shops" 
                 size="lg" 
                 className="flex items-center"
               >
@@ -133,31 +152,45 @@ const Hero = () => {
             </div>
           </div>
           
-          {/* Featured Image */}
+          {/* Featured Shop */}
           <div className="lg:w-1/2 relative">
-            <motion.div 
-              className="bg-white rounded-2xl shadow-xl overflow-hidden"
-              initial={{ opacity: 0, x: 50 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.7 }}
-            >
-              <img 
-                src="/lovable-uploads/0c423741-0711-4e97-8c56-ca4fe31dc6ca.png" 
-                alt="Halal marketplace" 
-                className="w-full h-auto"
-              />
-              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-6">
-                <h3 className="text-white text-xl font-serif font-bold mb-2">Discover Authentic Halal Products</h3>
-                <p className="text-white/80 mb-4">From local sellers committed to quality and tradition</p>
-                <Button 
-                  href="/shop"
-                  size="sm"
-                  className="bg-white text-haluna-primary hover:bg-gray-100"
-                >
-                  Start Shopping <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </div>
-            </motion.div>
+            {featuredShop ? (
+              <motion.div 
+                initial={{ opacity: 0, x: 50 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.7 }}
+              >
+                <ShopCard shop={featuredShop} index={0} featured={true} />
+              </motion.div>
+            ) : (
+              <motion.div 
+                className="bg-white rounded-2xl shadow-xl overflow-hidden"
+                initial={{ opacity: 0, x: 50 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.7 }}
+              >
+                <div className="h-80 bg-gradient-to-r from-haluna-primary-light to-purple-100 flex items-center justify-center">
+                  <div className="text-center p-8">
+                    <Store className="h-16 w-16 text-haluna-primary mx-auto mb-4" />
+                    <h3 className="text-2xl font-serif font-bold mb-2">Discover Local Muslim Shops</h3>
+                    <p className="text-haluna-text-light mb-6">
+                      {isLocationEnabled 
+                        ? "We're finding shops near you..."
+                        : "Enable location to find shops in your area"}
+                    </p>
+                    {!isLocationEnabled && (
+                      <Button 
+                        onClick={requestLocation}
+                        className="bg-white text-haluna-primary hover:bg-gray-100"
+                      >
+                        <MapPin className="mr-2 h-4 w-4" />
+                        Enable Location
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </motion.div>
+            )}
           </div>
         </div>
       </div>

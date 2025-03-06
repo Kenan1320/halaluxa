@@ -9,9 +9,10 @@ import Hero from '@/components/home/Hero';
 import Features from '@/components/home/Features';
 import CategoryCard from '@/components/home/CategoryCard';
 import Stats from '@/components/home/Stats';
+import ShopCard from '@/components/shop/ShopCard';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
-import { ArrowRight, LogIn, UserPlus, MapPin, Star, Store } from 'lucide-react';
+import { ArrowRight, LogIn, UserPlus, MapPin, Store } from 'lucide-react';
 
 const Index = () => {
   const { isLoggedIn, user } = useAuth();
@@ -32,7 +33,7 @@ const Index = () => {
         setIsLoading(true);
         try {
           const shops = await getNearbyShops();
-          setNearbyShops(shops.slice(0, 3)); // Show top 3 shops
+          setNearbyShops(shops.slice(0, 4)); // Show top 4 shops
         } catch (error) {
           console.error("Error fetching nearby shops:", error);
         } finally {
@@ -81,8 +82,8 @@ const Index = () => {
             </div>
             
             {isLoading ? (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {[...Array(3)].map((_, i) => (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {[...Array(4)].map((_, i) => (
                   <div key={i} className="bg-white rounded-xl shadow-sm overflow-hidden animate-pulse">
                     <div className="h-48 bg-gray-200"></div>
                     <div className="p-6 space-y-4">
@@ -94,60 +95,9 @@ const Index = () => {
                 ))}
               </div>
             ) : nearbyShops.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {nearbyShops.map((shop, index) => (
-                  <motion.div 
-                    key={shop.id}
-                    className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3, delay: index * 0.1 }}
-                  >
-                    <div className="h-48 bg-gray-100 relative">
-                      {shop.coverImage ? (
-                        <img 
-                          src={shop.coverImage} 
-                          alt={shop.name} 
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-haluna-primary-light">
-                          <Store className="h-12 w-12 text-haluna-primary" />
-                        </div>
-                      )}
-                      {shop.isVerified && (
-                        <div className="absolute top-4 right-4 bg-white px-2 py-1 rounded-full text-xs font-medium shadow-sm">
-                          Verified
-                        </div>
-                      )}
-                    </div>
-                    <div className="p-6">
-                      <div className="flex items-center justify-between mb-2">
-                        <h3 className="text-xl font-medium">{shop.name}</h3>
-                        <div className="flex items-center text-yellow-500">
-                          <Star className="h-4 w-4 fill-current" />
-                          <span className="ml-1 text-sm">{shop.rating}</span>
-                        </div>
-                      </div>
-                      <p className="text-haluna-text-light mb-3 line-clamp-2">{shop.description}</p>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm bg-gray-100 px-3 py-1 rounded-full">
-                          {shop.category}
-                        </span>
-                        {isLocationEnabled && shop.distance && (
-                          <span className="text-sm text-haluna-text-light">
-                            {shop.distance.toFixed(1)} miles away
-                          </span>
-                        )}
-                      </div>
-                      <Button 
-                        onClick={() => navigate(`/shop/${shop.id}`)}
-                        className="w-full mt-4"
-                      >
-                        View Shop
-                      </Button>
-                    </div>
-                  </motion.div>
+                  <ShopCard key={shop.id} shop={shop} index={index} />
                 ))}
               </div>
             ) : (
@@ -209,35 +159,35 @@ const Index = () => {
               <CategoryCard 
                 title="Clothing & Fashion"
                 description="Modest apparel with contemporary designs"
-                imageSrc="/lovable-uploads/26c50a86-ec95-4072-8f0c-ac930a65b34d.png"
+                imageSrc="/placeholder.svg"
                 backgroundColor="bg-haluna-primary-light"
-                link="/shop"
+                link="/shops"
               />
               <CategoryCard 
-                title="Food & Cuisine"
+                title="Food & Groceries"
                 description="Authentic halal delicacies and ingredients"
-                imageSrc="/lovable-uploads/0c423741-0711-4e97-8c56-ca4fe31dc6ca.png"
+                imageSrc="/placeholder.svg"
                 backgroundColor="bg-haluna-beige"
-                link="/shop"
+                link="/shops"
               />
               <CategoryCard 
                 title="Beauty & Wellness"
                 description="Natural and halal-certified care products"
-                imageSrc="/lovable-uploads/9c75ca26-bc1a-4718-84bb-67d7f2337b30.png"
+                imageSrc="/placeholder.svg"
                 backgroundColor="bg-haluna-sage"
-                link="/shop"
+                link="/shops"
               />
               <CategoryCard 
                 title="Home & Decor"
                 description="Elegant Islamic art and home accessories"
-                imageSrc="/lovable-uploads/d8db1529-74b3-4d86-b64a-f0c8b0f92c5c.png"
+                imageSrc="/placeholder.svg"
                 backgroundColor="bg-haluna-cream"
-                link="/shop"
+                link="/shops"
               />
             </div>
             
             <div className="text-center mt-12">
-              <Button href="/shop" variant="outline" className="inline-flex items-center">
+              <Button href="/shops" variant="outline" className="inline-flex items-center">
                 View All Categories <ArrowRight size={16} className="ml-2" />
               </Button>
             </div>
@@ -261,7 +211,7 @@ const Index = () => {
               {isLoggedIn ? (
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                   <Button 
-                    href={user?.role === 'business' ? '/dashboard' : '/shop'} 
+                    href={user?.role === 'business' ? '/dashboard' : '/shops'} 
                     size="lg"
                   >
                     {user?.role === 'business' ? 'Go to Dashboard' : 'Start Shopping'}

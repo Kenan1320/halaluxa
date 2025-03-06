@@ -1,29 +1,38 @@
 
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { Star, Store, MapPin } from 'lucide-react';
+import { Star, Store, MapPin, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface ShopCardProps {
   shop: any;
   index: number;
+  featured?: boolean;
 }
 
-const ShopCard = ({ shop, index }: ShopCardProps) => {
+const ShopCard = ({ shop, index, featured = false }: ShopCardProps) => {
   return (
     <motion.div 
-      className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow"
+      className={`bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow ${featured ? 'lg:flex' : ''}`}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: index * 0.1 }}
     >
-      <div className="h-48 bg-gray-100 relative">
+      <div className={`${featured ? 'lg:w-2/5 h-48 lg:h-auto' : 'h-48'} bg-gray-100 relative`}>
         {shop.coverImage ? (
           <img 
             src={shop.coverImage} 
             alt={shop.name} 
             className="w-full h-full object-cover"
           />
+        ) : shop.logo ? (
+          <div className="w-full h-full flex items-center justify-center bg-haluna-primary-light p-4">
+            <img 
+              src={shop.logo} 
+              alt={`${shop.name} logo`} 
+              className="max-h-full max-w-full object-contain"
+            />
+          </div>
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-haluna-primary-light">
             <Store className="h-12 w-12 text-haluna-primary" />
@@ -36,7 +45,7 @@ const ShopCard = ({ shop, index }: ShopCardProps) => {
         )}
       </div>
       
-      <div className="p-6">
+      <div className={`p-6 ${featured ? 'lg:w-3/5' : ''}`}>
         <div className="flex items-center justify-between mb-2">
           <h3 className="text-xl font-medium">{shop.name}</h3>
           <div className="flex items-center text-yellow-500">
@@ -45,7 +54,9 @@ const ShopCard = ({ shop, index }: ShopCardProps) => {
           </div>
         </div>
         
-        <p className="text-haluna-text-light mb-4 line-clamp-2">{shop.description}</p>
+        <p className={`text-haluna-text-light mb-4 ${featured ? 'line-clamp-3' : 'line-clamp-2'}`}>
+          {shop.description}
+        </p>
         
         <div className="flex items-center justify-between mb-4">
           <span className="text-sm bg-gray-100 px-3 py-1 rounded-full">
@@ -70,9 +81,15 @@ const ShopCard = ({ shop, index }: ShopCardProps) => {
         
         <Button 
           href={`/shop/${shop.id}`}
-          className="w-full"
+          className="w-full flex items-center justify-center"
         >
-          View Shop
+          {featured ? (
+            <>
+              Visit Shop <ExternalLink className="ml-2 h-4 w-4" />
+            </>
+          ) : (
+            'View Shop'
+          )}
         </Button>
       </div>
     </motion.div>

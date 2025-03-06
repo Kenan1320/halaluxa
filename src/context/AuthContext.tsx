@@ -14,6 +14,12 @@ interface User {
   city?: string;
   state?: string;
   zip?: string;
+  // Business specific fields
+  shopName?: string;
+  shopDescription?: string;
+  shopLogo?: string;
+  shopCategory?: string;
+  shopLocation?: string;
 }
 
 interface ProfileUpdateData {
@@ -24,13 +30,29 @@ interface ProfileUpdateData {
   city?: string;
   state?: string;
   zip?: string;
+  shopName?: string;
+  shopDescription?: string;
+  shopLogo?: string;
+  shopCategory?: string;
+  shopLocation?: string;
 }
 
 interface AuthContextType {
   user: User | null;
   isLoggedIn: boolean;
   login: (email: string, password: string) => Promise<UserRole | false>;
-  signup: (name: string, email: string, password: string, role: UserRole) => Promise<boolean>;
+  signup: (
+    name: string, 
+    email: string, 
+    password: string, 
+    role: UserRole, 
+    shopDetails?: {
+      shopName?: string;
+      shopDescription?: string;
+      shopCategory?: string;
+      shopLocation?: string;
+    }
+  ) => Promise<boolean>;
   logout: () => void;
   updateUserProfile: (data: ProfileUpdateData) => Promise<boolean>;
 }
@@ -93,7 +115,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     name: string, 
     email: string, 
     password: string, 
-    role: UserRole
+    role: UserRole,
+    shopDetails?: {
+      shopName?: string;
+      shopDescription?: string;
+      shopCategory?: string;
+      shopLocation?: string;
+    }
   ): Promise<boolean> => {
     // Here you would typically call your registration API
     try {
@@ -102,12 +130,39 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         id: Math.random().toString(36).substr(2, 9),
         name,
         email,
-        role
+        role,
+        ...(role === 'business' && shopDetails ? {
+          shopName: shopDetails.shopName || '',
+          shopDescription: shopDetails.shopDescription || '',
+          shopCategory: shopDetails.shopCategory || '',
+          shopLocation: shopDetails.shopLocation || '',
+        } : {})
       };
       
       // Save to localStorage for demo purposes
       localStorage.setItem('user', JSON.stringify(newUser));
       localStorage.setItem('isLoggedIn', 'true');
+      
+      // If it's a business user, create a shop entry
+      if (role === 'business' && shopDetails?.shopName) {
+        const newShop = {
+          id: newUser.id, // Use the same ID as the user for simplicity
+          name: shopDetails.shopName,
+          description: shopDetails.shopDescription || 'New shop on Haluna',
+          category: shopDetails.shopCategory || 'General',
+          location: shopDetails.shopLocation || 'Online',
+          coverImage: null,
+          logo: null,
+          isVerified: false,
+          productCount: 0,
+          rating: 5.0
+        };
+        
+        // Save the new shop to shops in localStorage
+        const existingShops = JSON.parse(localStorage.getItem('shops') || '[]');
+        const updatedShops = [...existingShops, newShop];
+        localStorage.setItem('shops', JSON.stringify(updatedShops));
+      }
       
       setUser(newUser);
       setIsLoggedIn(true);
@@ -130,6 +185,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       // Update in localStorage
       localStorage.setItem('user', JSON.stringify(updatedUser));
+      
+      // If this is a business user and shop details were updated, update the shop too
+      if (user.role === 'business' && (data.shopName || data.shopDescription || data.shopLogo || data.shopCategory || data.shopLocation)) {
+        const shops = JSON.parse(localStorage.getItem('shops') || '[]');
+        const updatedShops = shops.map((shop: any) => {
+          if (shop.id === user.id) {
+            return {
+              ...shop,
+              name: data.shopName || shop.name,
+              description: data.shopDescription || shop.description,
+              logo: data.shopLogo || shop.logo,
+              category: data.shopCategory || shop.category,
+              location: data.shopLocation || shop.location
+            };
+          }
+          return shop;
+        });
+        
+        localStorage.setItem('shops', JSON.stringify(updatedShops));
+      }
       
       // Update state
       setUser(updatedUser);

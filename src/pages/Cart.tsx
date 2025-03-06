@@ -1,280 +1,318 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { ShoppingBag, ArrowRight, Trash2, Plus, Minus, ChevronLeft } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { useCart } from '@/context/CartContext';
+import { useAuth } from '@/context/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
-import { useCart } from '@/context/CartContext';
-import { useToast } from '@/hooks/use-toast';
+import { Button } from '@/components/ui/button';
+import { ShoppingCart, Trash, Plus, Minus, ArrowLeft, Store, ShoppingBag } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { CartItem } from '@/models/cart';
-import { Product } from '@/models/product';
-
-// Define a type for grouped cart items by seller
-interface GroupedCartItems {
-  [sellerId: string]: {
-    sellerName: string;
-    items: CartItem[];
-  };
-}
+import { getShopById } from '@/services/shopService';
 
 const Cart = () => {
   const { cart, removeFromCart, updateQuantity, clearCart } = useCart();
+  const { isLoggedIn } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   
-  // Group cart items by sellerId for a better display
-  const groupedItems: GroupedCartItems = cart.items.reduce((groups, item) => {
-    const product = item.product as Product;
-    const sellerId = product.sellerId || 'unknown';
+  const [shopGroups, setShopGroups] = useState<Record<string, any>>({});
+  const [isLoading, setIsLoading] = useState(true);
+  
+  useEffect(() => {
+    window.scrollTo(0, 0);
     
-    if (!groups[sellerId]) {
-      groups[sellerId] = {
-        sellerName: product.sellerName || 'Unknown Seller',
-        items: []
-      };
+    const loadShopDetails = async () => {
+      setIsLoading(true);
+      try {
+        const groups: Record<string, any> = {};
+        
+        // First, create groups by seller ID
+        const sellerGroups: Record<string, any[]> = {};
+        
+        cart.items.forEach(item => {
+          if (!sellerGroups[item.product.sellerId]) {
+            sellerGroups[item.product.sellerId] = [];
+          }
+          sellerGroups[item.product.sellerId].push(item);
+        });
+        
+        // Then, fetch shop details for each seller
+        await Promise.all(
+          Object.keys(sellerGroups).map(async (sellerId) => {
+            const shop = await getShopById(sellerId);
+            groups[sellerId] = {
+              shop,
+              items: sellerGroups[sellerId],
+              subtotal: sellerGroups[sellerId].reduce(
+                (sum, item) => sum + (item.product.price * item.quantity), 
+                0
+              )
+            };
+          })
+        );
+        
+        setShopGroups(groups);
+      } catch (error) {
+        console.error("Error loading shop details:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    if (cart.items.length > 0) {
+      loadShopDetails();
+    } else {
+      setIsLoading(false);
     }
-    groups[sellerId].items.push(item);
-    return groups;
-  }, {} as GroupedCartItems);
+  }, [cart.items]);
+  
+  const handleUpdateQuantity = (productId: string, newQuantity: number) => {
+    if (newQuantity < 1) return;
+    updateQuantity(productId, newQuantity);
+  };
   
   const handleRemoveItem = (productId: string) => {
     removeFromCart(productId);
     toast({
       title: "Item removed",
-      description: "Item has been removed from your cart",
+      description: "The item has been removed from your cart",
     });
   };
   
-  const handleQuantityChange = (productId: string, newQuantity: number, maxStock?: number) => {
-    if (newQuantity < 1) {
-      handleRemoveItem(productId);
-      return;
-    }
-    
-    if (maxStock && newQuantity > maxStock) {
+  const handleCheckout = () => {
+    if (!isLoggedIn) {
       toast({
-        title: "Maximum stock reached",
-        description: `Only ${maxStock} items available`,
-        variant: "destructive"
+        title: "Login required",
+        description: "Please login to proceed to checkout",
+        variant: "destructive",
       });
-      updateQuantity(productId, maxStock);
+      navigate('/login');
       return;
     }
     
-    updateQuantity(productId, newQuantity);
+    navigate('/checkout');
   };
   
+  const cartTotal = cart.items.reduce(
+    (sum, item) => sum + (item.product.price * item.quantity), 
+    0
+  );
+  
+  const totalItems = cart.items.reduce(
+    (sum, item) => sum + item.quantity, 
+    0
+  );
+  
+  if (isLoading) {
+    return (
+      <div className="min-h-screen">
+        <Navbar />
+        <main className="pt-28 pb-20">
+          <div className="container mx-auto px-4">
+            <h1 className="text-3xl md:text-4xl font-serif font-bold mb-8">Your Cart</h1>
+            <div className="animate-pulse">
+              <div className="h-32 bg-gray-200 rounded-lg mb-4"></div>
+              <div className="h-32 bg-gray-200 rounded-lg mb-4"></div>
+              <div className="h-40 bg-gray-200 rounded-lg"></div>
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+  
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
       <Navbar />
       
       <main className="pt-28 pb-20">
         <div className="container mx-auto px-4">
-          <div className="flex items-center mb-6">
-            <button 
-              onClick={() => navigate(-1)} 
-              className="mr-4 p-2 rounded-full hover:bg-gray-100 transition-colors"
+          <div className="mb-6">
+            <Link 
+              to="/shop"
+              className="inline-flex items-center text-haluna-text-light hover:text-haluna-text transition-colors"
             >
-              <ChevronLeft className="h-5 w-5" />
-            </button>
-            <h1 className="text-3xl md:text-4xl font-serif font-bold">Your Cart</h1>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Continue Shopping
+            </Link>
           </div>
           
+          <h1 className="text-3xl md:text-4xl font-serif font-bold mb-2">Your Cart</h1>
+          <p className="text-haluna-text-light mb-8">
+            {totalItems === 0 
+              ? "Your cart is empty" 
+              : `You have ${totalItems} item${totalItems === 1 ? '' : 's'} in your cart`}
+          </p>
+          
           {cart.items.length === 0 ? (
-            <motion.div 
-              className="bg-white rounded-xl shadow-sm p-12 text-center"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              <div className="w-24 h-24 mx-auto mb-6 bg-gray-100 rounded-full flex items-center justify-center">
-                <ShoppingBag className="h-12 w-12 text-gray-400" />
+            <div className="bg-white rounded-xl shadow-sm p-12 text-center">
+              <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <ShoppingCart className="h-10 w-10 text-haluna-text-light" />
               </div>
-              <h2 className="text-2xl font-medium mb-2">Your cart is empty</h2>
+              <h2 className="text-2xl font-serif font-medium mb-4">Your cart is empty</h2>
               <p className="text-haluna-text-light mb-8 max-w-md mx-auto">
-                Looks like you haven't added any items to your cart yet. Check out our shop to find halal products from Muslim-owned businesses.
+                Looks like you haven't added any products to your cart yet. Browse our collections and discover amazing products.
               </p>
-              <Button 
-                onClick={() => navigate('/shop')}
-                className="px-8"
-              >
-                Browse Products
+              <Button href="/shops" size="lg">
+                Browse Shops
               </Button>
-            </motion.div>
+            </div>
           ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <motion.div 
-                className="lg:col-span-2"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-              >
-                <div className="bg-white rounded-xl shadow-sm overflow-hidden mb-6">
-                  <div className="p-6 border-b flex justify-between items-center">
-                    <h2 className="text-xl font-medium">Cart Items ({cart.totalItems})</h2>
-                    <button 
-                      onClick={clearCart}
-                      className="text-red-500 hover:text-red-700 text-sm flex items-center"
+            <div className="lg:grid lg:grid-cols-3 lg:gap-8">
+              <div className="lg:col-span-2">
+                {Object.keys(shopGroups).map((sellerId) => {
+                  const group = shopGroups[sellerId];
+                  return (
+                    <motion.div 
+                      key={sellerId}
+                      className="bg-white rounded-xl shadow-sm overflow-hidden mb-6"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3 }}
                     >
-                      <Trash2 className="h-4 w-4 mr-1" />
-                      Clear Cart
-                    </button>
-                  </div>
-                  
-                  {/* Display items grouped by seller */}
-                  {Object.entries(groupedItems).map(([sellerId, group]) => (
-                    <div key={sellerId} className="border-b last:border-b-0">
-                      <div className="px-6 pt-4 pb-2">
-                        <p className="text-sm font-medium text-haluna-primary">{group.sellerName}</p>
+                      <div className="p-4 border-b bg-gray-50 flex items-center">
+                        {group.shop?.logo ? (
+                          <img 
+                            src={group.shop.logo} 
+                            alt={group.shop?.name} 
+                            className="w-10 h-10 object-cover rounded-lg mr-3"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 bg-haluna-primary-light rounded-lg flex items-center justify-center mr-3">
+                            <Store className="h-5 w-5 text-haluna-primary" />
+                          </div>
+                        )}
+                        <div>
+                          <Link 
+                            to={`/shop/${sellerId}`}
+                            className="font-medium hover:text-haluna-primary transition-colors"
+                          >
+                            {group.shop?.name || "Shop"}
+                          </Link>
+                          <div className="text-xs text-haluna-text-light">
+                            {group.items.length} item{group.items.length === 1 ? '' : 's'}
+                          </div>
+                        </div>
                       </div>
                       
-                      {group.items.map((item, index) => {
-                        const product = item.product as Product;
-                        
-                        return (
-                          <motion.div 
-                            key={product.id}
-                            className="p-4 px-6 border-t first:border-t-0 flex gap-4"
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.3, delay: index * 0.1 }}
-                          >
-                            <Link to={`/product/${product.id}`} className="w-24 h-24 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
-                              {product.images && product.images.length > 0 ? (
-                                <img
-                                  src={product.images[0]}
-                                  alt={product.name}
-                                  className="w-full h-full object-cover"
-                                />
-                              ) : (
-                                <div className="w-full h-full flex items-center justify-center text-gray-400">
-                                  No Image
-                                </div>
-                              )}
-                            </Link>
+                      <div className="divide-y">
+                        {group.items.map((item: any) => (
+                          <div key={item.product.id} className="p-4 md:p-6 flex flex-col md:flex-row items-start">
+                            <div className="w-full md:w-20 h-20 flex-shrink-0 bg-gray-100 rounded-lg overflow-hidden mb-4 md:mb-0 md:mr-4">
+                              <img 
+                                src={item.product.images?.[0] || '/placeholder.svg'} 
+                                alt={item.product.name} 
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
                             
                             <div className="flex-1">
-                              <div className="flex justify-between">
-                                <div>
-                                  <Link 
-                                    to={`/product/${product.id}`}
-                                    className="font-medium hover:text-haluna-primary transition-colors"
-                                  >
-                                    {product.name}
-                                  </Link>
-                                  <p className="text-sm text-haluna-text-light">
-                                    Category: {product.category}
-                                  </p>
-                                </div>
-                                <p className="font-medium text-haluna-primary">
-                                  ${product.price.toFixed(2)}
-                                </p>
+                              <Link 
+                                to={`/product/${item.product.id}`}
+                                className="font-medium hover:text-haluna-primary transition-colors"
+                              >
+                                {item.product.name}
+                              </Link>
+                              <div className="text-sm text-haluna-text-light mb-2">
+                                {item.product.category}
                               </div>
                               
-                              <div className="flex items-center justify-between mt-4">
-                                <div className="flex items-center border rounded-md">
+                              <div className="flex flex-wrap justify-between items-end">
+                                <div className="flex items-center mb-2 md:mb-0">
                                   <button 
-                                    onClick={() => handleQuantityChange(product.id, item.quantity - 1)}
-                                    className="px-3 py-1 border-r hover:bg-gray-100"
-                                    aria-label="Decrease quantity"
+                                    className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-100 transition-colors"
+                                    onClick={() => handleUpdateQuantity(item.product.id, item.quantity - 1)}
+                                    disabled={item.quantity <= 1}
                                   >
                                     <Minus className="h-3 w-3" />
                                   </button>
-                                  <span className="px-4 py-1">{item.quantity}</span>
+                                  <span className="mx-3 min-w-10 text-center">{item.quantity}</span>
                                   <button 
-                                    onClick={() => handleQuantityChange(product.id, item.quantity + 1, product.stock)}
-                                    className="px-3 py-1 border-l hover:bg-gray-100"
-                                    aria-label="Increase quantity"
+                                    className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-100 transition-colors"
+                                    onClick={() => handleUpdateQuantity(item.product.id, item.quantity + 1)}
                                   >
                                     <Plus className="h-3 w-3" />
                                   </button>
                                 </div>
                                 
-                                <button
-                                  onClick={() => handleRemoveItem(product.id)}
-                                  className="text-red-500 hover:text-red-700 p-2"
-                                  aria-label="Remove item"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </button>
+                                <div className="flex items-center space-x-4">
+                                  <button 
+                                    className="text-haluna-text-light hover:text-red-500 transition-colors"
+                                    onClick={() => handleRemoveItem(item.product.id)}
+                                  >
+                                    <Trash className="h-5 w-5" />
+                                  </button>
+                                  <span className="font-medium text-lg">
+                                    ${(item.product.price * item.quantity).toFixed(2)}
+                                  </span>
+                                </div>
                               </div>
                             </div>
-                          </motion.div>
-                        );
-                      })}
-                    </div>
-                  ))}
-                </div>
-                
-                <div className="flex gap-4">
-                  <Button 
-                    variant="outline" 
-                    onClick={() => navigate('/shop')}
-                    className="flex-1"
-                  >
-                    Continue Shopping
-                  </Button>
-                  <Button 
-                    onClick={() => navigate('/checkout')}
-                    className="flex-1"
-                  >
-                    Proceed to Checkout
-                  </Button>
-                </div>
-              </motion.div>
+                          </div>
+                        ))}
+                      </div>
+                      
+                      <div className="p-4 bg-gray-50 text-right">
+                        <span className="text-sm font-medium">
+                          Subtotal: ${group.subtotal.toFixed(2)}
+                        </span>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
               
-              <motion.div 
-                className="lg:col-span-1"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.2 }}
-              >
-                <div className="bg-white rounded-xl shadow-sm p-6 sticky top-24">
-                  <h2 className="text-xl font-medium mb-6">Order Summary</h2>
+              <div className="lg:col-span-1">
+                <motion.div 
+                  className="bg-white rounded-xl shadow-sm p-6 mb-6 sticky top-28"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: 0.2 }}
+                >
+                  <h3 className="text-xl font-medium mb-4">Order Summary</h3>
                   
-                  <div className="space-y-4 mb-6">
+                  <div className="space-y-3 mb-6">
                     <div className="flex justify-between">
-                      <span className="text-haluna-text-light">Subtotal ({cart.totalItems} items)</span>
-                      <span>${cart.totalPrice.toFixed(2)}</span>
+                      <span className="text-haluna-text-light">Subtotal</span>
+                      <span>${cartTotal.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-haluna-text-light">Shipping</span>
-                      <span className="text-sm">Calculated at checkout</span>
+                      <span>Calculated at checkout</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-haluna-text-light">Tax</span>
-                      <span className="text-sm">Calculated at checkout</span>
+                      <span>Calculated at checkout</span>
+                    </div>
+                    <div className="border-t border-gray-100 pt-3 flex justify-between font-medium text-lg">
+                      <span>Total</span>
+                      <span>${cartTotal.toFixed(2)}</span>
                     </div>
                   </div>
                   
-                  <div className="border-t border-b py-4 mb-6">
-                    <div className="flex justify-between font-medium">
-                      <span>Estimated Total</span>
-                      <span>${cart.totalPrice.toFixed(2)}</span>
-                    </div>
+                  <div className="space-y-3">
+                    <Button 
+                      onClick={handleCheckout}
+                      className="w-full"
+                      size="lg"
+                    >
+                      Proceed to Checkout
+                    </Button>
+                    
+                    <Button 
+                      variant="outline"
+                      onClick={() => navigate('/shops')}
+                      className="w-full flex items-center justify-center"
+                    >
+                      <ShoppingBag className="mr-2 h-4 w-4" />
+                      Continue Shopping
+                    </Button>
                   </div>
-                  
-                  <Button 
-                    onClick={() => navigate('/checkout')} 
-                    className="w-full flex items-center justify-center"
-                  >
-                    Proceed to Checkout
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                  
-                  <div className="mt-6 space-y-2">
-                    <p className="text-xs text-center text-haluna-text-light">We accept</p>
-                    <div className="flex justify-center gap-2">
-                      <div className="w-10 h-6 bg-blue-100 rounded"></div>
-                      <div className="w-10 h-6 bg-red-100 rounded"></div>
-                      <div className="w-10 h-6 bg-green-100 rounded"></div>
-                      <div className="w-10 h-6 bg-yellow-100 rounded"></div>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
+                </motion.div>
+              </div>
             </div>
           )}
         </div>
