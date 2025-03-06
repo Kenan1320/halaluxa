@@ -1,74 +1,98 @@
 
+export interface ProductDetails {
+  weight?: string;
+  dimensions?: string;
+  servings?: string;
+  ingredients?: string;
+  nutrition?: string;
+  [key: string]: any;
+}
+
 export interface Product {
   id: string;
   name: string;
   description: string;
   price: number;
-  compareAtPrice?: number;
+  stock: number;
   category: string;
   images: string[];
-  rating?: number;
-  stock: number;
   sellerId: string;
   sellerName?: string;
-  isHalalCertified?: boolean;
-  details?: Record<string, any>;
-  longDescription?: string;
+  rating?: number;
+  isHalalCertified: boolean;
+  details?: ProductDetails;
   createdAt: string;
 }
 
-// Add product categories export
+// Product categories
 export const productCategories = [
   "Food & Groceries",
-  "Clothing & Apparel",
+  "Fashion",
   "Beauty & Personal Care",
-  "Home & Kitchen",
   "Health & Wellness",
-  "Religious Items",
-  "Books & Education",
+  "Home & Kitchen",
+  "Books & Media",
+  "Kids & Baby",
   "Electronics",
-  "Toys & Games",
-  "Accessories",
-  "Other"
+  "Gifts & Souvenirs"
 ];
 
-// Add mapping functions
-export const mapDbProductToModel = (dbProduct: any): Product => {
+// Interface for DB Product to handle field name differences
+export interface DbProduct {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  stock: number;
+  category: string;
+  images: string[];
+  seller_id: string;
+  seller_name?: string;
+  rating?: number;
+  is_halal_certified: boolean;
+  details?: ProductDetails;
+  created_at: string;
+}
+
+// Map DB product to model
+export function mapDbProductToModel(dbProduct: DbProduct): Product {
   return {
     id: dbProduct.id,
     name: dbProduct.name,
     description: dbProduct.description,
     price: dbProduct.price,
-    compareAtPrice: dbProduct.compare_at_price,
-    category: dbProduct.category,
-    images: dbProduct.images || [],
-    rating: dbProduct.rating,
     stock: dbProduct.stock,
+    category: dbProduct.category,
+    images: dbProduct.images,
     sellerId: dbProduct.seller_id,
     sellerName: dbProduct.seller_name,
+    rating: dbProduct.rating,
     isHalalCertified: dbProduct.is_halal_certified,
-    details: dbProduct.details || {},
-    longDescription: dbProduct.long_description,
+    details: dbProduct.details,
     createdAt: dbProduct.created_at
   };
-};
+}
 
-export const mapModelToDbProduct = (product: Partial<Product>): any => {
-  return {
-    ...(product.id && { id: product.id }),
-    ...(product.name && { name: product.name }),
-    ...(product.description && { description: product.description }),
-    ...(product.price !== undefined && { price: product.price }),
-    ...(product.compareAtPrice !== undefined && { compare_at_price: product.compareAtPrice }),
-    ...(product.category && { category: product.category }),
-    ...(product.images && { images: product.images }),
-    ...(product.rating !== undefined && { rating: product.rating }),
-    ...(product.stock !== undefined && { stock: product.stock }),
-    ...(product.sellerId && { seller_id: product.sellerId }),
-    ...(product.sellerName && { seller_name: product.sellerName }),
-    ...(product.isHalalCertified !== undefined && { is_halal_certified: product.isHalalCertified }),
-    ...(product.details && { details: product.details }),
-    ...(product.longDescription && { long_description: product.longDescription }),
-    ...(product.createdAt && { created_at: product.createdAt })
+// Map model to DB product
+export function mapModelToDbProduct(product: Partial<Product>): Partial<DbProduct> {
+  const dbProduct: Partial<DbProduct> = {
+    id: product.id,
+    name: product.name,
+    description: product.description,
+    price: product.price,
+    stock: product.stock,
+    category: product.category,
+    images: product.images,
+    seller_id: product.sellerId,
+    seller_name: product.sellerName,
+    rating: product.rating,
+    is_halal_certified: product.isHalalCertified,
+    details: product.details
   };
-};
+  
+  if (product.createdAt) {
+    dbProduct.created_at = product.createdAt;
+  }
+  
+  return dbProduct;
+}
