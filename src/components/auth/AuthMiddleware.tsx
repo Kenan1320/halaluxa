@@ -22,12 +22,18 @@ const AuthMiddleware = () => {
         console.log('Auth state change:', event);
         
         if (event === 'SIGNED_IN' && session) {
+          // Force refresh the session to get the latest user data
           await refreshSession();
           
           toast({
             title: "Logged in",
             description: "You have been successfully logged in",
           });
+          
+          // Redirect business users to dashboard right after sign-in
+          if (user?.role === 'business') {
+            navigate('/dashboard');
+          }
         } else if (event === 'SIGNED_OUT') {
           toast({
             title: "Logged out",
@@ -40,7 +46,7 @@ const AuthMiddleware = () => {
     return () => {
       authListener.subscription.unsubscribe();
     };
-  }, [toast, refreshSession]);
+  }, [toast, refreshSession, navigate, user]);
   
   // Check authentication tokens on route change and validate session
   useEffect(() => {
@@ -73,7 +79,7 @@ const AuthMiddleware = () => {
     verifyAuth();
   }, [location.pathname, isLoggedIn, refreshSession]);
   
-  // Direct business users to dashboard if they log in and try to access shopper pages
+  // Direct business users to dashboard if they try to access shopper pages
   useEffect(() => {
     if (isLoggedIn && user?.role === 'business') {
       // Check if the user is on the homepage or other consumer pages
@@ -83,8 +89,6 @@ const AuthMiddleware = () => {
       if (isOnConsumerPage) {
         console.log('Business user detected on consumer page, redirecting to dashboard');
         navigate('/dashboard');
-      } else if (location.pathname.startsWith('/dashboard')) {
-        console.log('Business user accessing dashboard:', user.name);
       }
     }
   }, [location.pathname, isLoggedIn, user, navigate]);

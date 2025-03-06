@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -58,7 +57,7 @@ interface AuthContextType {
   ) => Promise<boolean>;
   logout: () => void;
   updateUserProfile: (data: ProfileUpdateData) => Promise<boolean>;
-  refreshSession: () => void;
+  refreshSession: () => Promise<void>;
 }
 
 const AUTH_TOKEN_KEY = 'haluna_auth_token';
@@ -93,7 +92,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           return;
         }
         
-        // FIXED: Ensure role is preserved exactly as stored in the database
         const userRole: UserRole = userData.role === 'business' ? 'business' : 'shopper';
         
         console.log('Refreshed user role from database:', userRole);
@@ -115,7 +113,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           shopLocation: userData.shop_location,
         };
         
-        // Store the fresh data from database
         setUser(userObj);
         setIsLoggedIn(true);
         localStorage.setItem(USER_DATA_KEY, JSON.stringify(userObj));
@@ -129,29 +126,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const checkLoggedIn = async () => {
-      const { data, error } = await supabase.auth.getSession();
-      
-      if (error) {
-        console.error('Session check error:', error);
-        return;
-      }
-      
-      if (data.session) {
-        refreshSession();
-      } else {
-        const token = localStorage.getItem(AUTH_TOKEN_KEY);
-        const storedUserJson = localStorage.getItem(USER_DATA_KEY);
+      try {
+        const { data, error } = await supabase.auth.getSession();
         
-        if (token && storedUserJson) {
-          try {
-            const storedUser = JSON.parse(storedUserJson);
-            setUser(storedUser);
-            setIsLoggedIn(true);
-          } catch (error) {
-            console.error('Failed to parse stored user data', error);
-            logout();
+        if (error) {
+          console.error('Session check error:', error);
+          return;
+        }
+        
+        if (data.session) {
+          await refreshSession();
+        } else {
+          const storedUserJson = localStorage.getItem(USER_DATA_KEY);
+          
+          if (storedUserJson) {
+            try {
+              localStorage.removeItem(USER_DATA_KEY);
+            } catch (error) {
+              console.error('Failed to parse stored user data', error);
+            }
           }
         }
+      } catch (error) {
+        console.error('Initial auth check error:', error);
       }
     };
     
@@ -198,7 +195,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
         
         if (userData) {
-          // FIXED: Always respect the exact role from the database
           const userRole: UserRole = userData.role === 'business' ? 'business' : 'shopper';
             
           console.log('User logging in with role from database:', userRole);
@@ -245,33 +241,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setIsLoggedIn(true);
           localStorage.setItem(USER_DATA_KEY, JSON.stringify(basicUser));
           return 'shopper';
-        }
-      }
-      
-      const usersStr = localStorage.getItem('users');
-      let users = [];
-      
-      if (usersStr) {
-        users = JSON.parse(usersStr);
-      }
-      
-      const foundUser = users.find((u: any) => 
-        u.email.toLowerCase() === email.toLowerCase()
-      );
-      
-      if (foundUser) {
-        if (foundUser.password === password) {
-          const { password: _, ...userWithoutPassword } = foundUser;
-          
-          const token = Math.random().toString(36).substr(2) + Date.now().toString(36);
-          
-          setUser(userWithoutPassword);
-          setIsLoggedIn(true);
-          
-          localStorage.setItem(AUTH_TOKEN_KEY, token);
-          localStorage.setItem(USER_DATA_KEY, JSON.stringify(userWithoutPassword));
-          
-          return userWithoutPassword.role;
         }
       }
       
@@ -396,21 +365,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       };
       
       localStorage.setItem(USER_DATA_KEY, JSON.stringify(userObj));
-      
-      const usersStr = localStorage.getItem('users');
-      let users = [];
-      
-      if (usersStr) {
-        users = JSON.parse(usersStr);
-      }
-      
-      users.push({
-        ...userObj,
-        password
-      });
-      
-      localStorage.setItem('users', JSON.stringify(users));
-      
       setUser(userObj);
       setIsLoggedIn(true);
       
@@ -526,17 +480,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
   
   const logout = async () => {
-    await supabase.auth.signOut();
-    
-    setUser(null);
-    setIsLoggedIn(false);
-    localStorage.removeItem(AUTH_TOKEN_KEY);
-    navigate('/');
-    
-    toast({
-      title: "Logged Out",
-      description: "You have been logged out successfully.",
-    });
+    try {
+      await supabase.auth.signOut();
+      
+      setUser(null);
+      setIsLoggedIn(false);
+      localStorage.removeItem(AUTH_TOKEN_KEY);
+      localStorage.removeItem(USER_DATA_KEY);
+      navigate('/');
+      
+      toast({
+        title: "Logged Out",
+        description: "You have been logged out successfully.",
+      });
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast({
+        title: "Logout Failed",
+        description: "There was an error logging out. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
   
   return (

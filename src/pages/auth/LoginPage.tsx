@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -11,7 +11,7 @@ import LoginSelector from './LoginSelector';
 const LoginPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login } = useAuth();
+  const { login, isLoggedIn, user } = useAuth();
   const { toast } = useToast();
   const [formData, setFormData] = useState({
     email: '',
@@ -22,6 +22,17 @@ const LoginPage = () => {
 
   // Get the intended destination, if any
   const from = location.state?.from?.pathname || '/';
+  
+  // If already logged in, redirect to appropriate page
+  useEffect(() => {
+    if (isLoggedIn) {
+      if (user?.role === 'business') {
+        navigate('/dashboard');
+      } else {
+        navigate('/shop');
+      }
+    }
+  }, [isLoggedIn, user, navigate]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -43,6 +54,7 @@ const LoginPage = () => {
     setLoading(true);
     
     try {
+      // Attempt to login and get the user's actual role from the database
       const role = await login(formData.email, formData.password);
       
       if (role) {
@@ -65,8 +77,12 @@ const LoginPage = () => {
           description: "Logged in successfully",
         });
         
-        // Navigate to the intended destination or role-specific page
-        navigate(from === '/' ? (role === 'business' ? '/dashboard' : '/shop') : from);
+        // Navigate to the appropriate destination based on role
+        if (role === 'business') {
+          navigate('/dashboard');
+        } else {
+          navigate(from === '/' ? '/shop' : from);
+        }
       } else {
         toast({
           title: "Error",

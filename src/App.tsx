@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -52,72 +53,83 @@ const queryClient = new QueryClient({
   },
 });
 
-const AppRoutes = () => (
-  <>
-    <AuthMiddleware />
-    <Navbar />
-    <Routes>
-      {/* Public routes */}
-      <Route path="/" element={<Index />} />
-      <Route path="/about" element={<About />} />
-      <Route path="/sellers" element={<Sellers />} />
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/signup" element={<SignUpPage />} />
-      <Route path="/shop" element={<Shop />} />
-      <Route path="/browse" element={<Browse />} />
-      <Route path="/search" element={<Search />} />
-      <Route path="/shops" element={<Shops />} />
-      <Route path="/shop/:shopId" element={<ShopDetail />} />
-      <Route path="/product/:productId" element={<ProductDetail />} />
-      
-      {/* Protected shopper routes */}
-      <Route path="/cart" element={
-        <ProtectedRoute requiredRole="shopper">
-          <Cart />
-        </ProtectedRoute>
-      } />
-      <Route path="/checkout" element={
-        <ProtectedRoute requiredRole="shopper">
-          <Checkout />
-        </ProtectedRoute>
-      } />
-      <Route path="/order-confirmation" element={
-        <ProtectedRoute requiredRole="shopper">
-          <OrderConfirmation />
-        </ProtectedRoute>
-      } />
-      <Route path="/orders" element={
-        <ProtectedRoute requiredRole="shopper">
-          <Orders />
-        </ProtectedRoute>
-      } />
-      <Route path="/profile" element={
-        <ProtectedRoute requiredRole="shopper">
-          <UserProfilePage />
-        </ProtectedRoute>
-      } />
-      
-      {/* Protected business owner routes */}
-      <Route path="/dashboard" element={
-        <ProtectedRoute requiredRole="business">
-          <DashboardLayout />
-        </ProtectedRoute>
-      }>
-        <Route index element={<DashboardHome />} />
-        <Route path="products" element={<ProductsPage />} />
-        <Route path="products/new" element={<AddEditProductPage />} />
-        <Route path="products/edit/:id" element={<AddEditProductPage />} />
-        <Route path="orders" element={<OrdersPage />} />
-        <Route path="customers" element={<CustomersPage />} />
-        <Route path="settings" element={<SettingsPage />} />
-        <Route path="payment-account" element={<PaymentAccountPage />} />
-      </Route>
-      
-      {/* 404 route */}
-      <Route path="*" element={<NotFound />} />
-    </Routes>
-  </>
-);
+const AppRoutes = () => {
+  const location = useLocation();
+  const { user } = useAuth();
+  
+  // Business users should only see the dashboard interface
+  const showNavbar = !user || user.role !== 'business' || 
+                    (!location.pathname.startsWith('/dashboard') && 
+                     location.pathname !== '/login' && 
+                     location.pathname !== '/signup');
+  
+  return (
+    <>
+      <AuthMiddleware />
+      {showNavbar && <Navbar />}
+      <Routes>
+        {/* Public routes */}
+        <Route path="/" element={<Index />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/sellers" element={<Sellers />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/signup" element={<SignUpPage />} />
+        <Route path="/shop" element={<Shop />} />
+        <Route path="/browse" element={<Browse />} />
+        <Route path="/search" element={<Search />} />
+        <Route path="/shops" element={<Shops />} />
+        <Route path="/shop/:shopId" element={<ShopDetail />} />
+        <Route path="/product/:productId" element={<ProductDetail />} />
+        
+        {/* Protected shopper routes - explicitly disallow business users */}
+        <Route path="/cart" element={
+          <ProtectedRoute requiredRole="shopper" businessAllowed={false}>
+            <Cart />
+          </ProtectedRoute>
+        } />
+        <Route path="/checkout" element={
+          <ProtectedRoute requiredRole="shopper" businessAllowed={false}>
+            <Checkout />
+          </ProtectedRoute>
+        } />
+        <Route path="/order-confirmation" element={
+          <ProtectedRoute requiredRole="shopper" businessAllowed={false}>
+            <OrderConfirmation />
+          </ProtectedRoute>
+        } />
+        <Route path="/orders" element={
+          <ProtectedRoute requiredRole="shopper" businessAllowed={false}>
+            <Orders />
+          </ProtectedRoute>
+        } />
+        <Route path="/profile" element={
+          <ProtectedRoute requiredRole="shopper" businessAllowed={false}>
+            <UserProfilePage />
+          </ProtectedRoute>
+        } />
+        
+        {/* Protected business owner routes */}
+        <Route path="/dashboard" element={
+          <ProtectedRoute requiredRole="business">
+            <DashboardLayout />
+          </ProtectedRoute>
+        }>
+          <Route index element={<DashboardHome />} />
+          <Route path="products" element={<ProductsPage />} />
+          <Route path="products/new" element={<AddEditProductPage />} />
+          <Route path="products/edit/:id" element={<AddEditProductPage />} />
+          <Route path="orders" element={<OrdersPage />} />
+          <Route path="customers" element={<CustomersPage />} />
+          <Route path="settings" element={<SettingsPage />} />
+          <Route path="payment-account" element={<PaymentAccountPage />} />
+        </Route>
+        
+        {/* 404 route */}
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </>
+  );
+};
 
 const App = () => {
   const [showSplash, setShowSplash] = useState(true);
