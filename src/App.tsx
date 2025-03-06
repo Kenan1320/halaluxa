@@ -1,4 +1,5 @@
 
+import { useState, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -10,6 +11,7 @@ import { LanguageProvider } from "@/context/LanguageContext";
 import { LocationProvider } from "@/context/LocationContext";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import AuthMiddleware from "@/components/auth/AuthMiddleware";
+import SplashScreen from "@/components/SplashScreen";
 
 // Pages
 import Index from "./pages/Index";
@@ -114,24 +116,44 @@ const AppRoutes = () => (
   </>
 );
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <LanguageProvider>
-          <AuthProvider>
-            <CartProvider>
-              <LocationProvider>
-                <AppRoutes />
-              </LocationProvider>
-            </CartProvider>
-          </AuthProvider>
-        </LanguageProvider>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  const [showSplash, setShowSplash] = useState(true);
+  
+  // Check if this is the first visit in this session
+  useEffect(() => {
+    const hasSeenSplash = sessionStorage.getItem('hasSeenSplash');
+    if (hasSeenSplash) {
+      setShowSplash(false);
+    } else {
+      sessionStorage.setItem('hasSeenSplash', 'true');
+    }
+  }, []);
+
+  const handleSplashFinished = () => setShowSplash(false);
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        {showSplash ? (
+          <SplashScreen onFinished={handleSplashFinished} />
+        ) : (
+          <BrowserRouter>
+            <LanguageProvider>
+              <AuthProvider>
+                <CartProvider>
+                  <LocationProvider>
+                    <AppRoutes />
+                  </LocationProvider>
+                </CartProvider>
+              </AuthProvider>
+            </LanguageProvider>
+          </BrowserRouter>
+        )}
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
