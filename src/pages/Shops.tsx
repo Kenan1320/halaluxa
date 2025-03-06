@@ -1,12 +1,12 @@
 
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { Store, Search, MapPin, Filter } from 'lucide-react';
 import { getAllShops } from '@/services/shopService';
 import { useLocation } from '@/context/LocationContext';
-import ShopCard from '@/components/shop/ShopCard';
 
 const Shops = () => {
   const [shops, setShops] = useState<any[]>([]);
@@ -124,17 +124,14 @@ const Shops = () => {
             </div>
           </div>
           
-          {/* Shops grid */}
+          {/* Shops grid - Simplified to only show logo and name */}
           {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {[...Array(6)].map((_, index) => (
-                <div key={index} className="bg-white rounded-xl shadow-sm overflow-hidden animate-pulse">
-                  <div className="h-40 bg-gray-200"></div>
-                  <div className="p-6">
-                    <div className="h-4 bg-gray-200 rounded w-3/4 mb-3"></div>
-                    <div className="h-3 bg-gray-200 rounded w-1/2 mb-4"></div>
-                    <div className="h-3 bg-gray-200 rounded w-full mb-4"></div>
-                    <div className="h-10 bg-gray-200 rounded w-1/3"></div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+              {[...Array(18)].map((_, index) => (
+                <div key={index} className="bg-white rounded-lg shadow-sm overflow-hidden animate-pulse">
+                  <div className="h-24 w-24 mx-auto my-4 bg-gray-200 rounded-full"></div>
+                  <div className="p-3 text-center">
+                    <div className="h-4 bg-gray-200 rounded w-3/4 mx-auto mb-2"></div>
                   </div>
                 </div>
               ))}
@@ -150,9 +147,22 @@ const Shops = () => {
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {filteredShops.map((shop, index) => (
-                <ShopCard key={shop.id} shop={shop} index={index} />
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+              {filteredShops.map((shop) => (
+                <Link 
+                  key={shop.id} 
+                  to={`/shop/${shop.id}`}
+                  className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow p-4 flex flex-col items-center text-center"
+                >
+                  <div className="h-24 w-24 rounded-full overflow-hidden bg-gray-100 mb-3 flex items-center justify-center">
+                    {shop.logo ? (
+                      <img src={shop.logo} alt={shop.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <Store className="h-12 w-12 text-haluna-text-light" />
+                    )}
+                  </div>
+                  <h3 className="font-medium text-sm line-clamp-2">{shop.name}</h3>
+                </Link>
               ))}
             </div>
           )}

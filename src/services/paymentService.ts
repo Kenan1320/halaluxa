@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { CartItem } from '@/models/cart';
 import { Product } from '@/models/product';
@@ -29,7 +30,7 @@ export interface OrderDetails {
   total: number;
 }
 
-// Mock function to simulate payment processing
+// Process payment for a customer order
 export const processPayment = async (
   cart: { items: CartItem[]; totalPrice: number },
   paymentMethodDetails: any,
@@ -57,7 +58,7 @@ export const processPayment = async (
       image: item.product.images[0]
     }));
     
-    // Store order in database with proper JSON typing
+    // Store order in database
     const { data, error } = await supabase
       .from('orders')
       .insert({
@@ -117,7 +118,7 @@ export const getUserOrders = async (): Promise<OrderDetails[]> => {
   }
 };
 
-// Create a seller account
+// Create a seller account with payment details
 export const createSellerAccount = async (
   accountData: Partial<SellerAccount>
 ): Promise<SellerAccount | null> => {
@@ -201,7 +202,7 @@ export const getSellerAccounts = async (): Promise<SellerAccount[]> => {
       throw error;
     }
     
-    return data;
+    return data || [];
   } catch (error) {
     console.error('Error fetching seller accounts:', error);
     return [];
@@ -210,21 +211,13 @@ export const getSellerAccounts = async (): Promise<SellerAccount[]> => {
 
 // Save seller account - for backward compatibility
 export const saveSellerAccount = async (
-  accountData: any
+  accountData: Partial<SellerAccount>
 ): Promise<SellerAccount | null> => {
   // If id exists, update, otherwise create
   if (accountData.id) {
     return updateSellerAccount(accountData);
   } else {
-    return createSellerAccount({
-      account_name: accountData.accountName || 'Default Account',
-      account_number: accountData.accountNumber || 'N/A',
-      bank_name: accountData.bankName || 'N/A',
-      account_type: accountData.accountType || 'bank',
-      paypal_email: accountData.paypalEmail,
-      stripe_account_id: accountData.stripeAccountId,
-      applepay_merchant_id: accountData.applepayMerchantId
-    });
+    return createSellerAccount(accountData);
   }
 };
 
@@ -239,10 +232,14 @@ export const updateSellerAccount = async (
       throw new Error('User not authenticated');
     }
     
+    if (!accountData.id) {
+      throw new Error('Account ID is required for update');
+    }
+    
     const { data, error } = await supabase
       .from('seller_accounts')
       .update(accountData)
-      .eq('seller_id', user.user.id)
+      .eq('id', accountData.id)
       .select()
       .single();
     

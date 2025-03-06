@@ -1,357 +1,389 @@
+
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useToast } from '@/hooks/use-toast';
-import { CreditCard, Building, User, Mail } from 'lucide-react';
+import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useAuth } from '@/context/AuthContext';
-import { getSellerAccount, createSellerAccount, SellerAccount } from '@/services/paymentService';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { CreditCard, DollarSign, Trash2, AlertCircle, ChevronsUpDown, Plus, Check } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { motion } from 'framer-motion';
+import { 
+  getSellerAccount,
+  getSellerAccounts,
+  createSellerAccount,
+  updateSellerAccount,
+  SellerAccount,
+  formatPaymentMethod
+} from '@/services/paymentService';
 
 const PaymentAccountPage = () => {
-  const navigate = useNavigate();
+  const [accounts, setAccounts] = useState<SellerAccount[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('bank');
+  const [formData, setFormData] = useState({
+    account_name: '',
+    account_number: '',
+    bank_name: '',
+    account_type: 'bank',
+    paypal_email: '',
+    stripe_account_id: '',
+    applepay_merchant_id: '',
+  });
+  const [isFormVisible, setIsFormVisible] = useState(false);
   const { toast } = useToast();
-  const { user } = useAuth();
-  
-  const [activeTab, setActiveTab] = useState("bank");
-  const [bankData, setBankData] = useState({
-    accountName: '',
-    accountNumber: '',
-    bankName: '',
-    routingNumber: '',
-  });
-  
-  const [paypalData, setPaypalData] = useState({
-    paypalEmail: '',
-  });
-  
-  const [stripeData, setStripeData] = useState({
-    stripeAccountId: '',
-  });
-  
+
   useEffect(() => {
-    const loadAccountData = async () => {
-      if (user) {
-        // Load existing account data if available
-        const existingAccount = await getSellerAccount();
-        
-        if (existingAccount) {
-          if (existingAccount.account_type === 'bank') {
-            setBankData({
-              accountName: existingAccount.account_name,
-              accountNumber: existingAccount.account_number,
-              bankName: existingAccount.bank_name,
-              routingNumber: '',
-            });
-            setActiveTab('bank');
-          } else if (existingAccount.account_type === 'paypal' && existingAccount.paypal_email) {
-            setPaypalData({
-              paypalEmail: existingAccount.paypal_email,
-            });
-            setActiveTab('paypal');
-          } else if (existingAccount.account_type === 'stripe' && existingAccount.stripe_account_id) {
-            setStripeData({
-              stripeAccountId: existingAccount.stripe_account_id,
-            });
-            setActiveTab('stripe');
-          }
-        }
-      }
-    };
-    
-    loadAccountData();
-  }, [user]);
-  
-  const handleBankChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setBankData(prev => ({ ...prev, [name]: value }));
+    fetchAccounts();
+  }, []);
+
+  const fetchAccounts = async () => {
+    setIsLoading(true);
+    try {
+      const accountsData = await getSellerAccounts();
+      setAccounts(accountsData);
+    } catch (error) {
+      console.error("Error fetching accounts:", error);
+      toast({
+        title: "Error",
+        description: "Could not load payment accounts",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
-  
-  const handlePaypalChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setPaypalData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
-  
-  const handleStripeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setStripeData(prev => ({ ...prev, [name]: value }));
+
+  const resetForm = () => {
+    setFormData({
+      account_name: '',
+      account_number: '',
+      bank_name: '',
+      account_type: activeTab,
+      paypal_email: '',
+      stripe_account_id: '',
+      applepay_merchant_id: '',
+    });
   };
-  
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!user) {
-      toast({
-        title: "Error",
-        description: "You must be logged in to save payment information",
-        variant: "destructive",
-      });
-      return;
-    }
-    
     try {
-      if (activeTab === "bank") {
-        // Validate form fields
-        if (!bankData.accountName || !bankData.accountNumber || !bankData.bankName) {
-          toast({
-            title: "Error",
-            description: "Please fill all required fields",
-            variant: "destructive",
-          });
-          return;
-        }
-        
-        // Save bank account details
-        await createSellerAccount({
-          seller_id: user.id,
-          account_name: bankData.accountName,
-          account_number: bankData.accountNumber,
-          bank_name: bankData.bankName,
-          account_type: 'bank'
+      // Set account type based on active tab
+      const accountData = {
+        ...formData,
+        account_type: activeTab,
+      };
+      
+      const result = await createSellerAccount(accountData);
+      
+      if (result) {
+        toast({
+          title: "Success",
+          description: "Payment method added successfully",
         });
-      } else if (activeTab === "paypal") {
-        // Validate PayPal email
-        if (!paypalData.paypalEmail) {
-          toast({
-            title: "Error",
-            description: "Please enter your PayPal email",
-            variant: "destructive",
-          });
-          return;
-        }
         
-        // Save PayPal account details
-        await createSellerAccount({
-          seller_id: user.id,
-          account_name: user.name || 'PayPal Account',
-          account_number: 'paypal-account',
-          bank_name: 'PayPal',
-          account_type: 'paypal',
-          paypal_email: paypalData.paypalEmail
-        });
-      } else if (activeTab === "stripe") {
-        // Validate Stripe account ID
-        if (!stripeData.stripeAccountId) {
-          toast({
-            title: "Error",
-            description: "Please enter your Stripe account ID",
-            variant: "destructive",
-          });
-          return;
-        }
-        
-        // Save Stripe account details
-        await createSellerAccount({
-          seller_id: user.id,
-          account_name: user.name || 'Stripe Account',
-          account_number: 'stripe-account',
-          bank_name: 'Stripe',
-          account_type: 'stripe',
-          stripe_account_id: stripeData.stripeAccountId
-        });
+        fetchAccounts();
+        resetForm();
+        setIsFormVisible(false);
       }
-      
-      toast({
-        title: "Success",
-        description: "Payment account saved successfully",
-      });
-      
-      // Navigate back to dashboard
-      navigate('/dashboard');
     } catch (error) {
-      console.error('Error saving payment account:', error);
+      console.error("Error saving account:", error);
       toast({
         title: "Error",
-        description: "Failed to save payment account. Please try again.",
+        description: "Could not save payment information",
         variant: "destructive",
       });
     }
   };
-  
+
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    setFormData((prev) => ({
+      ...prev,
+      account_type: value,
+    }));
+  };
+
+  const getAccountTypeIcon = (type: string) => {
+    switch (type) {
+      case 'bank':
+        return <CreditCard className="h-5 w-5" />;
+      case 'paypal':
+        return <span className="font-bold text-blue-500">P</span>;
+      case 'stripe':
+        return <span className="font-bold text-purple-500">S</span>;
+      case 'applepay':
+        return <span className="font-bold">A</span>;
+      default:
+        return <CreditCard className="h-5 w-5" />;
+    }
+  };
+
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-serif font-bold text-haluna-text">Payment Account</h1>
-        <p className="text-haluna-text-light">Set up how you'll receive payments from sales</p>
+      <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-serif font-bold text-haluna-text">Payment Methods</h1>
+          <p className="text-haluna-text-light">
+            Manage how you receive payments from customers
+          </p>
+        </div>
+        <Button
+          onClick={() => {
+            setIsFormVisible(!isFormVisible);
+            if (!isFormVisible) resetForm();
+          }}
+          className="flex items-center"
+        >
+          {isFormVisible ? (
+            <>Cancel</>
+          ) : (
+            <>
+              <Plus className="mr-2 h-4 w-4" />
+              Add Payment Method
+            </>
+          )}
+        </Button>
       </div>
-      
-      <Tabs defaultValue="bank" value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="mb-6">
-          <TabsTrigger value="bank">Bank Account</TabsTrigger>
-          <TabsTrigger value="paypal">PayPal</TabsTrigger>
-          <TabsTrigger value="stripe">Stripe</TabsTrigger>
-          <TabsTrigger value="applepay">Apple Pay</TabsTrigger>
-        </TabsList>
-        
-        <form onSubmit={handleSubmit}>
-          <TabsContent value="bank" className="bg-white rounded-lg shadow-sm p-6">
-            <div className="space-y-6">
-              <div>
-                <label htmlFor="bankName" className="block text-sm font-medium text-haluna-text mb-1">
-                  Bank Name *
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                    <Building className="h-5 w-5 text-haluna-text-light" />
+
+      {isFormVisible && (
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8"
+        >
+          <Card className="p-6">
+            <h2 className="text-xl font-medium mb-4">Add New Payment Method</h2>
+            
+            <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+              <TabsList className="grid grid-cols-4 mb-6">
+                <TabsTrigger value="bank">Bank Account</TabsTrigger>
+                <TabsTrigger value="paypal">PayPal</TabsTrigger>
+                <TabsTrigger value="stripe">Stripe</TabsTrigger>
+                <TabsTrigger value="applepay">Apple Pay</TabsTrigger>
+              </TabsList>
+              
+              <form onSubmit={handleSubmit}>
+                <TabsContent value="bank" className="space-y-4">
+                  <div>
+                    <label htmlFor="account_name" className="block text-sm font-medium mb-1">
+                      Account Holder Name
+                    </label>
+                    <input
+                      id="account_name"
+                      name="account_name"
+                      type="text"
+                      required
+                      className="w-full rounded-md border p-2"
+                      value={formData.account_name}
+                      onChange={handleInputChange}
+                    />
                   </div>
-                  <input
-                    type="text"
-                    id="bankName"
-                    name="bankName"
-                    placeholder="Enter your bank name"
-                    value={bankData.bankName}
-                    onChange={handleBankChange}
-                    className="w-full border rounded-lg p-2.5 pl-10 focus:ring-1 focus:ring-haluna-primary focus:border-haluna-primary"
-                    required
-                  />
+                  
+                  <div>
+                    <label htmlFor="account_number" className="block text-sm font-medium mb-1">
+                      Account Number
+                    </label>
+                    <input
+                      id="account_number"
+                      name="account_number"
+                      type="text"
+                      required
+                      className="w-full rounded-md border p-2"
+                      value={formData.account_number}
+                      onChange={handleInputChange}
+                    />
+                  </div>
+                  
+                  <div>
+                    <label htmlFor="bank_name" className="block text-sm font-medium mb-1">
+                      Bank Name
+                    </label>
+                    <input
+                      id="bank_name"
+                      name="bank_name"
+                      type="text"
+                      required
+                      className="w-full rounded-md border p-2"
+                      value={formData.bank_name}
+                      onChange={handleInputChange}
+                    />
+                  </div>
+                </TabsContent>
+                
+                <TabsContent value="paypal" className="space-y-4">
+                  <div>
+                    <label htmlFor="paypal_email" className="block text-sm font-medium mb-1">
+                      PayPal Email
+                    </label>
+                    <input
+                      id="paypal_email"
+                      name="paypal_email"
+                      type="email"
+                      required
+                      className="w-full rounded-md border p-2"
+                      value={formData.paypal_email}
+                      onChange={handleInputChange}
+                    />
+                  </div>
+                  
+                  <div className="bg-blue-50 p-4 rounded-md text-sm">
+                    <p>
+                      Payments will be sent to this PayPal account. Make sure the email is correct
+                      and associated with an active PayPal account.
+                    </p>
+                  </div>
+                </TabsContent>
+                
+                <TabsContent value="stripe" className="space-y-4">
+                  <div>
+                    <label htmlFor="stripe_account_id" className="block text-sm font-medium mb-1">
+                      Stripe Account ID
+                    </label>
+                    <input
+                      id="stripe_account_id"
+                      name="stripe_account_id"
+                      type="text"
+                      required
+                      className="w-full rounded-md border p-2"
+                      value={formData.stripe_account_id}
+                      onChange={handleInputChange}
+                    />
+                  </div>
+                  
+                  <div className="bg-purple-50 p-4 rounded-md text-sm">
+                    <p>
+                      Enter your Stripe account ID to receive payments directly to your Stripe account.
+                      You can find this in your Stripe dashboard.
+                    </p>
+                  </div>
+                </TabsContent>
+                
+                <TabsContent value="applepay" className="space-y-4">
+                  <div>
+                    <label htmlFor="applepay_merchant_id" className="block text-sm font-medium mb-1">
+                      Apple Pay Merchant ID
+                    </label>
+                    <input
+                      id="applepay_merchant_id"
+                      name="applepay_merchant_id"
+                      type="text"
+                      required
+                      className="w-full rounded-md border p-2"
+                      value={formData.applepay_merchant_id}
+                      onChange={handleInputChange}
+                    />
+                  </div>
+                  
+                  <div className="bg-gray-50 p-4 rounded-md text-sm">
+                    <p>
+                      Your Apple Pay Merchant ID is required to process Apple Pay payments.
+                      You can find this in your Apple Developer account.
+                    </p>
+                  </div>
+                </TabsContent>
+                
+                <div className="mt-6 flex justify-end gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsFormVisible(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="submit">Save Payment Method</Button>
+                </div>
+              </form>
+            </Tabs>
+          </Card>
+        </motion.div>
+      )}
+
+      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+        {isLoading ? (
+          <div className="p-6 space-y-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="animate-pulse flex items-center p-4 border rounded-lg">
+                <div className="h-10 w-10 bg-gray-200 rounded-full mr-4"></div>
+                <div className="flex-1">
+                  <div className="h-4 bg-gray-200 rounded w-1/3 mb-2"></div>
+                  <div className="h-3 bg-gray-200 rounded w-1/2"></div>
                 </div>
               </div>
-              
-              <div>
-                <label htmlFor="accountName" className="block text-sm font-medium text-haluna-text mb-1">
-                  Account Holder Name *
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                    <User className="h-5 w-5 text-haluna-text-light" />
+            ))}
+          </div>
+        ) : accounts.length > 0 ? (
+          <div className="divide-y">
+            {accounts.map((account) => (
+              <div
+                key={account.id}
+                className="p-4 flex items-center justify-between hover:bg-gray-50"
+              >
+                <div className="flex items-center">
+                  <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center mr-4">
+                    {getAccountTypeIcon(account.account_type)}
                   </div>
-                  <input
-                    type="text"
-                    id="accountName"
-                    name="accountName"
-                    placeholder="Enter account holder name"
-                    value={bankData.accountName}
-                    onChange={handleBankChange}
-                    className="w-full border rounded-lg p-2.5 pl-10 focus:ring-1 focus:ring-haluna-primary focus:border-haluna-primary"
-                    required
-                  />
+                  <div>
+                    <p className="font-medium">{formatPaymentMethod(account)}</p>
+                    <p className="text-sm text-haluna-text-light">
+                      Added on {new Date(account.created_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center text-red-500 hover:text-red-700 hover:bg-red-50"
+                  >
+                    <Trash2 className="h-4 w-4 mr-1" />
+                    Remove
+                  </Button>
                 </div>
               </div>
-              
-              <div>
-                <label htmlFor="accountNumber" className="block text-sm font-medium text-haluna-text mb-1">
-                  Account Number *
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                    <CreditCard className="h-5 w-5 text-haluna-text-light" />
-                  </div>
-                  <input
-                    type="text"
-                    id="accountNumber"
-                    name="accountNumber"
-                    placeholder="Enter your account number"
-                    value={bankData.accountNumber}
-                    onChange={handleBankChange}
-                    className="w-full border rounded-lg p-2.5 pl-10 focus:ring-1 focus:ring-haluna-primary focus:border-haluna-primary"
-                    required
-                  />
-                </div>
-              </div>
-              
-              <div>
-                <label htmlFor="routingNumber" className="block text-sm font-medium text-haluna-text mb-1">
-                  Routing Number (if applicable)
-                </label>
-                <input
-                  type="text"
-                  id="routingNumber"
-                  name="routingNumber"
-                  placeholder="Enter routing number"
-                  value={bankData.routingNumber}
-                  onChange={handleBankChange}
-                  className="w-full border rounded-lg p-2.5 focus:ring-1 focus:ring-haluna-primary focus:border-haluna-primary"
-                />
-              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="p-10 text-center">
+            <div className="h-16 w-16 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-4">
+              <CreditCard className="h-8 w-8 text-haluna-text-light" />
             </div>
-          </TabsContent>
-          
-          <TabsContent value="paypal" className="bg-white rounded-lg shadow-sm p-6">
-            <div className="space-y-6">
-              <div>
-                <label htmlFor="paypalEmail" className="block text-sm font-medium text-haluna-text mb-1">
-                  PayPal Email *
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                    <Mail className="h-5 w-5 text-haluna-text-light" />
-                  </div>
-                  <input
-                    type="email"
-                    id="paypalEmail"
-                    name="paypalEmail"
-                    placeholder="Enter your PayPal email"
-                    value={paypalData.paypalEmail}
-                    onChange={handlePaypalChange}
-                    className="w-full border rounded-lg p-2.5 pl-10 focus:ring-1 focus:ring-haluna-primary focus:border-haluna-primary"
-                    required
-                  />
-                </div>
-              </div>
-              
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <p className="text-blue-700 text-sm">
-                  Make sure you use the email associated with your PayPal account. This is where your payments will be sent.
-                </p>
-              </div>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="stripe" className="bg-white rounded-lg shadow-sm p-6">
-            <div className="space-y-6">
-              <div>
-                <label htmlFor="stripeAccountId" className="block text-sm font-medium text-haluna-text mb-1">
-                  Stripe Account ID *
-                </label>
-                <input
-                  type="text"
-                  id="stripeAccountId"
-                  name="stripeAccountId"
-                  placeholder="Enter your Stripe account ID"
-                  value={stripeData.stripeAccountId}
-                  onChange={handleStripeChange}
-                  className="w-full border rounded-lg p-2.5 focus:ring-1 focus:ring-haluna-primary focus:border-haluna-primary"
-                  required
-                />
-              </div>
-              
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <p className="text-blue-700 text-sm">
-                  You can find your Stripe account ID in your Stripe Dashboard under Account Settings.
-                </p>
-              </div>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="applepay" className="bg-white rounded-lg shadow-sm p-6">
-            <div className="p-4 text-center">
-              <p className="text-haluna-text-light mb-4">
-                Apple Pay integration is coming soon. Please check back later.
-              </p>
-            </div>
-          </TabsContent>
-          
-          <div className="border-t pt-6 mt-6 flex justify-end space-x-4">
+            <h3 className="text-xl font-medium mb-2">No payment methods yet</h3>
+            <p className="text-haluna-text-light mb-6 max-w-md mx-auto">
+              Add a payment method to start receiving payments from your customers
+            </p>
             <Button
-              type="button"
-              variant="outline"
-              onClick={() => navigate('/dashboard')}
+              onClick={() => setIsFormVisible(true)}
+              className="flex items-center mx-auto"
             >
-              Cancel
-            </Button>
-            <Button type="submit">
-              Save Payment Details
+              <Plus className="mr-2 h-4 w-4" />
+              Add Payment Method
             </Button>
           </div>
-        </form>
-      </Tabs>
+        )}
+      </div>
       
-      <div className="mt-8 bg-blue-50 p-4 rounded-lg text-sm">
-        <p className="text-blue-700 mb-2 font-medium">Important Information:</p>
-        <ul className="list-disc list-inside text-blue-600 space-y-1">
-          <li>Your payment account information is securely stored</li>
-          <li>Payments are processed within 2-3 business days after a sale</li>
-          <li>Standard processing fees may apply (typically 2.9% + $0.30)</li>
-        </ul>
+      <div className="mt-8 bg-amber-50 border border-amber-200 rounded-lg p-6">
+        <div className="flex items-start gap-4">
+          <div className="flex-shrink-0">
+            <AlertCircle className="h-6 w-6 text-amber-500" />
+          </div>
+          <div>
+            <h3 className="font-medium mb-2">Important Information About Payouts</h3>
+            <p className="text-sm mb-4">
+              Payouts are processed within 3-5 business days after a successful order. 
+              The platform charges a 2% transaction fee on each order, which is deducted automatically.
+            </p>
+            <p className="text-sm">
+              Make sure your payment information is accurate to avoid delays in receiving your funds.
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );

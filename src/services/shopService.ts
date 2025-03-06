@@ -15,6 +15,8 @@ export interface DbShop {
   address?: string;
   owner_id: string;
   created_at: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 // Define Shop interface for frontend use
@@ -30,6 +32,8 @@ export interface Shop {
   category?: string;
   isVerified?: boolean;
   distance?: number;
+  latitude?: number;
+  longitude?: number;
 }
 
 // Define shop display settings interface
@@ -56,6 +60,8 @@ const convertDbShopToShop = (dbShop: DbShop): Shop => {
     productCount: dbShop.product_count || 0,
     isVerified: false, // Placeholder
     category: 'General', // Placeholder
+    latitude: dbShop.latitude,
+    longitude: dbShop.longitude,
   };
 };
 
@@ -75,6 +81,8 @@ export const createShop = async (shopData: Partial<Shop>): Promise<Shop | null> 
       logo_url: shopData.logo || '',
       location: shopData.location || '',
       owner_id: userData.user.id,
+      latitude: shopData.latitude,
+      longitude: shopData.longitude,
     };
     
     // Insert the shop
@@ -234,7 +242,7 @@ export const getShopProducts = async (shopId: string): Promise<Product[]> => {
       sellerId: item.seller_id,
       sellerName: item.seller_name,
       isHalalCertified: item.is_halal_certified,
-      details: item.details,
+      details: item.details as Record<string, any>,
       longDescription: item.long_description,
       createdAt: item.created_at
     }));
@@ -256,6 +264,8 @@ export const updateShop = async (id: string, shopData: Partial<Shop>): Promise<S
       description: shopData.description,
       logo_url: shopData.logo,
       location: shopData.location,
+      latitude: shopData.latitude,
+      longitude: shopData.longitude,
     };
     
     const { data, error } = await supabase

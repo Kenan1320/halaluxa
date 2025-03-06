@@ -1,9 +1,10 @@
 
-import { ShoppingBag, Trash2, Plus, Minus } from 'lucide-react';
+import { ShoppingCart, Trash2, Plus, Minus } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
 
 const CartDropdown = () => {
   const { cart, removeFromCart, updateQuantity } = useCart();
@@ -27,19 +28,28 @@ const CartDropdown = () => {
   return (
     <div className="relative" ref={dropdownRef}>
       <button
-        className="relative p-2 rounded-lg bg-haluna-primary text-white hover:bg-haluna-primary-dark transition flex items-center"
+        className="relative p-2 rounded-lg bg-orange-500 hover:bg-orange-600 text-white transition flex items-center justify-center"
         onClick={() => setIsOpen(!isOpen)}
+        aria-label="Shopping Cart"
       >
-        <ShoppingBag className="h-5 w-5" />
+        <ShoppingCart className="h-5 w-5" />
         {cart.totalItems > 0 && (
-          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full">
+          <motion.span 
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            className="absolute -top-1 -right-1 bg-haluna-primary text-white text-xs w-5 h-5 flex items-center justify-center rounded-full"
+          >
             {cart.totalItems}
-          </span>
+          </motion.span>
         )}
       </button>
       
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-lg z-50 overflow-hidden">
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-lg z-50 overflow-hidden"
+        >
           <div className="p-4 border-b">
             <h3 className="font-medium">Your Shopping Cart</h3>
             <p className="text-xs text-haluna-text-light">
@@ -49,7 +59,7 @@ const CartDropdown = () => {
           
           {cart.items.length === 0 ? (
             <div className="p-6 text-center">
-              <ShoppingBag className="h-10 w-10 text-haluna-text-light mx-auto mb-2" />
+              <ShoppingCart className="h-10 w-10 text-haluna-text-light mx-auto mb-2" />
               <p className="text-haluna-text-light">Your cart is empty</p>
             </div>
           ) : (
@@ -84,6 +94,7 @@ const CartDropdown = () => {
                         <button
                           onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
                           className="p-1 rounded-full bg-gray-100 hover:bg-gray-200"
+                          disabled={item.quantity <= 1}
                         >
                           <Minus className="h-3 w-3" />
                         </button>
@@ -125,7 +136,7 @@ const CartDropdown = () => {
               </div>
             </>
           )}
-        </div>
+        </motion.div>
       )}
     </div>
   );
