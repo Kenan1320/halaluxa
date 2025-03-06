@@ -74,43 +74,58 @@ const BottomNavigation = () => {
     <AnimatePresence>
       {isVisible && (
         <motion.nav 
-          className="fixed bottom-0 left-0 right-0 bg-white shadow-lg z-40 md:hidden"
+          className="fixed bottom-0 left-0 right-0 z-40 md:hidden"
           initial={{ y: 100 }}
           animate={{ y: 0 }}
           exit={{ y: 100 }}
           transition={{ duration: 0.3 }}
+          style={{
+            background: 'rgba(255, 255, 255, 0.85)',
+            backdropFilter: 'blur(10px)',
+            borderTop: '1px solid rgba(229, 231, 235, 0.8)'
+          }}
         >
-          <div className="flex justify-around items-center h-16 px-2">
+          <div className="flex justify-around items-center h-16">
             {navItems.map((item) => (
               <Link
                 key={item.label}
                 to={item.path}
                 className="relative flex flex-col items-center justify-center w-full h-full"
               >
-                <div 
-                  className={`flex flex-col items-center justify-center transition-all ${
+                <motion.div 
+                  className={`flex flex-col items-center justify-center ${
                     isActive(item) 
-                      ? 'text-haluna-primary' 
-                      : 'text-gray-500'
+                      ? 'text-haluna-primary font-medium' 
+                      : 'text-gray-400'
                   }`}
+                  whileTap={{ scale: 0.9 }}
+                  transition={{ duration: 0.2 }}
                 >
                   <div className="relative">
                     {item.icon}
                     {item.badge && (
-                      <span className="absolute -top-2 -right-2 flex items-center justify-center w-4 h-4 bg-red-500 text-white text-[10px] rounded-full">
+                      <motion.span 
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        className="absolute -top-1.5 -right-1.5 flex items-center justify-center w-4 h-4 bg-red-500 text-white text-[10px] rounded-full"
+                      >
                         {item.badge > 9 ? '9+' : item.badge}
-                      </span>
+                      </motion.span>
                     )}
                   </div>
-                  <span className="mt-1 text-xs font-medium">{item.label}</span>
+                  <span className="mt-1 text-[10px]">{item.label}</span>
+                  
                   {isActive(item) && (
                     <motion.div
                       layoutId="bottomNavIndicator"
-                      className="absolute -bottom-1 w-12 h-0.5 bg-haluna-primary rounded-full"
-                      transition={{ type: "spring", duration: 0.5 }}
+                      className="absolute -bottom-1 w-10 h-1 rounded-full bg-gradient-to-r from-haluna-primary to-haluna-primary/70"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ type: "spring", bounce: 0.3, duration: 0.5 }}
                     />
                   )}
-                </div>
+                </motion.div>
               </Link>
             ))}
           </div>

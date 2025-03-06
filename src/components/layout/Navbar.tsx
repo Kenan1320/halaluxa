@@ -37,6 +37,19 @@ const Navbar = () => {
     { href: '/about', label: 'About' },
   ];
 
+  // Animation variants for background gradient
+  const gradientVariants = {
+    animate: {
+      backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
+      transition: {
+        duration: 15,
+        ease: "linear",
+        repeat: Infinity,
+        repeatType: "reverse" as const
+      }
+    }
+  };
+
   // Animation variants for the logo text
   const letterVariants = {
     initial: { opacity: 1 },
@@ -56,14 +69,22 @@ const Navbar = () => {
   };
   
   return (
-    <header className={`fixed top-0 w-full z-50 transition-all duration-300 ${
-      isScrolled ? 'py-2' : 'py-4'
-    } bg-gradient-to-r from-green-500/90 via-purple-200/20 to-green-500/90 backdrop-blur-sm shadow-md`}>
+    <motion.header 
+      className={`fixed top-0 w-full z-50 transition-all duration-300 ${
+        isScrolled ? 'py-2' : 'py-4'
+      } backdrop-blur-lg shadow-md`}
+      variants={gradientVariants}
+      animate="animate"
+      style={{
+        backgroundSize: "300% 300%",
+        background: "linear-gradient(-45deg, #E5DEFF 0%, #8cd9a3 25%, #b2f0cb 50%, #E5DEFF 75%, #d6c5ff 100%)"
+      }}
+    >
       <div className="container mx-auto px-4 flex justify-between items-center">
         <Link to="/" className="flex items-center gap-2">
           <div className="flex items-center">
             <motion.span 
-              className="text-2xl font-serif font-bold text-white"
+              className="text-2xl font-serif font-bold text-white drop-shadow-sm"
               variants={letterVariants}
               initial="initial"
               animate="animate"
@@ -165,7 +186,7 @@ const Navbar = () => {
           </nav>
         </div>
       )}
-    </header>
+    </motion.header>
   );
 };
 
