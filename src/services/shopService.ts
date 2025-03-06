@@ -29,29 +29,60 @@ export const mockShops = [
   }
 ];
 
+// Get all shops from localStorage with improved caching
+let cachedShops = null;
+let lastFetchTime = 0;
+const CACHE_DURATION = 1000; // 1 second cache duration
+
 // Get all shops from localStorage or use mock shops
 export const getShops = async () => {
+  const currentTime = Date.now();
+  
+  // Use cache if it's recent enough
+  if (cachedShops && currentTime - lastFetchTime < CACHE_DURATION) {
+    return cachedShops;
+  }
+  
   const storedShops = localStorage.getItem('shops');
   
   if (storedShops) {
-    const shops = JSON.parse(storedShops);
-    
-    // Calculate product count for each shop
-    return shops.map(shop => {
-      // Count products from localStorage
-      const localProducts = JSON.parse(localStorage.getItem('products') || '[]');
-      const mockProductsForShop = mockProducts.filter(p => p.sellerId === shop.id);
-      const localProductsForShop = localProducts.filter(p => p.sellerId === shop.id);
+    try {
+      const shops = JSON.parse(storedShops);
       
-      return {
-        ...shop,
-        productCount: mockProductsForShop.length + localProductsForShop.length
-      };
-    });
+      // Calculate product count for each shop
+      const updatedShops = shops.map(shop => {
+        // Count products from localStorage
+        const localProducts = JSON.parse(localStorage.getItem('products') || '[]');
+        const mockProductsForShop = mockProducts.filter(p => p.sellerId === shop.id);
+        const localProductsForShop = localProducts.filter(p => p.sellerId === shop.id);
+        
+        return {
+          ...shop,
+          productCount: mockProductsForShop.length + localProductsForShop.length
+        };
+      });
+      
+      // Update cache
+      cachedShops = updatedShops;
+      lastFetchTime = currentTime;
+      
+      return updatedShops;
+    } catch (error) {
+      console.error('Failed to parse shops data:', error);
+      return mockShops;
+    }
   }
   
-  // No shops in localStorage, return empty array
-  return [];
+  // No shops in localStorage, return mock shops
+  cachedShops = mockShops;
+  lastFetchTime = currentTime;
+  return mockShops;
+};
+
+// Invalidate the shop cache to force fresh data
+export const invalidateShopCache = () => {
+  cachedShops = null;
+  lastFetchTime = 0;
 };
 
 // Get a shop by ID
@@ -81,6 +112,10 @@ export const updateShop = async (shopId: string, shopData: any) => {
   );
   
   localStorage.setItem('shops', JSON.stringify(updatedShops));
+  
+  // Invalidate cache to ensure fresh data
+  invalidateShopCache();
+  
   return updatedShops.find(shop => shop.id === shopId) || null;
 };
 
@@ -102,5 +137,9 @@ export const createShop = async (shopData: any) => {
   
   const updatedShops = [...shops, newShop];
   localStorage.setItem('shops', JSON.stringify(updatedShops));
+  
+  // Invalidate cache to ensure fresh data
+  invalidateShopCache();
+  
   return newShop;
 };

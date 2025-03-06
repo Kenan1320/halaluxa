@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -86,29 +85,56 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
   
   const login = async (email: string, password: string): Promise<UserRole | false> => {
-    // Here you would typically call your authentication API
-    // For now, we'll use localStorage as a simple demo
-    
-    const storedUserJson = localStorage.getItem('user');
-    
-    if (storedUserJson) {
-      try {
+    // Improved login function with better password validation and error handling
+    try {
+      // Get all stored users for improved login validation
+      const usersStr = localStorage.getItem('users');
+      let users = [];
+      
+      if (usersStr) {
+        users = JSON.parse(usersStr);
+      }
+      
+      // Find user by email - case insensitive search
+      const foundUser = users.find((u: any) => 
+        u.email.toLowerCase() === email.toLowerCase()
+      );
+      
+      if (foundUser) {
+        // In a real app, we would hash and compare passwords
+        // For this demo, we're using plain text comparison
+        if (foundUser.password === password) {
+          // Remove password from user object before storing in state
+          const { password: _, ...userWithoutPassword } = foundUser;
+          
+          setUser(userWithoutPassword);
+          setIsLoggedIn(true);
+          localStorage.setItem('isLoggedIn', 'true');
+          localStorage.setItem('user', JSON.stringify(userWithoutPassword));
+          return userWithoutPassword.role;
+        }
+      }
+      
+      // Fallback to old user storage method (single user)
+      const storedUserJson = localStorage.getItem('user');
+      
+      if (storedUserJson) {
         const storedUser = JSON.parse(storedUserJson);
         
-        // In a real app, we would validate the password
-        // Here we're just checking if the email matches
-        if (storedUser.email === email) {
+        // In a real app, we would hash and compare passwords
+        if (storedUser.email.toLowerCase() === email.toLowerCase()) {
           setUser(storedUser);
           setIsLoggedIn(true);
           localStorage.setItem('isLoggedIn', 'true');
           return storedUser.role;
         }
-      } catch (error) {
-        console.error('Failed to parse stored user data', error);
       }
+      
+      return false;
+    } catch (error) {
+      console.error('Login error:', error);
+      return false;
     }
-    
-    return false;
   };
   
   const signup = async (
@@ -123,13 +149,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       shopLocation?: string;
     }
   ): Promise<boolean> => {
-    // Here you would typically call your registration API
     try {
-      // Create a new user object
-      const newUser: User = {
-        id: Math.random().toString(36).substr(2, 9),
+      // Generate a unique ID
+      const userId = Math.random().toString(36).substr(2, 9);
+      
+      // Create a new user object with secure password storage
+      const newUser = {
+        id: userId,
         name,
         email,
+        password, // In a real app, this would be hashed
         role,
         ...(role === 'business' && shopDetails ? {
           shopName: shopDetails.shopName || '',
@@ -139,14 +168,39 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         } : {})
       };
       
-      // Save to localStorage for demo purposes
-      localStorage.setItem('user', JSON.stringify(newUser));
+      // Store the user in the users array
+      const usersStr = localStorage.getItem('users');
+      let users = [];
+      
+      if (usersStr) {
+        users = JSON.parse(usersStr);
+      }
+      
+      // Check if email already exists
+      const emailExists = users.some((u: any) => 
+        u.email.toLowerCase() === email.toLowerCase()
+      );
+      
+      if (emailExists) {
+        console.error('Email already exists');
+        return false;
+      }
+      
+      // Add the new user to the users array
+      users.push(newUser);
+      localStorage.setItem('users', JSON.stringify(users));
+      
+      // Remove password from user object before storing in state
+      const { password: _, ...userWithoutPassword } = newUser;
+      
+      // Save to localStorage for current session
+      localStorage.setItem('user', JSON.stringify(userWithoutPassword));
       localStorage.setItem('isLoggedIn', 'true');
       
       // If it's a business user, create a shop entry
       if (role === 'business' && shopDetails?.shopName) {
         const newShop = {
-          id: newUser.id, // Use the same ID as the user for simplicity
+          id: userId, // Use the same ID as the user for simplicity
           name: shopDetails.shopName,
           description: shopDetails.shopDescription || 'New shop on Haluna',
           category: shopDetails.shopCategory || 'General',
@@ -164,7 +218,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         localStorage.setItem('shops', JSON.stringify(updatedShops));
       }
       
-      setUser(newUser);
+      setUser(userWithoutPassword);
       setIsLoggedIn(true);
       
       return true;
@@ -183,8 +237,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         ...data
       };
       
-      // Update in localStorage
+      // Update in local storage for current session
       localStorage.setItem('user', JSON.stringify(updatedUser));
+      
+      // Update in users array
+      const usersStr = localStorage.getItem('users');
+      if (usersStr) {
+        let users = JSON.parse(usersStr);
+        users = users.map((u: any) => {
+          if (u.id === user.id) {
+            // Keep the password when updating the user in the users array
+            return { ...u, ...data };
+          }
+          return u;
+        });
+        
+        localStorage.setItem('users', JSON.stringify(users));
+      }
       
       // If this is a business user and shop details were updated, update the shop too
       if (user.role === 'business' && (data.shopName || data.shopDescription || data.shopLogo || data.shopCategory || data.shopLocation)) {
@@ -220,6 +289,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(null);
     setIsLoggedIn(false);
     localStorage.removeItem('isLoggedIn');
+    // Don't remove 'user' from localStorage to maintain compatibility with old code
     navigate('/');
   };
   

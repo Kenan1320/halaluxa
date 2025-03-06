@@ -79,7 +79,7 @@ const ShopCard = ({ shop, index, featured = false }: ShopCardProps) => {
         </div>
         
         <Button 
-          href={`/shop/${shop.id}`}
+          to={`/shop/${shop.id}`}
           className="w-full flex items-center justify-center"
         >
           {featured ? (
