@@ -53,6 +53,9 @@ const SplashScreen = ({ onFinished }: SplashScreenProps) => {
   };
 
   const brandName = "Haluna";
+  
+  // Rainbow color animation for Haluna text
+  const colors = ["#29866B", "#36A186", "#E4875E", "#F9A280", "#29866B"];
 
   return (
     <AnimatePresence>
@@ -65,7 +68,7 @@ const SplashScreen = ({ onFinished }: SplashScreenProps) => {
           exit={{ opacity: 0 }}
           transition={{ duration: 0.8, ease: "easeInOut" }}
         >
-          {/* Consistent light green background (#E4F5F0) matching the top nav */}
+          {/* Light green background matching the top nav */}
           <div className="absolute inset-0 bg-[#E4F5F0]" />
           
           {/* Wave animation container */}
@@ -101,7 +104,7 @@ const SplashScreen = ({ onFinished }: SplashScreenProps) => {
 
           {/* Content container */}
           <div className="relative z-10 flex flex-col items-center">
-            {/* Brand name with letter-by-letter reveal */}
+            {/* Brand name with letter-by-letter reveal and color animation */}
             <div className="flex overflow-hidden">
               {brandName.split('').map((letter, i) => (
                 <motion.span
@@ -111,6 +114,22 @@ const SplashScreen = ({ onFinished }: SplashScreenProps) => {
                   initial="hidden"
                   animate="visible"
                   className="text-white text-[4.5rem] font-serif font-bold tracking-wide"
+                  style={{
+                    background: `linear-gradient(to right, ${colors.join(', ')})`,
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundSize: '200% auto',
+                  }}
+                  animate={{
+                    backgroundPosition: ['0% center', '200% center'],
+                  }}
+                  transition={{
+                    duration: 3,
+                    repeat: Infinity,
+                    repeatType: 'reverse',
+                    ease: 'linear',
+                    delay: 1.5 + (i * 0.2)
+                  }}
                 >
                   {letter}
                 </motion.span>

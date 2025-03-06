@@ -1,23 +1,28 @@
 
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Search, ShoppingCart, User, MapPin, Store } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Menu, X, Search, ShoppingCart, User, MapPin, Store, AlertCircle } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 import { useLocation as useLocationContext } from '@/context/LocationContext';
 import { motion } from 'framer-motion';
+import { useToast } from '@/hooks/use-toast';
+import { getShopById, Shop } from '@/services/shopService';
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mainShop, setMainShop] = useState<Shop | null>(null);
   const { translate } = useLanguage();
   const isMobile = useIsMobile();
   const location = useLocation();
+  const navigate = useNavigate();
   const { isLoggedIn, user } = useAuth();
   const { cart } = useCart();
   const { isLocationEnabled, requestLocation, location: userLocation } = useLocationContext();
+  const { toast } = useToast();
   
   // Close mobile menu when route changes
   useEffect(() => {
@@ -33,6 +38,37 @@ const Navbar = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+  
+  // Load main shop from localStorage
+  useEffect(() => {
+    const loadMainShop = async () => {
+      const mainShopId = localStorage.getItem('mainShopId');
+      if (mainShopId) {
+        try {
+          const shop = await getShopById(mainShopId);
+          setMainShop(shop);
+        } catch (error) {
+          console.error('Error loading main shop:', error);
+        }
+      }
+    };
+    
+    loadMainShop();
+  }, [location.pathname]);
+  
+  const handleMainShopClick = () => {
+    if (!mainShop) {
+      toast({
+        title: "No main shop selected",
+        description: "Please go to Select Your Shops to choose your main shop.",
+        variant: "destructive"
+      });
+      navigate('/select-shops');
+      return;
+    }
+    
+    navigate(`/shop/${mainShop.id}`);
+  };
   
   const isActive = (path: string) => {
     return location.pathname === path;
@@ -104,7 +140,50 @@ const Navbar = () => {
             <MapPin className="h-6 w-6" />
           </button>
           
-          {/* Select Shops Button - NEW */}
+          {/* Main Shop Button */}
+          <button 
+            onClick={handleMainShopClick}
+            className="relative p-2 rounded-full text-[#2A866A] hover:bg-[#d5efe8] transition-colors"
+          >
+            {mainShop ? (
+              <>
+                {mainShop.logo ? (
+                  <div className="w-6 h-6 rounded-full overflow-hidden">
+                    <img src={mainShop.logo} alt={mainShop.name} className="w-full h-full object-cover" />
+                  </div>
+                ) : (
+                  <Store className="h-6 w-6" />
+                )}
+                <motion.div 
+                  className="absolute -bottom-1 -right-1 w-2 h-2 bg-[#E4875E] rounded-full"
+                  animate={{
+                    scale: [1, 1.5, 1],
+                  }}
+                  transition={{
+                    duration: 2,
+                    repeat: Infinity,
+                  }}
+                />
+              </>
+            ) : (
+              <div className="relative">
+                <Store className="h-6 w-6" />
+                <motion.div 
+                  className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"
+                  animate={{
+                    scale: [1, 1.5, 1],
+                    opacity: [0.7, 1, 0.7]
+                  }}
+                  transition={{
+                    duration: 1.5,
+                    repeat: Infinity,
+                  }}
+                />
+              </div>
+            )}
+          </button>
+          
+          {/* Select Shops Button */}
           <Link 
             to="/select-shops" 
             className="p-2 rounded-full text-[#2A866A] hover:bg-[#d5efe8] transition-colors"

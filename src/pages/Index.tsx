@@ -17,6 +17,7 @@ const Index = () => {
   const [selectedShops, setSelectedShops] = useState<Shop[]>([]);
   const [nearbyShops, setNearbyShops] = useState<Shop[]>([]);
   const [isLoadingShops, setIsLoadingShops] = useState(false);
+  const [activeShopIndex, setActiveShopIndex] = useState(0);
   
   // Scroll to top on page load
   useEffect(() => {
@@ -63,6 +64,17 @@ const Index = () => {
     
     loadShops();
   }, [getNearbyShops, location]);
+
+  // Cycling shop index animation effect
+  useEffect(() => {
+    if (selectedShops.length === 0) return;
+    
+    const interval = setInterval(() => {
+      setActiveShopIndex(prev => (prev + 1) % selectedShops.length);
+    }, 3000);
+    
+    return () => clearInterval(interval);
+  }, [selectedShops.length]);
 
   // Get current hour to determine greeting
   const currentHour = new Date().getHours();
@@ -112,42 +124,56 @@ const Index = () => {
             </Link>
           </div>
           
-          <div className="relative h-20 overflow-hidden">
-            <motion.div
-              className="flex absolute whitespace-nowrap"
-              animate={{
-                x: [0, -1000],
-              }}
-              transition={{
-                repeat: Infinity,
-                duration: 20,
-                ease: "linear"
-              }}
-            >
-              {/* Duplicate the shops array to create seamless loop */}
-              {[...selectedShops, ...selectedShops].map((shop, index) => (
+          {/* Enhanced carousel with scaling effect */}
+          <div className="relative h-24 overflow-hidden">
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="w-full h-full flex items-center">
+                {/* This is the visible container for the continuous flowing shops */}
                 <motion.div
-                  key={`${shop.id}-${index}`}
-                  className="flex flex-col items-center mx-4"
-                  whileHover={{ scale: 1.1 }}
+                  className="flex absolute"
+                  initial={{ x: "100%" }}
+                  animate={{ x: "-100%" }}
+                  transition={{
+                    repeat: Infinity,
+                    duration: 20,
+                    ease: "linear",
+                    repeatType: "loop"
+                  }}
                 >
-                  <Link to={`/shop/${shop.id}`}>
-                    <div className="w-12 h-12 rounded-full bg-white shadow-sm flex items-center justify-center overflow-hidden">
-                      {shop.logo ? (
-                        <img src={shop.logo} alt={shop.name} className="w-8 h-8 object-contain" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-[#F9F5EB] text-[#29866B] font-semibold">
-                          {shop.name.charAt(0)}
+                  {/* Duplicate the shops array twice to create a continuous loop */}
+                  {[...selectedShops, ...selectedShops, ...selectedShops].map((shop, index) => (
+                    <motion.div
+                      key={`${shop.id}-${index}`}
+                      className="flex flex-col items-center mx-6 relative"
+                      animate={{
+                        scale: activeShopIndex % selectedShops.length === index % selectedShops.length ? 1.15 : 1,
+                        y: activeShopIndex % selectedShops.length === index % selectedShops.length ? -5 : 0,
+                        zIndex: activeShopIndex % selectedShops.length === index % selectedShops.length ? 10 : 1,
+                      }}
+                      transition={{
+                        duration: 0.5,
+                        ease: "easeInOut"
+                      }}
+                    >
+                      <Link to={`/shop/${shop.id}`}>
+                        <div className="w-14 h-14 rounded-full bg-white shadow-sm flex items-center justify-center overflow-hidden">
+                          {shop.logo ? (
+                            <img src={shop.logo} alt={shop.name} className="w-10 h-10 object-contain" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-[#F9F5EB] text-[#29866B] font-semibold">
+                              {shop.name.charAt(0)}
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
-                    <span className="text-xs text-center mt-1 block font-medium tracking-tight">
-                      {shop.name.length > 10 ? `${shop.name.substring(0, 10)}...` : shop.name}
-                    </span>
-                  </Link>
+                        <span className="text-xs text-center mt-1 block font-medium tracking-tight">
+                          {shop.name.length > 10 ? `${shop.name.substring(0, 10)}...` : shop.name}
+                        </span>
+                      </Link>
+                    </motion.div>
+                  ))}
                 </motion.div>
-              ))}
-            </motion.div>
+              </div>
+            </div>
           </div>
         </section>
         
