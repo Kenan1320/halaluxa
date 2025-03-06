@@ -1,6 +1,37 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { Product, mapDbProductToModel, mapModelToDbProduct } from '@/models/product';
+import { Product, ProductDetails, mapDbProductToModel, mapModelToDbProduct } from '@/models/product';
+
+// Helper function to safely handle JSON conversion
+const safeJsonParse = (data: any): ProductDetails => {
+  if (typeof data === 'string') {
+    try {
+      return JSON.parse(data);
+    } catch (e) {
+      return {};
+    }
+  }
+  return data || {};
+};
+
+// Custom mapper for Supabase data to our model
+const customMapDbProductToModel = (data: any): Product => {
+  return {
+    id: data.id,
+    name: data.name,
+    description: data.description,
+    price: data.price,
+    stock: data.stock || 0,
+    category: data.category,
+    images: data.images || [],
+    sellerId: data.seller_id,
+    sellerName: data.seller_name,
+    rating: data.rating,
+    isHalalCertified: data.is_halal_certified,
+    details: safeJsonParse(data.details),
+    createdAt: data.created_at
+  };
+};
 
 // Fetch all products
 export async function getProducts(): Promise<Product[]> {
@@ -15,7 +46,7 @@ export async function getProducts(): Promise<Product[]> {
       return [];
     }
     
-    return data.map(mapDbProductToModel);
+    return data.map(customMapDbProductToModel);
   } catch (err) {
     console.error('Error in getProducts:', err);
     return [];
@@ -29,24 +60,48 @@ export async function getProductById(id: string): Promise<Product | undefined> {
       .from('products')
       .select('*')
       .eq('id', id)
-      .single();
+      .maybeSingle();
     
-    if (error) {
+    if (error || !data) {
       console.error(`Error fetching product with id ${id}:`, error);
       return undefined;
     }
     
-    return mapDbProductToModel(data);
+    return customMapDbProductToModel(data);
   } catch (err) {
     console.error(`Error in getProductById for ${id}:`, err);
     return undefined;
   }
 }
 
+// Helper function to prepare product data for database
+const prepareProductForDb = (product: Partial<Product>) => {
+  const dbProduct: any = {
+    name: product.name,
+    description: product.description,
+    price: product.price,
+    stock: product.stock,
+    category: product.category,
+    images: product.images,
+    seller_id: product.sellerId,
+    seller_name: product.sellerName,
+    rating: product.rating,
+    is_halal_certified: product.isHalalCertified,
+    details: product.details ? JSON.stringify(product.details) : '{}'
+  };
+  
+  // Only include id if it exists (for updates)
+  if (product.id) {
+    dbProduct.id = product.id;
+  }
+  
+  return dbProduct;
+};
+
 // Save a new product or update an existing one
 export async function saveProduct(product: Partial<Product>): Promise<Product | undefined> {
   try {
-    const dbProduct = mapModelToDbProduct(product);
+    const dbProduct = prepareProductForDb(product);
     
     if (product.id) {
       // Update existing product
@@ -62,7 +117,7 @@ export async function saveProduct(product: Partial<Product>): Promise<Product | 
         return undefined;
       }
       
-      return mapDbProductToModel(data);
+      return customMapDbProductToModel(data);
     } else {
       // Create new product
       const { data, error } = await supabase
@@ -76,7 +131,7 @@ export async function saveProduct(product: Partial<Product>): Promise<Product | 
         return undefined;
       }
       
-      return mapDbProductToModel(data);
+      return customMapDbProductToModel(data);
     }
   } catch (err) {
     console.error('Error in saveProduct:', err);
@@ -87,7 +142,7 @@ export async function saveProduct(product: Partial<Product>): Promise<Product | 
 // Add a new product - implemented function that was previously just an alias
 export async function addProduct(product: Partial<Product>): Promise<Product | undefined> {
   try {
-    const dbProduct = mapModelToDbProduct(product);
+    const dbProduct = prepareProductForDb(product);
     
     const { data, error } = await supabase
       .from('products')
@@ -100,7 +155,7 @@ export async function addProduct(product: Partial<Product>): Promise<Product | u
       return undefined;
     }
     
-    return mapDbProductToModel(data);
+    return customMapDbProductToModel(data);
   } catch (err) {
     console.error('Error in addProduct:', err);
     return undefined;
@@ -115,7 +170,7 @@ export async function updateProduct(product: Partial<Product>): Promise<Product 
       return undefined;
     }
     
-    const dbProduct = mapModelToDbProduct(product);
+    const dbProduct = prepareProductForDb(product);
     
     const { data, error } = await supabase
       .from('products')
@@ -129,7 +184,7 @@ export async function updateProduct(product: Partial<Product>): Promise<Product 
       return undefined;
     }
     
-    return mapDbProductToModel(data);
+    return customMapDbProductToModel(data);
   } catch (err) {
     console.error('Error in updateProduct:', err);
     return undefined;
@@ -171,7 +226,7 @@ export async function getFeaturedProducts(): Promise<Product[]> {
       return [];
     }
     
-    return data.map(mapDbProductToModel);
+    return data.map(customMapDbProductToModel);
   } catch (err) {
     console.error('Error in getFeaturedProducts:', err);
     return [];
@@ -192,7 +247,7 @@ export async function getProductsByCategory(category: string): Promise<Product[]
       return [];
     }
     
-    return data.map(mapDbProductToModel);
+    return data.map(customMapDbProductToModel);
   } catch (err) {
     console.error(`Error in getProductsByCategory for ${category}:`, err);
     return [];
@@ -213,7 +268,7 @@ export async function getProductsBySeller(sellerId: string): Promise<Product[]> 
       return [];
     }
     
-    return data.map(mapDbProductToModel);
+    return data.map(customMapDbProductToModel);
   } catch (err) {
     console.error(`Error in getProductsBySeller for ${sellerId}:`, err);
     return [];
@@ -244,3 +299,6 @@ export function getMockProducts(): Product[] {
     }
   ];
 }
+
+// Export the Product type to make it available to other modules
+export type { Product };

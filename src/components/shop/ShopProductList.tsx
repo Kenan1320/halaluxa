@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { ShoppingCart, Heart, ChevronRight, ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { getShopProducts } from '@/services/shopService';
+import { getShopProducts, convertToModelProduct } from '@/services/shopService';
 import { Product } from '@/models/product';
 import { useCart } from '@/context/CartContext';
 import { Link } from 'react-router-dom';
@@ -28,7 +28,9 @@ const ShopProductList = ({ shopId }: ShopProductListProps) => {
       try {
         setIsLoading(true);
         const shopProducts = await getShopProducts(shopId);
-        setProducts(shopProducts);
+        // Convert shop products to model products
+        const modelProducts = shopProducts.map(convertToModelProduct);
+        setProducts(modelProducts);
       } catch (error) {
         console.error('Error loading shop products:', error);
       } finally {

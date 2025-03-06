@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { getRandomId } from '@/lib/utils';
+import { Product as ModelProduct } from '@/models/product';
 
 export interface Shop {
   id: string;
@@ -15,9 +16,12 @@ export interface Shop {
   productCount: number;
   isVerified: boolean;
   ownerId: string;
+  latitude?: number;
+  longitude?: number;
 }
 
-export interface Product {
+// ShopProduct interface aligned with the model Product
+export interface ShopProduct {
   id: string;
   name: string;
   price: number;
@@ -25,9 +29,19 @@ export interface Product {
   images: string[];
   category: string;
   sellerId: string;
-  sellerName: string;
-  rating: number;
+  sellerName?: string;
+  rating?: number;
   stock: number;
+}
+
+// Adapter function to convert ShopProduct to ModelProduct
+export function convertToModelProduct(shopProduct: ShopProduct): ModelProduct {
+  return {
+    ...shopProduct,
+    isHalalCertified: true, // Default value
+    createdAt: new Date().toISOString(), // Default value
+    details: {} // Default empty details
+  };
 }
 
 export const getAllShops = async (): Promise<Shop[]> => {
@@ -42,6 +56,8 @@ export const getAllShops = async (): Promise<Shop[]> => {
     return [];
   }
 };
+
+export const getShops = getAllShops; // Alias for backward compatibility
 
 export const getShopById = async (id: string): Promise<Shop | null> => {
   try {
@@ -79,7 +95,7 @@ export const getNearbyShops = async (latitude?: number, longitude?: number): Pro
   }
 };
 
-export const getShopProducts = async (shopId: string): Promise<Product[]> => {
+export const getShopProducts = async (shopId: string): Promise<ShopProduct[]> => {
   try {
     // This would be a real API call in production
     await new Promise(resolve => setTimeout(resolve, 700));
@@ -122,14 +138,16 @@ function createMockShop(index: number): Shop {
     coverImage: index % 2 === 0 ? `/lovable-uploads/${['0c423741-0711-4e97-8c56-ca4fe31dc6ca', '26c50a86-ec95-4072-8f0c-ac930a65b34d'][index % 2]}.png` : undefined,
     category: categories[index % categories.length],
     location: locations[index % locations.length],
-    rating: (3 + Math.random() * 2).toFixed(1) as unknown as number,
+    rating: parseFloat((3 + Math.random() * 2).toFixed(1)),
     productCount: 5 + Math.floor(Math.random() * 20),
     isVerified: index % 3 === 0,
-    ownerId: `owner-${index}`
+    ownerId: `owner-${index}`,
+    latitude: 40.7128 + (Math.random() - 0.5) * 0.1,
+    longitude: -74.0060 + (Math.random() - 0.5) * 0.1
   };
 }
 
-function createMockProduct(shopId: string, index: number): Product {
+function createMockProduct(shopId: string, index: number): ShopProduct {
   const categories = ["Food", "Clothing", "Books", "Accessories", "Beauty"];
   const productNames = ["Organic Dates", "Modest Dress", "Prayer Rug", "Halal Meat", "Islamic Book", "Miswak", "Honey", "Olive Oil", "Attar Perfume", "Hijab"];
   const shopIndex = parseInt(shopId.replace('shop-', ''));
@@ -145,7 +163,7 @@ function createMockProduct(shopId: string, index: number): Product {
     category: categories[index % categories.length],
     sellerId: shopId,
     sellerName: createMockShop(shopIndex).name,
-    rating: (3.5 + Math.random() * 1.5).toFixed(1) as unknown as number,
+    rating: parseFloat((3.5 + Math.random() * 1.5).toFixed(1)),
     stock: 5 + Math.floor(Math.random() * 30)
   };
 }

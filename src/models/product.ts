@@ -50,12 +50,23 @@ export interface DbProduct {
   seller_name?: string;
   rating?: number;
   is_halal_certified: boolean;
-  details?: ProductDetails;
+  details?: ProductDetails | string;
   created_at: string;
 }
 
 // Map DB product to model
 export function mapDbProductToModel(dbProduct: DbProduct): Product {
+  let details = dbProduct.details;
+  
+  // Handle string details (from JSON)
+  if (typeof details === 'string') {
+    try {
+      details = JSON.parse(details);
+    } catch (e) {
+      details = {};
+    }
+  }
+  
   return {
     id: dbProduct.id,
     name: dbProduct.name,
@@ -68,7 +79,7 @@ export function mapDbProductToModel(dbProduct: DbProduct): Product {
     sellerName: dbProduct.seller_name,
     rating: dbProduct.rating,
     isHalalCertified: dbProduct.is_halal_certified,
-    details: dbProduct.details,
+    details: details as ProductDetails,
     createdAt: dbProduct.created_at
   };
 }
@@ -76,7 +87,6 @@ export function mapDbProductToModel(dbProduct: DbProduct): Product {
 // Map model to DB product
 export function mapModelToDbProduct(product: Partial<Product>): Partial<DbProduct> {
   const dbProduct: Partial<DbProduct> = {
-    id: product.id,
     name: product.name,
     description: product.description,
     price: product.price,
@@ -86,9 +96,17 @@ export function mapModelToDbProduct(product: Partial<Product>): Partial<DbProduc
     seller_id: product.sellerId,
     seller_name: product.sellerName,
     rating: product.rating,
-    is_halal_certified: product.isHalalCertified,
-    details: product.details
+    is_halal_certified: product.isHalalCertified
   };
+  
+  // Handle details conversion to string
+  if (product.details) {
+    dbProduct.details = JSON.stringify(product.details);
+  }
+  
+  if (product.id) {
+    dbProduct.id = product.id;
+  }
   
   if (product.createdAt) {
     dbProduct.created_at = product.createdAt;

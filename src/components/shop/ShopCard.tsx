@@ -1,4 +1,5 @@
 
+import { memo } from 'react';
 import { motion } from 'framer-motion';
 import { Store } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -11,7 +12,8 @@ interface ShopCardProps {
   minimal?: boolean;
 }
 
-const ShopCard = ({ shop, index, featured = false, minimal = false }: ShopCardProps) => {
+// Using memo to prevent unnecessary re-renders
+const ShopCard = memo(({ shop, index, featured = false, minimal = false }: ShopCardProps) => {
   if (minimal) {
     return (
       <motion.div 
@@ -26,6 +28,7 @@ const ShopCard = ({ shop, index, featured = false, minimal = false }: ShopCardPr
               src={shop.logo} 
               alt={`${shop.name} logo`} 
               className="max-h-20 max-w-[80%] object-contain"
+              loading="lazy"
             />
           ) : (
             <div className="flex items-center justify-center bg-haluna-primary-light h-full w-full">
@@ -64,6 +67,7 @@ const ShopCard = ({ shop, index, featured = false, minimal = false }: ShopCardPr
             src={shop.coverImage} 
             alt={shop.name} 
             className="w-full h-full object-cover"
+            loading="lazy"
           />
         ) : shop.logo ? (
           <div className="w-full h-full flex items-center justify-center bg-haluna-primary-light p-4">
@@ -71,6 +75,7 @@ const ShopCard = ({ shop, index, featured = false, minimal = false }: ShopCardPr
               src={shop.logo} 
               alt={`${shop.name} logo`} 
               className="max-h-full max-w-full object-contain"
+              loading="lazy"
             />
           </div>
         ) : (
@@ -125,6 +130,8 @@ const ShopCard = ({ shop, index, featured = false, minimal = false }: ShopCardPr
       </div>
     </motion.div>
   );
-};
+});
+
+ShopCard.displayName = 'ShopCard';
 
 export default ShopCard;

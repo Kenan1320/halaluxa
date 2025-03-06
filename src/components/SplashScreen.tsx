@@ -78,11 +78,11 @@ const SplashScreen = ({ onFinished }: SplashScreenProps) => {
               className="w-full h-[60%] bg-[#29866B] rounded-t-[100%]"
               initial={{ y: "100%" }}
               animate={{ 
-                y: "0%",
-                transition: { 
-                  duration: 1.8, 
-                  ease: [0.22, 1, 0.36, 1],
-                }
+                y: "0%"
+              }}
+              transition={{ 
+                duration: 1.8, 
+                ease: [0.22, 1, 0.36, 1]
               }}
               onAnimationComplete={() => setWaveComplete(true)}
             />
@@ -92,12 +92,12 @@ const SplashScreen = ({ onFinished }: SplashScreenProps) => {
               className="absolute bottom-0 w-full h-[45%] bg-gradient-to-t from-[#E4875E] to-[#29866B] rounded-t-[100%]"
               initial={{ y: "100%" }}
               animate={{ 
-                y: "0%",
-                transition: { 
-                  duration: 1.8, 
-                  ease: [0.22, 1, 0.36, 1],
-                  delay: 0.2 
-                }
+                y: "0%"
+              }}
+              transition={{ 
+                duration: 1.8, 
+                ease: [0.22, 1, 0.36, 1],
+                delay: 0.2 
               }}
             />
           </div>
@@ -121,8 +121,10 @@ const SplashScreen = ({ onFinished }: SplashScreenProps) => {
                     backgroundSize: '200% auto',
                   }}
                   animate={{
-                    backgroundPosition: ['0% center', '200% center'],
-                    transition: {
+                    backgroundPosition: ['0% center', '200% center']
+                  }}
+                  transition={{
+                    backgroundPosition: {
                       duration: 3,
                       repeat: Infinity,
                       repeatType: 'reverse',
