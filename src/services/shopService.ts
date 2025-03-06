@@ -1,101 +1,156 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { Product, mapDbProductToModel } from '@/models/product';
+import { Product } from '@/models/product';
 
-// Interface for shop data
-export interface Shop {
+// Define DbShop type separate from Shop to prevent circular reference
+export interface DbShop {
   id: string;
   name: string;
-  description: string;
-  ownerId: string;
-  logo?: string;
-  coverImage?: string;
-  location: string;
-  rating: number;
-  productCount: number;
-  isVerified?: boolean;
-  latitude?: number;
-  longitude?: number;
-  distance?: number;
-  category?: string;
-}
-
-// Database representation of shop data - completely separate to avoid circular references
-interface DbShop {
-  id: string;
-  name: string;
-  description: string;
-  owner_id: string;
+  description?: string;
   logo_url?: string;
-  cover_image?: string;
   location?: string;
   rating?: number;
   product_count?: number;
-  is_verified?: boolean;
-  latitude?: number;
-  longitude?: number;
-  category?: string;
+  address?: string;
+  owner_id: string;
+  created_at: string;
 }
 
-// Mapping function for shop data
-function mapDbShopToModel(dbShop: DbShop): Shop {
+// Define Shop interface for frontend use
+export interface Shop {
+  id: string;
+  name: string;
+  description?: string;
+  logo?: string;
+  coverImage?: string;
+  location?: string;
+  rating?: number;
+  productCount?: number;
+  category?: string;
+  isVerified?: boolean;
+  distance?: number;
+}
+
+// Define shop display settings interface
+export interface ShopDisplaySettings {
+  id: string;
+  shop_id: string;
+  show_distance: boolean;
+  show_rating: boolean;
+  show_reviews: boolean;
+  products_per_row: number;
+  created_at: string;
+  updated_at: string;
+}
+
+// Convert database shop to frontend shop
+const convertDbShopToShop = (dbShop: DbShop): Shop => {
   return {
     id: dbShop.id,
     name: dbShop.name,
     description: dbShop.description || '',
-    ownerId: dbShop.owner_id,
-    logo: dbShop.logo_url,
-    coverImage: dbShop.cover_image,
-    location: dbShop.location || 'Online',
-    rating: dbShop.rating || 5.0,
+    logo: dbShop.logo_url || '',
+    location: dbShop.location || '',
+    rating: dbShop.rating || 0,
     productCount: dbShop.product_count || 0,
-    isVerified: dbShop.is_verified || false,
-    category: dbShop.category || 'General',
-    latitude: dbShop.latitude,
-    longitude: dbShop.longitude
+    isVerified: false, // Placeholder
+    category: 'General', // Placeholder
   };
-}
+};
 
-// Helper function to map from model to DB format
-function mapModelToDbShop(shop: Partial<Shop>): Partial<DbShop> {
-  const dbShop: Partial<DbShop> = {};
-  
-  if (shop.name !== undefined) dbShop.name = shop.name;
-  if (shop.description !== undefined) dbShop.description = shop.description;
-  if (shop.ownerId !== undefined) dbShop.owner_id = shop.ownerId;
-  if (shop.logo !== undefined) dbShop.logo_url = shop.logo;
-  if (shop.coverImage !== undefined) dbShop.cover_image = shop.coverImage;
-  if (shop.location !== undefined) dbShop.location = shop.location;
-  if (shop.rating !== undefined) dbShop.rating = shop.rating;
-  if (shop.productCount !== undefined) dbShop.product_count = shop.productCount;
-  if (shop.isVerified !== undefined) dbShop.is_verified = shop.isVerified;
-  if (shop.category !== undefined) dbShop.category = shop.category;
-  
-  return dbShop;
-}
+// Create a new shop
+export const createShop = async (shopData: Partial<Shop>): Promise<Shop | null> => {
+  try {
+    const { data: userData } = await supabase.auth.getUser();
+    
+    if (!userData.user) {
+      throw new Error('User not authenticated');
+    }
+    
+    // Convert frontend shop data to database format
+    const dbShopData = {
+      name: shopData.name || '',
+      description: shopData.description || '',
+      logo_url: shopData.logo || '',
+      location: shopData.location || '',
+      owner_id: userData.user.id,
+    };
+    
+    // Insert the shop
+    const { data, error } = await supabase
+      .from('shops')
+      .insert(dbShopData)
+      .select()
+      .single();
+    
+    if (error) {
+      console.error('Error creating shop:', error);
+      throw error;
+    }
+    
+    // Create default display settings for the shop
+    await supabase
+      .from('shop_display_settings')
+      .insert({
+        shop_id: data.id,
+        show_distance: false,
+        show_rating: true,
+        show_reviews: true,
+        products_per_row: 3
+      });
+    
+    return convertDbShopToShop(data);
+  } catch (error) {
+    console.error('Error in createShop:', error);
+    return null;
+  }
+};
 
 // Get all shops
-export async function getShops(): Promise<Shop[]> {
+export const getAllShops = async (): Promise<Shop[]> => {
   try {
     const { data, error } = await supabase
       .from('shops')
       .select('*')
-      .order('name');
+      .order('created_at', { ascending: false });
     
     if (error) {
-      console.error('Error fetching shops:', error);
-      return [];
+      throw error;
     }
     
-    return data.map(shop => mapDbShopToModel(shop as DbShop));
-  } catch (err) {
-    console.error('Error in getShops:', err);
+    return data.map(convertDbShopToShop);
+  } catch (error) {
+    console.error('Error fetching shops:', error);
     return [];
   }
-}
+};
 
-// Get a single shop by ID
-export async function getShopById(id: string): Promise<Shop | undefined> {
+// Get shops with limited data for landing page
+export const getShopsForLanding = async (): Promise<Shop[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('shops')
+      .select('id, name, logo_url')
+      .order('created_at', { ascending: false })
+      .limit(6);
+    
+    if (error) {
+      throw error;
+    }
+    
+    return data.map(shop => ({
+      id: shop.id,
+      name: shop.name,
+      logo: shop.logo_url || '',
+    }));
+  } catch (error) {
+    console.error('Error fetching shops for landing:', error);
+    return [];
+  }
+};
+
+// Get shop by ID
+export const getShopById = async (id: string): Promise<Shop | null> => {
   try {
     const { data, error } = await supabase
       .from('shops')
@@ -104,107 +159,140 @@ export async function getShopById(id: string): Promise<Shop | undefined> {
       .single();
     
     if (error) {
-      console.error(`Error fetching shop with id ${id}:`, error);
-      return undefined;
+      throw error;
     }
     
-    return mapDbShopToModel(data as DbShop);
-  } catch (err) {
-    console.error(`Error in getShopById for ${id}:`, err);
-    return undefined;
+    return convertDbShopToShop(data);
+  } catch (error) {
+    console.error('Error fetching shop by ID:', error);
+    return null;
   }
-}
+};
 
-// Get all products for a specific shop
-export async function getProductsForShop(shopId: string): Promise<Product[]> {
+// Get shop by owner ID
+export const getShopByOwnerId = async (ownerId: string): Promise<Shop | null> => {
+  try {
+    const { data, error } = await supabase
+      .from('shops')
+      .select('*')
+      .eq('owner_id', ownerId)
+      .single();
+    
+    if (error) {
+      return null;
+    }
+    
+    return convertDbShopToShop(data);
+  } catch (error) {
+    console.error('Error fetching shop by owner ID:', error);
+    return null;
+  }
+};
+
+// Get current user's shop
+export const getCurrentUserShop = async (): Promise<Shop | null> => {
+  try {
+    const { data: userData } = await supabase.auth.getUser();
+    
+    if (!userData.user) {
+      return null;
+    }
+    
+    return getShopByOwnerId(userData.user.id);
+  } catch (error) {
+    console.error('Error fetching current user shop:', error);
+    return null;
+  }
+};
+
+// Get products for a shop
+export const getShopProducts = async (shopId: string): Promise<Product[]> => {
   try {
     const { data, error } = await supabase
       .from('products')
       .select('*')
-      .eq('seller_id', shopId)
-      .order('created_at', { ascending: false });
+      .eq('seller_id', shopId);
     
     if (error) {
-      console.error(`Error fetching products for shop ${shopId}:`, error);
-      return [];
+      throw error;
     }
     
-    return data.map(mapDbProductToModel);
-  } catch (err) {
-    console.error(`Error in getProductsForShop for ${shopId}:`, err);
+    return data;
+  } catch (error) {
+    console.error('Error fetching shop products:', error);
     return [];
   }
-}
+};
 
-// Update shop details
-export async function updateShop(shop: Partial<Shop>): Promise<Shop | undefined> {
+// Update shop
+export const updateShop = async (id: string, shopData: Partial<Shop>): Promise<Shop | null> => {
   try {
-    if (!shop.id) {
-      console.error('Cannot update shop without id');
-      return undefined;
-    }
-    
-    // Use the helper function to convert to DB format
-    const dbShop = mapModelToDbShop(shop);
+    // Convert frontend shop data to database format
+    const dbShopData = {
+      name: shopData.name,
+      description: shopData.description,
+      logo_url: shopData.logo,
+      location: shopData.location,
+    };
     
     const { data, error } = await supabase
       .from('shops')
-      .update(dbShop)
-      .eq('id', shop.id)
+      .update(dbShopData)
+      .eq('id', id)
       .select()
       .single();
     
     if (error) {
-      console.error(`Error updating shop ${shop.id}:`, error);
-      return undefined;
+      throw error;
     }
     
-    return mapDbShopToModel(data as DbShop);
-  } catch (err) {
-    console.error(`Error in updateShop for ${shop.id}:`, err);
-    return undefined;
+    return convertDbShopToShop(data);
+  } catch (error) {
+    console.error('Error updating shop:', error);
+    return null;
   }
-}
+};
 
-// Get featured shops (for home page)
-export async function getFeaturedShops(): Promise<Shop[]> {
+// Get shop display settings
+export const getShopDisplaySettings = async (shopId: string): Promise<ShopDisplaySettings | null> => {
   try {
     const { data, error } = await supabase
-      .from('shops')
+      .from('shop_display_settings')
       .select('*')
-      .eq('is_verified', true)
-      .order('rating', { ascending: false })
-      .limit(4);
+      .eq('shop_id', shopId)
+      .maybeSingle();
     
     if (error) {
-      console.error('Error fetching featured shops:', error);
-      return [];
+      throw error;
     }
     
-    return data.map(shop => mapDbShopToModel(shop as DbShop));
-  } catch (err) {
-    console.error('Error in getFeaturedShops:', err);
-    return [];
+    return data;
+  } catch (error) {
+    console.error('Error fetching shop display settings:', error);
+    return null;
   }
-}
+};
 
-// Mock function for backward compatibility
-export function getMockShops(): Shop[] {
-  return [
-    {
-      id: "shop1",
-      name: "Halal Meats & More",
-      description: "Premium halal meats and grocery items for your everyday needs.",
-      ownerId: "user1",
-      logo: "/lovable-uploads/8d386384-3944-48e3-922c-2edb81fa1631.png",
-      coverImage: "/lovable-uploads/d4ab324c-23f0-4fcc-9069-0afbc77d1c3e.png",
-      location: "New York",
-      rating: 4.9,
-      productCount: 24,
-      isVerified: true,
-      category: "Food & Groceries",
-      latitude: 40.7128,
-      longitude: -74.0060
+// Update shop display settings
+export const updateShopDisplaySettings = async (
+  shopId: string, 
+  settings: Partial<ShopDisplaySettings>
+): Promise<ShopDisplaySettings | null> => {
+  try {
+    const { data, error } = await supabase
+      .from('shop_display_settings')
+      .update(settings)
+      .eq('shop_id', shopId)
+      .select()
+      .single();
+    
+    if (error) {
+      throw error;
     }
-  ];
-}
+    
+    return data;
+  } catch (error) {
+    console.error('Error updating shop display settings:', error);
+    return null;
+  }
+};

@@ -1,243 +1,212 @@
 
-import { Cart, CartItem } from '@/models/cart';
 import { supabase } from '@/integrations/supabase/client';
+import { CartItem } from '@/models/cart';
+import { Product } from '@/models/product';
 
-export interface PaymentMethod {
-  type: 'card' | 'paypal' | 'applepay' | 'stripe';
-  cardNumber?: string;
-  cardName?: string;
-  expiryDate?: string;
-  cvv?: string;
-  paypalEmail?: string;
-  stripeToken?: string;
-}
-
-export interface PaymentDetails {
-  total: number;
-  paymentMethod: PaymentMethod;
-}
-
+// Update the interface to include the new fields added to the seller_accounts table
 export interface SellerAccount {
-  id?: string;
-  sellerId: string;
-  accountName: string;
-  accountNumber: string;
-  bankName: string;
-  accountType?: 'bank' | 'paypal' | 'stripe' | 'applepay';
-  paypalEmail?: string;
-  stripeAccountId?: string;
+  id: string;
+  seller_id: string;
+  account_name: string;
+  account_number: string;
+  bank_name: string;
+  created_at: string;
+  account_type: string;
+  paypal_email?: string;
+  stripe_account_id?: string;
+  applepay_merchant_id?: string;
 }
 
-// Simulated payment processing
+interface PaymentResult {
+  success: boolean;
+  orderId: string;
+  orderDate: string;
+}
+
+export interface OrderDetails {
+  orderId: string;
+  orderDate: string;
+  total: number;
+}
+
+// Mock function to simulate payment processing
 export const processPayment = async (
-  cart: Cart, 
-  paymentDetails: PaymentMethod,
+  cart: { items: CartItem[]; totalPrice: number },
+  paymentMethodDetails: any,
   shippingDetails: any
-): Promise<{ success: boolean; orderId: string; orderDate: string }> => {
-  // Simulate API call delay
-  await new Promise(resolve => setTimeout(resolve, 1500));
+): Promise<PaymentResult> => {
+  // Simulate payment processing delay
+  await new Promise(resolve => setTimeout(resolve, 1000));
   
+  // Create an order in the database
   try {
-    // In a real app, this would make an API call to a payment processor
-    const success = true; // Simulate successful payment
+    // Serialize cart items for storage
+    const serializedItems = cart.items.map(item => ({
+      productId: item.product.id,
+      quantity: item.quantity,
+      price: item.product.price,
+      name: item.product.name,
+      image: item.product.images[0]
+    }));
     
-    if (success) {
-      // Create order in Supabase if available, otherwise use localStorage
-      const orderId = `ORD-${Math.floor(Math.random() * 1000000)}`;
-      const orderDate = new Date().toISOString();
-      
-      // Try to save to Supabase if we have a user ID
-      const { data: sessionData } = await supabase.auth.getSession();
-      
-      if (sessionData.session?.user?.id) {
-        const userId = sessionData.session.user.id;
-        
-        try {
-          // Convert cart items to a format Supabase can store as JSON
-          const jsonItems = JSON.stringify(cart.items);
-          const jsonShippingDetails = JSON.stringify(shippingDetails);
-          
-          // Insert into orders table
-          const { error } = await supabase
-            .from('orders')
-            .insert({
-              user_id: userId,
-              date: orderDate,
-              items: jsonItems,
-              total: cart.totalPrice,
-              shipping_details: jsonShippingDetails,
-              status: 'Processing'
-            });
-            
-          if (error) {
-            console.error('Failed to save order to database:', error);
-            // Fallback to localStorage
-            const orders = JSON.parse(localStorage.getItem('orders') || '[]');
-            orders.push({
-              id: orderId,
-              user_id: userId,
-              date: orderDate,
-              items: cart.items,
-              total: cart.totalPrice,
-              shippingDetails,
-              status: 'Processing'
-            });
-            localStorage.setItem('orders', JSON.stringify(orders));
-          }
-        } catch (dbError) {
-          console.error('Failed to save order:', dbError);
-          // Fallback to localStorage
-          const orders = JSON.parse(localStorage.getItem('orders') || '[]');
-          orders.push({
-            id: orderId,
-            user_id: userId,
-            date: orderDate,
-            items: cart.items,
-            total: cart.totalPrice,
-            shippingDetails,
-            status: 'Processing'
-          });
-          localStorage.setItem('orders', JSON.stringify(orders));
-        }
-      } else {
-        // Fallback to localStorage if no user is signed in
-        const orders = JSON.parse(localStorage.getItem('orders') || '[]');
-        orders.push({
-          id: orderId,
-          date: orderDate,
-          items: cart.items,
-          total: cart.totalPrice,
-          shippingDetails,
-          status: 'Processing'
-        });
-        localStorage.setItem('orders', JSON.stringify(orders));
-      }
-      
-      return {
-        success: true,
-        orderId,
-        orderDate
-      };
-    } else {
-      throw new Error('Payment processing failed');
+    // Store order in database
+    const { data, error } = await supabase
+      .from('orders')
+      .insert({
+        items: serializedItems,
+        total: cart.totalPrice,
+        user_id: supabase.auth.getUser().then(response => response.data.user?.id),
+        shipping_details: shippingDetails,
+        status: 'Processing'
+      })
+      .select()
+      .single();
+    
+    if (error) {
+      console.error("Error creating order:", error);
+      throw error;
     }
+    
+    // Return success with the order ID
+    return {
+      success: true,
+      orderId: data.id,
+      orderDate: data.created_at
+    };
   } catch (error) {
     console.error('Payment processing error:', error);
-    throw error;
+    throw new Error('Payment processing failed');
   }
 };
 
-// Get seller payment accounts
-export const getSellerAccounts = async (): Promise<SellerAccount[]> => {
+// Get all orders for the current user
+export const getUserOrders = async (): Promise<OrderDetails[]> => {
   try {
-    // Check if user is authenticated
-    const { data: sessionData } = await supabase.auth.getSession();
-    if (sessionData.session?.user?.id) {
-      const sellerId = sessionData.session.user.id;
-      
-      // Try to fetch from Supabase first
-      const { data, error } = await supabase
-        .from('seller_accounts')
-        .select('*')
-        .eq('seller_id', sellerId);
-        
-      if (error) {
-        console.error('Error fetching seller accounts from database:', error);
-        // Fallback to localStorage
-        const localAccounts = localStorage.getItem('sellerAccounts');
-        if (localAccounts) {
-          return JSON.parse(localAccounts);
-        }
-        return [];
-      }
-      
-      if (data && data.length > 0) {
-        // Map from DB format to our interface
-        return data.map(account => ({
-          id: account.id,
-          sellerId: account.seller_id,
-          accountName: account.account_name,
-          accountNumber: account.account_number,
-          bankName: account.bank_name,
-          accountType: account.account_type || 'bank',
-          paypalEmail: account.paypal_email,
-          stripeAccountId: account.stripe_account_id
-        }));
-      }
+    const { data: user } = await supabase.auth.getUser();
+    
+    if (!user.user) {
+      throw new Error('User not authenticated');
     }
     
-    // If not authenticated or no data, try localStorage
-    const accounts = localStorage.getItem('sellerAccounts');
-    if (accounts) {
-      return JSON.parse(accounts);
+    const { data, error } = await supabase
+      .from('orders')
+      .select('*')
+      .eq('user_id', user.user.id)
+      .order('created_at', { ascending: false });
+    
+    if (error) {
+      throw error;
     }
-    return [];
+    
+    return data.map(order => ({
+      orderId: order.id,
+      orderDate: order.created_at,
+      total: order.total
+    }));
   } catch (error) {
-    console.error('Error fetching seller accounts:', error);
+    console.error('Error fetching user orders:', error);
     return [];
   }
 };
 
-// Save seller payment account
-export const saveSellerAccount = async (account: SellerAccount): Promise<void> => {
+// Create a seller account
+export const createSellerAccount = async (
+  accountData: Partial<SellerAccount>
+): Promise<SellerAccount | null> => {
   try {
-    // Check if user is authenticated
-    const { data: sessionData } = await supabase.auth.getSession();
-    if (sessionData.session?.user?.id) {
-      const sellerId = sessionData.session.user.id;
-      
-      // Try to save to Supabase
-      const { error } = await supabase
-        .from('seller_accounts')
-        .insert({
-          seller_id: sellerId,
-          account_name: account.accountName,
-          account_number: account.accountNumber,
-          bank_name: account.bankName,
-          account_type: account.accountType || 'bank',
-          paypal_email: account.paypalEmail,
-          stripe_account_id: account.stripeAccountId
-        });
-        
-      if (error) {
-        console.error('Error saving seller account to database:', error);
-        // Fallback to localStorage
-        const accounts = await getSellerAccounts();
-        const existingIndex = accounts.findIndex(a => a.sellerId === account.sellerId);
-        
-        if (existingIndex >= 0) {
-          accounts[existingIndex] = account;
-        } else {
-          accounts.push(account);
-        }
-        
-        localStorage.setItem('sellerAccounts', JSON.stringify(accounts));
-      }
-    } else {
-      // Save to localStorage if not authenticated
-      const accounts = await getSellerAccounts();
-      const existingIndex = accounts.findIndex(a => a.sellerId === account.sellerId);
-      
-      if (existingIndex >= 0) {
-        accounts[existingIndex] = account;
-      } else {
-        accounts.push(account);
-      }
-      
-      localStorage.setItem('sellerAccounts', JSON.stringify(accounts));
+    const { data: user } = await supabase.auth.getUser();
+    
+    if (!user.user) {
+      throw new Error('User not authenticated');
     }
+    
+    const { data, error } = await supabase
+      .from('seller_accounts')
+      .insert({
+        ...accountData,
+        seller_id: user.user.id
+      })
+      .select()
+      .single();
+    
+    if (error) {
+      throw error;
+    }
+    
+    return data;
   } catch (error) {
-    console.error('Error saving seller account:', error);
-    // Ensure we still save to localStorage as a fallback
-    const accounts = await getSellerAccounts();
-    const existingIndex = accounts.findIndex(a => a.sellerId === account.sellerId);
+    console.error('Error creating seller account:', error);
+    return null;
+  }
+};
+
+// Get seller account for current user
+export const getSellerAccount = async (): Promise<SellerAccount | null> => {
+  try {
+    const { data: user } = await supabase.auth.getUser();
     
-    if (existingIndex >= 0) {
-      accounts[existingIndex] = account;
-    } else {
-      accounts.push(account);
+    if (!user.user) {
+      throw new Error('User not authenticated');
     }
     
-    localStorage.setItem('sellerAccounts', JSON.stringify(accounts));
+    const { data, error } = await supabase
+      .from('seller_accounts')
+      .select('*')
+      .eq('seller_id', user.user.id)
+      .maybeSingle();
+    
+    if (error) {
+      throw error;
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Error fetching seller account:', error);
+    return null;
+  }
+};
+
+// Update seller account
+export const updateSellerAccount = async (
+  accountData: Partial<SellerAccount>
+): Promise<SellerAccount | null> => {
+  try {
+    const { data: user } = await supabase.auth.getUser();
+    
+    if (!user.user) {
+      throw new Error('User not authenticated');
+    }
+    
+    const { data, error } = await supabase
+      .from('seller_accounts')
+      .update(accountData)
+      .eq('seller_id', user.user.id)
+      .select()
+      .single();
+    
+    if (error) {
+      throw error;
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Error updating seller account:', error);
+    return null;
+  }
+};
+
+// Format payment method based on account type
+export const formatPaymentMethod = (account: SellerAccount): string => {
+  switch (account.account_type) {
+    case 'bank':
+      return `${account.bank_name} - ${account.account_number}`;
+    case 'paypal':
+      return `PayPal - ${account.paypal_email}`;
+    case 'stripe':
+      return `Stripe Account - ${account.stripe_account_id}`;
+    case 'applepay':
+      return 'Apple Pay';
+    default:
+      return `${account.bank_name} - ${account.account_number}`;
   }
 };

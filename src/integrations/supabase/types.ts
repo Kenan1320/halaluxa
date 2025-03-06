@@ -154,28 +154,81 @@ export type Database = {
         Row: {
           account_name: string
           account_number: string
+          account_type: string | null
+          applepay_merchant_id: string | null
           bank_name: string
           created_at: string | null
           id: string
+          paypal_email: string | null
           seller_id: string | null
+          stripe_account_id: string | null
         }
         Insert: {
           account_name: string
           account_number: string
+          account_type?: string | null
+          applepay_merchant_id?: string | null
           bank_name: string
           created_at?: string | null
           id?: string
+          paypal_email?: string | null
           seller_id?: string | null
+          stripe_account_id?: string | null
         }
         Update: {
           account_name?: string
           account_number?: string
+          account_type?: string | null
+          applepay_merchant_id?: string | null
           bank_name?: string
           created_at?: string | null
           id?: string
+          paypal_email?: string | null
           seller_id?: string | null
+          stripe_account_id?: string | null
         }
         Relationships: []
+      }
+      shop_display_settings: {
+        Row: {
+          created_at: string | null
+          id: string
+          products_per_row: number | null
+          shop_id: string | null
+          show_distance: boolean | null
+          show_rating: boolean | null
+          show_reviews: boolean | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          products_per_row?: number | null
+          shop_id?: string | null
+          show_distance?: boolean | null
+          show_rating?: boolean | null
+          show_reviews?: boolean | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          products_per_row?: number | null
+          shop_id?: string | null
+          show_distance?: boolean | null
+          show_rating?: boolean | null
+          show_reviews?: boolean | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shop_display_settings_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       shops: {
         Row: {
