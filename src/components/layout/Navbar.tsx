@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Search, ShoppingCart, User, MapPin } from 'lucide-react';
+import { Menu, X, Search, ShoppingCart, User, MapPin, Store } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/context/AuthContext';
@@ -57,18 +57,18 @@ const Navbar = () => {
           )}
         </button>
         
-        {/* Logo - smaller and positioned to the left */}
+        {/* Logo - with advanced animation */}
         <div className="flex items-center ml-3 mr-auto">
           <Link to="/" className="flex items-center">
             <span className="text-lg font-serif font-bold text-[#2A866A]">Haluna</span>
             
-            {/* Smaller animated logo design */}
+            {/* Advanced animated logo design */}
             <div className="relative ml-1">
+              {/* Main orange ball */}
               <motion.div 
-                className="w-5 h-5 bg-[#FF7A45] rounded-full"
+                className="w-5 h-5 bg-[#E4875E] rounded-full"
                 animate={{
                   scale: [1, 1.1, 1],
-                  rotate: [0, 10, 0, -10, 0],
                 }}
                 transition={{
                   duration: 6,
@@ -76,18 +76,18 @@ const Navbar = () => {
                   repeatType: "reverse"
                 }}
               />
+              
+              {/* Orbiting green ball */}
               <motion.div
-                className="w-2 h-2 bg-[#2A866A] rounded-full absolute -bottom-1 -right-1"
+                className="w-2 h-2 bg-[#2A866B] rounded-full absolute"
                 animate={{
-                  scale: [1, 1.3, 1],
-                  y: [0, -2, 0, 2, 0],
-                  x: [0, 2, 0, -2, 0],
+                  x: [2, 1.5, 0, -1.5, -2, -1.5, 0, 1.5, 2],
+                  y: [0, 1.5, 2, 1.5, 0, -1.5, -2, -1.5, 0],
                 }}
                 transition={{
-                  duration: 4,
+                  duration: 8,
                   repeat: Infinity,
-                  repeatType: "reverse",
-                  delay: 1
+                  ease: "linear"
                 }}
               />
             </div>
@@ -103,6 +103,14 @@ const Navbar = () => {
           >
             <MapPin className="h-6 w-6" />
           </button>
+          
+          {/* Select Shops Button - NEW */}
+          <Link 
+            to="/select-shops" 
+            className="p-2 rounded-full text-[#2A866A] hover:bg-[#d5efe8] transition-colors"
+          >
+            <Store className="h-6 w-6" />
+          </Link>
           
           {/* Cart Button */}
           <Link 
@@ -168,6 +176,16 @@ const Navbar = () => {
               onClick={() => setMobileMenuOpen(false)}
             >
               <span>Browse</span>
+            </Link>
+            {/* New Select Shops link */}
+            <Link
+              to="/select-shops"
+              className={`flex items-center gap-3 p-3 rounded-lg transition ${
+                isActive('/select-shops') ? 'bg-[#E4F5F0] text-[#2A866A]' : 'text-gray-700 hover:bg-gray-100'
+              }`}
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <span>Select Your Shops</span>
             </Link>
             {user?.role === 'business' && (
               <Link

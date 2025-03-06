@@ -10,25 +10,32 @@ interface SplashScreenProps {
 const SplashScreen = ({ onFinished }: SplashScreenProps) => {
   const [isVisible, setIsVisible] = useState(true);
   const [taglineVisible, setTaglineVisible] = useState(false);
+  const [secondTaglineVisible, setSecondTaglineVisible] = useState(false);
   const [waveComplete, setWaveComplete] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Show tagline after a delay
+    // Show primary tagline after a delay
     const taglineTimer = setTimeout(() => {
       setTaglineVisible(true);
     }, 1800);
+
+    // Show secondary tagline after a longer delay
+    const secondTaglineTimer = setTimeout(() => {
+      setSecondTaglineVisible(true);
+    }, 2300);
 
     // Hide splash screen after desired duration
     const timer = setTimeout(() => {
       setIsVisible(false);
       // Give time for exit animation before calling onFinished
       setTimeout(onFinished, 900);
-    }, 4500);
+    }, 5000);
 
     return () => {
       clearTimeout(timer);
       clearTimeout(taglineTimer);
+      clearTimeout(secondTaglineTimer);
     };
   }, [onFinished]);
 
@@ -111,9 +118,9 @@ const SplashScreen = ({ onFinished }: SplashScreenProps) => {
               ))}
             </div>
             
-            {/* Tagline */}
+            {/* First Tagline - Bold and elegant */}
             <motion.p
-              className="text-white text-opacity-90 text-sm tracking-wider mt-1 font-light"
+              className="text-white text-opacity-95 text-base font-medium tracking-wider mt-1"
               initial={{ opacity: 0, y: 10 }}
               animate={taglineVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
               transition={{ 
@@ -121,16 +128,29 @@ const SplashScreen = ({ onFinished }: SplashScreenProps) => {
                 ease: "easeOut",
               }}
             >
-              Where You Shop Your Muslim Shops Nearby and Beyond
+              The Muslim Shops and Businesses
             </motion.p>
             
-            {/* Circular element */}
+            {/* Second Tagline - Different color */}
+            <motion.p
+              className="text-[#F9F5EB] text-opacity-90 text-sm tracking-wider mt-0.5 font-light"
+              initial={{ opacity: 0, y: 10 }}
+              animate={secondTaglineVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
+              transition={{ 
+                duration: 0.8,
+                ease: "easeOut",
+              }}
+            >
+              Shop Your Muslim Shops Nearby & Beyond
+            </motion.p>
+            
+            {/* Logo animation container */}
             <motion.div
-              className="mt-6"
+              className="mt-8 relative"
               initial={{ scale: 0, opacity: 0 }}
               animate={{ 
                 scale: waveComplete ? 1 : 0, 
-                opacity: waveComplete ? 0.85 : 0 
+                opacity: waveComplete ? 1 : 0 
               }}
               transition={{ 
                 delay: 0.2, 
@@ -138,6 +158,7 @@ const SplashScreen = ({ onFinished }: SplashScreenProps) => {
                 ease: "easeOut"
               }}
             >
+              {/* Main orange ball */}
               <motion.div
                 className="w-14 h-14 bg-[#E4875E] rounded-full flex items-center justify-center"
                 animate={{ 
@@ -152,6 +173,20 @@ const SplashScreen = ({ onFinished }: SplashScreenProps) => {
               >
                 <div className="w-10 h-10 rounded-full border-2 border-white border-opacity-40"></div>
               </motion.div>
+              
+              {/* Orbiting green ball */}
+              <motion.div
+                className="absolute w-6 h-6 bg-[#29866B] rounded-full shadow-md"
+                animate={{
+                  x: [15, 12, 0, -12, -15, -12, 0, 12, 15],
+                  y: [0, 12, 15, 12, 0, -12, -15, -12, 0],
+                }}
+                transition={{
+                  duration: 8,
+                  repeat: Infinity,
+                  ease: "linear"
+                }}
+              />
             </motion.div>
           </div>
         </motion.div>

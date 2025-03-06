@@ -31,6 +31,7 @@ import About from "./pages/About";
 import NotFound from "./pages/NotFound";
 import LoginPage from "./pages/auth/LoginPage";
 import SignUpPage from "./pages/auth/SignUpPage";
+import SelectShops from "./pages/SelectShops"; // Import the new SelectShops page
 
 // Dashboard imports
 import DashboardLayout from "./components/layout/DashboardLayout";
@@ -80,6 +81,7 @@ const AppRoutes = () => {
         <Route path="/shops" element={<Shops />} />
         <Route path="/shop/:shopId" element={<ShopDetail />} />
         <Route path="/product/:productId" element={<ProductDetail />} />
+        <Route path="/select-shops" element={<SelectShops />} /> {/* Add new route */}
         
         {/* Protected shopper routes - explicitly disallow business users */}
         <Route path="/cart" element={
