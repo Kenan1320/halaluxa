@@ -20,6 +20,23 @@ export interface Shop {
   category?: string;
 }
 
+// Database representation of shop data
+interface DbShop {
+  id?: string;
+  name?: string;
+  description?: string;
+  owner_id?: string;
+  logo_url?: string;
+  cover_image?: string;
+  location?: string;
+  rating?: number;
+  product_count?: number;
+  is_verified?: boolean;
+  latitude?: number;
+  longitude?: number;
+  category?: string;
+}
+
 // Mapping function for shop data
 function mapDbShopToModel(dbShop: any): Shop {
   return {
@@ -37,6 +54,24 @@ function mapDbShopToModel(dbShop: any): Shop {
     latitude: dbShop.latitude,
     longitude: dbShop.longitude
   };
+}
+
+// Helper function to map from model to DB format
+function mapModelToDbShop(shop: Partial<Shop>): DbShop {
+  const dbShop: DbShop = {};
+  
+  if (shop.name !== undefined) dbShop.name = shop.name;
+  if (shop.description !== undefined) dbShop.description = shop.description;
+  if (shop.ownerId !== undefined) dbShop.owner_id = shop.ownerId;
+  if (shop.logo !== undefined) dbShop.logo_url = shop.logo;
+  if (shop.coverImage !== undefined) dbShop.cover_image = shop.coverImage;
+  if (shop.location !== undefined) dbShop.location = shop.location;
+  if (shop.rating !== undefined) dbShop.rating = shop.rating;
+  if (shop.productCount !== undefined) dbShop.product_count = shop.productCount;
+  if (shop.isVerified !== undefined) dbShop.is_verified = shop.isVerified;
+  if (shop.category !== undefined) dbShop.category = shop.category;
+  
+  return dbShop;
 }
 
 // Get all shops
@@ -104,17 +139,13 @@ export async function getProductsForShop(shopId: string): Promise<Product[]> {
 // Update shop details
 export async function updateShop(shop: Partial<Shop>): Promise<Shop | undefined> {
   try {
-    // Create a simplified object for the database update
-    // Only include the fields we want to update to avoid circular references
-    const dbShop = {
-      name: shop.name,
-      description: shop.description,
-      logo_url: shop.logo,
-      cover_image: shop.coverImage,
-      location: shop.location,
-      is_verified: shop.isVerified,
-      category: shop.category
-    };
+    if (!shop.id) {
+      console.error('Cannot update shop without id');
+      return undefined;
+    }
+    
+    // Use the helper function to convert to DB format
+    const dbShop = mapModelToDbShop(shop);
     
     const { data, error } = await supabase
       .from('shops')

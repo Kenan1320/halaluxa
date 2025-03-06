@@ -1,5 +1,5 @@
 
-import { Cart } from '@/models/cart';
+import { Cart, CartItem } from '@/models/cart';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface PaymentMethod {
@@ -46,15 +46,19 @@ export const processPayment = async (
         const userId = sessionData.session.user.id;
         
         try {
+          // Convert cart items to a format Supabase can store as JSON
+          const jsonItems = JSON.stringify(cart.items);
+          const jsonShippingDetails = JSON.stringify(shippingDetails);
+          
           // Insert into orders table
           const { error } = await supabase
             .from('orders')
             .insert({
               user_id: userId,
               date: orderDate,
-              items: cart.items,
+              items: jsonItems,
               total: cart.totalPrice,
-              shipping_details: shippingDetails,
+              shipping_details: jsonShippingDetails,
               status: 'Processing'
             });
             

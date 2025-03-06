@@ -350,7 +350,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         toast({
           title: "Profile Creation Warning",
           description: "Your account was created but we couldn't set up your profile completely. Some features may be limited.",
-          variant: "warning",
+          variant: "destructive",
         });
       }
       
@@ -371,7 +371,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           toast({
             title: "Shop Creation Warning",
             description: "Your account was created but there was an issue setting up your shop. You can set it up later in your dashboard.",
-            variant: "warning",
+            variant: "destructive",
           });
         }
       }

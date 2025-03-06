@@ -5,7 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 import { CreditCard, Building, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
-import { getSellerAccounts, saveSellerAccount } from '@/services/paymentService';
+import { getSellerAccounts, saveSellerAccount, SellerAccount } from '@/services/paymentService';
 
 const PaymentAccountPage = () => {
   const navigate = useNavigate();
@@ -20,20 +20,24 @@ const PaymentAccountPage = () => {
   });
   
   useEffect(() => {
-    if (user) {
-      // Load existing account data if available
-      const accounts = getSellerAccounts();
-      const existingAccount = accounts.find(acc => acc.sellerId === user.id);
-      
-      if (existingAccount) {
-        setFormData({
-          accountName: existingAccount.accountName,
-          accountNumber: existingAccount.accountNumber,
-          bankName: existingAccount.bankName,
-          routingNumber: '',
-        });
+    const loadAccountData = async () => {
+      if (user) {
+        // Load existing account data if available
+        const accounts = await getSellerAccounts();
+        const existingAccount = accounts.find(acc => acc.sellerId === user.id);
+        
+        if (existingAccount) {
+          setFormData({
+            accountName: existingAccount.accountName,
+            accountNumber: existingAccount.accountNumber,
+            bankName: existingAccount.bankName,
+            routingNumber: '',
+          });
+        }
       }
-    }
+    };
+    
+    loadAccountData();
   }, [user]);
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
