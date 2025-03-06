@@ -94,7 +94,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           return;
         }
         
-        const userRole: UserRole = userData.role || 'shopper';
+        const userRole: UserRole = (userData.role === 'business' || userData.role === 'shopper') 
+          ? userData.role as UserRole 
+          : 'shopper';
         
         console.log('Refreshed user role from database:', userRole);
         
@@ -188,7 +190,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           return false;
         }
         
-        const userRole: UserRole = userData.role === 'business' ? 'business' : 'shopper';
+        const userRole: UserRole = (userData.role === 'business' || userData.role === 'shopper') 
+          ? userData.role as UserRole 
+          : 'shopper';
             
         console.log('User logging in with role from database:', userRole);
             

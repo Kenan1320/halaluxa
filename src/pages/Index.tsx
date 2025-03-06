@@ -50,7 +50,7 @@ const Index = () => {
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            <h2 className="text-sm font-medium text-[#2A866A]">
+            <h2 className="text-xs font-medium text-[#2A866A]">
               {greeting}, {isLoggedIn && user ? user.name : 'Guest'}
             </h2>
           </motion.div>

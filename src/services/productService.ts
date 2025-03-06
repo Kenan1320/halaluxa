@@ -238,7 +238,8 @@ export function getMockProducts(): Product[] {
         weight: "500g",
         servings: "4 patties",
         ingredients: "100% grass-fed beef, salt, black pepper"
-      }
+      },
+      createdAt: new Date().toISOString()
     }
   ];
 }
