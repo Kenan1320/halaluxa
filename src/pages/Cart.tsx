@@ -6,11 +6,16 @@ import { Button } from '@/components/ui/button';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { useCart } from '@/context/CartContext';
+import { useLanguage } from '@/context/LanguageContext';
 import { Link } from 'react-router-dom';
 
 const Cart = () => {
   const { cart, removeFromCart, updateQuantity, clearCart } = useCart();
+  const { translate } = useLanguage();
   const navigate = useNavigate();
+  
+  // Debug cart to ensure it has items
+  console.log("Cart state:", cart);
   
   return (
     <div className="min-h-screen">
@@ -18,18 +23,17 @@ const Cart = () => {
       
       <main className="pt-28 pb-20">
         <div className="container mx-auto px-4">
-          <h1 className="text-3xl md:text-4xl font-serif font-bold mb-6">Your Cart</h1>
+          <h1 className="text-3xl md:text-4xl font-serif font-bold mb-6">{translate('Your Cart')}</h1>
           
-          {cart.items.length === 0 ? (
+          {(!cart || !cart.items || cart.items.length === 0) ? (
             <div className="bg-white rounded-xl shadow-sm p-12 text-center">
               <ShoppingBag className="h-16 w-16 text-haluna-text-light mx-auto mb-4" />
-              <h2 className="text-2xl font-medium mb-2">Your cart is empty</h2>
+              <h2 className="text-2xl font-medium mb-2">{translate('Your cart is empty')}</h2>
               <p className="text-haluna-text-light mb-8 max-w-md mx-auto">
-                Looks like you haven't added any items to your cart yet. 
-                Check out our shop to find halal products from Muslim-owned businesses.
+                {translate('Looks like you haven\'t added any items to your cart yet. Check out our shop to find halal products from Muslim-owned businesses.')}
               </p>
               <Button onClick={() => navigate('/shop')}>
-                Browse Products
+                {translate('Browse Products')}
               </Button>
             </div>
           ) : (
@@ -38,13 +42,15 @@ const Cart = () => {
                 <div className="bg-white rounded-xl shadow-sm overflow-hidden">
                   <div className="p-6 border-b">
                     <div className="flex justify-between items-center">
-                      <h2 className="text-xl font-medium">Cart Items ({cart.totalItems})</h2>
+                      <h2 className="text-xl font-medium">
+                        {translate('Cart Items')} ({cart.totalItems})
+                      </h2>
                       <button 
                         onClick={clearCart}
                         className="text-red-500 hover:text-red-700 text-sm flex items-center"
                       >
                         <Trash2 className="h-4 w-4 mr-1" />
-                        Clear Cart
+                        {translate('Clear Cart')}
                       </button>
                     </div>
                   </div>
@@ -53,11 +59,17 @@ const Cart = () => {
                     {cart.items.map((item) => (
                       <div key={item.product.id} className="p-6 border-b flex flex-col md:flex-row gap-4">
                         <div className="md:w-24 md:h-24 w-full h-48 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
-                          <img
-                            src={item.product.images[0]}
-                            alt={item.product.name}
-                            className="w-full h-full object-cover"
-                          />
+                          {item.product.images && item.product.images.length > 0 ? (
+                            <img
+                              src={item.product.images[0]}
+                              alt={item.product.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-gray-400">
+                              No Image
+                            </div>
+                          )}
                         </div>
                         
                         <div className="flex-1">
@@ -70,8 +82,13 @@ const Cart = () => {
                                 {item.product.name}
                               </Link>
                               <p className="text-sm text-haluna-text-light mb-2">
-                                Category: {item.product.category}
+                                {translate('Category')}: {item.product.category}
                               </p>
+                              {item.product.sellerName && (
+                                <p className="text-xs text-haluna-primary">
+                                  {translate('Sold by')}: {item.product.sellerName}
+                                </p>
+                              )}
                             </div>
                             
                             <div className="text-haluna-primary font-medium">
@@ -79,7 +96,7 @@ const Cart = () => {
                             </div>
                           </div>
                           
-                          <div className="flex justify-between items-end mt-2">
+                          <div className="flex justify-between items-end mt-4">
                             <div className="flex items-center border rounded-md">
                               <button 
                                 onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
@@ -92,7 +109,7 @@ const Cart = () => {
                               <button 
                                 onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
                                 className="px-3 py-1 border-l hover:bg-gray-100"
-                                disabled={item.quantity >= item.product.stock}
+                                disabled={item.product.stock && item.quantity >= item.product.stock}
                               >
                                 <Plus className="h-3 w-3" />
                               </button>
@@ -114,22 +131,22 @@ const Cart = () => {
               
               <div className="lg:col-span-1">
                 <div className="bg-white rounded-xl shadow-sm p-6 sticky top-24">
-                  <h2 className="text-xl font-medium mb-6">Order Summary</h2>
+                  <h2 className="text-xl font-medium mb-6">{translate('Order Summary')}</h2>
                   
                   <div className="space-y-4 mb-6">
                     <div className="flex justify-between">
-                      <span className="text-haluna-text-light">Subtotal</span>
+                      <span className="text-haluna-text-light">{translate('Subtotal')}</span>
                       <span>${cart.totalPrice.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-haluna-text-light">Shipping</span>
-                      <span>Calculated at checkout</span>
+                      <span className="text-haluna-text-light">{translate('Shipping')}</span>
+                      <span>{translate('Calculated at checkout')}</span>
                     </div>
                   </div>
                   
                   <div className="border-t border-b py-4 mb-6">
                     <div className="flex justify-between font-medium">
-                      <span>Total</span>
+                      <span>{translate('Total')}</span>
                       <span>${cart.totalPrice.toFixed(2)}</span>
                     </div>
                   </div>
@@ -138,7 +155,7 @@ const Cart = () => {
                     onClick={() => navigate('/checkout')} 
                     className="w-full"
                   >
-                    Proceed to Checkout
+                    {translate('Proceed to Checkout')}
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                   
@@ -146,7 +163,7 @@ const Cart = () => {
                     onClick={() => navigate('/shop')}
                     className="w-full text-center mt-4 text-haluna-primary hover:underline"
                   >
-                    Continue Shopping
+                    {translate('Continue Shopping')}
                   </button>
                 </div>
               </div>

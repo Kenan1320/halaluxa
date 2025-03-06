@@ -1,18 +1,42 @@
 
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ShoppingBag, Store, User, LogOut } from 'lucide-react';
+import { ShoppingBag, Store, User, LogOut, Globe, MapPin } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
+import { useLocation } from '@/context/LocationContext';
 import CartDropdown from '@/components/shop/CartDropdown';
 
 const AuthNavItems = () => {
   const { isLoggedIn, user, logout } = useAuth();
-  const { translate } = useLanguage();
+  const { language, toggleLanguage, translate } = useLanguage();
+  const { isLocationEnabled, location, requestLocation } = useLocation();
   
   if (!isLoggedIn) {
     return (
       <div className="flex items-center gap-4">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={toggleLanguage}
+          className="flex items-center gap-2"
+        >
+          <Globe className="h-4 w-4" />
+          <span>{language === 'en' ? 'العربية' : 'English'}</span>
+        </Button>
+        
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={requestLocation}
+          className="flex items-center gap-2"
+        >
+          <MapPin className="h-4 w-4" />
+          <span className="hidden md:inline">
+            {isLocationEnabled ? location?.city || translate('Location enabled') : translate('Enable location')}
+          </span>
+        </Button>
+
         <Link to="/login" className="text-haluna-text hover:text-haluna-primary transition">
           {translate('Log In')}
         </Link>
@@ -25,6 +49,28 @@ const AuthNavItems = () => {
   
   return (
     <div className="flex items-center gap-4">
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={toggleLanguage}
+        className="flex items-center gap-2"
+      >
+        <Globe className="h-4 w-4" />
+        <span>{language === 'en' ? 'العربية' : 'English'}</span>
+      </Button>
+      
+      <Button 
+        variant="ghost" 
+        size="sm" 
+        onClick={requestLocation}
+        className="flex items-center gap-2"
+      >
+        <MapPin className="h-4 w-4" />
+        <span className="hidden md:inline">
+          {isLocationEnabled ? location?.city || translate('Location enabled') : translate('Enable location')}
+        </span>
+      </Button>
+      
       {user?.role === 'business' ? (
         <Button href="/dashboard" size="sm" variant="outline" className="flex items-center gap-2">
           <Store className="h-4 w-4" />
@@ -32,9 +78,9 @@ const AuthNavItems = () => {
         </Button>
       ) : (
         <div className="flex items-center gap-4">
-          <Button href="/shop" size="sm" variant="outline" className="flex items-center gap-2">
+          <Button href="/browse" size="sm" variant="outline" className="flex items-center gap-2">
             <ShoppingBag className="h-4 w-4" />
-            <span className="hidden md:inline">{translate('Shop')}</span>
+            <span className="hidden md:inline">{translate('Browse')}</span>
           </Button>
           
           <CartDropdown />
@@ -56,10 +102,16 @@ const AuthNavItems = () => {
           </div>
           <div className="p-2">
             {user?.role === 'shopper' && (
-              <Link to="/profile" className="block w-full text-left p-2 rounded-md flex items-center gap-2 hover:bg-haluna-primary-light">
-                <User className="h-4 w-4" />
-                <span>{translate('Profile')}</span>
-              </Link>
+              <>
+                <Link to="/profile" className="block w-full text-left p-2 rounded-md flex items-center gap-2 hover:bg-haluna-primary-light">
+                  <User className="h-4 w-4" />
+                  <span>{translate('Profile')}</span>
+                </Link>
+                <Link to="/orders" className="block w-full text-left p-2 rounded-md flex items-center gap-2 hover:bg-haluna-primary-light">
+                  <ShoppingBag className="h-4 w-4" />
+                  <span>{translate('Orders')}</span>
+                </Link>
+              </>
             )}
             <button 
               onClick={logout}

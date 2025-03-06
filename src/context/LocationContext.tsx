@@ -2,6 +2,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { LocationInfo, getCurrentLocation, getSavedUserLocation } from '@/services/locationService';
 import { useToast } from '@/hooks/use-toast';
+import { useLanguage } from '@/context/LanguageContext';
 
 interface LocationContextType {
   location: LocationInfo | null;
@@ -9,6 +10,7 @@ interface LocationContextType {
   loading: boolean;
   requestLocation: () => Promise<void>;
   clearLocation: () => void;
+  getNearbyShops: () => Promise<any[]>;
 }
 
 const initialLocationState: LocationInfo = {
@@ -27,6 +29,7 @@ export const LocationProvider = ({ children }: { children: ReactNode }) => {
   const [isLocationEnabled, setIsLocationEnabled] = useState(false);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const { translate } = useLanguage();
 
   // Check for previously saved location on mount
   useEffect(() => {
@@ -44,16 +47,16 @@ export const LocationProvider = ({ children }: { children: ReactNode }) => {
       setLocation(userLocation);
       setIsLocationEnabled(true);
       toast({
-        title: "Location updated",
-        description: `We'll show you shops and products near ${userLocation.city}, ${userLocation.state}`,
+        title: translate("Location updated"),
+        description: translate(`We'll show you shops and products near ${userLocation.city}, ${userLocation.state}`),
       });
     } catch (error) {
       const locationError = error as LocationInfo;
       setLocation(locationError);
       setIsLocationEnabled(false);
       toast({
-        title: "Location error",
-        description: locationError.error || "Something went wrong getting your location",
+        title: translate("Location error"),
+        description: locationError.error || translate("Something went wrong getting your location"),
         variant: "destructive",
       });
     } finally {
@@ -66,9 +69,29 @@ export const LocationProvider = ({ children }: { children: ReactNode }) => {
     setIsLocationEnabled(false);
     localStorage.removeItem('userLocation');
     toast({
-      title: "Location cleared",
-      description: "Your location data has been removed",
+      title: translate("Location cleared"),
+      description: translate("Your location data has been removed"),
     });
+  };
+
+  const getNearbyShops = async () => {
+    if (!location || !isLocationEnabled) {
+      return [];
+    }
+    
+    // This would normally call an API that uses the user's coordinates
+    // to find nearby shops. For now, we'll simulate this functionality
+    // by pulling from our existing shops
+    const { getShops } = await import('@/services/shopService');
+    const allShops = await getShops();
+    
+    // In a real implementation, we would sort by actual distance
+    // For now, we'll return the shops with a "simulated" nearby flag
+    return allShops.map(shop => ({
+      ...shop,
+      distance: Math.random() * 10, // Simulated distance in miles
+      isNearby: true
+    })).sort((a, b) => a.distance - b.distance);
   };
 
   return (
@@ -78,7 +101,8 @@ export const LocationProvider = ({ children }: { children: ReactNode }) => {
         isLocationEnabled, 
         loading, 
         requestLocation, 
-        clearLocation 
+        clearLocation,
+        getNearbyShops
       }}
     >
       {children}

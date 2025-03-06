@@ -5,16 +5,20 @@ import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { getShops } from '@/services/shopService';
 import { productCategories } from '@/models/product';
-import { MapPin, Search, Store, ChevronRight, Filter, XCircle } from 'lucide-react';
+import { MapPin, Search, Store, ChevronRight, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
+import { useLanguage } from '@/context/LanguageContext';
+import { useLocation } from '@/context/LocationContext';
 
 const Browse = () => {
   const [shops, setShops] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [location, setLocation] = useState('');
+  const [searchLocation, setSearchLocation] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredShops, setFilteredShops] = useState([]);
+  const { translate } = useLanguage();
+  const { location, isLocationEnabled, requestLocation, getNearbyShops } = useLocation();
   
   // Fetch shops on component mount
   useEffect(() => {
@@ -23,7 +27,19 @@ const Browse = () => {
     const loadShops = async () => {
       setIsLoading(true);
       try {
-        const shopsData = await getShops();
+        let shopsData = [];
+        
+        // If location is enabled, get nearby shops
+        if (isLocationEnabled && location) {
+          shopsData = await getNearbyShops();
+          if (shopsData.length === 0) {
+            // Fallback to all shops if no nearby shops found
+            shopsData = await getShops();
+          }
+        } else {
+          shopsData = await getShops();
+        }
+        
         setShops(shopsData);
         setFilteredShops(shopsData);
       } catch (error) {
@@ -34,7 +50,7 @@ const Browse = () => {
     };
     
     loadShops();
-  }, []);
+  }, [isLocationEnabled, location]);
   
   // Filter shops based on location and search query
   useEffect(() => {
@@ -50,14 +66,14 @@ const Browse = () => {
       );
     }
     
-    if (location) {
+    if (searchLocation) {
       filtered = filtered.filter(shop => 
-        shop.location.toLowerCase().includes(location.toLowerCase())
+        shop.location.toLowerCase().includes(searchLocation.toLowerCase())
       );
     }
     
     setFilteredShops(filtered);
-  }, [shops, searchQuery, location]);
+  }, [shops, searchQuery, searchLocation]);
   
   // Container animation variants
   const containerVariants = {
@@ -80,6 +96,13 @@ const Browse = () => {
     }
   };
   
+  // Handle location request click
+  const handleLocationClick = () => {
+    requestLocation();
+    // Clear manual location search when requesting device location
+    setSearchLocation('');
+  };
+  
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
@@ -89,11 +112,20 @@ const Browse = () => {
           <section className="mb-12">
             <div className="text-center max-w-3xl mx-auto mb-10">
               <h1 className="text-4xl md:text-5xl font-serif font-bold mb-4">
-                Browse Categories & Shops
+                {translate('Browse Categories & Shops')}
               </h1>
               <p className="text-haluna-text-light text-lg">
-                Discover authentic halal products from verified Muslim businesses near you
+                {translate('Discover authentic halal products from verified Muslim businesses near you')}
               </p>
+              
+              {!isLocationEnabled && (
+                <div className="mt-4">
+                  <Button onClick={handleLocationClick} className="flex items-center gap-2">
+                    <MapPin className="h-4 w-4" />
+                    {translate('Enable location')}
+                  </Button>
+                </div>
+              )}
             </div>
             
             {/* Search and Location Filters */}
@@ -106,7 +138,7 @@ const Browse = () => {
                   <input
                     type="text"
                     className="pl-12 pr-4 py-3 w-full border rounded-lg focus:ring-1 focus:ring-haluna-primary focus:border-haluna-primary transition"
-                    placeholder="Search shops or categories..."
+                    placeholder={translate('Search shops and businesses...')}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
@@ -127,13 +159,13 @@ const Browse = () => {
                   <input
                     type="text"
                     className="pl-12 pr-4 py-3 w-full border rounded-lg focus:ring-1 focus:ring-haluna-primary focus:border-haluna-primary transition"
-                    placeholder="Filter by location (e.g. Chicago, IL)"
-                    value={location}
-                    onChange={(e) => setLocation(e.target.value)}
+                    placeholder={translate('Filter by location (e.g. Chicago, IL)')}
+                    value={searchLocation}
+                    onChange={(e) => setSearchLocation(e.target.value)}
                   />
-                  {location && (
+                  {searchLocation && (
                     <button 
-                      onClick={() => setLocation('')}
+                      onClick={() => setSearchLocation('')}
                       className="absolute inset-y-0 right-0 flex items-center pr-3"
                     >
                       <XCircle className="h-5 w-5 text-gray-400 hover:text-gray-600" />
@@ -141,6 +173,15 @@ const Browse = () => {
                   )}
                 </div>
               </div>
+              
+              {isLocationEnabled && location && (
+                <div className="mt-4 p-2 bg-haluna-primary-light/20 rounded-lg flex items-center gap-2">
+                  <MapPin className="h-4 w-4 text-haluna-primary" />
+                  <span className="text-sm text-haluna-primary">
+                    {translate('Showing shops near')} {location.city}, {location.state}
+                  </span>
+                </div>
+              )}
             </div>
           </section>
           
@@ -148,10 +189,10 @@ const Browse = () => {
           <section className="mb-16">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl md:text-3xl font-serif font-bold">
-                Popular Categories
+                {translate('Popular Categories')}
               </h2>
               <Link to="/shop" className="text-haluna-primary flex items-center hover:underline">
-                View All <ChevronRight size={16} />
+                {translate('View All')} <ChevronRight size={16} />
               </Link>
             </div>
             
@@ -181,7 +222,7 @@ const Browse = () => {
                       />
                     </div>
                     <h3 className="font-medium text-center text-haluna-text group-hover:text-haluna-primary transition-colors">
-                      {category}
+                      {translate(category)}
                     </h3>
                   </Link>
                 </motion.div>
@@ -192,7 +233,7 @@ const Browse = () => {
                   to="/shop" 
                   className="flex flex-col items-center justify-center p-6 bg-haluna-primary-light/30 rounded-xl border-2 border-dashed border-haluna-primary/30 hover:border-haluna-primary/60 transition-colors h-full"
                 >
-                  <span className="text-haluna-primary font-medium">View All Categories</span>
+                  <span className="text-haluna-primary font-medium">{translate('View All Categories')}</span>
                   <ChevronRight size={20} className="mt-2 text-haluna-primary" />
                 </Link>
               </motion.div>
@@ -203,10 +244,15 @@ const Browse = () => {
           <section>
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl md:text-3xl font-serif font-bold">
-                {location ? `Shops in ${location}` : 'Featured Shops'}
+                {searchLocation ? 
+                  `${translate('Shops in')} ${searchLocation}` : 
+                  isLocationEnabled && location ? 
+                    `${translate('Shops Near You')} (${location.city})` : 
+                    translate('Featured Shops')
+                }
               </h2>
               <Link to="/shops" className="text-haluna-primary flex items-center hover:underline">
-                View All <ChevronRight size={16} />
+                {translate('View All')} <ChevronRight size={16} />
               </Link>
             </div>
             
@@ -227,21 +273,21 @@ const Browse = () => {
             ) : filteredShops.length === 0 ? (
               <div className="text-center py-16 bg-white rounded-xl shadow-sm">
                 <Store className="h-16 w-16 text-haluna-text-light mx-auto mb-4" />
-                <h3 className="text-xl font-medium mb-2">No shops found</h3>
+                <h3 className="text-xl font-medium mb-2">{translate('No shops found')}</h3>
                 <p className="text-haluna-text-light mb-6">
-                  {location 
-                    ? `We couldn't find any shops in "${location}". Try a different location.` 
-                    : "We couldn't find any shops matching your search."}
+                  {searchLocation 
+                    ? translate(`We couldn't find any shops in "${searchLocation}". Try a different location.`)
+                    : translate("We couldn't find any shops matching your search.")}
                 </p>
-                {(location || searchQuery) && (
+                {(searchLocation || searchQuery) && (
                   <Button 
                     onClick={() => {
-                      setLocation('');
+                      setSearchLocation('');
                       setSearchQuery('');
                     }}
                     variant="outline"
                   >
-                    Clear Filters
+                    {translate('Clear Filters')}
                   </Button>
                 )}
               </div>
@@ -274,6 +320,11 @@ const Browse = () => {
                         <div className="absolute top-3 right-3 bg-white/80 backdrop-blur-sm px-2 py-1 rounded-full text-xs font-medium flex items-center">
                           <MapPin className="h-3 w-3 mr-1" />
                           {shop.location}
+                          {shop.distance && (
+                            <span className="ml-1 text-haluna-primary">
+                              (~{shop.distance.toFixed(1)} mi)
+                            </span>
+                          )}
                         </div>
                       </div>
                       
@@ -285,7 +336,7 @@ const Browse = () => {
                           </div>
                           {shop.isVerified && (
                             <div className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full font-medium">
-                              Verified
+                              {translate('Verified')}
                             </div>
                           )}
                         </div>
@@ -296,7 +347,7 @@ const Browse = () => {
                         
                         <div className="flex items-center justify-between text-sm">
                           <span className="text-haluna-text">
-                            {shop.productCount} Products
+                            {shop.productCount} {translate('Products')}
                           </span>
                           <div className="flex items-center text-amber-500">
                             <span>★</span>
