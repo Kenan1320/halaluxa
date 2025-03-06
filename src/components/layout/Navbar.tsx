@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Store } from 'lucide-react';
+import { Menu, X, Store, MapPin, Search } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import AuthNavItems from './AuthNavItems';
 
@@ -30,7 +30,7 @@ const Navbar = () => {
     { href: '/', label: 'Home' },
     { href: '/shop', label: 'Shop' },
     { href: '/shops', label: 'Businesses' },
-    { href: '/sellers', label: 'For Sellers' },
+    { href: '/sellers', label: 'Connect your Shop with your Customers and More' },
     { href: '/about', label: 'About' },
   ];
   
@@ -40,10 +40,11 @@ const Navbar = () => {
         <Link to="/" className="flex items-center gap-2">
           <div className="flex items-center">
             <span className="text-2xl font-serif font-bold text-haluna-primary">Haluna</span>
-            {/* Enhanced logo design */}
+            {/* Enhanced logo design with more sophisticated styling */}
             <div className="relative ml-1">
-              <div className="w-6 h-6 bg-gradient-to-br from-orange-300 to-orange-400 rounded-full shadow-md"></div>
-              <div className="absolute top-1/4 left-1/4 w-1/2 h-1/2 bg-white rounded-full opacity-30"></div>
+              <div className="w-7 h-7 bg-gradient-to-br from-orange-400 to-orange-500 rounded-full shadow-md"></div>
+              <div className="absolute top-1/4 left-1/4 w-1/2 h-1/2 bg-white rounded-full opacity-40"></div>
+              <div className="absolute -top-1 -right-1 w-3 h-3 bg-haluna-primary rounded-full animate-pulse"></div>
             </div>
           </div>
         </Link>
@@ -55,7 +56,9 @@ const Navbar = () => {
                 <Link
                   key={link.href}
                   to={link.href}
-                  className={`text-haluna-text hover:text-haluna-primary transition ${
+                  className={`text-haluna-text hover:text-haluna-primary transition whitespace-nowrap ${
+                    link.href === '/sellers' ? 'text-sm' : ''
+                  } ${
                     location.pathname === link.href ? 'font-medium text-haluna-primary' : ''
                   }`}
                 >

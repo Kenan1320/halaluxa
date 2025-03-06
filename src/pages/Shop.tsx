@@ -1,6 +1,5 @@
-
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { Product, productCategories } from '@/models/product';
@@ -12,12 +11,23 @@ import { useToast } from '@/hooks/use-toast';
 import { motion } from 'framer-motion';
 
 const Shop = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [products, setProducts] = useState<Product[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
   const { addToCart } = useCart();
   const { toast } = useToast();
+  
+  // Parse URL params to get filters
+  useEffect(() => {
+    const queryParams = new URLSearchParams(location.search);
+    const category = queryParams.get('category');
+    if (category) {
+      setCategoryFilter(category);
+    }
+  }, [location.search]);
   
   // Fetch products on mount and when they change
   useEffect(() => {
@@ -31,12 +41,16 @@ const Shop = () => {
     };
     
     fetchProducts();
-    
-    // Set up interval to check for new products
-    const intervalId = setInterval(fetchProducts, 5000);
-    
-    return () => clearInterval(intervalId);
   }, []);
+  
+  // Update URL when filters change
+  useEffect(() => {
+    const queryParams = new URLSearchParams();
+    if (categoryFilter) {
+      queryParams.set('category', categoryFilter);
+    }
+    navigate({ search: queryParams.toString() }, { replace: true });
+  }, [categoryFilter, navigate]);
   
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -186,9 +200,13 @@ const Shop = () => {
                       <p className="font-bold text-haluna-primary">${product.price.toFixed(2)}</p>
                     </div>
                     
-                    <p className="text-sm text-haluna-text-light mb-4 line-clamp-2">
+                    <p className="text-sm text-haluna-text-light mb-2 line-clamp-2">
                       {product.description}
                     </p>
+                    
+                    <Link to={`/shop/${product.sellerId}`} className="text-xs text-haluna-primary hover:underline mb-3 inline-block">
+                      {product.sellerName || "Haluna Seller"}
+                    </Link>
                     
                     <div className="flex items-center justify-between">
                       <div className="flex items-center text-yellow-400">

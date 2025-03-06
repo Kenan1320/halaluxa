@@ -1,10 +1,11 @@
 
-import { ArrowRight, LogIn, UserPlus } from 'lucide-react';
+import { ArrowRight, LogIn, UserPlus, Store, Search, MapPin } from 'lucide-react';
 import { Button } from '../ui/button';
 import { useAuth } from '@/context/AuthContext';
 import { useState, useEffect } from 'react';
 import { getProducts } from '@/services/productService';
 import { Product } from '@/models/product';
+import { motion } from 'framer-motion';
 
 const Hero = () => {
   const { isLoggedIn, user } = useAuth();
@@ -32,6 +33,27 @@ const Hero = () => {
               Connect with authentic Muslim businesses and discover ethically sourced products that align with your values.
             </p>
             
+            {/* New "Browse Categories & Shops" button with animation */}
+            <motion.div 
+              className="mb-6"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+            >
+              <Button 
+                href="/browse" 
+                size="lg" 
+                className="group relative overflow-hidden bg-gradient-to-r from-haluna-primary to-purple-600 hover:from-purple-600 hover:to-haluna-primary transition-all duration-500 shadow-lg hover:shadow-xl"
+              >
+                <div className="absolute inset-0 bg-white/20 rounded-full transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-500"></div>
+                <div className="flex items-center relative z-10">
+                  <Store className="mr-2 h-5 w-5" />
+                  <span>Browse Categories & Shops</span>
+                  <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
+                </div>
+              </Button>
+            </motion.div>
+            
             {isLoggedIn ? (
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start animate-fade-in animate-delay-300">
                 <Button 
@@ -53,9 +75,6 @@ const Hero = () => {
                   <LogIn size={18} className="mr-2" />
                   Log In
                 </Button>
-                <Button href="/sellers" variant="secondary" size="lg">
-                  Connect your Shop with your Customers and More
-                </Button>
               </div>
             )}
             
@@ -75,7 +94,7 @@ const Hero = () => {
             </div>
           </div>
           
-          {/* Featured Products - Replacing the plain placeholder */}
+          {/* Featured Products */}
           <div className="lg:w-1/2 relative">
             <div className="bg-white rounded-2xl shadow-xl p-6 animate-float">
               <h3 className="text-xl font-serif font-bold text-haluna-primary mb-4 text-center">Featured Products</h3>

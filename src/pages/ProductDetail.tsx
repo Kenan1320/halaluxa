@@ -1,353 +1,275 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Star, Heart, ShoppingBag, Check, Store, MessageSquare } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
-import ImageGallery from '@/components/shop/ImageGallery';
+import { Product } from '@/models/product';
+import { getProductById } from '@/services/productService';
+import { ShoppingBag, Star } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { useCart } from '@/context/CartContext';
-import { mockProducts, Product } from '@/models/product';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/context/AuthContext';
-import { motion } from 'framer-motion';
-import { getProductById } from '@/services/productService'; 
-import { addReview, getReviewsForProduct } from '@/services/reviewService';
 import ReviewList from '@/components/shop/ReviewList';
-import AddReviewForm from '@/components/shop/AddReviewForm';
+import { useAuth } from '@/context/AuthContext';
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { formatDistanceToNow } from 'date-fns';
+
+interface Review {
+  id: string;
+  userId: string;
+  username: string;
+  rating: number;
+  comment: string;
+  createdAt: string;
+}
 
 const ProductDetail = () => {
-  const { productId } = useParams<{ productId: string }>();
-  const [product, setProduct] = useState<Product | null>(null);
-  const [quantity, setQuantity] = useState(1);
+  const { productId } = useParams();
+  const [product, setProduct] = useState<Product | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'description' | 'reviews'>('description');
-  const [reviews, setReviews] = useState<any[]>([]);
   const { addToCart } = useCart();
   const { toast } = useToast();
-  const navigate = useNavigate();
   const { isLoggedIn, user } = useAuth();
-  
+  const [reviews, setReviews] = useState<Review[]>([
+    {
+      id: '1',
+      userId: 'user1',
+      username: 'Aisha Khan',
+      rating: 5,
+      comment: 'Absolutely love this product! The quality is amazing and it arrived quickly.',
+      createdAt: new Date(2024, 5, 1).toISOString(),
+    },
+    {
+      id: '2',
+      userId: 'user2',
+      username: 'Omar Hassan',
+      rating: 4,
+      comment: 'Good product, but the shipping took a bit longer than expected.',
+      createdAt: new Date(2024, 5, 5).toISOString(),
+    },
+    {
+      id: '3',
+      userId: 'user3',
+      username: 'Fatima Ali',
+      rating: 5,
+      comment: 'Excellent customer service and a fantastic product. Highly recommend!',
+      createdAt: new Date(2024, 5, 10).toISOString(),
+    },
+  ]);
+  const [reviewData, setReviewData] = useState({ rating: 5, comment: '' });
+
   useEffect(() => {
-    // Scroll to top when page loads
     window.scrollTo(0, 0);
-    
-    // Fetch product data - first from localStorage, then fallback to mock data
-    const fetchProduct = () => {
-      setIsLoading(true);
-      // Try to get the product from localStorage first
-      const localProduct = getProductById(productId || '');
-      
-      // If not found in localStorage, check mock data
-      const foundProduct = localProduct || mockProducts.find((p) => p.id === productId);
-      
-      setTimeout(() => {
-        setProduct(foundProduct || null);
-        setIsLoading(false);
-      }, 500);
-    };
-    
-    fetchProduct();
-    loadReviews();
-  }, [productId]);
-  
-  const loadReviews = () => {
+
     if (productId) {
-      const productReviews = getReviewsForProduct(productId);
-      setReviews(productReviews);
+      setIsLoading(true);
+      const fetchedProduct = getProductById(productId);
+      setProduct(fetchedProduct);
+      setIsLoading(false);
     }
+  }, [productId]);
+
+  const handleAddToCart = (product: Product) => {
+    addToCart(product);
+    toast({
+      title: "Added to cart",
+      description: `${product.name} added to your cart`,
+    });
   };
-  
-  const handleAddReview = (reviewData: any) => {
-    if (product && user) {
-      const newReview = addReview({
-        productId: product.id,
-        userId: user.id,
-        username: user.username || user.email.split('@')[0],
-        ...reviewData
-      });
-      
+
+  const handleSubmitReview = (reviewData: { rating: number; comment: string }) => {
+    if (!isLoggedIn) {
       toast({
-        title: "Review Added",
-        description: "Thank you for your feedback!",
+        title: "Login Required",
+        description: "You must be logged in to leave a review",
+        variant: "destructive",
       });
-      
-      loadReviews();
+      return;
     }
+
+    const newReview = {
+      id: `review-${Date.now()}`,
+      userId: user?.id || 'anonymous',
+      username: user?.displayName || user?.email?.split('@')[0] || 'Anonymous User',
+      rating: reviewData.rating,
+      comment: reviewData.comment,
+      createdAt: new Date().toISOString(),
+    };
+
+    setReviews([newReview, ...reviews]);
+    setReviewData({ rating: 5, comment: '' });
+    toast({
+      title: "Review Added",
+      description: "Thank you for your feedback!",
+    });
   };
-  
-  const handleAddToCart = () => {
-    if (product) {
-      addToCart(product, quantity);
-      toast({
-        title: "Added to cart",
-        description: `${quantity} x ${product.name} added to your cart`,
-      });
-    }
-  };
-  
-  const handleQuantityChange = (newQuantity: number) => {
-    if (newQuantity >= 1 && product && newQuantity <= product.stock) {
-      setQuantity(newQuantity);
-    }
-  };
-  
+
   if (isLoading) {
     return (
       <div className="min-h-screen">
         <Navbar />
+
         <main className="pt-28 pb-20">
           <div className="container mx-auto px-4">
             <div className="animate-pulse">
-              <div className="h-96 bg-gray-200 rounded-lg mb-8"></div>
-              <div className="h-8 bg-gray-200 rounded w-1/3 mb-4"></div>
-              <div className="h-4 bg-gray-200 rounded w-1/2 mb-8"></div>
-              <div className="h-24 bg-gray-200 rounded mb-8"></div>
-              <div className="h-12 bg-gray-200 rounded w-1/4"></div>
+              <div className="h-64 bg-gray-200 rounded-xl mb-6"></div>
+              <div className="bg-white rounded-xl shadow-sm p-6">
+                <div className="h-8 bg-gray-200 rounded w-3/4 mb-4"></div>
+                <div className="h-6 bg-gray-200 rounded w-1/2 mb-6"></div>
+                <div className="h-4 bg-gray-200 rounded w-full mb-3"></div>
+                <div className="h-4 bg-gray-200 rounded w-5/6 mb-3"></div>
+                <div className="h-4 bg-gray-200 rounded w-2/3 mb-6"></div>
+                <div className="flex justify-between">
+                  <div className="h-10 bg-gray-200 rounded w-1/3"></div>
+                  <div className="h-10 bg-gray-200 rounded w-1/4"></div>
+                </div>
+              </div>
             </div>
           </div>
         </main>
+
         <Footer />
       </div>
     );
   }
-  
+
   if (!product) {
     return (
       <div className="min-h-screen">
         <Navbar />
+
         <main className="pt-28 pb-20">
           <div className="container mx-auto px-4 text-center">
-            <h1 className="text-2xl font-bold mb-4">Product Not Found</h1>
-            <p className="mb-6">Sorry, the product you are looking for does not exist or has been removed.</p>
-            <Button onClick={() => navigate('/shop')}>
-              Back to Shop
+            <h2 className="text-3xl font-serif font-bold mb-4">Product Not Found</h2>
+            <p className="text-haluna-text-light">
+              The requested product could not be found. Please check the URL or browse our other products.
+            </p>
+            <Button href="/shop" variant="outline" className="mt-6">
+              Browse Products
             </Button>
           </div>
         </main>
+
         <Footer />
       </div>
     );
   }
-  
+
   return (
     <div className="min-h-screen">
       <Navbar />
-      
+
       <main className="pt-28 pb-20">
         <div className="container mx-auto px-4">
-          <div className="mb-6">
-            <button 
-              onClick={() => navigate('/shop')}
-              className="flex items-center text-haluna-text-light hover:text-haluna-primary transition-colors"
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Shop
-            </button>
-          </div>
-          
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              <ImageGallery images={product.images} altText={product.name} />
-            </motion.div>
-            
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-            >
-              <div className="mb-6">
-                <h1 className="text-3xl font-serif font-bold mb-2">{product.name}</h1>
-                
-                {/* Shop info */}
-                <div className="flex items-center gap-2 mb-4">
-                  <Link to={`/shop/${product.sellerId}`} className="flex items-center text-haluna-text-light hover:text-haluna-primary transition-colors">
-                    <Store className="h-4 w-4 mr-1" />
-                    <span>{product.sellerName || "Haluna Seller"}</span>
-                  </Link>
-                </div>
-                
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="flex items-center text-yellow-400">
-                    {[...Array(5)].map((_, i) => (
-                      <Star 
-                        key={i} 
-                        className={`h-4 w-4 ${i < (product.rating || 5) ? 'fill-current' : 'text-gray-300'}`} 
-                      />
-                    ))}
-                    <span className="text-xs text-haluna-text-light ml-1">{product.rating || 5.0}</span>
-                    <span className="text-xs text-haluna-text-light ml-1">({reviews.length} reviews)</span>
-                  </div>
-                  
-                  {product.isHalalCertified && (
-                    <span className="bg-haluna-primary text-white text-xs px-2 py-1 rounded-full">
-                      Halal Certified
-                    </span>
-                  )}
-                </div>
-                
-                <p className="text-2xl font-bold text-haluna-primary mb-4">
-                  ${product.price.toFixed(2)}
-                </p>
-                
-                <p className="text-haluna-text leading-relaxed mb-6">
-                  {product.description}
-                </p>
-                
-                <div className="mb-8">
-                  <h3 className="font-medium mb-2">Product Details</h3>
-                  <ul className="space-y-2">
-                    {product.details && Object.entries(product.details).map(([key, value]) => (
-                      <li key={key} className="flex gap-2 text-sm">
-                        <span className="font-medium text-haluna-text-light">{key}:</span>
-                        <span>{value}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                
-                <div className="flex items-center mb-6">
-                  <div className="mr-6">
-                    <h3 className="font-medium mb-2">Quantity</h3>
-                    <div className="flex border rounded-md">
-                      <button 
-                        onClick={() => handleQuantityChange(quantity - 1)}
-                        className="px-3 py-2 border-r hover:bg-gray-100"
-                        disabled={quantity <= 1}
-                      >
-                        -
-                      </button>
-                      <input
-                        type="number"
-                        className="w-16 text-center"
-                        value={quantity}
-                        onChange={(e) => handleQuantityChange(parseInt(e.target.value))}
-                        min={1}
-                        max={product.stock}
-                      />
-                      <button 
-                        onClick={() => handleQuantityChange(quantity + 1)}
-                        className="px-3 py-2 border-l hover:bg-gray-100"
-                        disabled={quantity >= product.stock}
-                      >
-                        +
-                      </button>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <h3 className="font-medium mb-2">Availability</h3>
-                    <div className="flex items-center gap-1">
-                      {product.stock > 0 ? (
-                        <>
-                          <Check className="h-4 w-4 text-green-500" />
-                          <span className="text-green-600">In Stock</span>
-                          <span className="text-haluna-text-light ml-1">({product.stock} available)</span>
-                        </>
-                      ) : (
-                        <span className="text-red-600">Out of Stock</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="flex gap-3">
-                  <Button 
-                    onClick={handleAddToCart}
-                    disabled={product.stock <= 0}
-                    className="flex-1"
-                  >
-                    <ShoppingBag className="h-4 w-4 mr-2" />
-                    Add to Cart
-                  </Button>
-                  
-                  <Button variant="outline" className="p-3">
-                    <Heart className="h-5 w-5" />
-                  </Button>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-          
-          {/* Tabs for description and reviews */}
-          <div className="mt-16">
-            <div className="border-b mb-8">
-              <div className="flex gap-8">
-                <button
-                  className={`pb-4 px-2 font-medium ${activeTab === 'description' 
-                    ? 'border-b-2 border-haluna-primary text-haluna-primary' 
-                    : 'text-haluna-text-light'}`}
-                  onClick={() => setActiveTab('description')}
-                >
-                  Description
-                </button>
-                <button
-                  className={`pb-4 px-2 font-medium flex items-center ${activeTab === 'reviews' 
-                    ? 'border-b-2 border-haluna-primary text-haluna-primary' 
-                    : 'text-haluna-text-light'}`}
-                  onClick={() => setActiveTab('reviews')}
-                >
-                  Reviews <span className="ml-2 bg-gray-100 px-2 py-0.5 rounded-full text-xs">{reviews.length}</span>
-                </button>
-              </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* Product Image */}
+            <div className="rounded-xl overflow-hidden shadow-sm">
+              <img
+                src={product.images[0] || '/placeholder.svg'}
+                alt={product.name}
+                className="w-full h-full object-cover"
+              />
             </div>
-            
-            {activeTab === 'description' ? (
-              <div className="prose max-w-none">
-                <p className="mb-6">{product.description}</p>
-                
-                {product.longDescription && (
-                  <div dangerouslySetInnerHTML={{ __html: product.longDescription }} />
+
+            {/* Product Details */}
+            <div>
+              <h1 className="text-3xl font-serif font-bold mb-4">{product.name}</h1>
+              <div className="flex items-center text-yellow-400 mb-3">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className="h-5 w-5 fill-current" />
+                ))}
+                <span className="text-haluna-text-light ml-2">5.0 (35 reviews)</span>
+              </div>
+              <p className="text-haluna-text-light mb-6">{product.description}</p>
+
+              <div className="flex items-center justify-between mb-6">
+                <div className="text-2xl font-bold text-haluna-primary">${product.price.toFixed(2)}</div>
+                {product.isHalalCertified && (
+                  <span className="bg-haluna-primary text-white text-xs px-2 py-1 rounded-full">
+                    Halal Certified
+                  </span>
                 )}
               </div>
-            ) : (
-              <div>
-                <h3 className="text-xl font-medium mb-6">Customer Reviews ({reviews.length})</h3>
-                
-                {isLoggedIn ? (
-                  <AddReviewForm onSubmit={handleAddReview} />
+
+              <div className="flex items-center justify-between mb-8">
+                <span className="text-haluna-text">
+                  Availability: {product.stock > 0 ? 'In Stock' : 'Out of Stock'}
+                </span>
+                <span className="text-haluna-text">
+                  Category: {product.category}
+                </span>
+              </div>
+
+              <Button
+                size="lg"
+                onClick={() => handleAddToCart(product)}
+                disabled={product.stock <= 0}
+                className="w-full flex items-center justify-center"
+              >
+                {product.stock > 0 ? (
+                  <>
+                    Add to Cart <ShoppingBag className="ml-2" />
+                  </>
                 ) : (
-                  <div className="bg-gray-50 p-6 rounded-lg mb-8 text-center">
-                    <MessageSquare className="h-8 w-8 mx-auto mb-4 text-haluna-text-light" />
-                    <h4 className="font-medium mb-2">Share Your Thoughts</h4>
-                    <p className="text-haluna-text-light mb-4">Login to leave a review for this product.</p>
-                    <Button href="/login" variant="outline" size="sm">Login to Review</Button>
-                  </div>
+                  'Out of Stock'
                 )}
-                
-                <div>
-                  {reviews.map((review) => (
-                    <div key={review.id} className="mb-6 pb-6 border-b">
-                      <div className="flex justify-between items-start mb-2">
-                        <div>
-                          <div className="font-medium">{review.username}</div>
-                          <div className="flex items-center mt-1">
-                            {[...Array(5)].map((_, i) => (
-                              <Star 
-                                key={i} 
-                                className={`h-4 w-4 ${i < review.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} 
-                              />
-                            ))}
-                          </div>
-                        </div>
-                        <div className="text-xs text-haluna-text-light">
-                          {formatDistanceToNow(new Date(review.createdAt), { addSuffix: true })}
-                        </div>
-                      </div>
-                      <p className="mt-2 text-haluna-text">{review.comment}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+              </Button>
+            </div>
           </div>
+
+          {/* Reviews Section */}
+          <section className="mt-12">
+            <h2 className="text-2xl font-serif font-bold mb-6">Customer Reviews</h2>
+            <ReviewList reviews={reviews} />
+          </section>
+
+          {/* Add Review Form */}
+          {isLoggedIn && (
+            <section className="mt-12">
+              <h2 className="text-xl font-serif font-bold mb-4">Leave a Review</h2>
+              <div className="bg-white rounded-xl shadow-sm p-6">
+                <div className="mb-4">
+                  <Label htmlFor="rating" className="block text-sm font-medium text-haluna-text">
+                    Rating
+                  </Label>
+                  <div className="flex items-center mt-2">
+                    {[...Array(5)].map((_, i) => (
+                      <Star
+                        key={i}
+                        className={`h-6 w-6 cursor-pointer ${i < reviewData.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
+                        onClick={() => setReviewData({ ...reviewData, rating: i + 1 })}
+                      />
+                    ))}
+                  </div>
+                </div>
+                <div className="mb-4">
+                  <Label htmlFor="comment" className="block text-sm font-medium text-haluna-text">
+                    Comment
+                  </Label>
+                  <Textarea
+                    id="comment"
+                    rows={4}
+                    className="shadow-sm focus:ring-haluna-primary focus:border-haluna-primary mt-1 block w-full sm:text-sm border-gray-300 rounded-md"
+                    value={reviewData.comment}
+                    onChange={(e) => setReviewData({ ...reviewData, comment: e.target.value })}
+                  />
+                </div>
+                <Button onClick={() => handleSubmitReview(reviewData)}>Submit Review</Button>
+              </div>
+            </section>
+          )}
+
+          {!isLoggedIn && (
+            <div className="mt-8 text-center">
+              <p className="text-haluna-text-light">
+                You must be <Link to="/login" className="text-haluna-primary hover:underline">logged in</Link> to leave a review.
+              </p>
+            </div>
+          )}
         </div>
       </main>
-      
+
       <Footer />
     </div>
   );
