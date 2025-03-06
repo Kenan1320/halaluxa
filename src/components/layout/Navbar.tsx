@@ -40,7 +40,11 @@ const Navbar = () => {
         <Link to="/" className="flex items-center gap-2">
           <div className="flex items-center">
             <span className="text-2xl font-serif font-bold text-haluna-primary">Haluna</span>
-            <div className="w-6 h-6 bg-orange-300 rounded-full ml-1"></div>
+            {/* Enhanced logo design */}
+            <div className="relative ml-1">
+              <div className="w-6 h-6 bg-gradient-to-br from-orange-300 to-orange-400 rounded-full shadow-md"></div>
+              <div className="absolute top-1/4 left-1/4 w-1/2 h-1/2 bg-white rounded-full opacity-30"></div>
+            </div>
           </div>
         </Link>
         

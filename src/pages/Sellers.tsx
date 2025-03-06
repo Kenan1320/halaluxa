@@ -51,6 +51,78 @@ const Sellers = () => {
             </div>
           </div>
           
+          {/* Introduction Section */}
+          <section className="mb-16 bg-haluna-primary-light/20 p-8 rounded-2xl">
+            <div className="max-w-4xl mx-auto">
+              <h2 className="text-2xl font-serif font-bold mb-6 text-center">Connect your Shop with your Customers and More</h2>
+              <div className="prose prose-lg mx-auto text-haluna-text">
+                <p>
+                  At Haluna, we provide business owners and shop owners with the tools to expand their reach, enhance customer convenience, and streamline the way they sell. In today's digital world, customers expect seamless access to the products they need, and Haluna enables you to meet that demand.
+                </p>
+                <p>
+                  By bringing your store online, you are not just increasing visibility—you are creating new opportunities for growth, customer engagement, and long-term success. Our platform is designed to make ordering effortless for your customers while giving you full control over your product listings, orders, and payments, all in a secure and user-friendly environment.
+                </p>
+                <p>
+                  Whether you run a grocery store, a boutique, or a specialty halal shop, Haluna connects you with a growing community of consumers who actively seek halal-conscious products. This is more than just an online marketplace—it's a gateway to scale your business, build brand loyalty, and future-proof your success in an evolving market.
+                </p>
+              </div>
+            </div>
+          </section>
+          
+          {/* How It Works Section */}
+          <section className="mb-16">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-serif font-bold mb-4">How It Works</h2>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
+              {[
+                {
+                  step: "1",
+                  title: "Create a Seller Account",
+                  description: "Register your business, verify your information, and complete your store profile."
+                },
+                {
+                  step: "2",
+                  title: "List Products",
+                  description: "Upload high-quality images, detailed descriptions, and pricing for each product."
+                },
+                {
+                  step: "3",
+                  title: "Start Selling",
+                  description: "Customers browse the platform and place orders directly through your storefront."
+                },
+                {
+                  step: "4",
+                  title: "Receive Payments Securely",
+                  description: "Payments are processed through a secure gateway, ensuring that funds are transferred to sellers efficiently."
+                },
+                {
+                  step: "5",
+                  title: "Manage and Grow",
+                  description: "Utilize sales reports, marketing tools, and customer insights to optimize and expand your business."
+                }
+              ].map((item, index) => (
+                <div key={index} className="relative">
+                  <div className="bg-haluna-primary text-white w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold mb-4 mx-auto">
+                    {item.step}
+                  </div>
+                  {index < 4 && (
+                    <div className="hidden md:block absolute top-5 left-12 w-full h-0.5 bg-haluna-primary-light"></div>
+                  )}
+                  <h3 className="text-xl font-medium mb-2 text-center">{item.title}</h3>
+                  <p className="text-haluna-text-light text-center">{item.description}</p>
+                </div>
+              ))}
+            </div>
+            
+            <div className="text-center mt-12">
+              <Button href="/dashboard" size="lg">
+                Get Started Now <ArrowRight size={16} className="ml-2" />
+              </Button>
+            </div>
+          </section>
+          
           {/* Features Section */}
           <section id="benefits" className="py-16 bg-haluna-secondary rounded-2xl mb-16">
             <div className="container mx-auto px-4">
@@ -63,7 +135,7 @@ const Sellers = () => {
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 {features.map((feature, index) => (
-                  <div key={index} className="bg-white p-8 rounded-xl shadow-sm">
+                  <div key={index} className="bg-white p-8 rounded-xl shadow-sm hover:shadow-md transition-shadow">
                     <div className="bg-haluna-primary-light rounded-full w-20 h-20 flex items-center justify-center mb-6">
                       {feature.icon}
                     </div>
@@ -72,58 +144,6 @@ const Sellers = () => {
                   </div>
                 ))}
               </div>
-            </div>
-          </section>
-          
-          {/* How It Works Section */}
-          <section className="mb-16">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-serif font-bold mb-4">How It Works</h2>
-              <p className="text-haluna-text-light max-w-2xl mx-auto">
-                Getting started as a seller on Haluna is simple and straightforward.
-              </p>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-              {[
-                {
-                  step: "1",
-                  title: "Sign Up",
-                  description: "Create your seller account and verify your business information."
-                },
-                {
-                  step: "2",
-                  title: "Set Up Your Store",
-                  description: "Customize your storefront with your brand elements and halal certifications."
-                },
-                {
-                  step: "3",
-                  title: "Add Products",
-                  description: "List your products with detailed descriptions and high-quality images."
-                },
-                {
-                  step: "4",
-                  title: "Start Selling",
-                  description: "Receive orders, fulfill them, and grow your customer base."
-                }
-              ].map((item, index) => (
-                <div key={index} className="relative">
-                  <div className="bg-haluna-primary text-white w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold mb-4">
-                    {item.step}
-                  </div>
-                  {index < 3 && (
-                    <div className="hidden md:block absolute top-5 left-12 w-full h-0.5 bg-haluna-primary-light"></div>
-                  )}
-                  <h3 className="text-xl font-medium mb-2">{item.title}</h3>
-                  <p className="text-haluna-text-light">{item.description}</p>
-                </div>
-              ))}
-            </div>
-            
-            <div className="text-center mt-12">
-              <Button href="/dashboard" size="lg">
-                Get Started Now <ArrowRight size={16} className="ml-2" />
-              </Button>
             </div>
           </section>
           
@@ -195,7 +215,7 @@ const Sellers = () => {
                   answer: "Yes! Haluna allows you to sell globally. You can specify which countries you ship to in your seller settings."
                 },
               ].map((faq, index) => (
-                <div key={index} className="border rounded-xl p-6">
+                <div key={index} className="border rounded-xl p-6 hover:border-haluna-primary hover:shadow-sm transition-all">
                   <h3 className="text-lg font-medium mb-2">{faq.question}</h3>
                   <p className="text-haluna-text-light">{faq.answer}</p>
                 </div>

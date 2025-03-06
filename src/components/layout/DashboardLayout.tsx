@@ -17,8 +17,10 @@ const DashboardLayout = () => {
       <div className="ml-64 min-h-screen flex flex-col">
         <DashboardHeader />
         
-        <main className="flex-1 p-6">
-          <Outlet />
+        <main className="flex-1 p-6 transition-all animate-fadeIn">
+          <div className="max-w-7xl mx-auto">
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>

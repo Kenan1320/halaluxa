@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
@@ -140,7 +139,7 @@ const ProductDetail = () => {
           <div className="mb-6">
             <button 
               onClick={() => navigate('/shop')}
-              className="flex items-center text-haluna-text-light hover:text-haluna-text transition-colors"
+              className="flex items-center text-haluna-text-light hover:text-haluna-primary transition-colors"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Shop
@@ -175,7 +174,10 @@ const ProductDetail = () => {
                 <div className="flex items-center gap-2 mb-4">
                   <div className="flex items-center text-yellow-400">
                     {[...Array(5)].map((_, i) => (
-                      <Star key={i} className={`h-4 w-4 ${i < (product.rating || 5) ? 'fill-current' : ''}`} />
+                      <Star 
+                        key={i} 
+                        className={`h-4 w-4 ${i < (product.rating || 5) ? 'fill-current' : 'text-gray-300'}`} 
+                      />
                     ))}
                     <span className="text-xs text-haluna-text-light ml-1">{product.rating || 5.0}</span>
                     <span className="text-xs text-haluna-text-light ml-1">({reviews.length} reviews)</span>
@@ -317,7 +319,29 @@ const ProductDetail = () => {
                   </div>
                 )}
                 
-                <ReviewList reviews={reviews} />
+                <div>
+                  {reviews.map((review) => (
+                    <div key={review.id} className="mb-6 pb-6 border-b">
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <div className="font-medium">{review.username}</div>
+                          <div className="flex items-center mt-1">
+                            {[...Array(5)].map((_, i) => (
+                              <Star 
+                                key={i} 
+                                className={`h-4 w-4 ${i < review.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} 
+                              />
+                            ))}
+                          </div>
+                        </div>
+                        <div className="text-xs text-haluna-text-light">
+                          {formatDistanceToNow(new Date(review.createdAt), { addSuffix: true })}
+                        </div>
+                      </div>
+                      <p className="mt-2 text-haluna-text">{review.comment}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>

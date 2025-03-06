@@ -54,7 +54,7 @@ const Hero = () => {
                   Log In
                 </Button>
                 <Button href="/sellers" variant="secondary" size="lg">
-                  Sell Your Products
+                  Connect your Shop with your Customers and More
                 </Button>
               </div>
             )}
