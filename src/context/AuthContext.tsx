@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -277,23 +278,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return false;
       }
       
-      const profileData = {
-        id: authData.user.id,
-        name,
-        email,
-        role,
-        ...(role === 'business' && shopDetails ? {
-          shop_name: shopDetails.shopName || '',
-          shop_description: shopDetails.shopDescription || '',
-          shop_category: shopDetails.shopCategory || '',
-          shop_location: shopDetails.shopLocation || '',
-          shop_logo: shopDetails.shopLogo || '',
-        } : {})
-      };
-      
+      // First update profile data
       const { error: profileError } = await supabase
         .from('profiles')
-        .upsert(profileData, { onConflict: 'id' });
+        .update({
+          name,
+          role,
+          ...(role === 'business' && shopDetails ? {
+            shop_name: shopDetails.shopName || '',
+            shop_description: shopDetails.shopDescription || '',
+            shop_category: shopDetails.shopCategory || '',
+            shop_location: shopDetails.shopLocation || '',
+            shop_logo: shopDetails.shopLogo || '',
+          } : {})
+        })
+        .eq('id', authData.user.id);
       
       if (profileError) {
         console.error('Profile creation error:', profileError);
@@ -306,17 +305,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return false;
       }
       
+      // Create a shop record for business users
       if (role === 'business' && shopDetails?.shopName) {
         const { error: shopError } = await supabase
           .from('shops')
-          .upsert({
+          .insert({
             id: authData.user.id,
             name: shopDetails.shopName,
             description: shopDetails.shopDescription || 'New shop on Haluna',
             owner_id: authData.user.id,
             location: shopDetails.shopLocation || 'Online',
             logo_url: shopDetails.shopLogo || null,
-          }, { onConflict: 'owner_id' });
+          });
         
         if (shopError) {
           console.error('Shop creation error:', shopError);

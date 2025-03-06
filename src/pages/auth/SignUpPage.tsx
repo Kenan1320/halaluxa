@@ -17,7 +17,6 @@ const SignUpPage = () => {
     password: '',
     confirmPassword: '',
     role: 'shopper' as 'shopper' | 'business',
-    // Shop details for business users
     shopName: '',
     shopDescription: '',
     shopCategory: '',
@@ -38,7 +37,6 @@ const SignUpPage = () => {
     const file = e.target.files?.[0];
     if (!file) return;
     
-    // Check file size (max 2MB)
     if (file.size > 2 * 1024 * 1024) {
       toast({
         title: "Error",
@@ -48,7 +46,6 @@ const SignUpPage = () => {
       return;
     }
     
-    // Check file type
     if (!file.type.startsWith('image/')) {
       toast({
         title: "Error",
@@ -145,7 +142,6 @@ const SignUpPage = () => {
     }
   };
   
-  // Animation variants
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: { 
@@ -162,7 +158,6 @@ const SignUpPage = () => {
     visible: { y: 0, opacity: 1 }
   };
   
-  // Categories for shop selection
   const shopCategories = [
     "Food & Groceries",
     "Fashion",
@@ -227,7 +222,7 @@ const SignUpPage = () => {
                   onClick={() => setFormData(prev => ({ ...prev, role: 'business' }))}
                 >
                   <Store size={24} className="mb-2" />
-                  <span className="text-sm font-medium">I'm a Seller</span>
+                  <span className="text-sm font-medium">I'm a Business Owner</span>
                   <span className="text-xs text-haluna-text-light mt-1">List & sell products</span>
                 </button>
               </div>
@@ -521,12 +516,12 @@ const SignUpPage = () => {
                 {loading ? (
                   <div className="flex items-center">
                     <div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full mr-2"></div>
-                    Creating Shop...
+                    Creating Business...
                   </div>
                 ) : (
                   <>
                     <Store size={18} className="mr-2" />
-                    Create Shop
+                    Create Business
                   </>
                 )}
               </Button>
