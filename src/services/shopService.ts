@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Product, mapDbProductToModel } from '@/models/product';
 
@@ -12,7 +13,12 @@ export interface Shop {
   location: string;
   rating: number;
   productCount: number;
-  isVerified: boolean;
+  isVerified?: boolean;
+  // Add missing properties for geolocation
+  latitude?: number;
+  longitude?: number;
+  distance?: number;
+  category?: string; // Add category field for Browse.tsx
 }
 
 // Mapping function for shop data
@@ -27,7 +33,10 @@ function mapDbShopToModel(dbShop: any): Shop {
     location: dbShop.location || 'Online',
     rating: dbShop.rating || 5.0,
     productCount: dbShop.product_count || 0,
-    isVerified: dbShop.is_verified || false
+    isVerified: dbShop.is_verified || false,
+    category: dbShop.category || 'General', // Map category
+    latitude: dbShop.latitude,
+    longitude: dbShop.longitude
   };
 }
 
@@ -159,7 +168,10 @@ export function getMockShops(): Shop[] {
       location: "New York",
       rating: 4.9,
       productCount: 24,
-      isVerified: true
+      isVerified: true,
+      category: "Food & Groceries",
+      latitude: 40.7128,
+      longitude: -74.0060
     },
     // ... other mock shops
   ];

@@ -1,6 +1,6 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { getShops } from '@/services/shopService';
+import { getShops, Shop } from '@/services/shopService';
 
 interface LocationCoordinates {
   latitude: number;

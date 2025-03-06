@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -92,11 +93,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           return;
         }
         
+        // Ensure role is of type UserRole
+        const userRole: UserRole = (userData.role === 'business' || userData.role === 'shopper') 
+          ? userData.role as UserRole 
+          : 'shopper';
+        
         const userObj: User = {
           id: userData.id,
           name: userData.name || data.session.user.email?.split('@')[0] || 'User',
           email: data.session.user.email || '',
-          role: userData.role || 'shopper',
+          role: userRole,
           phone: userData.phone,
           address: userData.address,
           city: userData.city,
@@ -190,11 +196,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
         
         if (userData) {
+          // Ensure role is of type UserRole
+          const userRole: UserRole = (userData.role === 'business' || userData.role === 'shopper') 
+            ? userData.role as UserRole 
+            : 'shopper';
+            
           const userObj: User = {
             id: userData.id,
             name: userData.name || data.session.user.email?.split('@')[0] || 'User',
             email: data.session.user.email || '',
-            role: userData.role || 'shopper',
+            role: userRole,
             phone: userData.phone,
             address: userData.address,
             city: userData.city,

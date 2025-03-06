@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { useLocation } from '@/context/LocationContext';
-import { getShops } from '@/services/shopService';
+import { getShops, Shop } from '@/services/shopService';
 import ShopCard from '@/components/shop/ShopCard';
 import { Store } from 'lucide-react';
 
@@ -15,9 +15,9 @@ const Browse = () => {
   const routerLocation = useRouterLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   
-  const [shops, setShops] = useState([]);
-  const [filteredShops, setFilteredShops] = useState([]);
-  const [categories, setCategories] = useState([]);
+  const [shops, setShops] = useState<Shop[]>([]);
+  const [filteredShops, setFilteredShops] = useState<Shop[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
   // Search and filter states
@@ -34,7 +34,10 @@ const Browse = () => {
         setShops(allShops);
         
         // Extract unique categories
-        const uniqueCategories = [...new Set(allShops.map(shop => shop.category))];
+        const uniqueCategories = [...new Set(allShops
+          .filter(shop => shop.category)
+          .map(shop => shop.category as string)
+        )];
         setCategories(uniqueCategories);
         
         // Initial filtering
@@ -56,7 +59,7 @@ const Browse = () => {
     applyFilters(shops, searchFromUrl, selectedCategory);
   }, [searchParams, routerLocation]);
   
-  const applyFilters = (shopList, search, category) => {
+  const applyFilters = (shopList: Shop[], search: string, category: string) => {
     let filtered = [...shopList];
     
     // Apply search filter
@@ -65,7 +68,7 @@ const Browse = () => {
       filtered = filtered.filter(shop => 
         shop.name.toLowerCase().includes(lowercaseSearch) || 
         shop.description.toLowerCase().includes(lowercaseSearch) ||
-        shop.category.toLowerCase().includes(lowercaseSearch)
+        (shop.category && shop.category.toLowerCase().includes(lowercaseSearch))
       );
     }
     
@@ -88,7 +91,7 @@ const Browse = () => {
     applyFilters(shops, searchTerm, selectedCategory);
   };
   
-  const selectCategory = (category) => {
+  const selectCategory = (category: string) => {
     setSelectedCategory(category === selectedCategory ? '' : category);
     applyFilters(shops, searchTerm, category === selectedCategory ? '' : category);
   };

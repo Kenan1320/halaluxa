@@ -83,6 +83,16 @@ export async function saveProduct(product: Partial<Product>): Promise<Product | 
   }
 }
 
+// Add a new product - alias for saveProduct for AddEditProductPage
+export async function addProduct(product: Partial<Product>): Promise<Product | undefined> {
+  return saveProduct(product);
+}
+
+// Update an existing product - alias for saveProduct for AddEditProductPage
+export async function updateProduct(product: Partial<Product>): Promise<Product | undefined> {
+  return saveProduct(product);
+}
+
 // Delete a product
 export async function deleteProduct(id: string): Promise<boolean> {
   try {
