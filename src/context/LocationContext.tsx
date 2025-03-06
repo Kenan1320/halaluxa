@@ -2,7 +2,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { LocationInfo, getCurrentLocation, getSavedUserLocation } from '@/services/locationService';
 import { useToast } from '@/hooks/use-toast';
-import { useLanguage } from '@/context/LanguageContext';
 
 interface LocationContextType {
   location: LocationInfo | null;
@@ -29,7 +28,6 @@ export const LocationProvider = ({ children }: { children: ReactNode }) => {
   const [isLocationEnabled, setIsLocationEnabled] = useState(false);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
-  const { translate } = useLanguage();
 
   // Check for previously saved location on mount
   useEffect(() => {
@@ -47,16 +45,16 @@ export const LocationProvider = ({ children }: { children: ReactNode }) => {
       setLocation(userLocation);
       setIsLocationEnabled(true);
       toast({
-        title: translate("Location updated"),
-        description: translate(`We'll show you shops and products near ${userLocation.city}, ${userLocation.state}`),
+        title: "Location updated",
+        description: `We'll show you shops and products near ${userLocation.city}, ${userLocation.state}`,
       });
     } catch (error) {
       const locationError = error as LocationInfo;
       setLocation(locationError);
       setIsLocationEnabled(false);
       toast({
-        title: translate("Location error"),
-        description: locationError.error || translate("Something went wrong getting your location"),
+        title: "Location error",
+        description: locationError.error || "Something went wrong getting your location",
         variant: "destructive",
       });
     } finally {
@@ -69,8 +67,8 @@ export const LocationProvider = ({ children }: { children: ReactNode }) => {
     setIsLocationEnabled(false);
     localStorage.removeItem('userLocation');
     toast({
-      title: translate("Location cleared"),
-      description: translate("Your location data has been removed"),
+      title: "Location cleared",
+      description: "Your location data has been removed",
     });
   };
 

@@ -1,47 +1,44 @@
 
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { useLocation as useRouterLocation, useSearchParams } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { Search, MapPin, Filter, X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
-import { getShops } from '@/services/shopService';
-import { productCategories } from '@/models/product';
-import { MapPin, Search, Store, ChevronRight, XCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { motion } from 'framer-motion';
-import { useLanguage } from '@/context/LanguageContext';
 import { useLocation } from '@/context/LocationContext';
+import { getShops } from '@/services/shopService';
+import ShopCard from '@/components/shop/ShopCard';
 
 const Browse = () => {
-  const [shops, setShops] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [searchLocation, setSearchLocation] = useState('');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filteredShops, setFilteredShops] = useState([]);
-  const { translate } = useLanguage();
-  const { location, isLocationEnabled, requestLocation, getNearbyShops } = useLocation();
+  const { isLocationEnabled, location, requestLocation } = useLocation();
+  const routerLocation = useRouterLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
   
-  // Fetch shops on component mount
+  const [shops, setShops] = useState([]);
+  const [filteredShops, setFilteredShops] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // Search and filter states
+  const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
+  
+  // Load all shops on mount
   useEffect(() => {
-    window.scrollTo(0, 0);
-    
     const loadShops = async () => {
       setIsLoading(true);
       try {
-        let shopsData = [];
+        const allShops = await getShops();
+        setShops(allShops);
         
-        // If location is enabled, get nearby shops
-        if (isLocationEnabled && location) {
-          shopsData = await getNearbyShops();
-          if (shopsData.length === 0) {
-            // Fallback to all shops if no nearby shops found
-            shopsData = await getShops();
-          }
-        } else {
-          shopsData = await getShops();
-        }
+        // Extract unique categories
+        const uniqueCategories = [...new Set(allShops.map(shop => shop.category))];
+        setCategories(uniqueCategories);
         
-        setShops(shopsData);
-        setFilteredShops(shopsData);
+        // Initial filtering
+        applyFilters(allShops, searchTerm, selectedCategory);
       } catch (error) {
         console.error('Error loading shops:', error);
       } finally {
@@ -50,57 +47,57 @@ const Browse = () => {
     };
     
     loadShops();
-  }, [isLocationEnabled, location]);
+  }, []);
   
-  // Filter shops based on location and search query
+  // Update search term when URL parameter changes
   useEffect(() => {
-    if (shops.length === 0) return;
+    const searchFromUrl = searchParams.get('search') || '';
+    setSearchTerm(searchFromUrl);
+    applyFilters(shops, searchFromUrl, selectedCategory);
+  }, [searchParams, routerLocation]);
+  
+  const applyFilters = (shopList, search, category) => {
+    let filtered = [...shopList];
     
-    let filtered = [...shops];
-    
-    if (searchQuery) {
+    // Apply search filter
+    if (search) {
+      const lowercaseSearch = search.toLowerCase();
       filtered = filtered.filter(shop => 
-        shop.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        shop.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        shop.category.toLowerCase().includes(searchQuery.toLowerCase())
+        shop.name.toLowerCase().includes(lowercaseSearch) || 
+        shop.description.toLowerCase().includes(lowercaseSearch) ||
+        shop.category.toLowerCase().includes(lowercaseSearch)
       );
     }
     
-    if (searchLocation) {
-      filtered = filtered.filter(shop => 
-        shop.location.toLowerCase().includes(searchLocation.toLowerCase())
-      );
+    // Apply category filter
+    if (category) {
+      filtered = filtered.filter(shop => shop.category === category);
+    }
+    
+    // Sort by nearby if location is enabled
+    if (isLocationEnabled && filtered.length > 0) {
+      filtered.sort((a, b) => (a.distance || Infinity) - (b.distance || Infinity));
     }
     
     setFilteredShops(filtered);
-  }, [shops, searchQuery, searchLocation]);
-  
-  // Container animation variants
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1
-      }
-    }
   };
   
-  // Item animation variants
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.5 }
-    }
+  const handleSearch = (e) => {
+    e.preventDefault();
+    setSearchParams({ search: searchTerm });
+    applyFilters(shops, searchTerm, selectedCategory);
   };
   
-  // Handle location request click
-  const handleLocationClick = () => {
-    requestLocation();
-    // Clear manual location search when requesting device location
-    setSearchLocation('');
+  const selectCategory = (category) => {
+    setSelectedCategory(category === selectedCategory ? '' : category);
+    applyFilters(shops, searchTerm, category === selectedCategory ? '' : category);
+  };
+  
+  const clearFilters = () => {
+    setSearchTerm('');
+    setSelectedCategory('');
+    setSearchParams({});
+    applyFilters(shops, '', '');
   };
   
   return (
@@ -109,258 +106,157 @@ const Browse = () => {
       
       <main className="pt-28 pb-20">
         <div className="container mx-auto px-4">
-          <section className="mb-12">
-            <div className="text-center max-w-3xl mx-auto mb-10">
-              <h1 className="text-4xl md:text-5xl font-serif font-bold mb-4">
-                {translate('Browse Categories & Shops')}
-              </h1>
-              <p className="text-haluna-text-light text-lg">
-                {translate('Discover authentic halal products from verified Muslim businesses near you')}
-              </p>
+          <div className="mb-8">
+            <h1 className="text-3xl md:text-4xl font-serif font-bold mb-4">
+              Browse Muslim-Owned Shops
+            </h1>
+            <p className="text-haluna-text-light max-w-2xl">
+              Discover and support Muslim-owned businesses offering a wide range of halal products and services.
+            </p>
+          </div>
+          
+          {/* Search and Filter Section */}
+          <div className="bg-white rounded-xl shadow-sm p-6 mb-8">
+            <form onSubmit={handleSearch} className="flex flex-col md:flex-row gap-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
+                <input
+                  type="text"
+                  placeholder="Search shops and businesses..."
+                  className="pl-10 w-full border rounded-lg p-3"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
               
-              {!isLocationEnabled && (
-                <div className="mt-4">
-                  <Button onClick={handleLocationClick} className="flex items-center gap-2">
-                    <MapPin className="h-4 w-4" />
-                    {translate('Enable location')}
-                  </Button>
-                </div>
-              )}
-            </div>
-            
-            {/* Search and Location Filters */}
-            <div className="bg-white rounded-xl shadow-sm p-6 mb-10">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
-                    <Search className="h-5 w-5 text-haluna-text-light" />
-                  </div>
-                  <input
-                    type="text"
-                    className="pl-12 pr-4 py-3 w-full border rounded-lg focus:ring-1 focus:ring-haluna-primary focus:border-haluna-primary transition"
-                    placeholder={translate('Search shops and businesses...')}
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
-                  {searchQuery && (
-                    <button 
-                      onClick={() => setSearchQuery('')}
-                      className="absolute inset-y-0 right-0 flex items-center pr-3"
-                    >
-                      <XCircle className="h-5 w-5 text-gray-400 hover:text-gray-600" />
-                    </button>
-                  )}
-                </div>
+              <div className="flex gap-2">
+                <Button type="submit">
+                  Search
+                </Button>
                 
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
-                    <MapPin className="h-5 w-5 text-haluna-text-light" />
-                  </div>
-                  <input
-                    type="text"
-                    className="pl-12 pr-4 py-3 w-full border rounded-lg focus:ring-1 focus:ring-haluna-primary focus:border-haluna-primary transition"
-                    placeholder={translate('Filter by location (e.g. Chicago, IL)')}
-                    value={searchLocation}
-                    onChange={(e) => setSearchLocation(e.target.value)}
-                  />
-                  {searchLocation && (
-                    <button 
-                      onClick={() => setSearchLocation('')}
-                      className="absolute inset-y-0 right-0 flex items-center pr-3"
-                    >
-                      <XCircle className="h-5 w-5 text-gray-400 hover:text-gray-600" />
-                    </button>
-                  )}
-                </div>
-              </div>
-              
-              {isLocationEnabled && location && (
-                <div className="mt-4 p-2 bg-haluna-primary-light/20 rounded-lg flex items-center gap-2">
-                  <MapPin className="h-4 w-4 text-haluna-primary" />
-                  <span className="text-sm text-haluna-primary">
-                    {translate('Showing shops near')} {location.city}, {location.state}
-                  </span>
-                </div>
-              )}
-            </div>
-          </section>
-          
-          {/* Categories Section */}
-          <section className="mb-16">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl md:text-3xl font-serif font-bold">
-                {translate('Popular Categories')}
-              </h2>
-              <Link to="/shop" className="text-haluna-primary flex items-center hover:underline">
-                {translate('View All')} <ChevronRight size={16} />
-              </Link>
-            </div>
-            
-            <motion.div 
-              className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4"
-              variants={containerVariants}
-              initial="hidden"
-              animate="visible"
-            >
-              {productCategories.slice(0, 6).map((category, index) => (
-                <motion.div 
-                  key={category}
-                  variants={itemVariants}
-                  className="group"
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsFiltersOpen(!isFiltersOpen)}
+                  className="flex items-center"
                 >
-                  <Link 
-                    to={`/shop?category=${category}`} 
-                    className="flex flex-col items-center p-6 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow h-full"
+                  <Filter className="h-4 w-4 mr-2" />
+                  Filters
+                </Button>
+                
+                {(searchTerm || selectedCategory) && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={clearFilters}
+                    className="flex items-center text-red-500 hover:text-red-600 hover:bg-red-50"
                   >
-                    <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 bg-haluna-${
-                      ['primary-light', 'beige', 'sage', 'cream', 'accent', 'secondary'][index % 6]
-                    }`}>
-                      <img 
-                        src={`/lovable-uploads/${['26c50a86-ec95-4072-8f0c-ac930a65b34d.png', '0c423741-0711-4e97-8c56-ca4fe31dc6ca.png', '9c75ca26-bc1a-4718-84bb-67d7f2337b30.png', 'd8db1529-74b3-4d86-b64a-f0c8b0f92c5c.png'][index % 4]}`}
-                        alt={category}
-                        className="w-8 h-8 object-contain"
-                      />
-                    </div>
-                    <h3 className="font-medium text-center text-haluna-text group-hover:text-haluna-primary transition-colors">
-                      {translate(category)}
-                    </h3>
-                  </Link>
-                </motion.div>
-              ))}
-              
-              <motion.div variants={itemVariants}>
-                <Link 
-                  to="/shop" 
-                  className="flex flex-col items-center justify-center p-6 bg-haluna-primary-light/30 rounded-xl border-2 border-dashed border-haluna-primary/30 hover:border-haluna-primary/60 transition-colors h-full"
-                >
-                  <span className="text-haluna-primary font-medium">{translate('View All Categories')}</span>
-                  <ChevronRight size={20} className="mt-2 text-haluna-primary" />
-                </Link>
-              </motion.div>
-            </motion.div>
-          </section>
-          
-          {/* Shops Section */}
-          <section>
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl md:text-3xl font-serif font-bold">
-                {searchLocation ? 
-                  `${translate('Shops in')} ${searchLocation}` : 
-                  isLocationEnabled && location ? 
-                    `${translate('Shops Near You')} (${location.city})` : 
-                    translate('Featured Shops')
-                }
-              </h2>
-              <Link to="/shops" className="text-haluna-primary flex items-center hover:underline">
-                {translate('View All')} <ChevronRight size={16} />
-              </Link>
-            </div>
-            
-            {isLoading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {[...Array(6)].map((_, index) => (
-                  <div key={index} className="bg-white rounded-xl shadow-sm overflow-hidden animate-pulse">
-                    <div className="h-48 bg-gray-200"></div>
-                    <div className="p-6">
-                      <div className="h-6 bg-gray-200 rounded w-3/4 mb-3"></div>
-                      <div className="h-4 bg-gray-200 rounded w-1/4 mb-4"></div>
-                      <div className="h-4 bg-gray-200 rounded w-full mb-3"></div>
-                      <div className="h-4 bg-gray-200 rounded w-5/6"></div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : filteredShops.length === 0 ? (
-              <div className="text-center py-16 bg-white rounded-xl shadow-sm">
-                <Store className="h-16 w-16 text-haluna-text-light mx-auto mb-4" />
-                <h3 className="text-xl font-medium mb-2">{translate('No shops found')}</h3>
-                <p className="text-haluna-text-light mb-6">
-                  {searchLocation 
-                    ? translate(`We couldn't find any shops in "${searchLocation}". Try a different location.`)
-                    : translate("We couldn't find any shops matching your search.")}
-                </p>
-                {(searchLocation || searchQuery) && (
-                  <Button 
-                    onClick={() => {
-                      setSearchLocation('');
-                      setSearchQuery('');
-                    }}
-                    variant="outline"
-                  >
-                    {translate('Clear Filters')}
+                    <X className="h-4 w-4 mr-2" />
+                    Clear
                   </Button>
                 )}
               </div>
-            ) : (
-              <motion.div 
-                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-                variants={containerVariants}
-                initial="hidden"
-                animate="visible"
+            </form>
+            
+            {isFiltersOpen && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.3 }}
+                className="mt-4 pt-4 border-t"
               >
-                {filteredShops.map((shop, index) => (
-                  <motion.div
-                    key={shop.id}
-                    variants={itemVariants}
-                    className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow"
-                  >
-                    <Link to={`/shop/${shop.id}`} className="block">
-                      <div className="relative h-48 bg-gradient-to-r from-haluna-primary-light to-haluna-beige overflow-hidden">
-                        {shop.coverImage ? (
-                          <img 
-                            src={shop.coverImage} 
-                            alt={shop.name} 
-                            className="w-full h-full object-cover transition-transform hover:scale-105 duration-500"
-                          />
-                        ) : (
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <Store className="h-16 w-16 text-white/50" />
-                          </div>
-                        )}
-                        <div className="absolute top-3 right-3 bg-white/80 backdrop-blur-sm px-2 py-1 rounded-full text-xs font-medium flex items-center">
-                          <MapPin className="h-3 w-3 mr-1" />
-                          {shop.location}
-                          {shop.distance && (
-                            <span className="ml-1 text-haluna-primary">
-                              (~{shop.distance.toFixed(1)} mi)
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      
-                      <div className="p-6">
-                        <div className="flex justify-between items-start mb-2">
-                          <div>
-                            <h3 className="font-medium text-lg">{shop.name}</h3>
-                            <p className="text-xs text-haluna-text-light">{shop.category}</p>
-                          </div>
-                          {shop.isVerified && (
-                            <div className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full font-medium">
-                              {translate('Verified')}
-                            </div>
-                          )}
-                        </div>
-                        
-                        <p className="text-haluna-text-light text-sm mb-4 line-clamp-2">
-                          {shop.description}
-                        </p>
-                        
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-haluna-text">
-                            {shop.productCount} {translate('Products')}
-                          </span>
-                          <div className="flex items-center text-amber-500">
-                            <span>★</span>
-                            <span className="ml-1">{shop.rating}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </Link>
-                  </motion.div>
-                ))}
+                <div className="mb-4">
+                  <h3 className="font-medium mb-2">Categories</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {categories.map(category => (
+                      <button
+                        key={category}
+                        onClick={() => selectCategory(category)}
+                        className={`px-3 py-1 rounded-full text-sm ${
+                          selectedCategory === category
+                            ? 'bg-haluna-primary text-white'
+                            : 'bg-gray-100 hover:bg-gray-200'
+                        }`}
+                      >
+                        {category}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                
+                <div>
+                  <h3 className="font-medium mb-2">Location</h3>
+                  {isLocationEnabled ? (
+                    <div className="flex items-center text-sm text-haluna-primary">
+                      <MapPin className="h-4 w-4 mr-1" />
+                      Showing shops near {location?.city || 'your location'}
+                    </div>
+                  ) : (
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      onClick={requestLocation}
+                      className="flex items-center"
+                    >
+                      <MapPin className="h-4 w-4 mr-1" />
+                      Enable Location
+                    </Button>
+                  )}
+                </div>
               </motion.div>
             )}
-          </section>
+          </div>
+          
+          {/* Results Section */}
+          <div className="mb-6 flex items-center justify-between">
+            <h2 className="text-xl font-medium">
+              {isLocationEnabled && location
+                ? `Shops in ${location.city}, ${location.state}`
+                : 'All Shops'}
+              {filteredShops.length > 0 && ` (${filteredShops.length})`}
+            </h2>
+            
+            {searchTerm && (
+              <p className="text-sm">
+                Search results for: <span className="font-medium">"{searchTerm}"</span>
+              </p>
+            )}
+          </div>
+          
+          {isLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="bg-white rounded-xl shadow-sm overflow-hidden animate-pulse">
+                  <div className="h-48 bg-gray-200"></div>
+                  <div className="p-6 space-y-4">
+                    <div className="h-6 bg-gray-200 rounded w-3/4"></div>
+                    <div className="h-4 bg-gray-200 rounded w-full"></div>
+                    <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                    <div className="h-10 bg-gray-200 rounded"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : filteredShops.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredShops.map((shop, index) => (
+                <ShopCard key={shop.id} shop={shop} index={index} />
+              ))}
+            </div>
+          ) : (
+            <div className="bg-white rounded-xl shadow-sm p-10 text-center">
+              <Store className="h-16 w-16 mx-auto mb-4 text-gray-400" />
+              <h3 className="text-xl font-medium mb-2">No shops found</h3>
+              <p className="text-haluna-text-light mb-6 max-w-lg mx-auto">
+                We couldn't find any shops matching your search.
+                {searchTerm && " Try different search terms or clear your filters."}
+              </p>
+              <Button onClick={clearFilters}>
+                Clear Filters
+              </Button>
+            </div>
+          )}
         </div>
       </main>
       

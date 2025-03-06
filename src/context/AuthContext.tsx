@@ -9,6 +9,21 @@ interface User {
   name: string;
   email: string;
   role: UserRole;
+  phone?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+}
+
+interface ProfileUpdateData {
+  name: string;
+  email: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
 }
 
 interface AuthContextType {
@@ -17,6 +32,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<UserRole | false>;
   signup: (name: string, email: string, password: string, role: UserRole) => Promise<boolean>;
   logout: () => void;
+  updateUserProfile: (data: ProfileUpdateData) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -103,6 +119,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
   
+  const updateUserProfile = async (data: ProfileUpdateData): Promise<boolean> => {
+    try {
+      if (!user) return false;
+      
+      const updatedUser = {
+        ...user,
+        ...data
+      };
+      
+      // Update in localStorage
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      
+      // Update state
+      setUser(updatedUser);
+      
+      return true;
+    } catch (error) {
+      console.error('Profile update failed', error);
+      return false;
+    }
+  };
+  
   const logout = () => {
     setUser(null);
     setIsLoggedIn(false);
@@ -111,7 +149,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
   
   return (
-    <AuthContext.Provider value={{ user, isLoggedIn, login, signup, logout }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      isLoggedIn, 
+      login, 
+      signup, 
+      logout,
+      updateUserProfile
+    }}>
       {children}
     </AuthContext.Provider>
   );
