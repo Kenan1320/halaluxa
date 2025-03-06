@@ -27,12 +27,12 @@ const CartDropdown = () => {
   return (
     <div className="relative" ref={dropdownRef}>
       <button
-        className="relative p-2 rounded-full hover:bg-haluna-primary-light transition flex items-center"
+        className="relative p-2 rounded-lg bg-haluna-primary text-white hover:bg-haluna-primary-dark transition flex items-center"
         onClick={() => setIsOpen(!isOpen)}
       >
-        <ShoppingBag className="h-5 w-5 text-haluna-text" />
+        <ShoppingBag className="h-5 w-5" />
         {cart.totalItems > 0 && (
-          <span className="absolute -top-1 -right-1 bg-haluna-primary text-white text-xs w-5 h-5 flex items-center justify-center rounded-full">
+          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full">
             {cart.totalItems}
           </span>
         )}
@@ -41,7 +41,7 @@ const CartDropdown = () => {
       {isOpen && (
         <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-lg z-50 overflow-hidden">
           <div className="p-4 border-b">
-            <h3 className="font-medium">Your Cart</h3>
+            <h3 className="font-medium">Your Shopping Cart</h3>
             <p className="text-xs text-haluna-text-light">
               {cart.totalItems} {cart.totalItems === 1 ? 'item' : 'items'}
             </p>

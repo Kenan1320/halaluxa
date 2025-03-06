@@ -6,6 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { LogIn, ArrowLeft, Lock, Mail } from 'lucide-react';
 import { motion } from 'framer-motion';
+import LoginSelector from './LoginSelector';
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -17,6 +18,7 @@ const LoginPage = () => {
     password: ''
   });
   const [loading, setLoading] = useState(false);
+  const [userType, setUserType] = useState<'shopper' | 'business' | null>(null);
 
   // Get the intended destination, if any
   const from = location.state?.from?.pathname || '/';
@@ -28,19 +30,40 @@ const LoginPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!userType) {
+      toast({
+        title: "Select Account Type",
+        description: "Please select whether you are a shopper or business owner",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setLoading(true);
     
     try {
-      const success = await login(formData.email, formData.password);
+      const role = await login(formData.email, formData.password);
       
-      if (success) {
+      if (role) {
+        // Check if the role matches the selected type
+        if ((role === 'shopper' && userType === 'business') || (role === 'business' && userType === 'shopper')) {
+          toast({
+            title: "Account Type Mismatch",
+            description: `You're trying to log in as a ${userType} but your account is registered as a ${role}. Please select the correct account type.`,
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
+        }
+        
         toast({
           title: "Success",
           description: "Logged in successfully",
         });
         
         // Navigate to the intended destination or role-specific page
-        navigate(from === '/' ? (success === 'business' ? '/dashboard' : '/shop') : from);
+        navigate(from === '/' ? (role === 'business' ? '/dashboard' : '/shop') : from);
       } else {
         toast({
           title: "Error",
@@ -94,6 +117,10 @@ const LoginPage = () => {
         <motion.div className="text-center mb-8" variants={itemVariants}>
           <h1 className="text-3xl font-serif font-bold text-haluna-text bg-clip-text text-transparent bg-gradient-to-r from-haluna-primary to-purple-600">Welcome Back</h1>
           <p className="text-haluna-text-light mt-2">Log in to your Haluna account</p>
+        </motion.div>
+        
+        <motion.div variants={itemVariants}>
+          <LoginSelector onSelect={setUserType} selectedType={userType} />
         </motion.div>
         
         <form onSubmit={handleSubmit} className="space-y-5">
@@ -159,7 +186,7 @@ const LoginPage = () => {
             <Button 
               type="submit" 
               className="w-full flex items-center justify-center bg-gradient-to-r from-haluna-primary to-purple-600 hover:from-haluna-primary hover:to-purple-700 transition-all duration-300 h-12" 
-              disabled={loading}
+              disabled={loading || !userType}
             >
               {loading ? (
                 <div className="flex items-center">
@@ -169,7 +196,7 @@ const LoginPage = () => {
               ) : (
                 <>
                   <LogIn size={18} className="mr-2" />
-                  Log In
+                  Log In as {userType === 'shopper' ? 'Shopper' : userType === 'business' ? 'Business Owner' : 'User'}
                 </>
               )}
             </Button>

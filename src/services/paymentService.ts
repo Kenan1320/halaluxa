@@ -3,10 +3,13 @@ import { Cart, CartItem } from '@/models/cart';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface PaymentMethod {
-  cardNumber: string;
-  cardName: string;
-  expiryDate: string;
-  cvv: string;
+  type: 'card' | 'paypal' | 'applepay' | 'stripe';
+  cardNumber?: string;
+  cardName?: string;
+  expiryDate?: string;
+  cvv?: string;
+  paypalEmail?: string;
+  stripeToken?: string;
 }
 
 export interface PaymentDetails {
@@ -15,10 +18,14 @@ export interface PaymentDetails {
 }
 
 export interface SellerAccount {
+  id?: string;
   sellerId: string;
   accountName: string;
   accountNumber: string;
   bankName: string;
+  accountType?: 'bank' | 'paypal' | 'stripe' | 'applepay';
+  paypalEmail?: string;
+  stripeAccountId?: string;
 }
 
 // Simulated payment processing
@@ -147,10 +154,14 @@ export const getSellerAccounts = async (): Promise<SellerAccount[]> => {
       if (data && data.length > 0) {
         // Map from DB format to our interface
         return data.map(account => ({
+          id: account.id,
           sellerId: account.seller_id,
           accountName: account.account_name,
           accountNumber: account.account_number,
-          bankName: account.bank_name
+          bankName: account.bank_name,
+          accountType: account.account_type || 'bank',
+          paypalEmail: account.paypal_email,
+          stripeAccountId: account.stripe_account_id
         }));
       }
     }
@@ -182,22 +193,25 @@ export const saveSellerAccount = async (account: SellerAccount): Promise<void> =
           seller_id: sellerId,
           account_name: account.accountName,
           account_number: account.accountNumber,
-          bank_name: account.bankName
+          bank_name: account.bankName,
+          account_type: account.accountType || 'bank',
+          paypal_email: account.paypalEmail,
+          stripe_account_id: account.stripeAccountId
         });
         
       if (error) {
         console.error('Error saving seller account to database:', error);
         // Fallback to localStorage
-        const accounts = getSellerAccounts();
-        const existingIndex = (await accounts).findIndex(a => a.sellerId === account.sellerId);
+        const accounts = await getSellerAccounts();
+        const existingIndex = accounts.findIndex(a => a.sellerId === account.sellerId);
         
         if (existingIndex >= 0) {
-          (await accounts)[existingIndex] = account;
+          accounts[existingIndex] = account;
         } else {
-          (await accounts).push(account);
+          accounts.push(account);
         }
         
-        localStorage.setItem('sellerAccounts', JSON.stringify(await accounts));
+        localStorage.setItem('sellerAccounts', JSON.stringify(accounts));
       }
     } else {
       // Save to localStorage if not authenticated

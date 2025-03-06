@@ -20,12 +20,12 @@ export interface Shop {
   category?: string;
 }
 
-// Database representation of shop data
+// Database representation of shop data - completely separate to avoid circular references
 interface DbShop {
-  id?: string;
-  name?: string;
-  description?: string;
-  owner_id?: string;
+  id: string;
+  name: string;
+  description: string;
+  owner_id: string;
   logo_url?: string;
   cover_image?: string;
   location?: string;
@@ -38,7 +38,7 @@ interface DbShop {
 }
 
 // Mapping function for shop data
-function mapDbShopToModel(dbShop: any): Shop {
+function mapDbShopToModel(dbShop: DbShop): Shop {
   return {
     id: dbShop.id,
     name: dbShop.name,
@@ -57,8 +57,8 @@ function mapDbShopToModel(dbShop: any): Shop {
 }
 
 // Helper function to map from model to DB format
-function mapModelToDbShop(shop: Partial<Shop>): DbShop {
-  const dbShop: DbShop = {};
+function mapModelToDbShop(shop: Partial<Shop>): Partial<DbShop> {
+  const dbShop: Partial<DbShop> = {};
   
   if (shop.name !== undefined) dbShop.name = shop.name;
   if (shop.description !== undefined) dbShop.description = shop.description;
@@ -87,7 +87,7 @@ export async function getShops(): Promise<Shop[]> {
       return [];
     }
     
-    return data.map(mapDbShopToModel);
+    return data.map(shop => mapDbShopToModel(shop as DbShop));
   } catch (err) {
     console.error('Error in getShops:', err);
     return [];
@@ -108,7 +108,7 @@ export async function getShopById(id: string): Promise<Shop | undefined> {
       return undefined;
     }
     
-    return mapDbShopToModel(data);
+    return mapDbShopToModel(data as DbShop);
   } catch (err) {
     console.error(`Error in getShopById for ${id}:`, err);
     return undefined;
@@ -159,7 +159,7 @@ export async function updateShop(shop: Partial<Shop>): Promise<Shop | undefined>
       return undefined;
     }
     
-    return mapDbShopToModel(data);
+    return mapDbShopToModel(data as DbShop);
   } catch (err) {
     console.error(`Error in updateShop for ${shop.id}:`, err);
     return undefined;
@@ -181,7 +181,7 @@ export async function getFeaturedShops(): Promise<Shop[]> {
       return [];
     }
     
-    return data.map(mapDbShopToModel);
+    return data.map(shop => mapDbShopToModel(shop as DbShop));
   } catch (err) {
     console.error('Error in getFeaturedShops:', err);
     return [];

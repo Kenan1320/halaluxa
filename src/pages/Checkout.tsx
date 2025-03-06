@@ -1,8 +1,9 @@
 
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Check, CreditCard, Lock } from 'lucide-react';
+import { Check, CreditCard, Lock, Mail, CreditCardIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { useCart } from '@/context/CartContext';
@@ -18,10 +19,15 @@ interface CheckoutFormData {
   state: string;
   zipCode: string;
   country: string;
+  
+  // Credit card details
   cardNumber: string;
   cardName: string;
   expiryDate: string;
   cvv: string;
+  
+  // PayPal details
+  paypalEmail: string;
 }
 
 const initialFormData: CheckoutFormData = {
@@ -35,12 +41,14 @@ const initialFormData: CheckoutFormData = {
   cardNumber: '',
   cardName: '',
   expiryDate: '',
-  cvv: ''
+  cvv: '',
+  paypalEmail: ''
 };
 
 const Checkout = () => {
   const [formData, setFormData] = useState<CheckoutFormData>(initialFormData);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<'card' | 'paypal' | 'applepay' | 'stripe'>('card');
   const { cart, clearCart } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -75,6 +83,25 @@ const Checkout = () => {
       return;
     }
     
+    // Additional validation based on payment method
+    if (paymentMethod === 'card' && (!formData.cardNumber || !formData.cardName || !formData.expiryDate || !formData.cvv)) {
+      toast({
+        title: "Error",
+        description: "Please fill all card details",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (paymentMethod === 'paypal' && !formData.paypalEmail) {
+      toast({
+        title: "Error",
+        description: "Please enter your PayPal email",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     // Process payment
     setIsProcessing(true);
     
@@ -90,16 +117,35 @@ const Checkout = () => {
         country: formData.country
       };
       
-      // Prepare payment method
-      const paymentMethod = {
-        cardNumber: formData.cardNumber,
-        cardName: formData.cardName,
-        expiryDate: formData.expiryDate,
-        cvv: formData.cvv
-      };
+      // Prepare payment method based on selected type
+      let paymentMethodDetails;
+      
+      if (paymentMethod === 'card') {
+        paymentMethodDetails = {
+          type: 'card',
+          cardNumber: formData.cardNumber,
+          cardName: formData.cardName,
+          expiryDate: formData.expiryDate,
+          cvv: formData.cvv
+        };
+      } else if (paymentMethod === 'paypal') {
+        paymentMethodDetails = {
+          type: 'paypal',
+          paypalEmail: formData.paypalEmail
+        };
+      } else if (paymentMethod === 'applepay') {
+        paymentMethodDetails = {
+          type: 'applepay'
+        };
+      } else if (paymentMethod === 'stripe') {
+        paymentMethodDetails = {
+          type: 'stripe',
+          stripeToken: 'demo-token-' + Date.now()
+        };
+      }
       
       // Process payment
-      const result = await processPayment(cart, paymentMethod, shippingDetails);
+      const result = await processPayment(cart, paymentMethodDetails, shippingDetails);
       
       // Clear cart and redirect to confirmation
       clearCart();
@@ -264,7 +310,7 @@ const Checkout = () => {
                 </div>
                 
                 <div className="bg-white rounded-xl shadow-sm p-6">
-                  <h2 className="text-xl font-medium mb-6">Payment Information</h2>
+                  <h2 className="text-xl font-medium mb-6">Payment Method</h2>
                   
                   <div className="flex items-center justify-between mb-6">
                     <p className="text-sm text-haluna-text-light flex items-center">
@@ -279,75 +325,157 @@ const Checkout = () => {
                     </div>
                   </div>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="md:col-span-2">
-                      <label htmlFor="cardNumber" className="block text-sm font-medium text-haluna-text mb-1">
-                        Card Number *
-                      </label>
-                      <div className="relative">
-                        <input
-                          type="text"
-                          id="cardNumber"
-                          name="cardNumber"
-                          value={formData.cardNumber}
-                          onChange={handleChange}
-                          placeholder="1234 5678 9012 3456"
-                          className="w-full border rounded-lg p-2.5 pl-10 focus:ring-1 focus:ring-haluna-primary focus:border-haluna-primary"
-                          required
-                        />
-                        <CreditCard className="h-5 w-5 text-haluna-text-light absolute left-3 top-1/2 transform -translate-y-1/2" />
-                      </div>
-                    </div>
+                  <Tabs defaultValue="card" onValueChange={(value) => setPaymentMethod(value as any)}>
+                    <TabsList className="mb-6 w-full">
+                      <TabsTrigger value="card" className="flex-1">Credit/Debit Card</TabsTrigger>
+                      <TabsTrigger value="paypal" className="flex-1">PayPal</TabsTrigger>
+                      <TabsTrigger value="applepay" className="flex-1">Apple Pay</TabsTrigger>
+                      <TabsTrigger value="stripe" className="flex-1">Stripe</TabsTrigger>
+                    </TabsList>
                     
-                    <div>
-                      <label htmlFor="cardName" className="block text-sm font-medium text-haluna-text mb-1">
-                        Name on Card *
-                      </label>
-                      <input
-                        type="text"
-                        id="cardName"
-                        name="cardName"
-                        value={formData.cardName}
-                        onChange={handleChange}
-                        className="w-full border rounded-lg p-2.5 focus:ring-1 focus:ring-haluna-primary focus:border-haluna-primary"
-                        required
-                      />
-                    </div>
+                    <TabsContent value="card">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="md:col-span-2">
+                          <label htmlFor="cardNumber" className="block text-sm font-medium text-haluna-text mb-1">
+                            Card Number *
+                          </label>
+                          <div className="relative">
+                            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                              <CreditCard className="h-5 w-5 text-haluna-text-light" />
+                            </div>
+                            <input
+                              type="text"
+                              id="cardNumber"
+                              name="cardNumber"
+                              value={formData.cardNumber}
+                              onChange={handleChange}
+                              placeholder="1234 5678 9012 3456"
+                              className="w-full border rounded-lg p-2.5 pl-10 focus:ring-1 focus:ring-haluna-primary focus:border-haluna-primary"
+                              required={paymentMethod === 'card'}
+                            />
+                          </div>
+                        </div>
+                        
+                        <div>
+                          <label htmlFor="cardName" className="block text-sm font-medium text-haluna-text mb-1">
+                            Name on Card *
+                          </label>
+                          <input
+                            type="text"
+                            id="cardName"
+                            name="cardName"
+                            value={formData.cardName}
+                            onChange={handleChange}
+                            className="w-full border rounded-lg p-2.5 focus:ring-1 focus:ring-haluna-primary focus:border-haluna-primary"
+                            required={paymentMethod === 'card'}
+                          />
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label htmlFor="expiryDate" className="block text-sm font-medium text-haluna-text mb-1">
+                              Expiry Date *
+                            </label>
+                            <input
+                              type="text"
+                              id="expiryDate"
+                              name="expiryDate"
+                              value={formData.expiryDate}
+                              onChange={handleChange}
+                              placeholder="MM/YY"
+                              className="w-full border rounded-lg p-2.5 focus:ring-1 focus:ring-haluna-primary focus:border-haluna-primary"
+                              required={paymentMethod === 'card'}
+                            />
+                          </div>
+                          
+                          <div>
+                            <label htmlFor="cvv" className="block text-sm font-medium text-haluna-text mb-1">
+                              CVV *
+                            </label>
+                            <input
+                              type="text"
+                              id="cvv"
+                              name="cvv"
+                              value={formData.cvv}
+                              onChange={handleChange}
+                              placeholder="123"
+                              className="w-full border rounded-lg p-2.5 focus:ring-1 focus:ring-haluna-primary focus:border-haluna-primary"
+                              required={paymentMethod === 'card'}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </TabsContent>
                     
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label htmlFor="expiryDate" className="block text-sm font-medium text-haluna-text mb-1">
-                          Expiry Date *
-                        </label>
-                        <input
-                          type="text"
-                          id="expiryDate"
-                          name="expiryDate"
-                          value={formData.expiryDate}
-                          onChange={handleChange}
-                          placeholder="MM/YY"
-                          className="w-full border rounded-lg p-2.5 focus:ring-1 focus:ring-haluna-primary focus:border-haluna-primary"
-                          required
-                        />
+                    <TabsContent value="paypal">
+                      <div className="space-y-6">
+                        <div>
+                          <label htmlFor="paypalEmail" className="block text-sm font-medium text-haluna-text mb-1">
+                            PayPal Email *
+                          </label>
+                          <div className="relative">
+                            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                              <Mail className="h-5 w-5 text-haluna-text-light" />
+                            </div>
+                            <input
+                              type="email"
+                              id="paypalEmail"
+                              name="paypalEmail"
+                              value={formData.paypalEmail}
+                              onChange={handleChange}
+                              className="w-full border rounded-lg p-2.5 pl-10 focus:ring-1 focus:ring-haluna-primary focus:border-haluna-primary"
+                              required={paymentMethod === 'paypal'}
+                            />
+                          </div>
+                        </div>
+                        
+                        <div className="bg-blue-50 p-4 rounded-lg">
+                          <p className="text-blue-700 text-sm">
+                            After clicking "Complete Purchase", you will be redirected to PayPal to complete your payment.
+                          </p>
+                        </div>
                       </div>
-                      
-                      <div>
-                        <label htmlFor="cvv" className="block text-sm font-medium text-haluna-text mb-1">
-                          CVV *
-                        </label>
-                        <input
-                          type="text"
-                          id="cvv"
-                          name="cvv"
-                          value={formData.cvv}
-                          onChange={handleChange}
-                          placeholder="123"
-                          className="w-full border rounded-lg p-2.5 focus:ring-1 focus:ring-haluna-primary focus:border-haluna-primary"
-                          required
-                        />
+                    </TabsContent>
+                    
+                    <TabsContent value="applepay">
+                      <div className="p-4 text-center">
+                        <div className="mb-4 mx-auto w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center">
+                          <svg viewBox="0 0 24 24" width="32" height="32" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M12 14C7.58 14 4 12.21 4 10V14C4 16.21 7.58 18 12 18C16.42 18 20 16.21 20 14V10C20 12.21 16.42 14 12 14Z"></path>
+                            <path d="M12 10C7.58 10 4 8.21 4 6V10C4 12.21 7.58 14 12 14C16.42 14 20 12.21 20 10V6C20 8.21 16.42 10 12 10Z"></path>
+                            <ellipse cx="12" cy="6" rx="8" ry="3"></ellipse>
+                          </svg>
+                        </div>
+                        
+                        <p className="text-haluna-text-light mb-4">
+                          After clicking "Complete Purchase", you'll be prompted to confirm with Apple Pay.
+                        </p>
+                        
+                        <div className="w-full h-12 bg-black rounded-md flex items-center justify-center text-white">
+                          Apple Pay
+                        </div>
                       </div>
-                    </div>
-                  </div>
+                    </TabsContent>
+                    
+                    <TabsContent value="stripe">
+                      <div className="p-4 text-center">
+                        <div className="mb-4 mx-auto w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+                          <svg viewBox="0 0 24 24" width="32" height="32" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M2 12C2 6.48 6.48 2 12 2C17.52 2 22 6.48 22 12C22 17.52 17.52 22 12 22C6.48 22 2 17.52 2 12Z"></path>
+                            <path d="M16 12C16 14.21 14.21 16 12 16C9.79 16 8 14.21 8 12C8 9.79 9.79 8 12 8C14.21 8 16 9.79 16 12Z"></path>
+                          </svg>
+                        </div>
+                        
+                        <p className="text-haluna-text-light mb-4">
+                          After clicking "Complete Purchase", you'll be redirected to Stripe's secure payment page.
+                        </p>
+                        
+                        <div className="w-full h-12 bg-purple-600 rounded-md flex items-center justify-center text-white">
+                          Pay with Stripe
+                        </div>
+                      </div>
+                    </TabsContent>
+                  </Tabs>
                 </div>
                 
                 <Button 

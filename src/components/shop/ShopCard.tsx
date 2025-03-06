@@ -1,15 +1,53 @@
 
 import { motion } from 'framer-motion';
-import { Star, Store, MapPin, ExternalLink } from 'lucide-react';
+import { Store } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface ShopCardProps {
   shop: any;
   index: number;
   featured?: boolean;
+  minimal?: boolean;
 }
 
-const ShopCard = ({ shop, index, featured = false }: ShopCardProps) => {
+const ShopCard = ({ shop, index, featured = false, minimal = false }: ShopCardProps) => {
+  if (minimal) {
+    return (
+      <motion.div 
+        className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: index * 0.1 }}
+      >
+        <div className="h-32 bg-gray-100 relative flex items-center justify-center">
+          {shop.logo ? (
+            <img 
+              src={shop.logo} 
+              alt={`${shop.name} logo`} 
+              className="max-h-20 max-w-[80%] object-contain"
+            />
+          ) : (
+            <div className="flex items-center justify-center bg-haluna-primary-light h-full w-full">
+              <Store className="h-12 w-12 text-haluna-primary" />
+            </div>
+          )}
+        </div>
+        
+        <div className="p-4 text-center">
+          <h3 className="text-lg font-medium mb-2">{shop.name}</h3>
+          
+          <Button 
+            to={`/shop/${shop.id}`}
+            className="w-full text-sm"
+            size="sm"
+          >
+            Visit Shop
+          </Button>
+        </div>
+      </motion.div>
+    );
+  }
+  
   return (
     <motion.div 
       className={`bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow ${featured ? 'lg:flex' : ''}`}
@@ -48,7 +86,6 @@ const ShopCard = ({ shop, index, featured = false }: ShopCardProps) => {
         <div className="flex items-center justify-between mb-2">
           <h3 className="text-xl font-medium">{shop.name}</h3>
           <div className="flex items-center text-yellow-500">
-            <Star className="h-4 w-4 fill-current" />
             <span className="ml-1 text-sm">{shop.rating}</span>
           </div>
         </div>
@@ -63,7 +100,6 @@ const ShopCard = ({ shop, index, featured = false }: ShopCardProps) => {
           </span>
           
           <div className="flex items-center text-sm text-haluna-text-light">
-            <MapPin className="h-3 w-3 mr-1" />
             {shop.location}
           </div>
         </div>
@@ -82,13 +118,7 @@ const ShopCard = ({ shop, index, featured = false }: ShopCardProps) => {
           to={`/shop/${shop.id}`}
           className="w-full flex items-center justify-center"
         >
-          {featured ? (
-            <>
-              Visit Shop <ExternalLink className="ml-2 h-4 w-4" />
-            </>
-          ) : (
-            'View Shop'
-          )}
+          Visit Shop
         </Button>
       </div>
     </motion.div>
