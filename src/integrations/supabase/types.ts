@@ -60,6 +60,63 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles: {
+        Row: {
+          address: string | null
+          city: string | null
+          created_at: string
+          email: string | null
+          id: string
+          name: string | null
+          phone: string | null
+          role: string | null
+          shop_category: string | null
+          shop_description: string | null
+          shop_location: string | null
+          shop_logo: string | null
+          shop_name: string | null
+          state: string | null
+          updated_at: string
+          zip: string | null
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          created_at?: string
+          email?: string | null
+          id: string
+          name?: string | null
+          phone?: string | null
+          role?: string | null
+          shop_category?: string | null
+          shop_description?: string | null
+          shop_location?: string | null
+          shop_logo?: string | null
+          shop_name?: string | null
+          state?: string | null
+          updated_at?: string
+          zip?: string | null
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string | null
+          phone?: string | null
+          role?: string | null
+          shop_category?: string | null
+          shop_description?: string | null
+          shop_location?: string | null
+          shop_logo?: string | null
+          shop_name?: string | null
+          state?: string | null
+          updated_at?: string
+          zip?: string | null
+        }
+        Relationships: []
+      }
       shops: {
         Row: {
           address: string | null
