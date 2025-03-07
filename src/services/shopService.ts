@@ -53,6 +53,21 @@ const mapDbShopToModel = (shop: any, productCount: number = 0): Shop => {
   };
 };
 
+// Create a shop subscription for real-time updates
+export function subscribeToShopUpdates(onUpdate: (shops: Shop[]) => void) {
+  return supabase.channel('shops-subscription')
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'shops' },
+      async () => {
+        // Fetch the latest shops when any change happens
+        const shops = await getShops();
+        onUpdate(shops);
+      }
+    )
+    .subscribe();
+}
+
 // Convert shop product to model product
 export function convertToModelProduct(shopProduct: ShopProduct): Product {
   return {
@@ -189,6 +204,21 @@ export async function getMainShop(): Promise<Shop | null> {
   }
 }
 
+// Subscribe to products of a specific shop
+export function subscribeToShopProducts(shopId: string, onUpdate: (products: ShopProduct[]) => void) {
+  return supabase.channel(`shop-products-${shopId}`)
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'products', filter: `seller_id=eq.${shopId}` },
+      async () => {
+        // Fetch the latest products when any change happens
+        const products = await getShopProducts(shopId);
+        onUpdate(products);
+      }
+    )
+    .subscribe();
+}
+
 // Get products for a shop
 export async function getShopProducts(shopId: string): Promise<ShopProduct[]> {
   try {
@@ -228,5 +258,99 @@ export async function getShopProducts(shopId: string): Promise<ShopProduct[]> {
   } catch (err) {
     console.error('Error in getShopProducts:', err);
     return [];
+  }
+}
+
+// Create a new shop - optimized with better error handling
+export async function createShop(shopData: Partial<Shop>, userId: string): Promise<Shop | null> {
+  try {
+    if (!userId) {
+      console.error('User ID is required to create a shop');
+      return null;
+    }
+    
+    const { data, error } = await supabase
+      .from('shops')
+      .upsert({
+        id: userId, // Use the user ID as the shop ID
+        name: shopData.name || 'New Shop',
+        description: shopData.description || '',
+        owner_id: userId,
+        location: shopData.location || '',
+        category: shopData.category || '',
+        is_verified: true,
+        logo_url: shopData.logo || null,
+      }, { onConflict: 'id' })
+      .select('*')
+      .single();
+    
+    if (error) {
+      console.error('Error creating shop:', error);
+      return null;
+    }
+    
+    // Also update the profile with shop details
+    await supabase
+      .from('profiles')
+      .update({
+        shop_name: shopData.name,
+        shop_description: shopData.description,
+        shop_category: shopData.category,
+        shop_location: shopData.location,
+        shop_logo: shopData.logo
+      })
+      .eq('id', userId);
+    
+    return mapDbShopToModel(data, 0);
+  } catch (err) {
+    console.error('Error in createShop:', err);
+    return null;
+  }
+}
+
+// Update an existing shop
+export async function updateShop(shopData: Partial<Shop>): Promise<Shop | null> {
+  try {
+    if (!shopData.id) {
+      console.error('Shop ID is required to update a shop');
+      return null;
+    }
+    
+    const { data, error } = await supabase
+      .from('shops')
+      .update({
+        name: shopData.name,
+        description: shopData.description,
+        location: shopData.location,
+        category: shopData.category,
+        logo_url: shopData.logo
+      })
+      .eq('id', shopData.id)
+      .select('*')
+      .single();
+    
+    if (error) {
+      console.error('Error updating shop:', error);
+      return null;
+    }
+    
+    // Also update the profile with shop details
+    if (shopData.owner_id) {
+      await supabase
+        .from('profiles')
+        .update({
+          shop_name: shopData.name,
+          shop_description: shopData.description,
+          shop_category: shopData.category,
+          shop_location: shopData.location,
+          shop_logo: shopData.logo
+        })
+        .eq('id', shopData.owner_id);
+    }
+    
+    return mapDbShopToModel(data, 0);
+  } catch (err) {
+    console.error('Error in updateShop:', err);
+    return null;
   }
 }

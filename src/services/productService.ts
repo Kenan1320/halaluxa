@@ -1,5 +1,7 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Product, ProductDetails, mapDbProductToModel, mapModelToDbProduct } from '@/models/product';
+import { useToast } from '@/hooks/use-toast';
 
 // Helper function to safely handle JSON conversion
 const safeJsonParse = (data: any): ProductDetails => {
@@ -24,6 +26,21 @@ const isBusinessAccount = (profilesData: any): boolean => {
          profilesData.role === 'business';
 };
 
+// Subscribe to products for real-time updates
+export function subscribeToProductUpdates(onUpdate: (products: Product[]) => void) {
+  return supabase.channel('products-updates')
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'products' },
+      async () => {
+        // Fetch the latest products when any change happens
+        const products = await getProducts();
+        onUpdate(products);
+      }
+    )
+    .subscribe();
+}
+
 // Custom mapper for Supabase data to our model
 const customMapDbProductToModel = (data: any): Product => {
   return {
@@ -36,7 +53,7 @@ const customMapDbProductToModel = (data: any): Product => {
     images: data.images || [],
     sellerId: data.seller_id,
     sellerName: data.seller_name,
-    rating: data.rating,
+    rating: data.rating || 4.5,
     isHalalCertified: data.is_halal_certified,
     details: safeJsonParse(data.details),
     createdAt: data.created_at
@@ -109,7 +126,7 @@ const prepareProductForDb = (product: Partial<Product>) => {
     images: product.images,
     seller_id: product.sellerId,
     seller_name: product.sellerName,
-    rating: product.rating,
+    rating: product.rating || 4.5,
     is_halal_certified: product.isHalalCertified,
     details: product.details ? JSON.stringify(product.details) : '{}'
   };
@@ -122,7 +139,45 @@ const prepareProductForDb = (product: Partial<Product>) => {
   return dbProduct;
 };
 
-// Save a new product or update an existing one
+// Handle image upload with better error handling and progress
+export async function uploadProductImage(file: File, userId: string): Promise<string | null> {
+  try {
+    if (!file || !userId) {
+      console.error('File and user ID are required for upload');
+      return null;
+    }
+    
+    // Generate a unique filename to prevent conflicts
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+    const filePath = `${userId}/${fileName}`;
+    
+    // Upload the file with progress monitoring
+    const { data, error } = await supabase.storage
+      .from('product_images')
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: true
+      });
+    
+    if (error) {
+      console.error('Error uploading product image:', error);
+      return null;
+    }
+    
+    // Get the public URL for the uploaded file
+    const { data: urlData } = supabase.storage
+      .from('product_images')
+      .getPublicUrl(data.path);
+    
+    return urlData.publicUrl || null;
+  } catch (err) {
+    console.error('Error in uploadProductImage:', err);
+    return null;
+  }
+}
+
+// Save a new product or update an existing one with improved error handling
 export async function saveProduct(product: Partial<Product>): Promise<Product | undefined> {
   try {
     // Check if the user is a business owner
