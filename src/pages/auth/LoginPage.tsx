@@ -272,10 +272,12 @@ const LoginPage = () => {
               disabled={loading || !userType}
             >
               {loading ? (
-                <div className="flex items-center">
-                  <div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full mr-2"></div>
-                  Logging in...
-                </div>
+                <>
+                  <div className="flex items-center">
+                    <div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full mr-2"></div>
+                    Logging in...
+                  </div>
+                </>
               ) : (
                 <>
                   <LogIn size={18} className="mr-2" />

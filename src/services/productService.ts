@@ -1,5 +1,6 @@
+
 import { supabase } from '@/integrations/supabase/client';
-import { Product, ProductDetails, mapDbProductToModel, mapModelToDbProduct } from '@/models/product';
+import { Product, ProductDetails } from '@/models/product';
 
 // Helper function to safely handle JSON conversion
 const safeJsonParse = (data: any): ProductDetails => {
@@ -14,7 +15,7 @@ const safeJsonParse = (data: any): ProductDetails => {
 };
 
 // Custom mapper for Supabase data to our model
-const customMapDbProductToModel = (data: any): Product => {
+const mapDbProductToModel = (data: any): Product => {
   return {
     id: data.id,
     name: data.name,
@@ -45,7 +46,7 @@ export async function getProducts(): Promise<Product[]> {
       return [];
     }
     
-    return data.map(customMapDbProductToModel);
+    return data.map(mapDbProductToModel);
   } catch (err) {
     console.error('Error in getProducts:', err);
     return [];
@@ -69,7 +70,7 @@ export async function getProductById(id: string): Promise<Product | undefined> {
       return undefined;
     }
     
-    return customMapDbProductToModel(data);
+    return mapDbProductToModel(data);
   } catch (err) {
     console.error(`Error in getProductById for ${id}:`, err);
     return undefined;
@@ -100,48 +101,7 @@ const prepareProductForDb = (product: Partial<Product>) => {
   return dbProduct;
 };
 
-// Save a new product or update an existing one
-export async function saveProduct(product: Partial<Product>): Promise<Product | undefined> {
-  try {
-    const dbProduct = prepareProductForDb(product);
-    
-    if (product.id) {
-      // Update existing product
-      const { data, error } = await supabase
-        .from('products')
-        .update(dbProduct)
-        .eq('id', product.id)
-        .select()
-        .single();
-      
-      if (error) {
-        console.error('Error updating product:', error);
-        return undefined;
-      }
-      
-      return customMapDbProductToModel(data);
-    } else {
-      // Create new product
-      const { data, error } = await supabase
-        .from('products')
-        .insert(dbProduct)
-        .select()
-        .single();
-      
-      if (error) {
-        console.error('Error creating product:', error);
-        return undefined;
-      }
-      
-      return customMapDbProductToModel(data);
-    }
-  } catch (err) {
-    console.error('Error in saveProduct:', err);
-    return undefined;
-  }
-}
-
-// Add a new product - implemented function that was previously just an alias
+// Add a new product
 export async function addProduct(product: Partial<Product>): Promise<Product | undefined> {
   try {
     const dbProduct = prepareProductForDb(product);
@@ -157,14 +117,14 @@ export async function addProduct(product: Partial<Product>): Promise<Product | u
       return undefined;
     }
     
-    return customMapDbProductToModel(data);
+    return mapDbProductToModel(data);
   } catch (err) {
     console.error('Error in addProduct:', err);
     return undefined;
   }
 }
 
-// Update an existing product - implemented function that was previously just an alias
+// Update an existing product
 export async function updateProduct(product: Partial<Product>): Promise<Product | undefined> {
   try {
     if (!product.id) {
@@ -186,7 +146,7 @@ export async function updateProduct(product: Partial<Product>): Promise<Product 
       return undefined;
     }
     
-    return customMapDbProductToModel(data);
+    return mapDbProductToModel(data);
   } catch (err) {
     console.error('Error in updateProduct:', err);
     return undefined;
@@ -228,7 +188,7 @@ export async function getFeaturedProducts(): Promise<Product[]> {
       return [];
     }
     
-    return data.map(customMapDbProductToModel);
+    return data.map(mapDbProductToModel);
   } catch (err) {
     console.error('Error in getFeaturedProducts:', err);
     return [];
@@ -249,14 +209,14 @@ export async function getProductsByCategory(category: string): Promise<Product[]
       return [];
     }
     
-    return data.map(customMapDbProductToModel);
+    return data.map(mapDbProductToModel);
   } catch (err) {
     console.error(`Error in getProductsByCategory for ${category}:`, err);
     return [];
   }
 }
 
-// Get products by business owner ID (previously seller ID)
+// Get products by business owner ID
 export async function getProductsBySeller(sellerId: string): Promise<Product[]> {
   try {
     const { data, error } = await supabase
@@ -270,14 +230,14 @@ export async function getProductsBySeller(sellerId: string): Promise<Product[]> 
       return [];
     }
     
-    return data.map(customMapDbProductToModel);
+    return data.map(mapDbProductToModel);
   } catch (err) {
     console.error(`Error in getProductsBySeller for ${sellerId}:`, err);
     return [];
   }
 }
 
-// Function to provide mock data
+// Function to provide mock data when needed
 export function getMockProducts(): Product[] {
   return [
     {
@@ -296,6 +256,25 @@ export function getMockProducts(): Product[] {
         weight: "500g",
         servings: "4 patties",
         ingredients: "100% grass-fed beef, salt, black pepper"
+      },
+      createdAt: new Date().toISOString()
+    },
+    {
+      id: "2",
+      name: "Organic Medjool Dates",
+      description: "Sweet and succulent dates imported directly from the Middle East.",
+      price: 9.99,
+      inStock: true,
+      category: "Food & Groceries",
+      images: ["/lovable-uploads/d4ab324c-23f0-4fcc-9069-0afbc77d1c3e.png"],
+      sellerId: "seller2",
+      sellerName: "Barakah Organics",
+      rating: 4.9,
+      isHalalCertified: true,
+      details: {
+        weight: "250g",
+        origin: "Jordan",
+        ingredients: "100% organic Medjool dates"
       },
       createdAt: new Date().toISOString()
     }

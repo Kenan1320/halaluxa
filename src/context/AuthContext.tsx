@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -28,6 +29,7 @@ interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<string | null>;
   register: (email: string, password: string, name: string, role: 'shopper' | 'business') => Promise<boolean>;
+  signup: (email: string, password: string, name: string, role: 'shopper' | 'business') => Promise<boolean>;
   logout: () => Promise<void>;
   updateUser: (updates: Partial<User>) => Promise<boolean>;
   refreshSession: () => Promise<void>;
@@ -41,6 +43,7 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   login: async () => null,
   register: async () => false,
+  signup: async () => false,
   logout: async () => {},
   updateUser: async () => false,
   refreshSession: async () => {},
@@ -259,6 +262,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             .from('profiles')
             .update({ name, role })
             .eq('id', data.user.id);
+        } else {
+          // Update existing profile with role
+          await supabase
+            .from('profiles')
+            .update({ role })
+            .eq('id', data.user.id);
         }
         
         setUser({
@@ -289,6 +298,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
   
+  // Alias for register
+  const signup = register;
+  
   // Logout function
   const logout = async (): Promise<void> => {
     try {
@@ -305,10 +317,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (!user) return false;
     
     try {
+      // Prepare updates for the profiles table
+      const dbUpdates: any = {};
+      
+      if (updates.name !== undefined) dbUpdates.name = updates.name;
+      if (updates.shopName !== undefined) dbUpdates.shop_name = updates.shopName;
+      if (updates.shopDescription !== undefined) dbUpdates.shop_description = updates.shopDescription;
+      if (updates.shopCategory !== undefined) dbUpdates.shop_category = updates.shopCategory;
+      if (updates.shopLocation !== undefined) dbUpdates.shop_location = updates.shopLocation;
+      if (updates.shopLogo !== undefined) dbUpdates.shop_logo = updates.shopLogo;
+      if (updates.phone !== undefined) dbUpdates.phone = updates.phone;
+      if (updates.address !== undefined) dbUpdates.address = updates.address;
+      if (updates.city !== undefined) dbUpdates.city = updates.city;
+      if (updates.state !== undefined) dbUpdates.state = updates.state;
+      if (updates.zip !== undefined) dbUpdates.zip = updates.zip;
+      
       // Update user in database
       const { error } = await supabase
         .from('profiles')
-        .update(updates)
+        .update(dbUpdates)
         .eq('id', user.id);
       
       if (error) throw error;
@@ -378,6 +405,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       user,
       login,
       register,
+      signup,
       logout,
       updateUser,
       refreshSession,
