@@ -2,14 +2,14 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { getShopById, getShopProducts } from '@/services/shopService';
-import { ShopProduct, Shop } from '@/models/shop';
+import { ShopProduct } from '@/models/shop';
 import { Product } from '@/models/product';
 import ShopProductList from '@/components/shop/ShopProductList';
 import { MapPin, Check, Star, Package } from 'lucide-react';
 
 export default function ShopDetail() {
   const { shopId } = useParams<{ shopId: string }>();
-  const [shop, setShop] = useState<Shop | null>(null);
+  const [shop, setShop] = useState<any | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -24,7 +24,8 @@ export default function ShopDetail() {
           // Load shop products
           const shopProducts = await getShopProducts(shopId);
           
-          // Convert ShopProduct to Product
+          // Convert ShopProduct to Product using the convertToModelProduct function
+          // But we're reimplementing it here to avoid circular dependencies
           const convertedProducts: Product[] = shopProducts.map(sp => ({
             id: sp.id,
             name: sp.name,
@@ -144,7 +145,7 @@ export default function ShopDetail() {
       <h2 className="text-xl font-serif font-bold mb-6">Products from {shop.name}</h2>
       
       {products.length > 0 ? (
-        <ShopProductList products={products} />
+        <ShopProductList shopId={shop.id} products={products} />
       ) : (
         <div className="bg-white rounded-lg shadow-sm p-8 text-center">
           <div className="h-16 w-16 bg-haluna-primary-light rounded-full flex items-center justify-center mx-auto mb-4">

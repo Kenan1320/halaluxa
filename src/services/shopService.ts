@@ -4,7 +4,7 @@ import { Shop, ShopProduct } from '@/models/shop';
 import { Product } from '@/models/product';
 
 // Mapping database fields to model fields
-const mapDbShopToModel = (dbShop: any): Shop => {
+export const mapDbShopToModel = (dbShop: any): Shop => {
   return {
     id: dbShop.id,
     name: dbShop.name,
@@ -101,6 +101,34 @@ export async function uploadShopLogo(base64Image: string, ownerId: string) {
   }
 }
 
+// Upload product image
+export async function uploadProductImage(file: File, onProgress?: (progress: number) => void) {
+  try {
+    const fileName = `${Date.now()}_${file.name}`;
+    const filePath = `product_images/${fileName}`;
+    
+    const { data, error } = await supabase.storage
+      .from('products')
+      .upload(filePath, file, {
+        contentType: file.type,
+        cacheControl: '3600'
+      });
+    
+    if (error) {
+      throw error;
+    }
+    
+    const { data: urlData } = supabase.storage
+      .from('products')
+      .getPublicUrl(filePath);
+    
+    return urlData.publicUrl;
+  } catch (error) {
+    console.error('Error uploading product image:', error);
+    return null;
+  }
+}
+
 // Helper function to convert base64 to blob
 function base64ToBlob(base64: string, contentType = '') {
   const byteCharacters = atob(base64);
@@ -142,6 +170,9 @@ export async function getShops(): Promise<Shop[]> {
   }
 }
 
+// Alias for getShops - for compatibility
+export const getAllShops = getShops;
+
 // Get a shop by ID
 export async function getShopById(id: string): Promise<Shop | null> {
   try {
@@ -159,6 +190,19 @@ export async function getShopById(id: string): Promise<Shop | null> {
     return mapDbShopToModel(data);
   } catch (error) {
     console.error(`Error in getShopById for ${id}:`, error);
+    return null;
+  }
+}
+
+// Get the main shop for a user
+export async function getMainShop(): Promise<Shop | null> {
+  try {
+    const mainShopId = localStorage.getItem('mainShopId');
+    if (!mainShopId) return null;
+    
+    return await getShopById(mainShopId);
+  } catch (error) {
+    console.error('Error getting main shop:', error);
     return null;
   }
 }
@@ -251,7 +295,7 @@ export async function getShopProducts(shopId: string): Promise<ShopProduct[]> {
     const { data, error } = await supabase
       .from('products')
       .select('*')
-      .eq('business_owner_id', shopId);
+      .eq('seller_id', shopId);
     
     if (error) {
       console.error(`Error fetching products for shop ${shopId}:`, error);
@@ -266,14 +310,46 @@ export async function getShopProducts(shopId: string): Promise<ShopProduct[]> {
       price: product.price,
       category: product.category,
       images: product.images || [],
-      sellerId: product.business_owner_id,
-      sellerName: product.business_owner_name,
+      sellerId: product.seller_id,
+      sellerName: product.seller_name,
       rating: product.rating || 0
     }));
   } catch (error) {
     console.error(`Error in getShopProducts for ${shopId}:`, error);
     return createMockProducts(shopId, 6);
   }
+}
+
+// Convert ShopProduct to standard Product model
+export function convertToModelProduct(shopProduct: ShopProduct): Product {
+  return {
+    id: shopProduct.id,
+    name: shopProduct.name,
+    description: shopProduct.description,
+    price: shopProduct.price,
+    category: shopProduct.category,
+    images: shopProduct.images,
+    sellerId: shopProduct.sellerId,
+    sellerName: shopProduct.sellerName,
+    rating: shopProduct.rating || 0,
+    inStock: true, // Default value
+    isHalalCertified: true, // Default value
+    createdAt: new Date().toISOString(),
+    details: {}
+  };
+}
+
+// Subscribe to shops updates (mock for real-time updates)
+export function subscribeToShops(callback: (shops: Shop[]) => void) {
+  // For now just fetch shops once
+  getShops().then(shops => {
+    callback(shops);
+  });
+  
+  // Return a dummy unsubscribe function
+  return {
+    unsubscribe: () => {}
+  };
 }
 
 // Update a shop

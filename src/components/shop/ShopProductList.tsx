@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { ShoppingCart, Heart, ChevronRight, ChevronLeft } from 'lucide-react';
@@ -11,11 +10,12 @@ import { useToast } from '@/hooks/use-toast';
 
 interface ShopProductListProps {
   shopId: string;
+  products?: Product[];
 }
 
-const ShopProductList = ({ shopId }: ShopProductListProps) => {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+const ShopProductList = ({ shopId, products: initialProducts }: ShopProductListProps) => {
+  const [products, setProducts] = useState<Product[]>(initialProducts || []);
+  const [isLoading, setIsLoading] = useState(!initialProducts);
   const { addToCart } = useCart();
   const { toast } = useToast();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -24,11 +24,16 @@ const ShopProductList = ({ shopId }: ShopProductListProps) => {
   const [canScrollRight, setCanScrollRight] = useState(true);
   
   useEffect(() => {
+    if (initialProducts) {
+      setProducts(initialProducts);
+      setIsLoading(false);
+      return;
+    }
+    
     const loadProducts = async () => {
       try {
         setIsLoading(true);
         const shopProducts = await getShopProducts(shopId);
-        // Convert shop products to model products
         const modelProducts = shopProducts.map(convertToModelProduct);
         setProducts(modelProducts);
       } catch (error) {
@@ -39,7 +44,7 @@ const ShopProductList = ({ shopId }: ShopProductListProps) => {
     };
     
     loadProducts();
-  }, [shopId]);
+  }, [shopId, initialProducts]);
   
   const handleAddToCart = (product: Product, e?: React.MouseEvent) => {
     e?.stopPropagation();
@@ -145,7 +150,6 @@ const ShopProductList = ({ shopId }: ShopProductListProps) => {
               transition={{ layout: { duration: 0.3, ease: "easeOut" } }}
             >
               {selectedProduct === product.id ? (
-                // Expanded product card with details
                 <>
                   <div className="h-40 relative">
                     <img 
@@ -189,9 +193,7 @@ const ShopProductList = ({ shopId }: ShopProductListProps) => {
                   </div>
                 </>
               ) : (
-                // Minimalist product card
                 <>
-                  {/* Product image */}
                   <div className="h-36 relative">
                     <img 
                       src={product.images[0] || '/placeholder.svg'} 
@@ -216,7 +218,6 @@ const ShopProductList = ({ shopId }: ShopProductListProps) => {
                     </motion.div>
                   </div>
                   
-                  {/* Product details */}
                   <div className="p-2">
                     <h4 className="font-medium text-xs line-clamp-1">{product.name}</h4>
                     <div className="mt-1">
