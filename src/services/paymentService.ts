@@ -1,10 +1,8 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { CartItem } from '@/models/cart';
 import { Product } from '@/models/product';
 import { Json } from '@/integrations/supabase/types';
 
-// Update the interface to include the new fields added to the seller_accounts table
 export interface SellerAccount {
   id: string;
   seller_id: string;
@@ -30,18 +28,14 @@ export interface OrderDetails {
   total: number;
 }
 
-// Process payment for a customer order
 export const processPayment = async (
   cart: { items: CartItem[]; totalPrice: number },
   paymentMethodDetails: any,
   shippingDetails: any
 ): Promise<PaymentResult> => {
-  // Simulate payment processing delay
   await new Promise(resolve => setTimeout(resolve, 1000));
   
-  // Create an order in the database
   try {
-    // Get current user
     const { data: userData } = await supabase.auth.getUser();
     const userId = userData.user?.id;
     
@@ -49,7 +43,6 @@ export const processPayment = async (
       throw new Error('User not authenticated');
     }
     
-    // Serialize cart items for storage as JSON
     const serializedItems = cart.items.map(item => ({
       productId: item.product.id,
       quantity: item.quantity,
@@ -58,7 +51,6 @@ export const processPayment = async (
       image: item.product.images[0]
     }));
     
-    // Store order in database
     const { data, error } = await supabase
       .from('orders')
       .insert({
@@ -66,7 +58,9 @@ export const processPayment = async (
         total: cart.totalPrice,
         user_id: userId,
         shipping_details: shippingDetails as unknown as Json,
-        status: 'Processing'
+        status: 'Processing',
+        payment_method: paymentMethodDetails.type,
+        payment_details: paymentMethodDetails as unknown as Json
       })
       .select()
       .single();
@@ -76,7 +70,6 @@ export const processPayment = async (
       throw error;
     }
     
-    // Return success with the order ID
     return {
       success: true,
       orderId: data.id,
@@ -88,7 +81,6 @@ export const processPayment = async (
   }
 };
 
-// Get all orders for the current user
 export const getUserOrders = async (): Promise<OrderDetails[]> => {
   try {
     const { data: user } = await supabase.auth.getUser();
@@ -118,7 +110,6 @@ export const getUserOrders = async (): Promise<OrderDetails[]> => {
   }
 };
 
-// Create a seller account with payment details
 export const createSellerAccount = async (
   accountData: Partial<SellerAccount>
 ): Promise<SellerAccount | null> => {
@@ -129,7 +120,6 @@ export const createSellerAccount = async (
       throw new Error('User not authenticated');
     }
     
-    // Ensure required fields are present
     const completeAccountData = {
       seller_id: user.user.id,
       account_name: accountData.account_name || 'Default Account',
@@ -158,7 +148,6 @@ export const createSellerAccount = async (
   }
 };
 
-// Get seller account for current user
 export const getSellerAccount = async (): Promise<SellerAccount | null> => {
   try {
     const { data: user } = await supabase.auth.getUser();
@@ -184,7 +173,6 @@ export const getSellerAccount = async (): Promise<SellerAccount | null> => {
   }
 };
 
-// Get all seller accounts for current user
 export const getSellerAccounts = async (): Promise<SellerAccount[]> => {
   try {
     const { data: user } = await supabase.auth.getUser();
@@ -209,11 +197,9 @@ export const getSellerAccounts = async (): Promise<SellerAccount[]> => {
   }
 };
 
-// Save seller account - for backward compatibility
 export const saveSellerAccount = async (
   accountData: Partial<SellerAccount>
 ): Promise<SellerAccount | null> => {
-  // If id exists, update, otherwise create
   if (accountData.id) {
     return updateSellerAccount(accountData);
   } else {
@@ -221,7 +207,6 @@ export const saveSellerAccount = async (
   }
 };
 
-// Update seller account
 export const updateSellerAccount = async (
   accountData: Partial<SellerAccount>
 ): Promise<SellerAccount | null> => {
@@ -254,7 +239,6 @@ export const updateSellerAccount = async (
   }
 };
 
-// Format payment method based on account type
 export const formatPaymentMethod = (account: SellerAccount): string => {
   switch (account.account_type) {
     case 'bank':
