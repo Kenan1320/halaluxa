@@ -24,21 +24,32 @@ const ShopCard = memo(({ shop, index, featured = false, minimal = false }: ShopC
       >
         <div className="h-32 bg-white relative flex items-center justify-center">
           {shop.logo ? (
-            <img 
-              src={shop.logo} 
-              alt={`${shop.name} logo`} 
-              className="max-h-20 max-w-[80%] object-contain"
-              loading="lazy"
-            />
+            <motion.div
+              className="w-20 h-20 rounded-full overflow-hidden flex items-center justify-center"
+              whileHover={{ scale: 1.05 }}
+              transition={{ type: "spring", stiffness: 400, damping: 10 }}
+            >
+              <img 
+                src={shop.logo} 
+                alt={`${shop.name} logo`} 
+                className="w-full h-full object-cover"
+                loading="lazy"
+              />
+            </motion.div>
           ) : (
-            <div className="flex items-center justify-center bg-haluna-primary-light h-full w-full">
+            <div className="w-20 h-20 rounded-full flex items-center justify-center bg-haluna-primary-light">
               <Store className="h-12 w-12 text-haluna-primary" />
             </div>
           )}
         </div>
         
         <div className="p-4 text-center">
-          <h3 className="text-lg font-medium mb-2">{shop.name}</h3>
+          <motion.h3 
+            className="text-lg font-medium mb-2"
+            whileHover={{ color: "#2A866A" }}
+          >
+            {shop.name}
+          </motion.h3>
           
           <Link to={`/shop/${shop.id}`}>
             <Button 
@@ -71,16 +82,28 @@ const ShopCard = memo(({ shop, index, featured = false, minimal = false }: ShopC
           />
         ) : shop.logo ? (
           <div className="w-full h-full flex items-center justify-center bg-haluna-primary-light p-4">
-            <img 
-              src={shop.logo} 
-              alt={`${shop.name} logo`} 
-              className="max-h-full max-w-full object-contain"
-              loading="lazy"
-            />
+            <motion.div
+              className="w-24 h-24 rounded-full overflow-hidden flex items-center justify-center bg-white shadow-md"
+              whileHover={{ scale: 1.05 }}
+              transition={{ type: "spring", stiffness: 300, damping: 10 }}
+            >
+              <img 
+                src={shop.logo} 
+                alt={`${shop.name} logo`} 
+                className="w-full h-full object-cover"
+                loading="lazy"
+              />
+            </motion.div>
           </div>
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-haluna-primary-light">
-            <Store className="h-12 w-12 text-haluna-primary" />
+            <motion.div 
+              className="w-24 h-24 rounded-full bg-white shadow-md flex items-center justify-center"
+              whileHover={{ scale: 1.05 }}
+              transition={{ type: "spring", stiffness: 300, damping: 10 }}
+            >
+              <Store className="h-12 w-12 text-haluna-primary" />
+            </motion.div>
           </div>
         )}
         {shop.isVerified && (
@@ -92,7 +115,12 @@ const ShopCard = memo(({ shop, index, featured = false, minimal = false }: ShopC
       
       <div className={`p-6 ${featured ? 'lg:w-3/5' : ''}`}>
         <div className="flex items-center justify-between mb-2">
-          <h3 className="text-xl font-medium">{shop.name}</h3>
+          <motion.h3 
+            className="text-xl font-medium"
+            whileHover={{ color: "#2A866A" }}
+          >
+            {shop.name}
+          </motion.h3>
           <div className="flex items-center text-yellow-500">
             <span className="ml-1 text-sm">{shop.rating}</span>
           </div>

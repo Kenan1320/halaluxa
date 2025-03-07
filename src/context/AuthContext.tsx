@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -254,6 +253,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   ): Promise<boolean> => {
     try {
+      // Business accounts must provide shop details
+      if (role === 'business' && (!shopDetails || !shopDetails.shopName)) {
+        toast({
+          title: "Signup Failed",
+          description: "Business accounts must provide shop details",
+          variant: "destructive",
+        });
+        return false;
+      }
+
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
@@ -316,6 +325,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             owner_id: authData.user.id,
             location: shopDetails.shopLocation || 'Online',
             logo_url: shopDetails.shopLogo || null,
+            is_verified: true, // All business accounts are verified by default
           });
         
         if (shopError) {

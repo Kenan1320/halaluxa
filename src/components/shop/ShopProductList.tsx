@@ -182,9 +182,10 @@ const ShopProductList = ({ shopId }: ShopProductListProps) => {
                         e.stopPropagation();
                         handleAddToCart(product);
                       }}
+                      disabled={!product.inStock}
                     >
                       <ShoppingCart className="w-3 h-3 mr-1" />
-                      Add to cart
+                      {product.inStock ? 'Add to cart' : 'Out of stock'}
                     </Button>
                   </div>
                 </>
@@ -203,17 +204,27 @@ const ShopProductList = ({ shopId }: ShopProductListProps) => {
                       initial={{ opacity: 0 }}
                       whileHover={{ opacity: 1 }}
                     >
-                      <motion.button 
-                        className="bg-white p-2 rounded-full shadow-sm"
-                        whileTap={{ scale: 0.95 }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleAddToCart(product, e);
-                        }}
-                      >
-                        <ShoppingCart className="w-3 h-3 text-[#2A866A]" />
-                      </motion.button>
+                      {product.inStock && (
+                        <motion.button 
+                          className="bg-white p-2 rounded-full shadow-sm"
+                          whileTap={{ scale: 0.95 }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleAddToCart(product, e);
+                          }}
+                        >
+                          <ShoppingCart className="w-3 h-3 text-[#2A866A]" />
+                        </motion.button>
+                      )}
                     </motion.div>
+                    
+                    {!product.inStock && (
+                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                        <span className="bg-white px-2 py-1 rounded text-xs font-medium">
+                          Out of stock
+                        </span>
+                      </div>
+                    )}
                   </div>
                   
                   {/* Product details */}
