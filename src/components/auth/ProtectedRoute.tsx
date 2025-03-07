@@ -21,9 +21,9 @@ const ProtectedRoute = ({
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
   
-  // Handle business user restrictions
+  // Handle business owner restrictions
   if (user?.role === 'business' && !businessAllowed) {
-    // Redirect business users to dashboard if they try to access shopper-only features
+    // Redirect business owners to dashboard if they try to access shopper-only features
     return <Navigate to="/dashboard" replace />;
   }
   

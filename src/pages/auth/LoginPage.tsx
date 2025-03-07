@@ -31,6 +31,27 @@ const LoginPage = () => {
     if (savedEmail) {
       setRememberedEmail(savedEmail);
       setFormData(prev => ({ ...prev, email: savedEmail }));
+      
+      // Check if this is a known business owner account
+      const checkStoredRole = async () => {
+        if (savedEmail) {
+          try {
+            const { data } = await supabase
+              .from('profiles')
+              .select('role')
+              .eq('email', savedEmail)
+              .maybeSingle();
+              
+            if (data?.role === 'business') {
+              setUserType('business');
+            }
+          } catch (error) {
+            console.error('Error checking stored role:', error);
+          }
+        }
+      };
+      
+      checkStoredRole();
     }
   }, []);
   
@@ -62,6 +83,26 @@ const LoginPage = () => {
     setLoading(true);
     
     try {
+      // Attempt to check if the email exists in profiles and get the role
+      const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('email', formData.email)
+        .maybeSingle();
+        
+      // If the account exists, but the selected type doesn't match
+      if (existingProfile && 
+          ((existingProfile.role === 'business' && userType === 'shopper') || 
+           (existingProfile.role === 'shopper' && userType === 'business'))) {
+        toast({
+          title: "Account Type Mismatch",
+          description: `The account for ${formData.email} is registered as a ${existingProfile.role}, not as a ${userType}. Please select the correct account type.`,
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+      
       // Attempt to login and get the user's actual role from the database
       const role = await login(formData.email, formData.password);
       
@@ -74,17 +115,6 @@ const LoginPage = () => {
           localStorage.setItem('haluna_remembered_email', formData.email);
         } else {
           localStorage.removeItem('haluna_remembered_email');
-        }
-        
-        // Check if the role matches the selected type
-        if ((role === 'shopper' && userType === 'business') || (role === 'business' && userType === 'shopper')) {
-          toast({
-            title: "Account Type Mismatch",
-            description: `The account for ${formData.email} is registered as a ${role}, not as a ${userType}. Please select the correct account type.`,
-            variant: "destructive",
-          });
-          setLoading(false);
-          return;
         }
         
         toast({
@@ -108,8 +138,8 @@ const LoginPage = () => {
             // If no shop exists, redirect to create shop flow
             navigate('/dashboard/settings');
             toast({
-              title: "Complete Your Shop Setup",
-              description: "Please complete your shop details to get started",
+              title: "Complete Your Business Setup",
+              description: "Please complete your business details to get started",
             });
           } else {
             navigate('/dashboard');

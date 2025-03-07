@@ -1,3 +1,4 @@
+
 import { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
@@ -31,26 +32,28 @@ const AuthMiddleware = () => {
           }
           
           // If no shop exists, create one using profile data
-          if (!existingShop && user.shopName) {
+          if (!existingShop) {
             console.log('Creating shop for business owner:', user.id);
             const { error: createError } = await supabase
               .from('shops')
               .insert({
                 id: user.id,
-                name: user.shopName || 'My Shop',
-                description: user.shopDescription || 'New shop on Haluna',
+                name: user.shopName || 'My Business',
+                description: user.shopDescription || 'New business on Haluna',
                 owner_id: user.id,
                 location: user.shopLocation || 'Online',
                 logo_url: user.shopLogo || null,
                 is_verified: true, // All business accounts are verified by default
+                category: user.shopCategory || 'Other',
+                cover_image: null
               });
               
             if (createError) {
               console.error('Error creating shop:', createError);
             } else {
               toast({
-                title: "Shop Created",
-                description: "Your shop has been set up successfully",
+                title: "Business Shop Created",
+                description: "Your business shop has been set up successfully",
               });
             }
           }
@@ -81,7 +84,7 @@ const AuthMiddleware = () => {
             .single();
             
           if (data?.role === 'business') {
-            console.log('Business user signed in, redirecting to dashboard');
+            console.log('Business owner signed in, redirecting to dashboard');
             navigate('/dashboard');
             
             toast({
@@ -139,7 +142,7 @@ const AuthMiddleware = () => {
             .single();
             
           if (profileData?.role === 'business' && !location.pathname.startsWith('/dashboard')) {
-            console.log('Business user detected after session refresh, redirecting to dashboard');
+            console.log('Business owner detected after session refresh, redirecting to dashboard');
             navigate('/dashboard');
           }
         }
@@ -151,7 +154,7 @@ const AuthMiddleware = () => {
     verifyAuth();
   }, [location.pathname, isLoggedIn, refreshSession, navigate]);
   
-  // Direct business users to dashboard if they try to access shopper pages
+  // Direct business owners to dashboard if they try to access shopper pages
   useEffect(() => {
     if (isLoggedIn && user?.role === 'business') {
       // Check if the user is on the homepage or other consumer pages
@@ -159,7 +162,7 @@ const AuthMiddleware = () => {
                                !['/login', '/signup'].includes(location.pathname);
       
       if (isOnConsumerPage) {
-        console.log('Business user detected on consumer page, redirecting to dashboard');
+        console.log('Business owner detected on consumer page, redirecting to dashboard');
         navigate('/dashboard');
       }
     }
