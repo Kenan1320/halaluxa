@@ -1,9 +1,12 @@
 
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Check, CreditCard, Lock, Mail, CreditCardIcon } from 'lucide-react';
+import { Check, CreditCard, Lock, Mail, MapPin, Truck, Store, User, Phone, Building, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { useCart } from '@/context/CartContext';
@@ -28,6 +31,16 @@ interface CheckoutFormData {
   
   // PayPal details
   paypalEmail: string;
+
+  // New fields for billing address
+  company?: string;
+  apartment?: string;
+  phone?: string;
+  saveInformation: boolean;
+  
+  // Delivery options
+  deliveryMethod: 'ship' | 'pickup';
+  storeLocation?: string;
 }
 
 const initialFormData: CheckoutFormData = {
@@ -37,18 +50,26 @@ const initialFormData: CheckoutFormData = {
   city: '',
   state: '',
   zipCode: '',
-  country: '',
+  country: 'US',
   cardNumber: '',
   cardName: '',
   expiryDate: '',
   cvv: '',
-  paypalEmail: ''
+  paypalEmail: '',
+  company: '',
+  apartment: '',
+  phone: '',
+  saveInformation: true,
+  deliveryMethod: 'ship',
+  storeLocation: ''
 };
 
 const Checkout = () => {
   const [formData, setFormData] = useState<CheckoutFormData>(initialFormData);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<'card' | 'paypal' | 'applepay' | 'stripe'>('card');
+  const [paymentMethod, setPaymentMethod] = useState<'card' | 'paypal' | 'applepay' | 'googlepay' | 'shoppay'>('card');
+  const [showMoreOptions, setShowMoreOptions] = useState(false);
+  const [discountCode, setDiscountCode] = useState('');
   const { cart, clearCart } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -65,16 +86,25 @@ const Checkout = () => {
     }
   }, [user]);
   
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleCheckboxChange = (name: string, checked: boolean) => {
+    setFormData(prev => ({ ...prev, [name]: checked }));
+  };
+
+  const handleDeliveryMethodChange = (value: 'ship' | 'pickup') => {
+    setFormData(prev => ({ ...prev, deliveryMethod: value }));
   };
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Basic validation
-    if (!formData.fullName || !formData.email || !formData.address) {
+    if (!formData.fullName || !formData.email || 
+        (formData.deliveryMethod === 'ship' && (!formData.address || !formData.city || !formData.state || !formData.zipCode))) {
       toast({
         title: "Error",
         description: "Please fill all required fields",
@@ -110,11 +140,15 @@ const Checkout = () => {
       const shippingDetails = {
         fullName: formData.fullName,
         email: formData.email,
-        address: formData.address,
-        city: formData.city,
-        state: formData.state,
-        zipCode: formData.zipCode,
-        country: formData.country
+        address: formData.deliveryMethod === 'ship' ? formData.address : '',
+        city: formData.deliveryMethod === 'ship' ? formData.city : '',
+        state: formData.deliveryMethod === 'ship' ? formData.state : '',
+        zipCode: formData.deliveryMethod === 'ship' ? formData.zipCode : '',
+        country: formData.country,
+        deliveryMethod: formData.deliveryMethod,
+        storeLocation: formData.storeLocation,
+        phone: formData.phone,
+        saveInformation: formData.saveInformation
       };
       
       // Prepare payment method based on selected type
@@ -137,10 +171,13 @@ const Checkout = () => {
         paymentMethodDetails = {
           type: 'applepay'
         };
-      } else if (paymentMethod === 'stripe') {
+      } else if (paymentMethod === 'googlepay') {
         paymentMethodDetails = {
-          type: 'stripe',
-          stripeToken: 'demo-token-' + Date.now()
+          type: 'googlepay'
+        };
+      } else if (paymentMethod === 'shoppay') {
+        paymentMethodDetails = {
+          type: 'shoppay'
         };
       }
       
@@ -182,39 +219,24 @@ const Checkout = () => {
   }
   
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-gray-50">
       <Navbar />
       
       <main className="pt-28 pb-20">
         <div className="container mx-auto px-4">
-          <h1 className="text-3xl md:text-4xl font-serif font-bold mb-8">Checkout</h1>
-          
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2">
+          <div className="flex flex-col md:flex-row gap-8">
+            {/* Left Column - Checkout Steps */}
+            <div className="w-full md:w-2/3">
               <form onSubmit={handleSubmit} className="space-y-8">
-                <div className="bg-white rounded-xl shadow-sm p-6">
-                  <h2 className="text-xl font-medium mb-6">Shipping Information</h2>
+                {/* Contact Information */}
+                <div className="bg-white rounded-lg shadow-sm p-6">
+                  <h2 className="text-xl font-medium mb-6">Contact</h2>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
                     <div>
-                      <label htmlFor="fullName" className="block text-sm font-medium text-haluna-text mb-1">
-                        Full Name *
-                      </label>
-                      <input
-                        type="text"
-                        id="fullName"
-                        name="fullName"
-                        value={formData.fullName}
-                        onChange={handleChange}
-                        className="w-full border rounded-lg p-2.5 focus:ring-1 focus:ring-haluna-primary focus:border-haluna-primary"
-                        required
-                      />
-                    </div>
-                    
-                    <div>
-                      <label htmlFor="email" className="block text-sm font-medium text-haluna-text mb-1">
-                        Email Address *
-                      </label>
+                      <Label htmlFor="email" className="block text-sm font-medium mb-1">
+                        Email or mobile phone number
+                      </Label>
                       <input
                         type="email"
                         id="email"
@@ -226,281 +248,452 @@ const Checkout = () => {
                       />
                     </div>
                     
-                    <div className="md:col-span-2">
-                      <label htmlFor="address" className="block text-sm font-medium text-haluna-text mb-1">
-                        Address *
-                      </label>
-                      <input
-                        type="text"
-                        id="address"
-                        name="address"
-                        value={formData.address}
-                        onChange={handleChange}
-                        className="w-full border rounded-lg p-2.5 focus:ring-1 focus:ring-haluna-primary focus:border-haluna-primary"
-                        required
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id="emailUpdates" 
+                        checked={true}
+                        onCheckedChange={(checked) => {}}
                       />
-                    </div>
-                    
-                    <div>
-                      <label htmlFor="city" className="block text-sm font-medium text-haluna-text mb-1">
-                        City *
-                      </label>
-                      <input
-                        type="text"
-                        id="city"
-                        name="city"
-                        value={formData.city}
-                        onChange={handleChange}
-                        className="w-full border rounded-lg p-2.5 focus:ring-1 focus:ring-haluna-primary focus:border-haluna-primary"
-                        required
-                      />
-                    </div>
-                    
-                    <div>
-                      <label htmlFor="state" className="block text-sm font-medium text-haluna-text mb-1">
-                        State/Province *
-                      </label>
-                      <input
-                        type="text"
-                        id="state"
-                        name="state"
-                        value={formData.state}
-                        onChange={handleChange}
-                        className="w-full border rounded-lg p-2.5 focus:ring-1 focus:ring-haluna-primary focus:border-haluna-primary"
-                        required
-                      />
-                    </div>
-                    
-                    <div>
-                      <label htmlFor="zipCode" className="block text-sm font-medium text-haluna-text mb-1">
-                        Zip/Postal Code *
-                      </label>
-                      <input
-                        type="text"
-                        id="zipCode"
-                        name="zipCode"
-                        value={formData.zipCode}
-                        onChange={handleChange}
-                        className="w-full border rounded-lg p-2.5 focus:ring-1 focus:ring-haluna-primary focus:border-haluna-primary"
-                        required
-                      />
-                    </div>
-                    
-                    <div>
-                      <label htmlFor="country" className="block text-sm font-medium text-haluna-text mb-1">
-                        Country *
-                      </label>
-                      <select
-                        id="country"
-                        name="country"
-                        value={formData.country}
-                        onChange={handleChange}
-                        className="w-full border rounded-lg p-2.5 focus:ring-1 focus:ring-haluna-primary focus:border-haluna-primary"
-                        required
-                      >
-                        <option value="">Select a country</option>
-                        <option value="US">United States</option>
-                        <option value="CA">Canada</option>
-                        <option value="UK">United Kingdom</option>
-                        <option value="AU">Australia</option>
-                        <option value="AE">United Arab Emirates</option>
-                      </select>
+                      <Label htmlFor="emailUpdates" className="text-sm">
+                        Email me with news and offers
+                      </Label>
                     </div>
                   </div>
                 </div>
                 
-                <div className="bg-white rounded-xl shadow-sm p-6">
-                  <h2 className="text-xl font-medium mb-6">Payment Method</h2>
+                {/* Delivery Method */}
+                <div className="bg-white rounded-lg shadow-sm p-6">
+                  <h2 className="text-xl font-medium mb-6">Delivery</h2>
                   
+                  <RadioGroup 
+                    value={formData.deliveryMethod} 
+                    onValueChange={(value) => handleDeliveryMethodChange(value as 'ship' | 'pickup')}
+                    className="space-y-4"
+                  >
+                    <div className="flex items-center justify-between space-x-2 border rounded-lg p-4">
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="ship" id="ship" />
+                        <Label htmlFor="ship" className="font-medium">Ship</Label>
+                      </div>
+                      <Truck className="h-5 w-5 text-haluna-text-light" />
+                    </div>
+                    
+                    <div className="flex items-center justify-between space-x-2 border rounded-lg p-4">
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="pickup" id="pickup" />
+                        <Label htmlFor="pickup" className="font-medium">Pickup in store</Label>
+                      </div>
+                      <Store className="h-5 w-5 text-haluna-text-light" />
+                    </div>
+                  </RadioGroup>
+                  
+                  {formData.deliveryMethod === 'pickup' && (
+                    <div className="mt-6 space-y-4">
+                      <h3 className="font-medium">Store locations</h3>
+                      <p className="text-sm text-haluna-text-light">There is 1 store with stock close to your location</p>
+                      <button type="button" className="text-blue-600 text-sm">Change location</button>
+                      
+                      <div className="border rounded-lg p-4">
+                        <RadioGroup defaultValue="store1">
+                          <div className="flex justify-between items-start">
+                            <div className="flex items-start space-x-2">
+                              <RadioGroupItem value="store1" id="store1" className="mt-1" />
+                              <div>
+                                <Label htmlFor="store1" className="font-medium">1030 Stelton Rd, Piscataway, NJ 08854 (28 mi)</Label>
+                                <p className="text-sm text-haluna-text-light mt-1">1030 Stelton Road, 103, Piscataway NJ</p>
+                                <p className="text-sm text-haluna-text-light mt-1">Usually ready in 24 hours</p>
+                              </div>
+                            </div>
+                            <span className="font-medium">FREE</span>
+                          </div>
+                        </RadioGroup>
+                      </div>
+                      
+                      <div className="flex items-center space-x-2 mt-4">
+                        <Checkbox id="textUpdates" />
+                        <Label htmlFor="textUpdates" className="text-sm">
+                          Text me with news and offers
+                        </Label>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {formData.deliveryMethod === 'ship' && (
+                    <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="md:col-span-2">
+                        <Label htmlFor="fullName" className="block text-sm font-medium mb-1">
+                          Full name
+                        </Label>
+                        <input
+                          type="text"
+                          id="fullName"
+                          name="fullName"
+                          value={formData.fullName}
+                          onChange={handleChange}
+                          className="w-full border rounded-lg p-2.5 focus:ring-1 focus:ring-haluna-primary focus:border-haluna-primary"
+                          required
+                        />
+                      </div>
+                      
+                      <div className="md:col-span-2">
+                        <Label htmlFor="address" className="block text-sm font-medium mb-1">
+                          Address
+                        </Label>
+                        <input
+                          type="text"
+                          id="address"
+                          name="address"
+                          value={formData.address}
+                          onChange={handleChange}
+                          className="w-full border rounded-lg p-2.5 focus:ring-1 focus:ring-haluna-primary focus:border-haluna-primary"
+                          required
+                        />
+                      </div>
+                      
+                      <div className="md:col-span-2">
+                        <Label htmlFor="apartment" className="block text-sm font-medium mb-1">
+                          Apartment, suite, etc. (optional)
+                        </Label>
+                        <input
+                          type="text"
+                          id="apartment"
+                          name="apartment"
+                          value={formData.apartment || ''}
+                          onChange={handleChange}
+                          className="w-full border rounded-lg p-2.5 focus:ring-1 focus:ring-haluna-primary focus:border-haluna-primary"
+                        />
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="city" className="block text-sm font-medium mb-1">
+                          City
+                        </Label>
+                        <input
+                          type="text"
+                          id="city"
+                          name="city"
+                          value={formData.city}
+                          onChange={handleChange}
+                          className="w-full border rounded-lg p-2.5 focus:ring-1 focus:ring-haluna-primary focus:border-haluna-primary"
+                          required
+                        />
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="country" className="block text-sm font-medium mb-1">
+                          Country/Region
+                        </Label>
+                        <select
+                          id="country"
+                          name="country"
+                          value={formData.country}
+                          onChange={handleChange}
+                          className="w-full border rounded-lg p-2.5 focus:ring-1 focus:ring-haluna-primary focus:border-haluna-primary"
+                          required
+                        >
+                          <option value="US">United States</option>
+                          <option value="CA">Canada</option>
+                          <option value="UK">United Kingdom</option>
+                          <option value="AU">Australia</option>
+                          <option value="AE">United Arab Emirates</option>
+                        </select>
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="state" className="block text-sm font-medium mb-1">
+                          State
+                        </Label>
+                        <select
+                          id="state"
+                          name="state"
+                          value={formData.state}
+                          onChange={handleChange}
+                          className="w-full border rounded-lg p-2.5 focus:ring-1 focus:ring-haluna-primary focus:border-haluna-primary"
+                          required
+                        >
+                          <option value="">Select a state</option>
+                          <option value="NY">New York</option>
+                          <option value="CA">California</option>
+                          <option value="TX">Texas</option>
+                          <option value="FL">Florida</option>
+                          <option value="IL">Illinois</option>
+                        </select>
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="zipCode" className="block text-sm font-medium mb-1">
+                          ZIP code
+                        </Label>
+                        <input
+                          type="text"
+                          id="zipCode"
+                          name="zipCode"
+                          value={formData.zipCode}
+                          onChange={handleChange}
+                          className="w-full border rounded-lg p-2.5 focus:ring-1 focus:ring-haluna-primary focus:border-haluna-primary"
+                          required
+                        />
+                      </div>
+                      
+                      <div className="md:col-span-2">
+                        <Label htmlFor="phone" className="block text-sm font-medium mb-1">
+                          Phone (optional)
+                        </Label>
+                        <input
+                          type="tel"
+                          id="phone"
+                          name="phone"
+                          value={formData.phone || ''}
+                          onChange={handleChange}
+                          className="w-full border rounded-lg p-2.5 focus:ring-1 focus:ring-haluna-primary focus:border-haluna-primary"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Payment Method */}
+                <div className="bg-white rounded-lg shadow-sm p-6">
                   <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-xl font-medium">Payment</h2>
                     <p className="text-sm text-haluna-text-light flex items-center">
                       <Lock className="h-4 w-4 mr-1" />
-                      Secure Payment Processing
+                      All transactions are secure and encrypted
                     </p>
-                    
-                    <div className="flex gap-2">
-                      <div className="w-10 h-6 bg-gray-200 rounded"></div>
-                      <div className="w-10 h-6 bg-gray-200 rounded"></div>
-                      <div className="w-10 h-6 bg-gray-200 rounded"></div>
-                    </div>
                   </div>
                   
-                  <Tabs defaultValue="card" onValueChange={(value) => setPaymentMethod(value as any)}>
-                    <TabsList className="mb-6 w-full">
-                      <TabsTrigger value="card" className="flex-1">Credit/Debit Card</TabsTrigger>
-                      <TabsTrigger value="paypal" className="flex-1">PayPal</TabsTrigger>
-                      <TabsTrigger value="applepay" className="flex-1">Apple Pay</TabsTrigger>
-                      <TabsTrigger value="stripe" className="flex-1">Stripe</TabsTrigger>
-                    </TabsList>
+                  {/* Express checkout options */}
+                  <div className="mb-6">
+                    <h3 className="text-lg mb-4 text-center">Express checkout</h3>
                     
-                    <TabsContent value="card">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="md:col-span-2">
-                          <label htmlFor="cardNumber" className="block text-sm font-medium text-haluna-text mb-1">
-                            Card Number *
-                          </label>
-                          <div className="relative">
-                            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                              <CreditCard className="h-5 w-5 text-haluna-text-light" />
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                      <button
+                        type="button"
+                        onClick={() => setPaymentMethod('shoppay')}
+                        className={`h-14 rounded-lg border flex items-center justify-center ${paymentMethod === 'shoppay' ? 'border-blue-500 shadow-sm' : 'border-gray-300'}`}
+                      >
+                        <img src="/lovable-uploads/23c8a527-4c88-45b8-96c7-2e04ebee04eb.png" alt="Shop Pay" className="h-8" />
+                      </button>
+                      
+                      <button
+                        type="button"
+                        onClick={() => setPaymentMethod('paypal')}
+                        className={`h-14 rounded-lg border flex items-center justify-center ${paymentMethod === 'paypal' ? 'border-blue-500 shadow-sm' : 'border-gray-300'}`}
+                      >
+                        <img src="/lovable-uploads/b7391005-ab3c-4698-85d5-1192b4fc4df6.png" alt="PayPal" className="h-6" />
+                      </button>
+                      
+                      <button
+                        type="button"
+                        onClick={() => setPaymentMethod('applepay')}
+                        className={`h-14 rounded-lg border flex items-center justify-center ${paymentMethod === 'applepay' ? 'border-blue-500 shadow-sm' : 'border-gray-300'}`}
+                      >
+                        <img src="/lovable-uploads/3c7163e3-7825-410e-b6d1-2e91e6ec2442.png" alt="Apple Pay" className="h-6" />
+                      </button>
+                    </div>
+                    
+                    <button
+                      type="button"
+                      onClick={() => setShowMoreOptions(!showMoreOptions)}
+                      className="w-full text-blue-600 py-2 text-sm font-medium flex items-center justify-center"
+                    >
+                      {showMoreOptions ? 'Hide options' : 'Show more options'}
+                      <svg className={`ml-1 h-4 w-4 transition-transform ${showMoreOptions ? 'rotate-180' : ''}`} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                      </svg>
+                    </button>
+                    
+                    {showMoreOptions && (
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                        <button
+                          type="button"
+                          onClick={() => setPaymentMethod('googlepay')}
+                          className={`h-14 rounded-lg border flex items-center justify-center ${paymentMethod === 'googlepay' ? 'border-blue-500 shadow-sm' : 'border-gray-300'}`}
+                        >
+                          <img src="/lovable-uploads/30853bea-af12-4b7d-9bf5-14f37b607a62.png" alt="Google Pay" className="h-8" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="relative flex py-5 items-center">
+                    <div className="flex-grow border-t border-gray-200"></div>
+                    <span className="flex-shrink mx-4 text-gray-400">OR</span>
+                    <div className="flex-grow border-t border-gray-200"></div>
+                  </div>
+                  
+                  {/* Credit card form */}
+                  <div className="mt-4">
+                    <RadioGroup value={paymentMethod} onValueChange={(value) => setPaymentMethod(value as any)} className="space-y-4">
+                      <div className={`border rounded-lg p-4 ${paymentMethod === 'card' ? 'border-blue-500 shadow-sm' : ''}`}>
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="card" id="card" />
+                            <Label htmlFor="card" className="font-medium">Credit card</Label>
+                          </div>
+                          <div className="flex space-x-2">
+                            <img src="https://cdn.shopify.com/shopifycloud/checkout-web/assets/0169695890db3db16bfe.svg" alt="Visa" className="h-6" />
+                            <img src="https://cdn.shopify.com/shopifycloud/checkout-web/assets/ae9ceec48b1dc489596c.svg" alt="Mastercard" className="h-6" />
+                            <img src="https://cdn.shopify.com/shopifycloud/checkout-web/assets/5b6ca02f895540b546e9.svg" alt="Amex" className="h-6" />
+                            <span className="text-sm text-blue-600">+5</span>
+                          </div>
+                        </div>
+                        
+                        {paymentMethod === 'card' && (
+                          <div className="space-y-4 pt-2">
+                            <div>
+                              <Label htmlFor="cardNumber" className="sr-only">
+                                Card number
+                              </Label>
+                              <div className="relative">
+                                <input
+                                  type="text"
+                                  id="cardNumber"
+                                  name="cardNumber"
+                                  placeholder="Card number"
+                                  value={formData.cardNumber}
+                                  onChange={handleChange}
+                                  className="w-full border rounded-lg p-2.5 pr-10 focus:ring-1 focus:ring-haluna-primary focus:border-haluna-primary"
+                                  required
+                                />
+                                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                                  <Lock className="h-5 w-5 text-gray-400" />
+                                </div>
+                              </div>
                             </div>
-                            <input
-                              type="text"
-                              id="cardNumber"
-                              name="cardNumber"
-                              value={formData.cardNumber}
-                              onChange={handleChange}
-                              placeholder="1234 5678 9012 3456"
-                              className="w-full border rounded-lg p-2.5 pl-10 focus:ring-1 focus:ring-haluna-primary focus:border-haluna-primary"
-                              required={paymentMethod === 'card'}
-                            />
-                          </div>
-                        </div>
-                        
-                        <div>
-                          <label htmlFor="cardName" className="block text-sm font-medium text-haluna-text mb-1">
-                            Name on Card *
-                          </label>
-                          <input
-                            type="text"
-                            id="cardName"
-                            name="cardName"
-                            value={formData.cardName}
-                            onChange={handleChange}
-                            className="w-full border rounded-lg p-2.5 focus:ring-1 focus:ring-haluna-primary focus:border-haluna-primary"
-                            required={paymentMethod === 'card'}
-                          />
-                        </div>
-                        
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <label htmlFor="expiryDate" className="block text-sm font-medium text-haluna-text mb-1">
-                              Expiry Date *
-                            </label>
-                            <input
-                              type="text"
-                              id="expiryDate"
-                              name="expiryDate"
-                              value={formData.expiryDate}
-                              onChange={handleChange}
-                              placeholder="MM/YY"
-                              className="w-full border rounded-lg p-2.5 focus:ring-1 focus:ring-haluna-primary focus:border-haluna-primary"
-                              required={paymentMethod === 'card'}
-                            />
-                          </div>
-                          
-                          <div>
-                            <label htmlFor="cvv" className="block text-sm font-medium text-haluna-text mb-1">
-                              CVV *
-                            </label>
-                            <input
-                              type="text"
-                              id="cvv"
-                              name="cvv"
-                              value={formData.cvv}
-                              onChange={handleChange}
-                              placeholder="123"
-                              className="w-full border rounded-lg p-2.5 focus:ring-1 focus:ring-haluna-primary focus:border-haluna-primary"
-                              required={paymentMethod === 'card'}
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    </TabsContent>
-                    
-                    <TabsContent value="paypal">
-                      <div className="space-y-6">
-                        <div>
-                          <label htmlFor="paypalEmail" className="block text-sm font-medium text-haluna-text mb-1">
-                            PayPal Email *
-                          </label>
-                          <div className="relative">
-                            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                              <Mail className="h-5 w-5 text-haluna-text-light" />
+                            
+                            <div>
+                              <Label htmlFor="expiryDate" className="sr-only">
+                                Expiration date (MM / YY)
+                              </Label>
+                              <input
+                                type="text"
+                                id="expiryDate"
+                                name="expiryDate"
+                                placeholder="Expiration date (MM / YY)"
+                                value={formData.expiryDate}
+                                onChange={handleChange}
+                                className="w-full border rounded-lg p-2.5 focus:ring-1 focus:ring-haluna-primary focus:border-haluna-primary"
+                                required
+                              />
                             </div>
-                            <input
-                              type="email"
-                              id="paypalEmail"
-                              name="paypalEmail"
-                              value={formData.paypalEmail}
-                              onChange={handleChange}
-                              className="w-full border rounded-lg p-2.5 pl-10 focus:ring-1 focus:ring-haluna-primary focus:border-haluna-primary"
-                              required={paymentMethod === 'paypal'}
-                            />
+                            
+                            <div>
+                              <Label htmlFor="cvv" className="sr-only">
+                                Security code
+                              </Label>
+                              <div className="relative">
+                                <input
+                                  type="text"
+                                  id="cvv"
+                                  name="cvv"
+                                  placeholder="Security code"
+                                  value={formData.cvv}
+                                  onChange={handleChange}
+                                  className="w-full border rounded-lg p-2.5 pr-10 focus:ring-1 focus:ring-haluna-primary focus:border-haluna-primary"
+                                  required
+                                />
+                                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                                  <button type="button" className="text-gray-400 h-5 w-5 rounded-full border border-gray-400 flex items-center justify-center text-xs font-bold">?</button>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <div>
+                              <Label htmlFor="cardName" className="sr-only">
+                                Name on card
+                              </Label>
+                              <input
+                                type="text"
+                                id="cardName"
+                                name="cardName"
+                                placeholder="Name on card"
+                                value={formData.cardName}
+                                onChange={handleChange}
+                                className="w-full border rounded-lg p-2.5 focus:ring-1 focus:ring-haluna-primary focus:border-haluna-primary"
+                                required
+                              />
+                            </div>
                           </div>
-                        </div>
-                        
-                        <div className="bg-blue-50 p-4 rounded-lg">
-                          <p className="text-blue-700 text-sm">
-                            After clicking "Complete Purchase", you will be redirected to PayPal to complete your payment.
-                          </p>
+                        )}
+                      </div>
+                      
+                      <div className={`border rounded-lg p-4 ${paymentMethod === 'paypal' ? 'border-blue-500 shadow-sm' : ''}`}>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="paypal" id="paypal-radio" />
+                            <Label htmlFor="paypal-radio" className="font-medium">PayPal</Label>
+                          </div>
+                          <img src="/lovable-uploads/b7391005-ab3c-4698-85d5-1192b4fc4df6.png" alt="PayPal" className="h-6" />
                         </div>
                       </div>
-                    </TabsContent>
-                    
-                    <TabsContent value="applepay">
-                      <div className="p-4 text-center">
-                        <div className="mb-4 mx-auto w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center">
-                          <svg viewBox="0 0 24 24" width="32" height="32" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M12 14C7.58 14 4 12.21 4 10V14C4 16.21 7.58 18 12 18C16.42 18 20 16.21 20 14V10C20 12.21 16.42 14 12 14Z"></path>
-                            <path d="M12 10C7.58 10 4 8.21 4 6V10C4 12.21 7.58 14 12 14C16.42 14 20 12.21 20 10V6C20 8.21 16.42 10 12 10Z"></path>
-                            <ellipse cx="12" cy="6" rx="8" ry="3"></ellipse>
-                          </svg>
-                        </div>
-                        
-                        <p className="text-haluna-text-light mb-4">
-                          After clicking "Complete Purchase", you'll be prompted to confirm with Apple Pay.
-                        </p>
-                        
-                        <div className="w-full h-12 bg-black rounded-md flex items-center justify-center text-white">
-                          Apple Pay
+                      
+                      <div className={`border rounded-lg p-4 ${paymentMethod === 'shoppay' ? 'border-blue-500 shadow-sm' : ''}`}>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="shoppay" id="shoppay-radio" />
+                            <Label htmlFor="shoppay-radio" className="font-medium">
+                              Shop Pay <span className="text-sm font-normal text-gray-500">| Pay in full or in installments</span>
+                            </Label>
+                          </div>
+                          <img src="/lovable-uploads/23c8a527-4c88-45b8-96c7-2e04ebee04eb.png" alt="Shop Pay" className="h-6" />
                         </div>
                       </div>
-                    </TabsContent>
-                    
-                    <TabsContent value="stripe">
-                      <div className="p-4 text-center">
-                        <div className="mb-4 mx-auto w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
-                          <svg viewBox="0 0 24 24" width="32" height="32" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M2 12C2 6.48 6.48 2 12 2C17.52 2 22 6.48 22 12C22 17.52 17.52 22 12 22C6.48 22 2 17.52 2 12Z"></path>
-                            <path d="M16 12C16 14.21 14.21 16 12 16C9.79 16 8 14.21 8 12C8 9.79 9.79 8 12 8C14.21 8 16 9.79 16 12Z"></path>
-                          </svg>
-                        </div>
-                        
-                        <p className="text-haluna-text-light mb-4">
-                          After clicking "Complete Purchase", you'll be redirected to Stripe's secure payment page.
-                        </p>
-                        
-                        <div className="w-full h-12 bg-purple-600 rounded-md flex items-center justify-center text-white">
-                          Pay with Stripe
-                        </div>
-                      </div>
-                    </TabsContent>
-                  </Tabs>
+                    </RadioGroup>
+                  </div>
+                </div>
+                
+                {/* Remember me section */}
+                <div className="bg-white rounded-lg shadow-sm p-6">
+                  <h2 className="text-xl font-medium mb-6">Remember me</h2>
+                  
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="saveInformation" 
+                      checked={formData.saveInformation}
+                      onCheckedChange={(checked) => handleCheckboxChange('saveInformation', checked as boolean)}
+                    />
+                    <Label htmlFor="saveInformation" className="text-sm">
+                      Save my information for a faster checkout with a Shop account
+                    </Label>
+                  </div>
                 </div>
                 
                 <Button 
                   type="submit" 
-                  className="w-full py-6 text-lg"
+                  className="w-full py-6 text-lg bg-blue-600 hover:bg-blue-700"
                   disabled={isProcessing}
                 >
-                  {isProcessing ? 'Processing...' : `Complete Purchase • $${cart.totalPrice.toFixed(2)}`}
+                  {isProcessing ? 'Processing...' : 'Pay now'}
                 </Button>
               </form>
             </div>
             
-            <div className="lg:col-span-1">
-              <div className="bg-white rounded-xl shadow-sm p-6 sticky top-24">
-                <h2 className="text-xl font-medium mb-6">Order Summary</h2>
+            {/* Right Column - Order Summary */}
+            <div className="w-full md:w-1/3">
+              <div className="bg-white rounded-lg shadow-sm p-6 sticky top-24">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-xl font-medium">Order summary</h2>
+                  <button className="text-blue-600 flex items-center text-sm font-medium">
+                    <svg className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                    Details
+                  </button>
+                </div>
                 
                 <div className="max-h-80 overflow-y-auto mb-6">
-                  {cart.items.map((item) => (
+                  {cart.items.map((item, index) => (
                     <div key={item.product.id} className="flex gap-3 mb-4 pb-4 border-b last:border-0">
-                      <div className="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                      <div className="relative w-16 h-16 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
                         <img
                           src={item.product.images[0]}
                           alt={item.product.name}
                           className="w-full h-full object-cover"
                         />
+                        <div className="absolute -top-1 -left-1 w-5 h-5 bg-gray-500 rounded-full flex items-center justify-center text-white text-xs">
+                          {index + 1}
+                        </div>
                       </div>
                       
                       <div className="flex-1">
@@ -514,21 +707,44 @@ const Checkout = () => {
                   ))}
                 </div>
                 
-                <div className="space-y-4 mb-6">
+                <div className="border-t border-b py-4 mb-4">
+                  <div className="flex">
+                    <input
+                      type="text"
+                      placeholder="Discount code or gift card"
+                      value={discountCode}
+                      onChange={(e) => setDiscountCode(e.target.value)}
+                      className="flex-grow border rounded-l-lg p-2.5 focus:ring-1 focus:ring-haluna-primary focus:border-haluna-primary"
+                    />
+                    <button 
+                      type="button"
+                      className="bg-gray-200 text-gray-700 font-medium px-4 rounded-r-lg"
+                    >
+                      Apply
+                    </button>
+                  </div>
+                </div>
+                
+                <div className="space-y-3 mb-6">
                   <div className="flex justify-between">
                     <span className="text-haluna-text-light">Subtotal</span>
                     <span>${cart.totalPrice.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-haluna-text-light">Shipping</span>
-                    <span>Free</span>
+                    <span className="text-haluna-text-light">
+                      {formData.deliveryMethod === 'ship' ? 'Shipping' : 'Pickup in store'}
+                    </span>
+                    <span className="font-medium">FREE</span>
                   </div>
                 </div>
                 
-                <div className="border-t py-4">
-                  <div className="flex justify-between font-medium">
-                    <span>Total</span>
-                    <span>${cart.totalPrice.toFixed(2)}</span>
+                <div className="border-t pt-4">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <span className="font-medium text-lg">Total</span>
+                      <span className="text-sm text-gray-500 ml-1">USD</span>
+                    </div>
+                    <span className="font-medium text-xl">${cart.totalPrice.toFixed(2)}</span>
                   </div>
                 </div>
               </div>
