@@ -9,7 +9,7 @@ import CategoryScroll from '@/components/home/CategoryScroll';
 import ProductGrid from '@/components/home/ProductGrid';
 import NearbyShops from '@/components/home/NearbyShops';
 import { motion, useAnimationControls } from 'framer-motion';
-import { getShopById, Shop } from '@/services/shopService';
+import { getShopById, Shop, subscribeToShops } from '@/services/shopService';
 
 const Index = () => {
   const { isLoggedIn, user } = useAuth();
@@ -32,39 +32,66 @@ const Index = () => {
     }
   }, [isLocationEnabled, requestLocation]);
 
-  // Load selected shops and nearby shops
+  // Subscribe to real-time shop updates and load selected shops
   useEffect(() => {
-    const loadShops = async () => {
-      setIsLoadingShops(true);
-      
-      try {
-        // Load selected shops from localStorage
-        const savedShopIds = localStorage.getItem('selectedShops');
-        if (savedShopIds) {
-          const shopIds = JSON.parse(savedShopIds) as string[];
-          const shopPromises = shopIds.map(id => getShopById(id));
-          const shops = await Promise.all(shopPromises);
-          setSelectedShops(shops.filter((shop): shop is Shop => shop !== null));
-        }
-        
-        // Always get nearby shops based on location
-        const nearby = await getNearbyShops();
-        
-        // If no selected shops, use 5 nearby shops as default
-        if ((!savedShopIds || JSON.parse(savedShopIds).length === 0) && nearby.length > 0) {
-          setSelectedShops(nearby.slice(0, 5));
-        }
-        
-        setNearbyShops(nearby);
-      } catch (error) {
-        console.error('Error loading shops:', error);
-      } finally {
-        setIsLoadingShops(false);
+    setIsLoadingShops(true);
+    
+    // Load selected shops from localStorage
+    const loadSelectedShops = async () => {
+      const savedShopIds = localStorage.getItem('selectedShops');
+      if (savedShopIds) {
+        const shopIds = JSON.parse(savedShopIds) as string[];
+        const shopPromises = shopIds.map(id => getShopById(id));
+        const shops = await Promise.all(shopPromises);
+        setSelectedShops(shops.filter((shop): shop is Shop => shop !== null));
       }
     };
     
-    loadShops();
-  }, [getNearbyShops, location]);
+    // Setup real-time subscription for shops
+    const channel = subscribeToShops((shops) => {
+      // If we received real-time shops and have no selected shops yet,
+      // use the first 5 as the default selection
+      if (shops.length > 0 && selectedShops.length === 0) {
+        // Sort by product count (popularity) first
+        const sortedShops = [...shops].sort((a, b) => (b.productCount || 0) - (a.productCount || 0));
+        setSelectedShops(sortedShops.slice(0, 5));
+        
+        // Also update localStorage
+        localStorage.setItem('selectedShops', JSON.stringify(sortedShops.slice(0, 5).map(s => s.id)));
+        
+        // Set the first shop as main if none is set
+        if (!localStorage.getItem('mainShopId')) {
+          localStorage.setItem('mainShopId', sortedShops[0].id);
+        }
+      }
+      
+      setNearbyShops(shops);
+      setIsLoadingShops(false);
+    });
+    
+    // Load selected shops and nearby shops initially
+    const initialLoad = async () => {
+      await loadSelectedShops();
+      
+      // Always get nearby shops based on location
+      const nearby = await getNearbyShops();
+      setNearbyShops(nearby);
+      
+      // If no selected shops, use 5 nearby shops as default
+      if ((!localStorage.getItem('selectedShops') || JSON.parse(localStorage.getItem('selectedShops') || '[]').length === 0) && nearby.length > 0) {
+        setSelectedShops(nearby.slice(0, 5));
+      }
+      
+      setIsLoadingShops(false);
+    };
+    
+    initialLoad();
+    
+    // Cleanup subscription on unmount
+    return () => {
+      channel.unsubscribe();
+    };
+  }, [getNearbyShops]);
 
   // Cycling shop index animation effect
   useEffect(() => {
@@ -177,6 +204,9 @@ const Index = () => {
                             whileHover={{ opacity: 1, scale: 1.05, color: "#29866B" }}
                             animate={{
                               y: [0, -2, 0],
+                              color: activeShopIndex % selectedShops.length === index % selectedShops.length 
+                                ? ["#000000", "#29866B", "#000000"] 
+                                : "#000000",
                               transition: {
                                 duration: 2,
                                 repeat: Infinity,
@@ -239,6 +269,9 @@ const Index = () => {
                             whileHover={{ opacity: 1, scale: 1.05, color: "#29866B" }}
                             animate={{
                               y: [0, -2, 0],
+                              color: activeShopIndex % selectedShops.length === index % selectedShops.length 
+                                ? ["#000000", "#29866B", "#000000"] 
+                                : "#000000",
                               transition: {
                                 duration: 2,
                                 repeat: Infinity,

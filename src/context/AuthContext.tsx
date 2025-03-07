@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -10,6 +9,16 @@ export interface User {
   name: string | null;
   avatar?: string | null;
   role: 'shopper' | 'business';
+  shopName?: string | null;
+  shopDescription?: string | null;
+  shopCategory?: string | null;
+  shopLocation?: string | null;
+  shopLogo?: string | null;
+  phone?: string | null;
+  address?: string | null;
+  city?: string | null;
+  state?: string | null;
+  zip?: string | null;
 }
 
 // Define the context type
@@ -21,6 +30,8 @@ interface AuthContextType {
   register: (email: string, password: string, name: string, role: 'shopper' | 'business') => Promise<boolean>;
   logout: () => Promise<void>;
   updateUser: (updates: Partial<User>) => Promise<boolean>;
+  refreshSession: () => Promise<void>;
+  updateUserProfile: (updates: Partial<User>) => Promise<boolean>;
 }
 
 // Create the context with default values
@@ -32,6 +43,8 @@ const AuthContext = createContext<AuthContextType>({
   register: async () => false,
   logout: async () => {},
   updateUser: async () => false,
+  refreshSession: async () => {},
+  updateUserProfile: async () => false,
 });
 
 // Export the hook for using the auth context
@@ -66,6 +79,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               name: profile.name || session.user.user_metadata?.full_name || null,
               avatar: session.user.user_metadata?.avatar_url || null,
               role: profile.role as 'shopper' | 'business',
+              shopName: profile.shop_name || null,
+              shopDescription: profile.shop_description || null,
+              shopCategory: profile.shop_category || null,
+              shopLocation: profile.shop_location || null,
+              shopLogo: profile.shop_logo || null,
+              phone: profile.phone || null,
+              address: profile.address || null,
+              city: profile.city || null,
+              state: profile.state || null,
+              zip: profile.zip || null,
             });
             setIsLoggedIn(true);
           }
@@ -112,6 +135,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             name: profile.name || session.user.user_metadata?.full_name || null,
             avatar: session.user.user_metadata?.avatar_url || null,
             role: profile.role as 'shopper' | 'business',
+            shopName: profile.shop_name || null,
+            shopDescription: profile.shop_description || null,
+            shopCategory: profile.shop_category || null,
+            shopLocation: profile.shop_location || null,
+            shopLogo: profile.shop_logo || null,
+            phone: profile.phone || null,
+            address: profile.address || null,
+            city: profile.city || null,
+            state: profile.state || null,
+            zip: profile.zip || null,
           });
           setIsLoggedIn(true);
         }
@@ -151,6 +184,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           email: data.user.email || '',
           name: profile.name || null,
           role: profile.role as 'shopper' | 'business',
+          shopName: profile.shop_name || null,
+          shopDescription: profile.shop_description || null,
+          shopCategory: profile.shop_category || null,
+          shopLocation: profile.shop_location || null,
+          shopLogo: profile.shop_logo || null,
+          phone: profile.phone || null,
+          address: profile.address || null,
+          city: profile.city || null,
+          state: profile.state || null,
+          zip: profile.zip || null,
         });
         
         setIsLoggedIn(true);
@@ -223,6 +266,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           email: data.user.email || '',
           name,
           role,
+          shopName: null,
+          shopDescription: null,
+          shopCategory: null,
+          shopLocation: null,
+          shopLogo: null,
+          phone: null,
+          address: null,
+          city: null,
+          state: null,
+          zip: null,
         });
         
         setIsLoggedIn(true);
@@ -273,6 +326,50 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
   
+  // Refresh session function
+  const refreshSession = async (): Promise<void> => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session?.user) {
+        // Get user profile from the database
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+        
+        if (profile) {
+          setUser({
+            id: session.user.id,
+            email: session.user.email || '',
+            name: profile.name || session.user.user_metadata?.full_name || null,
+            avatar: session.user.user_metadata?.avatar_url || null,
+            role: profile.role as 'shopper' | 'business',
+            shopName: profile.shop_name || null,
+            shopDescription: profile.shop_description || null,
+            shopCategory: profile.shop_category || null,
+            shopLocation: profile.shop_location || null,
+            shopLogo: profile.shop_logo || null,
+            phone: profile.phone || null,
+            address: profile.address || null,
+            city: profile.city || null,
+            state: profile.state || null,
+            zip: profile.zip || null,
+          });
+          setIsLoggedIn(true);
+        }
+      }
+    } catch (error) {
+      console.error('Error refreshing session:', error);
+    }
+  };
+  
+  // Update user profile function (alias for updateUser for compatibility)
+  const updateUserProfile = async (updates: Partial<User>): Promise<boolean> => {
+    return updateUser(updates);
+  };
+  
   // Provide the auth context to children
   return (
     <AuthContext.Provider value={{
@@ -283,6 +380,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       register,
       logout,
       updateUser,
+      refreshSession,
+      updateUserProfile,
     }}>
       {children}
     </AuthContext.Provider>

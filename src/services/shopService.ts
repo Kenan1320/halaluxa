@@ -38,6 +38,7 @@ export interface ShopProduct {
 export function convertToModelProduct(shopProduct: ShopProduct): ModelProduct {
   return {
     ...shopProduct,
+    inStock: shopProduct.stock > 0,
     isHalalCertified: true, // Default value
     createdAt: new Date().toISOString(), // Default value
     details: {} // Default empty details
@@ -48,11 +49,17 @@ export function convertToModelProduct(shopProduct: ShopProduct): ModelProduct {
 export const createShop = async (shop: Omit<Shop, 'id'>): Promise<Shop | null> => {
   try {
     const newShop = {
-      ...shop,
       id: `shop-${getRandomId()}`,
+      name: shop.name,
+      description: shop.description,
+      logo_url: shop.logo,
+      category: shop.category,
+      location: shop.location,
       rating: shop.rating || 0,
-      productCount: shop.productCount || 0,
-      isVerified: shop.isVerified || false,
+      product_count: shop.productCount || 0,
+      owner_id: shop.ownerId,
+      address: '', // Default value
+      created_at: new Date().toISOString(), // Default value
     };
 
     const { data, error } = await supabase
@@ -66,7 +73,22 @@ export const createShop = async (shop: Omit<Shop, 'id'>): Promise<Shop | null> =
       return null;
     }
 
-    return data as Shop;
+    // Convert database shop to Shop interface
+    return {
+      id: data.id,
+      name: data.name,
+      description: data.description,
+      logo: data.logo_url,
+      coverImage: data.cover_image,
+      category: data.category || 'General',
+      location: data.location,
+      rating: data.rating,
+      productCount: data.product_count,
+      isVerified: Boolean(data.is_verified),
+      ownerId: data.owner_id,
+      latitude: data.latitude,
+      longitude: data.longitude
+    };
   } catch (error) {
     console.error('Error in createShop:', error);
     return null;
@@ -91,11 +113,29 @@ export const subscribeToShops = (
         // When any shop changes, fetch all shops
         const { data } = await supabase.from('shops').select('*');
         
-        // Sort shops by proximity if we have location data
-        // For now, we're using a mock sorting function
-        const sortedShops = sortShopsByProximity(data || []);
-        
-        callback(sortedShops as Shop[]);
+        if (data) {
+          // Convert database shops to Shop interface
+          const shops = data.map(item => ({
+            id: item.id,
+            name: item.name,
+            description: item.description,
+            logo: item.logo_url,
+            coverImage: item.cover_image,
+            category: item.category || 'General',
+            location: item.location,
+            rating: item.rating,
+            productCount: item.product_count,
+            isVerified: Boolean(item.is_verified),
+            ownerId: item.owner_id,
+            latitude: item.latitude,
+            longitude: item.longitude
+          }));
+          
+          // Sort shops by proximity if we have location data
+          const sortedShops = sortShopsByProximity(shops);
+          
+          callback(sortedShops);
+        }
       }
     )
     .subscribe();
@@ -171,14 +211,13 @@ export const uploadProductImage = async (
       .from('product_images')
       .upload(filePath, file, {
         cacheControl: '3600',
-        upsert: false,
-        onUploadProgress: (progress) => {
-          if (onProgress) {
-            const percent = (progress.loaded / progress.total) * 100;
-            onProgress(Math.round(percent));
-          }
-        },
+        upsert: false
       });
+
+    // Handle progress updates if needed
+    if (onProgress) {
+      onProgress(100); // Complete
+    }
 
     if (error) {
       console.error('Error uploading image:', error);
@@ -211,7 +250,22 @@ export const getAllShops = async (): Promise<Shop[]> => {
       return Array(10).fill(null).map((_, i) => createMockShop(i));
     }
     
-    return data as Shop[];
+    // Convert database shops to Shop interface
+    return data.map(item => ({
+      id: item.id,
+      name: item.name,
+      description: item.description,
+      logo: item.logo_url,
+      coverImage: item.cover_image,
+      category: item.category || 'General',
+      location: item.location,
+      rating: item.rating,
+      productCount: item.product_count,
+      isVerified: Boolean(item.is_verified),
+      ownerId: item.owner_id,
+      latitude: item.latitude,
+      longitude: item.longitude
+    }));
   } catch (error) {
     console.error('Error fetching shops:', error);
     return [];
@@ -285,17 +339,31 @@ export const getMainShop = async (): Promise<Shop | null> => {
   return getShopById(mainShopId);
 };
 
+// Array of logo URLs for mock shops
+const shopLogos = [
+  '/lovable-uploads/44753aff-66f9-4b69-b215-e76db83c47bf.png', // SmartAscend
+  '/lovable-uploads/96911ae4-ccd3-4ef1-8f73-fcbb77a95265.png', // E Logo
+  '/lovable-uploads/97b193a4-55a7-441c-a32f-79c71080192e.png', // Khalifa Thobes
+  '/lovable-uploads/740d131d-a0ff-46c5-a98c-83e1ed8b5ab4.png', // aaBideen
+  '/lovable-uploads/c2307bf9-52c0-4611-8895-3a6224a60cd9.png', // Al-Haq Thobes
+  '/lovable-uploads/0e9f3a41-9bf1-4ad1-948d-ca4bacd60f2c.png', // Thobe Company
+  '/lovable-uploads/e4d2a324-6b3b-4b2b-8e4a-5e42638a657a.png', // Shukr
+  '/lovable-uploads/3e176c4c-e137-4103-b452-aa7b222ac05a.png', // Halal Eatz
+  '/lovable-uploads/bf88547f-a12c-40f1-98ee-44958e3fe6ba.png', // Abu Omar
+  '/lovable-uploads/d40ef5c4-e8bd-476d-a62f-9ca786a695fb.png'  // Abu Ahmed
+];
+
 // Mock data generation utils
 function createMockShop(index: number): Shop {
   const categories = ["Grocery", "Clothing", "Restaurant", "Books", "Beauty"];
   const locations = ["Dallas, TX", "Houston, TX", "Austin, TX", "San Antonio, TX", "Plano, TX"];
-  const shopNames = ["Al-Barakah", "Halal Delights", "Modesty", "Al-Noor", "Salam Market", "Makkah Imports", "Crescent Foods", "Hamza's", "Medina Market", "Falafel House"];
+  const shopNames = ["SmartAscend", "E-Books", "Khalifa Thobes", "aaBideen", "Al-Haq Thobes", "Thobe Company", "Shukr", "Halal Eatz", "Abu Omar", "Abu Ahmed"];
   
   return {
     id: `shop-${index}`,
     name: shopNames[index % shopNames.length] + (index >= shopNames.length ? ` ${Math.floor(index / shopNames.length) + 1}` : ''),
     description: "A great Muslim owned business offering quality products and excellent service to the community.",
-    logo: index % 3 === 0 ? `/lovable-uploads/${['0780684a-9c7f-4f32-affc-6f9ea641b814', '9c75ca26-bc1a-4718-84bb-67d7f2337b30', 'd4ab324c-23f0-4fcc-9069-0afbc77d1c3e'][index % 3]}.png` : undefined,
+    logo: shopLogos[index % shopLogos.length],
     coverImage: index % 2 === 0 ? `/lovable-uploads/${['0c423741-0711-4e97-8c56-ca4fe31dc6ca', '26c50a86-ec95-4072-8f0c-ac930a65b34d'][index % 2]}.png` : undefined,
     category: categories[index % categories.length],
     location: locations[index % locations.length],

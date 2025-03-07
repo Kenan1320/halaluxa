@@ -1,550 +1,342 @@
+
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '@/context/AuthContext';
-import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { UserPlus, ArrowLeft, User, Mail, Lock, Store, ShoppingBag, MapPin, Tag, FileText, Upload, X } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/context/AuthContext';
+import { Card } from '@/components/ui/card';
+import ShopSetupForm from '@/components/auth/ShopSetupForm';
 import { motion } from 'framer-motion';
+import { Check } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 const SignUpPage = () => {
-  const navigate = useNavigate();
-  const { signup } = useAuth();
+  const { register } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     password: '',
     confirmPassword: '',
-    role: 'shopper' as 'shopper' | 'business',
-    shopName: '',
-    shopDescription: '',
-    shopCategory: '',
-    shopLocation: '',
-    shopLogo: '',
   });
   
-  const [shopLogoPreview, setShopLogoPreview] = useState<string | null>(null);
+  const [userType, setUserType] = useState<'shopper' | 'business'>('shopper');
+  const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState(1);
-  const [loading, setLoading] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
   
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
   
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const handleUserTypeChange = (type: 'shopper' | 'business') => {
+    setUserType(type);
+  };
+  
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     
-    if (file.size > 2 * 1024 * 1024) {
+    if (formData.password !== formData.confirmPassword) {
       toast({
         title: "Error",
-        description: "Logo file size should be less than 2MB",
-        variant: "destructive",
+        description: "Passwords do not match",
+        variant: "destructive"
       });
       return;
     }
     
-    if (!file.type.startsWith('image/')) {
+    if (formData.password.length < 6) {
       toast({
         title: "Error",
-        description: "Please upload an image file",
-        variant: "destructive",
+        description: "Password must be at least 6 characters long",
+        variant: "destructive"
       });
       return;
     }
     
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const result = e.target?.result as string;
-      setShopLogoPreview(result);
-      setFormData(prev => ({ ...prev, shopLogo: result }));
-    };
-    reader.readAsDataURL(file);
-  };
-  
-  const clearLogoUpload = () => {
-    setShopLogoPreview(null);
-    setFormData(prev => ({ ...prev, shopLogo: '' }));
-  };
-  
-  const handleNextStep = () => {
-    if (step === 1) {
-      if (!formData.name || !formData.email || !formData.password || !formData.confirmPassword) {
-        toast({
-          title: "Error",
-          description: "Please fill in all required fields",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      if (formData.password !== formData.confirmPassword) {
-        toast({
-          title: "Error",
-          description: "Passwords do not match",
-          variant: "destructive",
-        });
-        return;
-      }
-    }
-    
-    if (formData.role === 'business' && step === 1) {
-      setStep(2);
-    } else {
-      handleSubmit();
-    }
-  };
-  
-  const handleSubmit = async () => {
-    setLoading(true);
+    setIsLoading(true);
     
     try {
-      const shopDetails = formData.role === 'business' ? {
-        shopName: formData.shopName,
-        shopDescription: formData.shopDescription,
-        shopCategory: formData.shopCategory,
-        shopLocation: formData.shopLocation,
-        shopLogo: formData.shopLogo
-      } : undefined;
+      // Sign up with Supabase
+      const { data, error } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+        options: {
+          data: {
+            name: formData.name,
+            role: userType,
+          },
+        },
+      });
       
-      const success = await signup(
-        formData.name,
-        formData.email,
-        formData.password,
-        formData.role,
-        shopDetails
-      );
+      if (error) throw error;
       
-      if (success) {
+      if (data.user) {
+        setUserId(data.user.id);
+        
+        // Create profile if not already created by trigger
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .upsert({
+            id: data.user.id,
+            email: formData.email,
+            name: formData.name,
+            role: userType,
+          }, { onConflict: 'id' });
+        
+        if (profileError) throw profileError;
+        
         toast({
-          title: "Success",
-          description: `Account created successfully${formData.role === 'business' ? '. Your shop is now live!' : ''}`,
+          title: "Account created",
+          description: "Your account has been created successfully",
         });
         
-        navigate(formData.role === 'business' ? '/dashboard' : '/shop');
-      } else {
-        toast({
-          title: "Error",
-          description: "Failed to create account",
-          variant: "destructive",
-        });
+        // If business user, go to shop setup step
+        if (userType === 'business') {
+          setStep(2);
+        } else {
+          // If shopper, go directly to home page
+          navigate('/');
+        }
       }
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Signup error:', error);
       toast({
         title: "Error",
-        description: "An error occurred during sign up",
-        variant: "destructive",
+        description: error.message || "Failed to create account",
+        variant: "destructive"
       });
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
   
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: { 
-      opacity: 1,
-      transition: { 
-        when: "beforeChildren",
-        staggerChildren: 0.1
-      }
-    }
+  const handleShopSetupComplete = () => {
+    toast({
+      title: "Shop created",
+      description: "Your shop has been set up successfully. You can now add products.",
+    });
+    navigate('/dashboard');
   };
   
-  const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: { y: 0, opacity: 1 }
+  const handleSkipShopSetup = () => {
+    toast({
+      title: "Shop setup skipped",
+      description: "You can set up your shop later from the dashboard.",
+    });
+    navigate('/dashboard');
   };
   
-  const shopCategories = [
-    "Food & Groceries",
-    "Fashion",
-    "Beauty & Wellness",
-    "Home & Decor",
-    "Books & Stationery",
-    "Electronics",
-    "Toys & Games",
-    "Health & Fitness",
-    "Other"
-  ];
+  // Render shop setup form if on step 2
+  if (step === 2) {
+    return (
+      <div className="min-h-screen pt-24 pb-20 bg-white">
+        <div className="container mx-auto px-4">
+          <ShopSetupForm 
+            onComplete={handleShopSetupComplete} 
+            onSkip={handleSkipShopSetup}
+          />
+        </div>
+      </div>
+    );
+  }
   
   return (
-    <div className="min-h-screen bg-gradient-to-b from-haluna-primary-light to-white flex items-center justify-center p-4">
-      <motion.div 
-        className="max-w-md w-full bg-white rounded-2xl shadow-lg p-6 md:p-8"
-        initial="hidden"
-        animate="visible"
-        variants={containerVariants}
-      >
-        <motion.div variants={itemVariants}>
-          <Link to="/" className="inline-flex items-center text-haluna-text-light hover:text-haluna-primary mb-6 transition-colors">
-            <ArrowLeft size={16} className="mr-2" />
-            Back to Home
-          </Link>
-        </motion.div>
-        
-        <motion.div className="text-center mb-8" variants={itemVariants}>
-          <h1 className="text-3xl font-serif font-bold text-haluna-text bg-clip-text text-transparent bg-gradient-to-r from-haluna-primary to-purple-600">
-            {step === 1 ? 'Join Haluna' : 'Set Up Your Shop'}
-          </h1>
-          <p className="text-haluna-text-light mt-2">
-            {step === 1 ? 'Create your account today' : 'Tell us about your business'}
-          </p>
-        </motion.div>
-        
-        {step === 1 && (
-          <form onSubmit={(e) => { e.preventDefault(); handleNextStep(); }} className="space-y-5">
-            <motion.div className="space-y-4 mb-6" variants={itemVariants}>
+    <div className="min-h-screen pt-24 pb-20 bg-white">
+      <div className="container mx-auto px-4">
+        <div className="max-w-md mx-auto">
+          <h1 className="text-2xl font-serif font-bold text-center mb-2">Create Your Account</h1>
+          <p className="text-gray-600 text-center mb-8">Join Haluna to discover Muslim-owned businesses</p>
+          
+          <Card className="p-6 shadow-md">
+            <div className="mb-6">
+              <p className="text-sm text-gray-600 mb-2">I want to join as a:</p>
+              
               <div className="grid grid-cols-2 gap-4">
                 <button
                   type="button"
-                  className={`flex flex-col items-center justify-center p-4 rounded-lg border-2 transition-all ${
-                    formData.role === 'shopper' 
-                      ? 'border-haluna-primary bg-haluna-primary-light text-haluna-primary' 
+                  onClick={() => handleUserTypeChange('shopper')}
+                  className={`relative flex flex-col items-center justify-center p-4 rounded-lg border ${
+                    userType === 'shopper' 
+                      ? 'border-green-500 bg-green-50' 
                       : 'border-gray-200 hover:border-gray-300'
                   }`}
-                  onClick={() => setFormData(prev => ({ ...prev, role: 'shopper' }))}
                 >
-                  <ShoppingBag size={24} className="mb-2" />
-                  <span className="text-sm font-medium">I'm a Shopper</span>
-                  <span className="text-xs text-haluna-text-light mt-1">Browse & buy products</span>
+                  {userType === 'shopper' && (
+                    <div className="absolute top-2 right-2 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
+                      <Check className="h-3 w-3 text-white" />
+                    </div>
+                  )}
+                  <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center mb-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                    </svg>
+                  </div>
+                  <span className="text-sm font-medium">Shopper</span>
+                  <span className="text-xs text-gray-500 mt-1">Browse & buy products</span>
                 </button>
                 
                 <button
                   type="button"
-                  className={`flex flex-col items-center justify-center p-4 rounded-lg border-2 transition-all ${
-                    formData.role === 'business' 
-                      ? 'border-haluna-primary bg-haluna-primary-light text-haluna-primary' 
+                  onClick={() => handleUserTypeChange('business')}
+                  className={`relative flex flex-col items-center justify-center p-4 rounded-lg border ${
+                    userType === 'business' 
+                      ? 'border-green-500 bg-green-50' 
                       : 'border-gray-200 hover:border-gray-300'
                   }`}
-                  onClick={() => setFormData(prev => ({ ...prev, role: 'business' }))}
                 >
-                  <Store size={24} className="mb-2" />
-                  <span className="text-sm font-medium">I'm a Business Owner</span>
-                  <span className="text-xs text-haluna-text-light mt-1">List & sell products</span>
+                  {userType === 'business' && (
+                    <div className="absolute top-2 right-2 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
+                      <Check className="h-3 w-3 text-white" />
+                    </div>
+                  )}
+                  <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center mb-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    </svg>
+                  </div>
+                  <span className="text-sm font-medium">Business Owner</span>
+                  <span className="text-xs text-gray-500 mt-1">Sell your products</span>
                 </button>
               </div>
-            </motion.div>
+            </div>
             
-            <motion.div variants={itemVariants}>
-              <label htmlFor="name" className="block text-sm font-medium text-haluna-text mb-1">
-                Full Name
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <User className="h-5 w-5 text-haluna-text-light" />
+            <form onSubmit={handleSubmit}>
+              <div className="space-y-4">
+                <div>
+                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                    Full Name
+                  </label>
+                  <input
+                    type="text"
+                    id="name"
+                    name="name"
+                    required
+                    value={formData.name}
+                    onChange={handleChange}
+                    className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                    placeholder="Enter your full name"
+                  />
                 </div>
-                <input
-                  type="text"
-                  id="name"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  className="pl-10 w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-haluna-primary focus:border-haluna-primary transition-all"
-                  placeholder="John Doe"
-                  required
-                />
-              </div>
-            </motion.div>
-            
-            <motion.div variants={itemVariants}>
-              <label htmlFor="email" className="block text-sm font-medium text-haluna-text mb-1">
-                Email
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-haluna-text-light" />
+                
+                <div>
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                    Email Address
+                  </label>
+                  <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    required
+                    value={formData.email}
+                    onChange={handleChange}
+                    className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                    placeholder="name@example.com"
+                  />
                 </div>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  className="pl-10 w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-haluna-primary focus:border-haluna-primary transition-all"
-                  placeholder="you@example.com"
-                  required
-                />
-              </div>
-            </motion.div>
-            
-            <motion.div variants={itemVariants}>
-              <label htmlFor="password" className="block text-sm font-medium text-haluna-text mb-1">
-                Password
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-haluna-text-light" />
+                
+                <div>
+                  <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                    Password
+                  </label>
+                  <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    required
+                    value={formData.password}
+                    onChange={handleChange}
+                    className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                    placeholder="••••••••"
+                  />
                 </div>
-                <input
-                  type="password"
-                  id="password"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  className="pl-10 w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-haluna-primary focus:border-haluna-primary transition-all"
-                  placeholder="••••••••"
-                  required
-                  minLength={6}
-                />
-              </div>
-            </motion.div>
-            
-            <motion.div variants={itemVariants}>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-haluna-text mb-1">
-                Confirm Password
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-haluna-text-light" />
+                
+                <div>
+                  <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
+                    Confirm Password
+                  </label>
+                  <input
+                    type="password"
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    required
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                    className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                    placeholder="••••••••"
+                  />
                 </div>
-                <input
-                  type="password"
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  className="pl-10 w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-haluna-primary focus:border-haluna-primary transition-all"
-                  placeholder="••••••••"
-                  required
-                  minLength={6}
-                />
               </div>
-            </motion.div>
-            
-            <motion.div variants={itemVariants}>
-              <Button 
-                type="submit" 
-                className="w-full flex items-center justify-center bg-gradient-to-r from-haluna-primary to-purple-600 hover:from-haluna-primary hover:to-purple-700 transition-all duration-300 h-12"
-                disabled={loading}
-              >
-                {loading ? (
-                  <div className="flex items-center">
-                    <div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full mr-2"></div>
-                    Creating Account...
-                  </div>
-                ) : (
-                  <>
-                    {formData.role === 'business' ? (
-                      <>
-                        <Store size={18} className="mr-2" />
-                        Next: Shop Details
-                      </>
-                    ) : (
-                      <>
-                        <UserPlus size={18} className="mr-2" />
-                        Sign Up
-                      </>
-                    )}
-                  </>
-                )}
-              </Button>
-            </motion.div>
-          </form>
-        )}
-        
-        {step === 2 && (
-          <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} className="space-y-5">
-            <motion.div variants={itemVariants}>
-              <label htmlFor="shopName" className="block text-sm font-medium text-haluna-text mb-1">
-                Shop Name *
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Store className="h-5 w-5 text-haluna-text-light" />
-                </div>
-                <input
-                  type="text"
-                  id="shopName"
-                  name="shopName"
-                  value={formData.shopName}
-                  onChange={handleChange}
-                  className="pl-10 w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-haluna-primary focus:border-haluna-primary transition-all"
-                  placeholder="Your Shop Name"
-                  required
-                />
-              </div>
-            </motion.div>
-            
-            <motion.div variants={itemVariants}>
-              <label htmlFor="shopCategory" className="block text-sm font-medium text-haluna-text mb-1">
-                Category *
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Tag className="h-5 w-5 text-haluna-text-light" />
-                </div>
-                <select
-                  id="shopCategory"
-                  name="shopCategory"
-                  value={formData.shopCategory}
-                  onChange={handleChange}
-                  className="pl-10 w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-haluna-primary focus:border-haluna-primary transition-all"
-                  required
-                >
-                  <option value="" disabled>Select a category</option>
-                  {shopCategories.map(category => (
-                    <option key={category} value={category}>{category}</option>
-                  ))}
-                </select>
-              </div>
-            </motion.div>
-            
-            <motion.div variants={itemVariants}>
-              <label htmlFor="shopLocation" className="block text-sm font-medium text-haluna-text mb-1">
-                Location *
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <MapPin className="h-5 w-5 text-haluna-text-light" />
-                </div>
-                <input
-                  type="text"
-                  id="shopLocation"
-                  name="shopLocation"
-                  value={formData.shopLocation}
-                  onChange={handleChange}
-                  className="pl-10 w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-haluna-primary focus:border-haluna-primary transition-all"
-                  placeholder="City, State"
-                  required
-                />
-              </div>
-            </motion.div>
-            
-            <motion.div variants={itemVariants}>
-              <label className="block text-sm font-medium text-haluna-text mb-1">
-                Shop Logo
-              </label>
-              <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg relative">
-                {shopLogoPreview ? (
-                  <div className="relative">
-                    <img 
-                      src={shopLogoPreview} 
-                      alt="Shop Logo Preview" 
-                      className="max-h-40 mx-auto"
-                    />
-                    <button
-                      type="button"
-                      onClick={clearLogoUpload}
-                      className="absolute top-0 right-0 -mt-2 -mr-2 bg-red-500 text-white rounded-full p-1"
-                      title="Remove image"
-                    >
-                      <X size={16} />
-                    </button>
-                  </div>
-                ) : (
-                  <div className="space-y-1 text-center">
-                    <svg
-                      className="mx-auto h-12 w-12 text-haluna-text-light"
-                      stroke="currentColor"
-                      fill="none"
-                      viewBox="0 0 48 48"
-                      aria-hidden="true"
-                    >
-                      <path
-                        d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
-                        strokeWidth={2}
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                    <div className="flex text-sm text-gray-600">
-                      <label
-                        htmlFor="shop-logo-upload"
-                        className="relative cursor-pointer bg-white rounded-md font-medium text-haluna-primary hover:text-haluna-primary-dark"
-                      >
-                        <span>Upload a logo</span>
-                        <input
-                          id="shop-logo-upload"
-                          name="shopLogo"
-                          type="file"
-                          accept="image/*"
-                          className="sr-only"
-                          onChange={handleFileUpload}
-                        />
-                      </label>
-                      <p className="pl-1">or drag and drop</p>
-                    </div>
-                    <p className="text-xs text-gray-500">PNG, JPG, GIF up to 2MB</p>
-                  </div>
-                )}
-              </div>
-            </motion.div>
-            
-            <motion.div variants={itemVariants}>
-              <label htmlFor="shopDescription" className="block text-sm font-medium text-haluna-text mb-1">
-                Shop Description *
-              </label>
-              <div className="relative">
-                <div className="absolute top-3 left-3 flex items-start pointer-events-none">
-                  <FileText className="h-5 w-5 text-haluna-text-light" />
-                </div>
-                <textarea
-                  id="shopDescription"
-                  name="shopDescription"
-                  value={formData.shopDescription}
-                  onChange={handleChange}
-                  className="pl-10 w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-haluna-primary focus:border-haluna-primary transition-all"
-                  placeholder="Tell customers about your shop..."
-                  rows={4}
-                  required
-                />
-              </div>
-              <p className="text-xs text-haluna-text-light mt-1">
-                Briefly describe what your shop offers. You can add more details later.
-              </p>
-            </motion.div>
-            
-            <motion.div className="flex space-x-4" variants={itemVariants}>
-              <Button 
-                type="button"
-                variant="outline"
-                className="flex-1"
-                onClick={() => setStep(1)}
-                disabled={loading}
-              >
-                Back
-              </Button>
               
-              <Button 
-                type="submit" 
-                className="flex-1 flex items-center justify-center bg-gradient-to-r from-haluna-primary to-purple-600 hover:from-haluna-primary hover:to-purple-700 transition-all duration-300"
-                disabled={loading}
+              <Button
+                type="submit"
+                className="w-full mt-6 bg-green-600 hover:bg-green-700 text-white"
+                disabled={isLoading}
               >
-                {loading ? (
-                  <div className="flex items-center">
-                    <div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full mr-2"></div>
-                    Creating Business...
-                  </div>
-                ) : (
+                {isLoading ? (
                   <>
-                    <Store size={18} className="mr-2" />
-                    Create Business
+                    <motion.span 
+                      className="inline-block mr-2"
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                    >
+                      ◌
+                    </motion.span>
+                    Creating Account...
                   </>
+                ) : (
+                  'Create Account'
                 )}
               </Button>
-            </motion.div>
-          </form>
-        )}
-        
-        <motion.div className="mt-8 text-center" variants={itemVariants}>
-          <p className="text-haluna-text-light">
-            Already have an account?{' '}
-            <Link to="/login" className="text-haluna-primary font-medium hover:underline transition-colors">
-              Log In
-            </Link>
-          </p>
-        </motion.div>
-        
-        <motion.div 
-          className="mt-8 pt-6 border-t border-gray-100 text-center text-xs text-haluna-text-light"
-          variants={itemVariants}
-        >
-          By signing up, you agree to our Terms of Service and Privacy Policy
-        </motion.div>
-      </motion.div>
+            </form>
+            
+            <div className="mt-6 text-center">
+              <p className="text-sm text-gray-600">
+                Already have an account?{' '}
+                <a href="/login" className="text-green-600 font-medium hover:underline">
+                  Log in
+                </a>
+              </p>
+            </div>
+            
+            <div className="mt-6">
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-300"></div>
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-2 bg-white text-gray-500">Or continue with</span>
+                </div>
+              </div>
+              
+              <div className="mt-4">
+                <button
+                  type="button"
+                  className="w-full flex items-center justify-center py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50"
+                  onClick={() => {
+                    localStorage.setItem('signupUserType', userType);
+                    supabase.auth.signInWithOAuth({ 
+                      provider: 'google',
+                      options: {
+                        redirectTo: `${window.location.origin}/`
+                      }
+                    });
+                  }}
+                >
+                  <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12.24 10.285V14.4h6.806c-.275 1.765-2.056 5.174-6.806 5.174-4.095 0-7.439-3.389-7.439-7.574s3.345-7.574 7.439-7.574c2.33 0 3.891.989 4.785 1.849l3.254-3.138C18.189 1.186 15.479 0 12.24 0c-6.635 0-12 5.365-12 12s5.365 12 12 12c6.926 0 11.52-4.869 11.52-11.726 0-.788-.085-1.39-.189-1.989H12.24z" fill="#4285F4" />
+                    <path d="M12.24 10.285V14.4h6.806c-.275 1.765-2.056 5.174-6.806 5.174-4.095 0-7.439-3.389-7.439-7.574s3.345-7.574 7.439-7.574c2.33 0 3.891.989 4.785 1.849l3.254-3.138C18.189 1.186 15.479 0 12.24 0c-6.635 0-12 5.365-12 12s5.365 12 12 12c6.926 0 11.52-4.869 11.52-11.726 0-.788-.085-1.39-.189-1.989H12.24z" fill="#4285F4" />
+                  </svg>
+                  Continue with Google
+                </button>
+              </div>
+            </div>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 };

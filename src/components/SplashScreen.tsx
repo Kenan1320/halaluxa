@@ -5,14 +5,14 @@ interface SplashScreenProps {
   onComplete: () => void;
 }
 
-// Simplified splash screen that completes immediately
+// Immediately completes without showing a splash screen
 const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
-  // Call onComplete immediately
+  // Call onComplete immediately without any delay
   React.useEffect(() => {
     onComplete();
   }, [onComplete]);
   
-  // Return an empty div - this component will be unmounted immediately
+  // Return null to not render anything
   return null;
 };
 
