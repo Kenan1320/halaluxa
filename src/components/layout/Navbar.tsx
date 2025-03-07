@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X, Search, ShoppingCart, User, MapPin, Store, AlertCircle } from 'lucide-react';
@@ -10,6 +9,7 @@ import { useLocation as useLocationContext } from '@/context/LocationContext';
 import { motion } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
 import { getShopById, getMainShop, Shop } from '@/services/shopService';
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -73,7 +73,7 @@ const Navbar = () => {
 
   return (
     <header 
-      className="fixed top-0 w-full z-50 transition-all duration-300 bg-[#E4F5F0]"
+      className="fixed top-0 w-full z-50 transition-all duration-300 bg-background border-b border-border"
       style={{ height: '70px' }}
     >
       <div className="container mx-auto px-4 h-full flex justify-between items-center">
@@ -129,6 +129,9 @@ const Navbar = () => {
         
         {/* Right side buttons */}
         <div className="flex items-center gap-4">
+          {/* Theme Toggle */}
+          <ThemeToggle />
+          
           {/* Location Button */}
           <motion.button 
             onClick={requestLocation}
