@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { LogIn, ArrowLeft, Lock, Mail } from 'lucide-react';
 import { motion } from 'framer-motion';
 import LoginSelector from './LoginSelector';
+import { supabase } from '@/integrations/supabase/client';
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -101,6 +102,46 @@ const LoginPage = () => {
     }
   };
 
+  const handleGoogleSignIn = async () => {
+    if (!userType) {
+      toast({
+        title: "Select Account Type",
+        description: "Please select whether you are a shopper or business owner",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    try {
+      // Store the selected user type in localStorage temporarily
+      localStorage.setItem('signupUserType', userType);
+      
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/login`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
+        },
+      });
+      
+      if (error) {
+        throw error;
+      }
+      
+      // The redirect will happen automatically
+    } catch (error) {
+      console.error('Error signing in with Google:', error);
+      toast({
+        title: "Error",
+        description: "Failed to sign in with Google",
+        variant: "destructive",
+      });
+    }
+  };
+
   // Animation variants
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -140,6 +181,29 @@ const LoginPage = () => {
         
         <motion.div variants={itemVariants}>
           <LoginSelector onSelect={setUserType} selectedType={userType} />
+        </motion.div>
+        
+        {/* Google Sign In Button */}
+        <motion.div variants={itemVariants} className="mb-6">
+          <Button 
+            type="button" 
+            variant="outline" 
+            className="w-full flex items-center justify-center h-12 border-gray-300" 
+            onClick={handleGoogleSignIn}
+            disabled={!userType}
+          >
+            <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google" className="w-5 h-5 mr-2" />
+            Continue with Google
+          </Button>
+        </motion.div>
+        
+        <motion.div variants={itemVariants} className="relative my-6">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-gray-200"></div>
+          </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="px-2 bg-white text-gray-500">or log in with email</span>
+          </div>
         </motion.div>
         
         <form onSubmit={handleSubmit} className="space-y-5">

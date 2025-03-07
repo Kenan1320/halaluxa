@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { getShops, Shop, getShopProducts, convertToModelProduct } from '@/services/shopService';
+import { getShops, Shop, getShopProducts, convertToModelProduct, subscribeToShops } from '@/services/shopService';
 import { useLocation } from '@/context/LocationContext';
 import ShopCard from '@/components/shop/ShopCard';
 import ShopProductList from '@/components/shop/ShopProductList';
@@ -14,6 +14,7 @@ const NearbyShops = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
+    // Initial load of shops
     const loadShops = async () => {
       try {
         setIsLoading(true);
@@ -33,6 +34,16 @@ const NearbyShops = () => {
       // Load anyway for demo purposes
       loadShops();
     }
+
+    // Subscribe to real-time shop updates
+    const subscription = subscribeToShops((updatedShops) => {
+      setShops(updatedShops);
+      setIsLoading(false);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, [isLocationEnabled, location, getNearbyShops]);
   
   if (isLoading) {

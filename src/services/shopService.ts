@@ -1,7 +1,7 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { getRandomId } from '@/lib/utils';
 import { Product as ModelProduct } from '@/models/product';
+import { RealtimeChannel } from '@supabase/supabase-js';
 
 export interface Shop {
   id: string;
@@ -44,13 +44,174 @@ export function convertToModelProduct(shopProduct: ShopProduct): ModelProduct {
   };
 }
 
+// Create new shop
+export const createShop = async (shop: Omit<Shop, 'id'>): Promise<Shop | null> => {
+  try {
+    const newShop = {
+      ...shop,
+      id: `shop-${getRandomId()}`,
+      rating: shop.rating || 0,
+      productCount: shop.productCount || 0,
+      isVerified: shop.isVerified || false,
+    };
+
+    const { data, error } = await supabase
+      .from('shops')
+      .insert([newShop])
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error creating shop:', error);
+      return null;
+    }
+
+    return data as Shop;
+  } catch (error) {
+    console.error('Error in createShop:', error);
+    return null;
+  }
+};
+
+// Subscribe to shops changes for real-time updates
+export const subscribeToShops = (
+  callback: (shops: Shop[]) => void
+): RealtimeChannel => {
+  // Create a channel for shops table
+  const channel = supabase
+    .channel('shops-changes')
+    .on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'shops',
+      },
+      async () => {
+        // When any shop changes, fetch all shops
+        const { data } = await supabase.from('shops').select('*');
+        
+        // Sort shops by proximity if we have location data
+        // For now, we're using a mock sorting function
+        const sortedShops = sortShopsByProximity(data || []);
+        
+        callback(sortedShops as Shop[]);
+      }
+    )
+    .subscribe();
+
+  return channel;
+};
+
+// Subscribe to shop products for real-time updates
+export const subscribeToShopProducts = (
+  shopId: string,
+  callback: (products: ModelProduct[]) => void
+): RealtimeChannel => {
+  const channel = supabase
+    .channel(`shop-products-${shopId}`)
+    .on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'products',
+        filter: `business_owner_id=eq.${shopId}`,
+      },
+      async () => {
+        const { data } = await supabase
+          .from('products')
+          .select('*')
+          .eq('business_owner_id', shopId);
+        
+        callback((data || []).map(customMapDbProductToModel));
+      }
+    )
+    .subscribe();
+
+  return channel;
+};
+
+// Sort shops by proximity (mock implementation for now)
+const sortShopsByProximity = (shops: any[]): Shop[] => {
+  // In a real implementation, this would sort by actual proximity
+  // For now, sort by product count as a stand-in for popularity
+  return [...shops].sort((a, b) => (b.productCount || 0) - (a.productCount || 0));
+};
+
+// Helper function for shop product subscription
+const customMapDbProductToModel = (data: any): ModelProduct => {
+  return {
+    id: data.id,
+    name: data.name,
+    description: data.description,
+    price: data.price,
+    inStock: data.stock > 0,
+    category: data.category,
+    images: data.images || [],
+    sellerId: data.business_owner_id,
+    sellerName: data.business_owner_name,
+    rating: data.rating,
+    isHalalCertified: data.is_halal_certified,
+    details: typeof data.details === 'string' ? JSON.parse(data.details) : (data.details || {}),
+    createdAt: data.created_at
+  };
+};
+
+// Functions to upload product images
+export const uploadProductImage = async (
+  file: File,
+  onProgress?: (progress: number) => void
+): Promise<string | null> => {
+  try {
+    const fileExt = file.name.split('.').pop();
+    const filePath = `${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`;
+    
+    const { data, error } = await supabase.storage
+      .from('product_images')
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: false,
+        onUploadProgress: (progress) => {
+          if (onProgress) {
+            const percent = (progress.loaded / progress.total) * 100;
+            onProgress(Math.round(percent));
+          }
+        },
+      });
+
+    if (error) {
+      console.error('Error uploading image:', error);
+      return null;
+    }
+
+    // Return the public URL
+    const { data: publicUrlData } = supabase.storage
+      .from('product_images')
+      .getPublicUrl(data.path);
+
+    return publicUrlData.publicUrl;
+  } catch (error) {
+    console.error('Error in uploadProductImage:', error);
+    return null;
+  }
+};
+
+// Keep the original functions but mark them as using mock data
 export const getAllShops = async (): Promise<Shop[]> => {
   try {
-    // This would be a real API call in production
-    // For now we'll generate mock data
-    await new Promise(resolve => setTimeout(resolve, 500));
+    // Try to get real data first
+    const { data, error } = await supabase
+      .from('shops')
+      .select('*');
     
-    return Array(10).fill(null).map((_, i) => createMockShop(i));
+    if (error || !data || data.length === 0) {
+      console.log('Using mock shop data');
+      // Fall back to mock data
+      return Array(10).fill(null).map((_, i) => createMockShop(i));
+    }
+    
+    return data as Shop[];
   } catch (error) {
     console.error('Error fetching shops:', error);
     return [];
@@ -150,7 +311,7 @@ function createMockShop(index: number): Shop {
 function createMockProduct(shopId: string, index: number): ShopProduct {
   const categories = ["Food", "Clothing", "Books", "Accessories", "Beauty"];
   const productNames = ["Organic Dates", "Modest Dress", "Prayer Rug", "Halal Meat", "Islamic Book", "Miswak", "Honey", "Olive Oil", "Attar Perfume", "Hijab"];
-  const shopIndex = parseInt(shopId.replace('shop-', ''));
+  const shopIndex = parseInt(shopId.replace('shop-', '));
   
   return {
     id: `product-${shopId}-${index}`,

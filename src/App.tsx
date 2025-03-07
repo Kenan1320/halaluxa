@@ -31,7 +31,7 @@ import About from "./pages/About";
 import NotFound from "./pages/NotFound";
 import LoginPage from "./pages/auth/LoginPage";
 import SignUpPage from "./pages/auth/SignUpPage";
-import SelectShops from "./pages/SelectShops"; // Import the new SelectShops page
+import SelectShops from "./pages/SelectShops";
 
 // Dashboard imports
 import DashboardLayout from "./components/layout/DashboardLayout";
@@ -47,9 +47,9 @@ import UserProfilePage from "./pages/profile/UserProfilePage";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      refetchOnWindowFocus: false, // Disable automatic refetching on window focus
-      retry: 1, // Retry once on failure
-      staleTime: 30000, // Consider data fresh for 30 seconds
+      refetchOnWindowFocus: false,
+      retry: 1,
+      staleTime: 30000,
     },
   },
 });
@@ -81,41 +81,59 @@ const AppRoutes = () => {
         <Route path="/shops" element={<Shops />} />
         <Route path="/shop/:shopId" element={<ShopDetail />} />
         <Route path="/product/:productId" element={<ProductDetail />} />
-        <Route path="/select-shops" element={<SelectShops />} /> {/* Add new route */}
+        <Route path="/select-shops" element={<SelectShops />} />
         
         {/* Protected shopper routes - explicitly disallow business users */}
-        <Route path="/cart" element={
-          <ProtectedRoute requiredRole="shopper" businessAllowed={false}>
-            <Cart />
-          </ProtectedRoute>
-        } />
-        <Route path="/checkout" element={
-          <ProtectedRoute requiredRole="shopper" businessAllowed={false}>
-            <Checkout />
-          </ProtectedRoute>
-        } />
-        <Route path="/order-confirmation" element={
-          <ProtectedRoute requiredRole="shopper" businessAllowed={false}>
-            <OrderConfirmation />
-          </ProtectedRoute>
-        } />
-        <Route path="/orders" element={
-          <ProtectedRoute requiredRole="shopper" businessAllowed={false}>
-            <Orders />
-          </ProtectedRoute>
-        } />
-        <Route path="/profile" element={
-          <ProtectedRoute requiredRole="shopper" businessAllowed={false}>
-            <UserProfilePage />
-          </ProtectedRoute>
-        } />
+        <Route 
+          path="/cart" 
+          element={
+            <ProtectedRoute requiredRole="shopper" businessAllowed={false}>
+              <Cart />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/checkout" 
+          element={
+            <ProtectedRoute requiredRole="shopper" businessAllowed={false}>
+              <Checkout />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/order-confirmation" 
+          element={
+            <ProtectedRoute requiredRole="shopper" businessAllowed={false}>
+              <OrderConfirmation />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/orders" 
+          element={
+            <ProtectedRoute requiredRole="shopper" businessAllowed={false}>
+              <Orders />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/profile" 
+          element={
+            <ProtectedRoute requiredRole="shopper" businessAllowed={false}>
+              <UserProfilePage />
+            </ProtectedRoute>
+          } 
+        />
         
         {/* Protected business owner routes */}
-        <Route path="/dashboard" element={
-          <ProtectedRoute requiredRole="business">
-            <DashboardLayout />
-          </ProtectedRoute>
-        }>
+        <Route 
+          path="/dashboard" 
+          element={
+            <ProtectedRoute requiredRole="business">
+              <DashboardLayout />
+            </ProtectedRoute>
+          }
+        >
           <Route index element={<DashboardHome />} />
           <Route path="products" element={<ProductsPage />} />
           <Route path="products/new" element={<AddEditProductPage />} />
@@ -134,18 +152,8 @@ const AppRoutes = () => {
 };
 
 const App = () => {
-  const [showSplash, setShowSplash] = useState(true);
+  const [showSplash, setShowSplash] = useState(false); // Changed to false to skip splash
   
-  // Check if this is the first visit in this session
-  useEffect(() => {
-    const hasSeenSplash = sessionStorage.getItem('hasSeenSplash');
-    if (hasSeenSplash) {
-      setShowSplash(false);
-    } else {
-      sessionStorage.setItem('hasSeenSplash', 'true');
-    }
-  }, []);
-
   const handleSplashFinished = () => setShowSplash(false);
 
   return (
@@ -154,7 +162,7 @@ const App = () => {
         <Toaster />
         <Sonner />
         {showSplash ? (
-          <SplashScreen onFinished={handleSplashFinished} />
+          <SplashScreen onComplete={handleSplashFinished} />
         ) : (
           <BrowserRouter>
             <LanguageProvider>

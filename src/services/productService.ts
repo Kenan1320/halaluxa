@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Product, ProductDetails, mapDbProductToModel, mapModelToDbProduct } from '@/models/product';
 
@@ -24,8 +23,8 @@ const customMapDbProductToModel = (data: any): Product => {
     inStock: data.stock > 0,
     category: data.category,
     images: data.images || [],
-    sellerId: data.seller_id,
-    sellerName: data.seller_name,
+    sellerId: data.business_owner_id,
+    sellerName: data.business_owner_name,
     rating: data.rating,
     isHalalCertified: data.is_halal_certified,
     details: safeJsonParse(data.details),
@@ -86,8 +85,8 @@ const prepareProductForDb = (product: Partial<Product>) => {
     stock: product.inStock ? 1 : 0,
     category: product.category,
     images: product.images,
-    seller_id: product.sellerId,
-    seller_name: product.sellerName,
+    business_owner_id: product.sellerId,
+    business_owner_name: product.sellerName,
     rating: product.rating,
     is_halal_certified: product.isHalalCertified,
     details: product.details ? JSON.stringify(product.details) : '{}'
@@ -257,17 +256,17 @@ export async function getProductsByCategory(category: string): Promise<Product[]
   }
 }
 
-// Get products by seller ID
+// Get products by business owner ID (previously seller ID)
 export async function getProductsBySeller(sellerId: string): Promise<Product[]> {
   try {
     const { data, error } = await supabase
       .from('products')
       .select('*')
-      .eq('seller_id', sellerId)
+      .eq('business_owner_id', sellerId)
       .order('created_at', { ascending: false });
     
     if (error) {
-      console.error(`Error fetching products for seller ${sellerId}:`, error);
+      console.error(`Error fetching products for business owner ${sellerId}:`, error);
       return [];
     }
     
