@@ -5,18 +5,18 @@ import { motion } from 'framer-motion';
 import { ShoppingCart, ShoppingBag, Home, BookOpen, Utensils, HeartPulse, Gift, Shirt, Laptop, Baby, Drumstick, Palette } from 'lucide-react';
 
 const categories = [
-  { id: 1, name: 'Groceries', icon: ShoppingCart, color: '#2A866A' },
-  { id: 2, name: 'Food', icon: Utensils, color: '#2A866A' },
-  { id: 3, name: 'Modest Clothing', icon: Shirt, color: '#2A866A' },
-  { id: 4, name: 'Home', icon: Home, color: '#2A866A' },
-  { id: 5, name: 'Electronics', icon: Laptop, color: '#2A866A' },
-  { id: 6, name: 'Books', icon: BookOpen, color: '#2A866A' },
-  { id: 7, name: 'Health', icon: HeartPulse, color: '#2A866A' },
-  { id: 8, name: 'Toys', icon: Baby, color: '#2A866A' },
-  { id: 9, name: 'Gifts', icon: Gift, color: '#2A866A' },
-  { id: 10, name: 'Art', icon: Palette, color: '#2A866A' },
-  { id: 11, name: 'Baby', icon: Baby, color: '#2A866A' },
-  { id: 12, name: 'Halal Meat', icon: Drumstick, color: '#2A866A' }
+  { id: 1, name: 'Groceries', icon: ShoppingCart, color: '#01BFB3' },
+  { id: 2, name: 'Food', icon: Utensils, color: '#01BFB3' },
+  { id: 3, name: 'Modest Clothing', icon: Shirt, color: '#01BFB3' },
+  { id: 4, name: 'Home', icon: Home, color: '#01BFB3' },
+  { id: 5, name: 'Electronics', icon: Laptop, color: '#01BFB3' },
+  { id: 6, name: 'Books', icon: BookOpen, color: '#01BFB3' },
+  { id: 7, name: 'Health', icon: HeartPulse, color: '#01BFB3' },
+  { id: 8, name: 'Toys', icon: Baby, color: '#01BFB3' },
+  { id: 9, name: 'Gifts', icon: Gift, color: '#01BFB3' },
+  { id: 10, name: 'Art', icon: Palette, color: '#01BFB3' },
+  { id: 11, name: 'Baby', icon: Baby, color: '#01BFB3' },
+  { id: 12, name: 'Halal Meat', icon: Drumstick, color: '#01BFB3' }
 ];
 
 const CategoryScroll = () => {
@@ -88,7 +88,7 @@ const CategoryScroll = () => {
             whileTap={{ scale: 0.95 }}
             onClick={() => handleCategoryClick(category.name)}
           >
-            <category.icon className="h-5 w-5 text-[#2A866A] mb-1" />
+            <category.icon className="h-5 w-5 text-haluna-gradient mb-1" />
             <span className="text-gray-800 text-xs font-medium text-center line-clamp-1">{category.name}</span>
           </motion.button>
         ))}

@@ -16,8 +16,8 @@ const buttonVariants = cva(
         secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-haluna-gradient underline-offset-4 hover:underline",
-        teal: "bg-[#01BFB3] text-white hover:bg-[#01BFB3]/90", // Added teal variant
-        purple: "bg-[#6A3DE8] text-white hover:bg-[#6A3DE8]/90", // Added purple variant
+        teal: "bg-[#01BFB3] text-white hover:bg-[#01BFB3]/90", // Kept teal variant
+        purple: "bg-[#6A3DE8] text-white hover:bg-[#6A3DE8]/90", // Kept purple variant
       },
       size: {
         default: "h-10 px-6 py-2 text-sm",
