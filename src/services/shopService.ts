@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { getRandomId } from '@/lib/utils';
 import { Product as ModelProduct } from '@/models/product';
@@ -31,22 +32,22 @@ export interface ShopProduct {
   sellerName?: string;
   rating?: number;
   stock: number;
-  isHalalCertified?: boolean;
-  createdAt?: string;
 }
 
 // Adapter function to convert ShopProduct to ModelProduct
 export function convertToModelProduct(shopProduct: ShopProduct): ModelProduct {
   return {
     ...shopProduct,
-    isHalalCertified: shopProduct.isHalalCertified || true,
-    createdAt: shopProduct.createdAt || new Date().toISOString(),
-    details: {}
+    isHalalCertified: true, // Default value
+    createdAt: new Date().toISOString(), // Default value
+    details: {} // Default empty details
   };
 }
 
 export const getAllShops = async (): Promise<Shop[]> => {
   try {
+    // This would be a real API call in production
+    // For now we'll generate mock data
     await new Promise(resolve => setTimeout(resolve, 500));
     
     return Array(10).fill(null).map((_, i) => createMockShop(i));
@@ -56,14 +57,17 @@ export const getAllShops = async (): Promise<Shop[]> => {
   }
 };
 
-export const getShops = getAllShops;
+export const getShops = getAllShops; // Alias for backward compatibility
 
 export const getShopById = async (id: string): Promise<Shop | null> => {
   try {
+    // This would be a real API call in production
+    // For now we'll return a mock shop if id is valid format
     await new Promise(resolve => setTimeout(resolve, 300));
     
     if (!id || typeof id !== 'string') return null;
     
+    // Get the shop index from the id (assuming id format is "shop-X")
     const index = parseInt(id.replace('shop-', ''));
     if (isNaN(index)) return null;
     
@@ -76,11 +80,13 @@ export const getShopById = async (id: string): Promise<Shop | null> => {
 
 export const getNearbyShops = async (latitude?: number, longitude?: number): Promise<Shop[]> => {
   try {
+    // In production, this would use the latitude and longitude
+    // For now we'll generate mock data with random distances
     await new Promise(resolve => setTimeout(resolve, 800));
     
     return Array(5).fill(null).map((_, i) => {
       const shop = createMockShop(i);
-      shop.distance = Math.round((Math.random() * 10 + 0.5) * 10) / 10;
+      shop.distance = Math.round((Math.random() * 10 + 0.5) * 10) / 10; // 0.5 to 10.5 miles
       return shop;
     });
   } catch (error) {
@@ -91,19 +97,16 @@ export const getNearbyShops = async (latitude?: number, longitude?: number): Pro
 
 export const getShopProducts = async (shopId: string): Promise<ShopProduct[]> => {
   try {
+    // This would be a real API call in production
     await new Promise(resolve => setTimeout(resolve, 700));
     
     const index = parseInt(shopId.replace('shop-', ''));
     if (isNaN(index)) return [];
     
+    // Generate between 3 and 8 products for the shop
     const count = Math.floor(Math.random() * 6) + 3;
     
-    return Array(count).fill(null).map((_, i) => {
-      const product = createMockProduct(shopId, i);
-      product.isHalalCertified = true;
-      product.createdAt = new Date().toISOString();
-      return product;
-    });
+    return Array(count).fill(null).map((_, i) => createMockProduct(shopId, i));
   } catch (error) {
     console.error('Error fetching shop products:', error);
     return [];
@@ -121,6 +124,7 @@ export const getMainShop = async (): Promise<Shop | null> => {
   return getShopById(mainShopId);
 };
 
+// Mock data generation utils
 function createMockShop(index: number): Shop {
   const categories = ["Grocery", "Clothing", "Restaurant", "Books", "Beauty"];
   const locations = ["Dallas, TX", "Houston, TX", "Austin, TX", "San Antonio, TX", "Plano, TX"];
@@ -160,8 +164,6 @@ function createMockProduct(shopId: string, index: number): ShopProduct {
     sellerId: shopId,
     sellerName: createMockShop(shopIndex).name,
     rating: parseFloat((3.5 + Math.random() * 1.5).toFixed(1)),
-    stock: 5 + Math.floor(Math.random() * 30),
-    isHalalCertified: true,
-    createdAt: new Date().toISOString()
+    stock: 5 + Math.floor(Math.random() * 30)
   };
 }

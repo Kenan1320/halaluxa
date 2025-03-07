@@ -10,7 +10,6 @@ import { useLocation as useLocationContext } from '@/context/LocationContext';
 import { motion } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
 import { getShopById, getMainShop, Shop } from '@/services/shopService';
-import { ThemeToggle } from "@/components/theme/ThemeToggle";
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -25,10 +24,12 @@ const Navbar = () => {
   const { isLocationEnabled, requestLocation, location: userLocation } = useLocationContext();
   const { toast } = useToast();
   
+  // Close mobile menu when route changes
   useEffect(() => {
     setMobileMenuOpen(false);
   }, [location]);
   
+  // Handle scroll for navbar styles
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
@@ -38,6 +39,7 @@ const Navbar = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
   
+  // Load main shop from localStorage
   useEffect(() => {
     const loadMainShop = async () => {
       try {
@@ -71,13 +73,14 @@ const Navbar = () => {
 
   return (
     <header 
-      className="fixed top-0 w-full z-50 transition-all duration-300 bg-background border-b border-border dark:bg-[#121212] dark:border-[#2A2A2A]"
+      className="fixed top-0 w-full z-50 transition-all duration-300 bg-[#E4F5F0]"
       style={{ height: '70px' }}
     >
       <div className="container mx-auto px-4 h-full flex justify-between items-center">
+        {/* Menu Button */}
         <button
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="p-2 text-primary dark:text-[#29866B]"
+          className="p-2 text-[#2A866A]"
           aria-label="Toggle menu"
         >
           {mobileMenuOpen ? (
@@ -87,11 +90,14 @@ const Navbar = () => {
           )}
         </button>
         
+        {/* Logo - with advanced animation */}
         <div className="flex items-center ml-3 mr-auto">
           <Link to="/" className="flex items-center">
-            <span className="text-lg font-serif font-bold text-primary dark:text-[#29866B]">Haluna</span>
+            <span className="text-lg font-serif font-bold text-[#2A866A]">Haluna</span>
             
+            {/* Advanced animated logo design */}
             <div className="relative ml-1">
+              {/* Main orange ball */}
               <motion.div 
                 className="w-5 h-5 bg-[#E4875E] rounded-full"
                 animate={{
@@ -104,8 +110,9 @@ const Navbar = () => {
                 }}
               />
               
+              {/* Orbiting green ball */}
               <motion.div
-                className="w-2 h-2 bg-primary dark:bg-[#29866B] rounded-full absolute"
+                className="w-2 h-2 bg-[#2A866B] rounded-full absolute"
                 animate={{
                   x: [2, 1.5, 0, -1.5, -2, -1.5, 0, 1.5, 2],
                   y: [0, 1.5, 2, 1.5, 0, -1.5, -2, -1.5, 0],
@@ -120,21 +127,22 @@ const Navbar = () => {
           </Link>
         </div>
         
+        {/* Right side buttons */}
         <div className="flex items-center gap-4">
-          <ThemeToggle />
-          
+          {/* Location Button */}
           <motion.button 
             onClick={requestLocation}
-            className="p-2 rounded-full text-[#2A866A] hover:bg-[#d5efe8] transition-colors dark:hover:bg-[#1A3B32]"
+            className="p-2 rounded-full text-[#2A866A] hover:bg-[#d5efe8] transition-colors"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
             <MapPin className="h-6 w-6" />
           </motion.button>
           
+          {/* Main Shop Button */}
           <motion.button 
             onClick={handleMainShopClick}
-            className="relative p-2 rounded-full text-[#2A866A] hover:bg-[#d5efe8] transition-colors dark:hover:bg-[#1A3B32]"
+            className="relative p-2 rounded-full text-[#2A866A] hover:bg-[#d5efe8] transition-colors"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
@@ -176,18 +184,20 @@ const Navbar = () => {
             )}
           </motion.button>
           
+          {/* Select Shops Button */}
           <motion.div
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
             <Link 
               to="/select-shops" 
-              className="p-2 rounded-full text-[#2A866A] hover:bg-[#d5efe8] transition-colors block dark:hover:bg-[#1A3B32]"
+              className="p-2 rounded-full text-[#2A866A] hover:bg-[#d5efe8] transition-colors block"
             >
               <Store className="h-6 w-6" />
             </Link>
           </motion.div>
           
+          {/* Cart Button */}
           <motion.div
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -205,6 +215,7 @@ const Navbar = () => {
             </Link>
           </motion.div>
           
+          {/* User Profile */}
           <motion.div
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -219,78 +230,73 @@ const Navbar = () => {
         </div>
       </div>
       
+      {/* Mobile menu */}
       {mobileMenuOpen && (
-        <div className="container mx-auto px-4 py-4 bg-background border-t border-border dark:bg-[#121212] dark:border-[#2A2A2A]">
+        <div className="container mx-auto px-4 py-4 bg-white border-t border-gray-100">
           <div className="md:hidden mb-4">
             <div className="relative w-full">
               <input
                 type="text"
                 placeholder="Search your shop and products"
-                className="w-full py-2 px-4 pl-10 bg-secondary border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 dark:bg-[#1A1A1A] dark:border-[#2A2A2A] dark:text-[#E4F5F0]"
+                className="w-full py-2 px-4 pl-10 bg-[#F5F5F5] border border-[#E0E0E0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2A866A]/30"
               />
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
             </div>
           </div>
           
           <nav className="grid grid-cols-1 gap-3">
-            <ThemeToggle mobile={true} />
-            
             <Link
               to="/"
               className={`flex items-center gap-3 p-3 rounded-lg transition ${
-                isActive('/') ? 'bg-secondary text-primary dark:bg-[#1A3B32] dark:text-[#29866B]' : 'text-foreground hover:bg-secondary/50 dark:text-[#E4F5F0] dark:hover:bg-[#1A3B32]/50'
+                isActive('/') ? 'bg-[#E4F5F0] text-[#2A866A]' : 'text-gray-700 hover:bg-gray-100'
               }`}
               onClick={() => setMobileMenuOpen(false)}
             >
               <span>Home</span>
             </Link>
-            
             <Link
               to="/shops"
               className={`flex items-center gap-3 p-3 rounded-lg transition ${
-                isActive('/shops') ? 'bg-secondary text-primary dark:bg-[#1A3B32] dark:text-[#29866B]' : 'text-foreground hover:bg-secondary/50 dark:text-[#E4F5F0] dark:hover:bg-[#1A3B32]/50'
+                isActive('/shops') ? 'bg-[#E4F5F0] text-[#2A866A]' : 'text-gray-700 hover:bg-gray-100'
               }`}
               onClick={() => setMobileMenuOpen(false)}
             >
               <span>Shops</span>
             </Link>
-            
             <Link
               to="/browse"
               className={`flex items-center gap-3 p-3 rounded-lg transition ${
-                isActive('/browse') ? 'bg-secondary text-primary dark:bg-[#1A3B32] dark:text-[#29866B]' : 'text-foreground hover:bg-secondary/50 dark:text-[#E4F5F0] dark:hover:bg-[#1A3B32]/50'
+                isActive('/browse') ? 'bg-[#E4F5F0] text-[#2A866A]' : 'text-gray-700 hover:bg-gray-100'
               }`}
               onClick={() => setMobileMenuOpen(false)}
             >
               <span>Browse</span>
             </Link>
-            
+            {/* Select Shops link */}
             <Link
               to="/select-shops"
               className={`flex items-center gap-3 p-3 rounded-lg transition ${
-                isActive('/select-shops') ? 'bg-secondary text-primary dark:bg-[#1A3B32] dark:text-[#29866B]' : 'text-foreground hover:bg-secondary/50 dark:text-[#E4F5F0] dark:hover:bg-[#1A3B32]/50'
+                isActive('/select-shops') ? 'bg-[#E4F5F0] text-[#2A866A]' : 'text-gray-700 hover:bg-gray-100'
               }`}
               onClick={() => setMobileMenuOpen(false)}
             >
               <span>Select Your Shops</span>
             </Link>
-            
             {user?.role === 'business' && (
               <Link
                 to="/dashboard"
                 className={`flex items-center gap-3 p-3 rounded-lg transition ${
-                  isActive('/dashboard') ? 'bg-secondary text-primary dark:bg-[#1A3B32] dark:text-[#29866B]' : 'text-foreground hover:bg-secondary/50 dark:text-[#E4F5F0] dark:hover:bg-[#1A3B32]/50'
+                  isActive('/dashboard') ? 'bg-[#E4F5F0] text-[#2A866A]' : 'text-gray-700 hover:bg-gray-100'
                 }`}
                 onClick={() => setMobileMenuOpen(false)}
               >
                 <span>Seller Dashboard</span>
               </Link>
             )}
-            
             <Link
               to={isLoggedIn ? '/profile' : '/login'}
               className={`flex items-center gap-3 p-3 rounded-lg transition ${
-                isActive('/profile') || isActive('/login') ? 'bg-secondary text-primary dark:bg-[#1A3B32] dark:text-[#29866B]' : 'text-foreground hover:bg-secondary/50 dark:text-[#E4F5F0] dark:hover:bg-[#1A3B32]/50'
+                isActive('/profile') || isActive('/login') ? 'bg-[#E4F5F0] text-[#2A866A]' : 'text-gray-700 hover:bg-gray-100'
               }`}
               onClick={() => setMobileMenuOpen(false)}
             >

@@ -1,7 +1,6 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useTheme } from '@/context/ThemeContext';
 
 interface SplashScreenProps {
   onFinished: () => void;
@@ -13,7 +12,6 @@ const SplashScreen = ({ onFinished }: SplashScreenProps) => {
   const [secondTaglineVisible, setSecondTaglineVisible] = useState(false);
   const [waveComplete, setWaveComplete] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const { theme } = useTheme();
 
   useEffect(() => {
     // Show primary tagline after a delay
@@ -59,12 +57,6 @@ const SplashScreen = ({ onFinished }: SplashScreenProps) => {
   // Rainbow color animation for Haluna text
   const colors = ["#29866B", "#36A186", "#E4875E", "#F9A280", "#29866B"];
 
-  // Get appropriate colors based on theme
-  const bgColor = theme === 'dark' ? '#1A1A1A' : '#E4F5F0';
-  const waveColor = theme === 'dark' ? '#29866B' : '#29866B';
-  const secondWaveColor = theme === 'dark' ? '#E4875E' : '#E4875E';
-  const textColor = theme === 'dark' ? '#F9F5EB' : '#FFFFFF';
-
   return (
     <AnimatePresence>
       {isVisible && (
@@ -76,15 +68,14 @@ const SplashScreen = ({ onFinished }: SplashScreenProps) => {
           exit={{ opacity: 0 }}
           transition={{ duration: 0.8, ease: "easeInOut" }}
         >
-          {/* Background matching the theme */}
-          <div className="absolute inset-0" style={{ backgroundColor: bgColor }} />
+          {/* Light green background matching the top nav */}
+          <div className="absolute inset-0 bg-[#E4F5F0]" />
           
           {/* Wave animation container */}
           <div className="absolute inset-0 flex flex-col justify-end overflow-hidden">
-            {/* First wave */}
+            {/* First wave - Deep green (#29866B) */}
             <motion.div
-              className="w-full h-[60%] rounded-t-[100%]"
-              style={{ backgroundColor: waveColor }}
+              className="w-full h-[60%] bg-[#29866B] rounded-t-[100%]"
               initial={{ y: "100%" }}
               animate={{ 
                 y: "0%"
@@ -96,12 +87,9 @@ const SplashScreen = ({ onFinished }: SplashScreenProps) => {
               onAnimationComplete={() => setWaveComplete(true)}
             />
             
-            {/* Second wave with blend */}
+            {/* Second wave - Warm orange (#E4875E) with blend into green */}
             <motion.div
-              className="absolute bottom-0 w-full h-[45%] rounded-t-[100%]"
-              style={{ 
-                background: `linear-gradient(to top, ${secondWaveColor}, ${waveColor})`
-              }}
+              className="absolute bottom-0 w-full h-[45%] bg-gradient-to-t from-[#E4875E] to-[#29866B] rounded-t-[100%]"
               initial={{ y: "100%" }}
               animate={{ 
                 y: "0%"
@@ -150,10 +138,9 @@ const SplashScreen = ({ onFinished }: SplashScreenProps) => {
               ))}
             </div>
             
-            {/* Primary Tagline */}
+            {/* Primary Tagline - Bold and elegant */}
             <motion.p
-              className="text-opacity-95 text-base font-medium tracking-wider mt-1"
-              style={{ color: textColor }}
+              className="text-white text-opacity-95 text-base font-medium tracking-wider mt-1"
               initial={{ opacity: 0, y: 10 }}
               animate={taglineVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
               transition={{ 
@@ -164,10 +151,9 @@ const SplashScreen = ({ onFinished }: SplashScreenProps) => {
               The Muslim Shops and Businesses
             </motion.p>
             
-            {/* Secondary Tagline */}
+            {/* Secondary Tagline - Different color */}
             <motion.p
-              className="text-opacity-90 text-sm tracking-wider mt-0.5 font-light"
-              style={{ color: textColor }}
+              className="text-[#F9F5EB] text-opacity-90 text-sm tracking-wider mt-0.5 font-light"
               initial={{ opacity: 0, y: 10 }}
               animate={secondTaglineVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
               transition={{ 
@@ -194,8 +180,7 @@ const SplashScreen = ({ onFinished }: SplashScreenProps) => {
             >
               {/* Main orange ball */}
               <motion.div
-                className="w-14 h-14 rounded-full flex items-center justify-center"
-                style={{ backgroundColor: secondWaveColor }}
+                className="w-14 h-14 bg-[#E4875E] rounded-full flex items-center justify-center"
                 animate={{ 
                   scale: [1, 1.08, 1],
                   opacity: [0.85, 0.92, 0.85] 
@@ -211,8 +196,7 @@ const SplashScreen = ({ onFinished }: SplashScreenProps) => {
               
               {/* Orbiting green ball */}
               <motion.div
-                className="absolute w-6 h-6 rounded-full shadow-md"
-                style={{ backgroundColor: waveColor }}
+                className="absolute w-6 h-6 bg-[#29866B] rounded-full shadow-md"
                 animate={{
                   x: [15, 12, 0, -12, -15, -12, 0, 12, 15],
                   y: [0, 12, 15, 12, 0, -12, -15, -12, 0],

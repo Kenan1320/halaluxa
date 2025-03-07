@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -12,7 +13,6 @@ import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import AuthMiddleware from "@/components/auth/AuthMiddleware";
 import SplashScreen from "@/components/SplashScreen";
 import Navbar from "@/components/layout/Navbar";
-import { ThemeProvider } from "@/context/ThemeContext";
 
 // Pages
 import Index from "./pages/Index";
@@ -31,7 +31,7 @@ import About from "./pages/About";
 import NotFound from "./pages/NotFound";
 import LoginPage from "./pages/auth/LoginPage";
 import SignUpPage from "./pages/auth/SignUpPage";
-import SelectShops from "./pages/SelectShops";
+import SelectShops from "./pages/SelectShops"; // Import the new SelectShops page
 
 // Dashboard imports
 import DashboardLayout from "./components/layout/DashboardLayout";
@@ -81,7 +81,7 @@ const AppRoutes = () => {
         <Route path="/shops" element={<Shops />} />
         <Route path="/shop/:shopId" element={<ShopDetail />} />
         <Route path="/product/:productId" element={<ProductDetail />} />
-        <Route path="/select-shops" element={<SelectShops />} />
+        <Route path="/select-shops" element={<SelectShops />} /> {/* Add new route */}
         
         {/* Protected shopper routes - explicitly disallow business users */}
         <Route path="/cart" element={
@@ -150,27 +150,25 @@ const App = () => {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          {showSplash ? (
-            <SplashScreen onFinished={handleSplashFinished} />
-          ) : (
-            <BrowserRouter>
-              <LanguageProvider>
-                <AuthProvider>
-                  <CartProvider>
-                    <LocationProvider>
-                      <AppRoutes />
-                    </LocationProvider>
-                  </CartProvider>
-                </AuthProvider>
-              </LanguageProvider>
-            </BrowserRouter>
-          )}
-        </TooltipProvider>
-      </ThemeProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        {showSplash ? (
+          <SplashScreen onFinished={handleSplashFinished} />
+        ) : (
+          <BrowserRouter>
+            <LanguageProvider>
+              <AuthProvider>
+                <CartProvider>
+                  <LocationProvider>
+                    <AppRoutes />
+                  </LocationProvider>
+                </CartProvider>
+              </AuthProvider>
+            </LanguageProvider>
+          </BrowserRouter>
+        )}
+      </TooltipProvider>
     </QueryClientProvider>
   );
 };
