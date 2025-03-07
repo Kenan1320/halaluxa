@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Search, ShoppingCart, Heart, ChevronDown, Star } from 'lucide-react';
@@ -5,8 +6,8 @@ import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 import { useToast } from '@/hooks/use-toast';
-import { Product } from '@/types';
-import { getAllProducts, getProductsByCategory } from '@/services/productService';
+import { Product } from '@/models/product';
+import { getProducts, getProductsByCategory } from '@/services/productService';
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -31,9 +32,9 @@ const Browse = () => {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [categories, setCategories] = useState<string[]>([]);
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
-    const [priceRange, setPriceRange] = useState<number[]>([0, 100]);
-    const [ratingFilter, setRatingFilter] = useState<number | null>(null);
-    const [halalCertified, setHalalCertified] = useState(false);
+  const [priceRange, setPriceRange] = useState<number[]>([0, 100]);
+  const [ratingFilter, setRatingFilter] = useState<number | null>(null);
+  const [halalCertified, setHalalCertified] = useState(false);
   const { translate } = useLanguage();
   const navigate = useNavigate();
   const { isLoggedIn } = useAuth();
@@ -52,7 +53,7 @@ const Browse = () => {
         if (selectedCategory) {
           fetchedProducts = await getProductsByCategory(selectedCategory);
         } else {
-          fetchedProducts = await getAllProducts();
+          fetchedProducts = await getProducts();
         }
         
         // Extract categories from products
@@ -105,21 +106,21 @@ const Browse = () => {
       return priceB - priceA;
     }
   }).filter(product => {
-        if (priceRange) {
-            return product.price >= priceRange[0] && product.price <= priceRange[1];
-        }
-        return true;
-    }).filter(product => {
-        if (ratingFilter) {
-            return product.rating >= ratingFilter;
-        }
-        return true;
-    }).filter(product => {
-        if (halalCertified) {
-            return product.isHalalCertified === true;
-        }
-        return true;
-    });
+    if (priceRange) {
+      return product.price >= priceRange[0] && product.price <= priceRange[1];
+    }
+    return true;
+  }).filter(product => {
+    if (ratingFilter) {
+      return product.rating >= ratingFilter;
+    }
+    return true;
+  }).filter(product => {
+    if (halalCertified) {
+      return product.isHalalCertified === true;
+    }
+    return true;
+  });
   
   const SkeletonCards = () => (
     <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -142,7 +143,7 @@ const Browse = () => {
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 pt-28 pb-10">
-        <h1 className="text-3xl font-serif font-bold text-haluna-text mb-6">Browse Products</h1>
+        <h1 className="text-3xl font-serif font-bold text-foreground mb-6">Browse Products</h1>
         
         {/* Search and Filters */}
         <div className="flex flex-col md:flex-row items-center justify-between mb-6 gap-4">
@@ -150,11 +151,11 @@ const Browse = () => {
             <Input
               type="text"
               placeholder="Search products..."
-              className="w-full py-2 px-4 pl-10 rounded-lg border-border focus:ring-0 focus:border-haluna-primary"
+              className="w-full py-2 px-4 pl-10 rounded-lg border-border focus:ring-0 focus:border-haluna-primary dark-input"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
           </div>
           
           <div className="flex items-center gap-4">
@@ -238,7 +239,11 @@ const Browse = () => {
                             <Checkbox
                                 id="halal"
                                 checked={halalCertified}
-                                onCheckedChange={(checked) => setHalalCertified(checked || false)}
+                                onCheckedChange={(checked) => {
+                                    if (typeof checked === 'boolean') {
+                                        setHalalCertified(checked);
+                                    }
+                                }}
                             />
                             <Label htmlFor="halal">Halal Certified</Label>
                         </div>
@@ -253,7 +258,7 @@ const Browse = () => {
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {filteredProducts.map(product => (
-                            <Card key={product.id} className="bg-card text-card-foreground shadow-md overflow-hidden">
+                            <Card key={product.id} className="bg-card text-card-foreground shadow-md overflow-hidden dark-card">
                                 <Link to={`/product/${product.id}`}>
                                     <div className="relative">
                                         {product.images && product.images.length > 0 ? (
@@ -261,6 +266,7 @@ const Browse = () => {
                                                 src={product.images[0]}
                                                 alt={product.name}
                                                 className="w-full h-48 object-cover rounded-t-md transition-transform duration-300 hover:scale-105"
+                                                loading="lazy"
                                             />
                                         ) : (
                                             <Skeleton className="w-full h-48 rounded-t-md" />
@@ -269,10 +275,10 @@ const Browse = () => {
                                 </Link>
                                 <CardContent className="p-4">
                                     <CardTitle className="text-lg font-semibold line-clamp-1">{product.name}</CardTitle>
-                                    <CardDescription className="text-gray-500 line-clamp-2">{product.description}</CardDescription>
+                                    <CardDescription className="line-clamp-2">{product.description}</CardDescription>
                                     <div className="flex items-center mt-2">
                                         <Star className="h-4 w-4 text-yellow-500 mr-1" />
-                                        <span className="text-sm text-gray-600">{product.rating || 4.5}</span>
+                                        <span className="text-sm text-muted-foreground">{product.rating || 4.5}</span>
                                     </div>
                                 </CardContent>
                                 <CardFooter className="flex items-center justify-between p-4">
@@ -287,7 +293,7 @@ const Browse = () => {
                         ))}
                         {filteredProducts.length === 0 && !loading && (
                             <div className="col-span-full text-center py-12">
-                                <p className="text-haluna-text-light">No products found matching your criteria.</p>
+                                <p className="text-muted-foreground">No products found matching your criteria.</p>
                             </div>
                         )}
                     </div>

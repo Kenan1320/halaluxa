@@ -9,12 +9,14 @@ interface ThemeToggleProps {
 }
 
 export function ThemeToggle({ mobile = false }: ThemeToggleProps) {
-  const { theme, setTheme } = useTheme();
+  const { theme, toggleTheme } = useTheme();
   
   if (mobile) {
     return (
-      <div className="flex items-center gap-3 p-3 rounded-lg transition cursor-pointer" 
-           onClick={() => setTheme(theme === "light" ? "dark" : "light")}>
+      <div 
+        className="flex items-center gap-3 p-3 rounded-lg transition cursor-pointer" 
+        onClick={toggleTheme}
+      >
         <div className="flex items-center gap-2">
           {theme === "dark" ? (
             <Sun className="h-5 w-5 text-haluna-primary" />
@@ -32,7 +34,8 @@ export function ThemeToggle({ mobile = false }: ThemeToggleProps) {
       variant="ghost"
       size="icon"
       className="relative h-10 w-10 rounded-full"
-      onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+      onClick={toggleTheme}
+      aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
     >
       <motion.div
         initial={false}
