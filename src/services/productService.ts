@@ -21,7 +21,7 @@ const customMapDbProductToModel = (data: any): Product => {
     name: data.name,
     description: data.description,
     price: data.price,
-    stock: data.stock || 0,
+    inStock: data.stock > 0,
     category: data.category,
     images: data.images || [],
     sellerId: data.seller_id,
@@ -53,6 +53,9 @@ export async function getProducts(): Promise<Product[]> {
   }
 }
 
+// Alias for getAllProducts
+export const getAllProducts = getProducts;
+
 // Fetch a single product by ID
 export async function getProductById(id: string): Promise<Product | undefined> {
   try {
@@ -80,7 +83,7 @@ const prepareProductForDb = (product: Partial<Product>) => {
     name: product.name,
     description: product.description,
     price: product.price,
-    stock: product.stock,
+    stock: product.inStock ? 1 : 0,
     category: product.category,
     images: product.images,
     seller_id: product.sellerId,
@@ -283,7 +286,7 @@ export function getMockProducts(): Product[] {
       name: "Halal Beef Burger Patties",
       description: "Premium grass-fed beef patties, perfect for homemade burgers.",
       price: 12.99,
-      stock: 50,
+      inStock: true,
       category: "Food & Groceries",
       images: ["/lovable-uploads/0780684a-9c7f-4f32-affc-6f9ea641b814.png"],
       sellerId: "seller1",

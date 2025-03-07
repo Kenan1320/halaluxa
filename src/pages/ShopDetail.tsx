@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, MapPin, Star, ShoppingBag, Heart } from 'lucide-react';
@@ -104,7 +103,6 @@ const ShopDetail = () => {
             </Link>
           </div>
           
-          {/* Shop header */}
           <motion.div 
             className="rounded-2xl overflow-hidden shadow-sm mb-12"
             initial={{ opacity: 0, y: 20 }}
@@ -172,7 +170,6 @@ const ShopDetail = () => {
             </div>
           </motion.div>
           
-          {/* Shop products */}
           <div>
             <h2 className="text-2xl font-serif font-bold mb-6">Shop Products</h2>
             
@@ -238,10 +235,10 @@ const ShopDetail = () => {
                         <Button 
                           size="sm"
                           onClick={() => handleAddToCart(product)}
-                          disabled={product.stock <= 0}
+                          disabled={!product.inStock}
                           className="transition-transform hover:scale-105"
                         >
-                          {product.stock > 0 ? 'Add to Cart' : 'Out of Stock'}
+                          {product.inStock ? 'Add to Cart' : 'Out of Stock'}
                         </Button>
                       </div>
                     </div>

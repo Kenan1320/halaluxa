@@ -186,10 +186,10 @@ const ProductsPage = () => {
                       ${product.price.toFixed(2)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-haluna-text">
-                      {product.stock}
+                      {product.inStock ? 'In Stock' : 'Out of Stock'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      {product.stock > 0 ? (
+                      {product.inStock ? (
                         <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">
                           In Stock
                         </span>

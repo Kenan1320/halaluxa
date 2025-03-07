@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Navbar from '@/components/layout/Navbar';
@@ -21,7 +20,6 @@ const Shop = () => {
   const { addToCart } = useCart();
   const { toast } = useToast();
   
-  // Parse URL params to get filters
   useEffect(() => {
     const queryParams = new URLSearchParams(location.search);
     const category = queryParams.get('category');
@@ -30,7 +28,6 @@ const Shop = () => {
     }
   }, [location.search]);
   
-  // Fetch products on mount and when they change
   useEffect(() => {
     window.scrollTo(0, 0);
     
@@ -44,7 +41,6 @@ const Shop = () => {
     fetchProducts();
   }, []);
   
-  // Update URL when filters change
   useEffect(() => {
     const queryParams = new URLSearchParams();
     if (categoryFilter) {
@@ -86,7 +82,6 @@ const Shop = () => {
               Browse our collection of halal products from verified Muslim businesses.
             </p>
             
-            {/* Search and filter */}
             <div className="max-w-2xl mx-auto">
               <div className="relative mb-6">
                 <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
@@ -134,7 +129,6 @@ const Shop = () => {
             </div>
           </motion.div>
           
-          {/* Products grid */}
           {isLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {[...Array(8)].map((_, index) => (
@@ -220,10 +214,10 @@ const Shop = () => {
                       <Button 
                         size="sm"
                         onClick={() => handleAddToCart(product)}
-                        disabled={product.stock <= 0}
+                        disabled={!product.inStock}
                         className="transition-transform hover:scale-105"
                       >
-                        {product.stock > 0 ? 'Add to Cart' : 'Out of Stock'}
+                        {product.inStock ? 'Add to Cart' : 'Out of Stock'}
                       </Button>
                     </div>
                   </div>

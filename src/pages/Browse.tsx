@@ -1,8 +1,9 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { getAllProducts } from '@/services/productService';
+import { getProducts } from '@/services/productService';
 import { getAllShops } from '@/services/shopService';
 import { ProductCard } from '@/components/cards/ProductCard';
 import { Button } from '@/components/ui/button';
@@ -15,16 +16,17 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { ChevronLeft, ChevronRight, SearchX } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
+import { Product } from '@/models/product';
 
 const Browse = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [products, setProducts] = useState([]);
-  const [shops, setShops] = useState([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [shops, setShops] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState(searchParams.get('q') || '');
   const [priceRange, setPriceRange] = useState([0, 1000]);
-  const [categoryFilters, setCategoryFilters] = useState([]);
-  const [shopFilters, setShopFilters] = useState([]);
+  const [categoryFilters, setCategoryFilters] = useState<string[]>([]);
+  const [shopFilters, setShopFilters] = useState<string[]>([]);
   const [sortOption, setSortOption] = useState('relevance');
   const [currentPage, setCurrentPage] = useState(1);
   const [productsPerPage] = useState(9);
@@ -33,7 +35,7 @@ const Browse = () => {
   // Fetch products and shops using react-query
   const { data: productsData, isLoading: isLoadingProducts } = useQuery({
     queryKey: ['products'],
-    queryFn: getAllProducts,
+    queryFn: getProducts,
     staleTime: 60000, // 60 seconds
   });
   
@@ -45,10 +47,10 @@ const Browse = () => {
   
   useEffect(() => {
     if (productsData) {
-      setProducts(productsData);
+      setProducts(productsData as Product[]);
     }
     if (shopsData) {
-      setShops(shopsData);
+      setShops(shopsData as any[]);
     }
     setIsLoading(isLoadingProducts || isLoadingShops);
   }, [productsData, shopsData, isLoadingProducts, isLoadingShops]);

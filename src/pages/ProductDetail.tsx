@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Navbar from '@/components/layout/Navbar';
@@ -199,7 +198,7 @@ const ProductDetail = () => {
 
               <div className="flex items-center justify-between mb-8">
                 <span className="text-haluna-text">
-                  Availability: {product.stock > 0 ? 'In Stock' : 'Out of Stock'}
+                  Availability: {product.inStock ? 'In Stock' : 'Out of Stock'}
                 </span>
                 <span className="text-haluna-text">
                   Category: {product.category}
@@ -209,10 +208,10 @@ const ProductDetail = () => {
               <Button
                 size="lg"
                 onClick={() => handleAddToCart(product)}
-                disabled={product.stock <= 0}
+                disabled={!product.inStock}
                 className="w-full flex items-center justify-center"
               >
-                {product.stock > 0 ? (
+                {product.inStock ? (
                   <>
                     Add to Cart <ShoppingBag className="ml-2" />
                   </>
