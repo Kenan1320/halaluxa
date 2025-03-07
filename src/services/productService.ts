@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Product, ProductDetails, mapDbProductToModel, mapModelToDbProduct } from '@/models/product';
 
@@ -12,6 +11,15 @@ const safeJsonParse = (data: any): ProductDetails => {
     }
   }
   return data || {};
+};
+
+// Safely check if profiles data indicates this is a business account
+const isBusinessAccount = (profilesData: any): boolean => {
+  if (!profilesData) return false;
+  if (typeof profilesData !== 'object') return false;
+  if (profilesData === null) return false;
+  if (!('role' in profilesData)) return false;
+  return profilesData.role === 'business';
 };
 
 // Custom mapper for Supabase data to our model
@@ -47,13 +55,7 @@ export async function getProducts(): Promise<Product[]> {
     }
     
     // Only return products from verified business accounts
-    const validProducts = data.filter(product => 
-      product.profiles && 
-      typeof product.profiles === 'object' && 
-      product.profiles !== null &&
-      'role' in product.profiles &&
-      product.profiles.role === 'business'
-    );
+    const validProducts = data.filter(product => isBusinessAccount(product.profiles));
     
     return validProducts.map(customMapDbProductToModel);
   } catch (err) {
@@ -80,11 +82,7 @@ export async function getProductById(id: string): Promise<Product | undefined> {
     }
     
     // Only return product if it's from a business account
-    if (!data.profiles || 
-        typeof data.profiles !== 'object' || 
-        data.profiles === null ||
-        !('role' in data.profiles) ||
-        data.profiles.role !== 'business') {
+    if (!isBusinessAccount(data.profiles)) {
       console.error(`Product ${id} is not from a valid business account`);
       return undefined;
     }
@@ -242,13 +240,7 @@ export async function getFeaturedProducts(): Promise<Product[]> {
     }
     
     // Only return products from business accounts
-    const validProducts = data.filter(product => 
-      product.profiles && 
-      typeof product.profiles === 'object' && 
-      product.profiles !== null &&
-      'role' in product.profiles &&
-      product.profiles.role === 'business'
-    );
+    const validProducts = data.filter(product => isBusinessAccount(product.profiles));
     
     return validProducts.map(customMapDbProductToModel);
   } catch (err) {
@@ -272,13 +264,7 @@ export async function getProductsByCategory(category: string): Promise<Product[]
     }
     
     // Only return products from business accounts
-    const validProducts = data.filter(product => 
-      product.profiles && 
-      typeof product.profiles === 'object' && 
-      product.profiles !== null &&
-      'role' in product.profiles &&
-      product.profiles.role === 'business'
-    );
+    const validProducts = data.filter(product => isBusinessAccount(product.profiles));
     
     return validProducts.map(customMapDbProductToModel);
   } catch (err) {

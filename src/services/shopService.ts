@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Product } from '@/models/product';
 
@@ -22,6 +21,34 @@ export interface Shop {
 export interface ShopProduct extends Product {
   // ShopProduct already inherits all the required properties from Product
 }
+
+// Safely check if profiles data indicates this is a business account
+const isBusinessAccount = (profilesData: any): boolean => {
+  if (!profilesData) return false;
+  if (typeof profilesData !== 'object') return false;
+  if (profilesData === null) return false;
+  if (!('role' in profilesData)) return false;
+  return profilesData.role === 'business';
+};
+
+// Map database shop to our model
+const mapDbShopToModel = (shop: any, productCount: number = 0): Shop => {
+  return {
+    id: shop.id,
+    name: shop.name,
+    description: shop.description,
+    logo: shop.logo_url,
+    coverImage: shop.cover_image || '', // Handle in a type-safe way
+    location: shop.location,
+    category: shop.category || '', // Handle in a type-safe way
+    rating: shop.rating || 4.5,
+    isVerified: shop.is_verified || false, // Handle in a type-safe way
+    productCount: productCount,
+    owner_id: shop.owner_id,
+    latitude: Math.random() * 180 - 90, // Add random coordinates for demo
+    longitude: Math.random() * 360 - 180
+  };
+};
 
 // Convert shop product to model product
 export function convertToModelProduct(shopProduct: ShopProduct): Product {
@@ -62,13 +89,7 @@ export async function getShops(): Promise<Shop[]> {
     }
     
     // Filter to include only real business accounts
-    const validShops = data.filter(shop => 
-      shop.profiles && 
-      typeof shop.profiles === 'object' && 
-      shop.profiles !== null &&
-      'role' in shop.profiles &&
-      shop.profiles.role === 'business'
-    );
+    const validShops = data.filter(shop => isBusinessAccount(shop.profiles));
     
     // For each shop, get the product count
     const shopsWithCounts = await Promise.all(
@@ -78,25 +99,11 @@ export async function getShops(): Promise<Shop[]> {
           .select('id', { count: 'exact', head: true })
           .eq('seller_id', shop.owner_id);
           
-        return {
-          id: shop.id,
-          name: shop.name,
-          description: shop.description,
-          logo: shop.logo_url,
-          coverImage: shop.cover_image || '',
-          location: shop.location,
-          category: shop.category || '',
-          rating: shop.rating || 4.5,
-          isVerified: shop.is_verified || false,
-          productCount: count || 0,
-          owner_id: shop.owner_id,
-          latitude: Math.random() * 180 - 90, // Add random coordinates for demo
-          longitude: Math.random() * 360 - 180
-        };
+        return mapDbShopToModel(shop, count || 0);
       })
     );
     
-    return shopsWithCounts.filter(shop => shop.productCount > 0);
+    return shopsWithCounts.filter(shop => shop.productCount && shop.productCount > 0);
   } catch (err) {
     console.error('Error in getShops:', err);
     return [];
@@ -125,11 +132,7 @@ export async function getShopById(id: string): Promise<Shop | null> {
     }
     
     // Only return if it's a business account
-    if (!data.profiles || 
-        typeof data.profiles !== 'object' || 
-        data.profiles === null ||
-        !('role' in data.profiles) ||
-        data.profiles.role !== 'business') {
+    if (!isBusinessAccount(data.profiles)) {
       console.error('Shop is not a valid business account');
       return null;
     }
@@ -144,21 +147,7 @@ export async function getShopById(id: string): Promise<Shop | null> {
       console.error('Error counting products:', countError);
     }
     
-    return {
-      id: data.id,
-      name: data.name,
-      description: data.description,
-      logo: data.logo_url,
-      coverImage: data.cover_image || '',
-      location: data.location,
-      category: data.category || '',
-      rating: data.rating || 4.5,
-      isVerified: data.is_verified || false,
-      productCount: count || 0,
-      owner_id: data.owner_id,
-      latitude: Math.random() * 180 - 90, // Add random coordinates for demo
-      longitude: Math.random() * 360 - 180
-    };
+    return mapDbShopToModel(data, count || 0);
   } catch (err) {
     console.error('Error in getShopById:', err);
     return null;
