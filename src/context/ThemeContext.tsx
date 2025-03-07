@@ -38,6 +38,18 @@ export function ThemeProvider({
     localStorage.setItem(storageKey, theme);
   }, [theme, storageKey]);
 
+  // Set the theme based on user preference on initial load
+  useEffect(() => {
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const savedTheme = localStorage.getItem(storageKey) as Theme | null;
+    
+    if (savedTheme) {
+      setTheme(savedTheme);
+    } else if (prefersDark) {
+      setTheme('dark');
+    }
+  }, [storageKey]);
+
   const value = {
     theme,
     setTheme: (theme: Theme) => setTheme(theme),

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, MapPin, Star, ShoppingBag, Heart } from 'lucide-react';
@@ -30,7 +29,22 @@ const ShopDetail = () => {
         
         if (shopData) {
           const shopProducts = await getShopProducts(shopId);
-          setProducts(shopProducts);
+          setProducts(shopProducts.map(p => ({
+            id: p.id,
+            name: p.name,
+            description: p.description,
+            price: p.price,
+            images: p.images,
+            category: p.category,
+            seller: {
+              id: p.seller_id,
+              name: p.seller_name
+            },
+            rating: p.rating,
+            stock: p.stock,
+            isHalalCertified: p.is_halal_certified || false,
+            createdAt: p.created_at || new Date().toISOString()
+          })));
         }
       }
       setIsLoading(false);
