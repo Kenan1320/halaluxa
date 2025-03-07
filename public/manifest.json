@@ -1,0 +1,25 @@
+
+{
+  "name": "Halaluxa",
+  "short_name": "Halaluxa",
+  "description": "Shop from halal businesses and discover quality products",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#E4F5F0",
+  "theme_color": "#29866B",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
