@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X, Search, ShoppingCart, User, MapPin, Store, AlertCircle } from 'lucide-react';
@@ -70,13 +71,13 @@ const Navbar = () => {
 
   return (
     <header 
-      className="fixed top-0 w-full z-50 transition-all duration-300 bg-background border-b border-border"
+      className="fixed top-0 w-full z-50 transition-all duration-300 bg-background border-b border-border dark:bg-[#121212] dark:border-[#2A2A2A]"
       style={{ height: '70px' }}
     >
       <div className="container mx-auto px-4 h-full flex justify-between items-center">
         <button
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="p-2 text-primary"
+          className="p-2 text-primary dark:text-[#29866B]"
           aria-label="Toggle menu"
         >
           {mobileMenuOpen ? (
@@ -88,7 +89,7 @@ const Navbar = () => {
         
         <div className="flex items-center ml-3 mr-auto">
           <Link to="/" className="flex items-center">
-            <span className="text-lg font-serif font-bold text-primary">Haluna</span>
+            <span className="text-lg font-serif font-bold text-primary dark:text-[#29866B]">Haluna</span>
             
             <div className="relative ml-1">
               <motion.div 
@@ -104,7 +105,7 @@ const Navbar = () => {
               />
               
               <motion.div
-                className="w-2 h-2 bg-primary rounded-full absolute"
+                className="w-2 h-2 bg-primary dark:bg-[#29866B] rounded-full absolute"
                 animate={{
                   x: [2, 1.5, 0, -1.5, -2, -1.5, 0, 1.5, 2],
                   y: [0, 1.5, 2, 1.5, 0, -1.5, -2, -1.5, 0],
@@ -124,7 +125,7 @@ const Navbar = () => {
           
           <motion.button 
             onClick={requestLocation}
-            className="p-2 rounded-full text-[#2A866A] hover:bg-[#d5efe8] transition-colors"
+            className="p-2 rounded-full text-[#2A866A] hover:bg-[#d5efe8] transition-colors dark:hover:bg-[#1A3B32]"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
@@ -133,7 +134,7 @@ const Navbar = () => {
           
           <motion.button 
             onClick={handleMainShopClick}
-            className="relative p-2 rounded-full text-[#2A866A] hover:bg-[#d5efe8] transition-colors"
+            className="relative p-2 rounded-full text-[#2A866A] hover:bg-[#d5efe8] transition-colors dark:hover:bg-[#1A3B32]"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
@@ -181,7 +182,7 @@ const Navbar = () => {
           >
             <Link 
               to="/select-shops" 
-              className="p-2 rounded-full text-[#2A866A] hover:bg-[#d5efe8] transition-colors block"
+              className="p-2 rounded-full text-[#2A866A] hover:bg-[#d5efe8] transition-colors block dark:hover:bg-[#1A3B32]"
             >
               <Store className="h-6 w-6" />
             </Link>
@@ -219,13 +220,13 @@ const Navbar = () => {
       </div>
       
       {mobileMenuOpen && (
-        <div className="container mx-auto px-4 py-4 bg-background border-t border-border">
+        <div className="container mx-auto px-4 py-4 bg-background border-t border-border dark:bg-[#121212] dark:border-[#2A2A2A]">
           <div className="md:hidden mb-4">
             <div className="relative w-full">
               <input
                 type="text"
                 placeholder="Search your shop and products"
-                className="w-full py-2 px-4 pl-10 bg-secondary border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30"
+                className="w-full py-2 px-4 pl-10 bg-secondary border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 dark:bg-[#1A1A1A] dark:border-[#2A2A2A] dark:text-[#E4F5F0]"
               />
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
             </div>
@@ -237,7 +238,7 @@ const Navbar = () => {
             <Link
               to="/"
               className={`flex items-center gap-3 p-3 rounded-lg transition ${
-                isActive('/') ? 'bg-secondary text-primary' : 'text-foreground hover:bg-secondary/50'
+                isActive('/') ? 'bg-secondary text-primary dark:bg-[#1A3B32] dark:text-[#29866B]' : 'text-foreground hover:bg-secondary/50 dark:text-[#E4F5F0] dark:hover:bg-[#1A3B32]/50'
               }`}
               onClick={() => setMobileMenuOpen(false)}
             >
@@ -247,7 +248,7 @@ const Navbar = () => {
             <Link
               to="/shops"
               className={`flex items-center gap-3 p-3 rounded-lg transition ${
-                isActive('/shops') ? 'bg-secondary text-primary' : 'text-foreground hover:bg-secondary/50'
+                isActive('/shops') ? 'bg-secondary text-primary dark:bg-[#1A3B32] dark:text-[#29866B]' : 'text-foreground hover:bg-secondary/50 dark:text-[#E4F5F0] dark:hover:bg-[#1A3B32]/50'
               }`}
               onClick={() => setMobileMenuOpen(false)}
             >
@@ -257,7 +258,7 @@ const Navbar = () => {
             <Link
               to="/browse"
               className={`flex items-center gap-3 p-3 rounded-lg transition ${
-                isActive('/browse') ? 'bg-secondary text-primary' : 'text-foreground hover:bg-secondary/50'
+                isActive('/browse') ? 'bg-secondary text-primary dark:bg-[#1A3B32] dark:text-[#29866B]' : 'text-foreground hover:bg-secondary/50 dark:text-[#E4F5F0] dark:hover:bg-[#1A3B32]/50'
               }`}
               onClick={() => setMobileMenuOpen(false)}
             >
@@ -267,7 +268,7 @@ const Navbar = () => {
             <Link
               to="/select-shops"
               className={`flex items-center gap-3 p-3 rounded-lg transition ${
-                isActive('/select-shops') ? 'bg-secondary text-primary' : 'text-foreground hover:bg-secondary/50'
+                isActive('/select-shops') ? 'bg-secondary text-primary dark:bg-[#1A3B32] dark:text-[#29866B]' : 'text-foreground hover:bg-secondary/50 dark:text-[#E4F5F0] dark:hover:bg-[#1A3B32]/50'
               }`}
               onClick={() => setMobileMenuOpen(false)}
             >
@@ -278,7 +279,7 @@ const Navbar = () => {
               <Link
                 to="/dashboard"
                 className={`flex items-center gap-3 p-3 rounded-lg transition ${
-                  isActive('/dashboard') ? 'bg-secondary text-primary' : 'text-foreground hover:bg-secondary/50'
+                  isActive('/dashboard') ? 'bg-secondary text-primary dark:bg-[#1A3B32] dark:text-[#29866B]' : 'text-foreground hover:bg-secondary/50 dark:text-[#E4F5F0] dark:hover:bg-[#1A3B32]/50'
                 }`}
                 onClick={() => setMobileMenuOpen(false)}
               >
@@ -289,7 +290,7 @@ const Navbar = () => {
             <Link
               to={isLoggedIn ? '/profile' : '/login'}
               className={`flex items-center gap-3 p-3 rounded-lg transition ${
-                isActive('/profile') || isActive('/login') ? 'bg-secondary text-primary' : 'text-foreground hover:bg-secondary/50'
+                isActive('/profile') || isActive('/login') ? 'bg-secondary text-primary dark:bg-[#1A3B32] dark:text-[#29866B]' : 'text-foreground hover:bg-secondary/50 dark:text-[#E4F5F0] dark:hover:bg-[#1A3B32]/50'
               }`}
               onClick={() => setMobileMenuOpen(false)}
             >

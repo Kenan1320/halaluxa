@@ -48,41 +48,41 @@
   }
 
   .dark {
-    --background: 222 14% 10%;
+    --background: 222 14% 7%; /* Darker background */
     --foreground: 0 0% 95%;
     
-    --card: 222 14% 15%;
+    --card: 222 14% 12%; /* Darker card */
     --card-foreground: 0 0% 95%;
     
-    --popover: 222 14% 10%;
+    --popover: 222 14% 7%; /* Darker popover */
     --popover-foreground: 0 0% 95%;
     
     --primary: 142 53% 35%;
     --primary-foreground: 0 0% 95%;
     
-    --secondary: 222 14% 14%;
+    --secondary: 222 14% 12%; /* Darker secondary */
     --secondary-foreground: 0 0% 95%;
     
-    --muted: 222 14% 18%;
+    --muted: 222 14% 15%; /* Darker muted */
     --muted-foreground: 240 5% 75%;
     
-    --accent: 222 14% 18%;
+    --accent: 222 14% 15%; /* Darker accent */
     --accent-foreground: 0 0% 95%;
     
     --destructive: 0 62.8% 40.6%;
     --destructive-foreground: 0 0% 95%;
     
-    --border: 222 14% 20%;
-    --input: 222 14% 20%;
+    --border: 222 14% 17%; /* Darker border */
+    --input: 222 14% 17%; /* Darker input */
     --ring: 240 4.9% 83.9%;
 
-    --sidebar-background: 222 14% 10%;
+    --sidebar-background: 222 14% 7%; /* Darker sidebar */
     --sidebar-foreground: 0 0% 95%;
     --sidebar-primary: 142 53% 35%;
     --sidebar-primary-foreground: 0 0% 95%;
-    --sidebar-accent: 222 14% 14%;
+    --sidebar-accent: 222 14% 12%; /* Darker sidebar accent */
     --sidebar-accent-foreground: 0 0% 95%;
-    --sidebar-border: 222 14% 20%;
+    --sidebar-border: 222 14% 17%; /* Darker sidebar border */
     --sidebar-ring: 142 53% 35%;
   }
 }
@@ -128,6 +128,24 @@
   .dark-theme-active {
     color-scheme: dark;
   }
+  
+  /* Match the mint green price text shown in the image */
+  .dark .price-text,
+  .dark [class*="price"],
+  .dark [class*="Price"],
+  .dark [class*="-price"],
+  .dark span:has(+ .price),
+  .dark h3 + span,
+  .dark *[data-price],
+  .dark *:has(span:contains("$")) {
+    color: #29866B !important;
+  }
+  
+  /* Target price display specifically */
+  .dark span:first-child:contains("$"),
+  .dark h3 ~ span:contains("$") {
+    color: #29866B !important;
+  }
 }
 
 @layer components {
@@ -162,6 +180,11 @@
 
   .dark-button {
     @apply dark:shadow-black/10;
+  }
+  
+  /* Price color in mint green for dark mode to match the image */
+  .dark .price {
+    @apply dark:text-[#29866B];
   }
 }
 

@@ -56,10 +56,95 @@
 }
 
 .dark .dark-mode-bg {
-  background-color: #1e1e2e;
+  background-color: #121212 !important;
 }
 
-/* Dark mode transitions */
+body.dark {
+  background-color: #121212 !important;
+  color: #E4F5F0;
+}
+
+.dark .bg-background {
+  background-color: #121212 !important;
+}
+
+.dark .text-foreground {
+  color: #E4F5F0 !important;
+}
+
+.dark .bg-card {
+  background-color: #1E1E1E !important;
+}
+
+.dark .text-primary {
+  color: #29866B !important;
+}
+
+.dark .bg-primary {
+  background-color: #29866B !important;
+}
+
+.dark .border-border {
+  border-color: #2A2A2A !important;
+}
+
+.dark button, 
+.dark .button,
+.dark [role="button"] {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+.dark input,
+.dark select,
+.dark textarea {
+  background-color: #1A1A1A !important;
+  border-color: #2A2A2A !important;
+  color: #E4F5F0 !important;
+}
+
+.dark img {
+  filter: brightness(0.9);
+}
+
+/* Price elements - match the mint green color shown in the image */
+.dark [class*="price"],
+.dark span:has(+ .price),
+.dark h3 + span:contains("$"),
+.dark *[data-price],
+.dark .text-price {
+  color: #29866B !important;
+}
+
+/* Theme transitions */
 .theme-transition {
   transition: background-color 0.5s ease, color 0.5s ease, border-color 0.5s ease;
+}
+
+/* Shop cards and product cards in dark mode */
+.dark .bg-white {
+  background-color: #1E1E1E !important;
+}
+
+.dark .text-haluna-text-light {
+  color: #A0A0A0 !important;
+}
+
+.dark .bg-haluna-primary-light {
+  background-color: #1A3B32 !important;
+}
+
+.dark .bg-gray-100 {
+  background-color: #1D2626 !important;
+}
+
+/* Product prices */
+.dark [class*="price"],
+.dark *:contains("$") {
+  color: #29866B !important;
+}
+
+/* Header styling */
+.dark header {
+  background-color: #121212 !important;
+  border-color: #2A2A2A !important;
 }
