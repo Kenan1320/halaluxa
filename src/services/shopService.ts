@@ -15,6 +15,8 @@ export interface Shop {
   distance?: number;
   productCount?: number;
   owner_id?: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 export interface ShopProduct extends Product {
@@ -61,7 +63,7 @@ export async function getShops(): Promise<Shop[]> {
     
     // Filter to include only real business accounts
     const validShops = data.filter(shop => 
-      shop.profiles && shop.profiles.role === 'business'
+      shop.profiles && typeof shop.profiles === 'object' && shop.profiles.role === 'business'
     );
     
     // For each shop, get the product count
@@ -77,13 +79,15 @@ export async function getShops(): Promise<Shop[]> {
           name: shop.name,
           description: shop.description,
           logo: shop.logo_url,
-          coverImage: shop.cover_image,
+          coverImage: shop.cover_image || '',
           location: shop.location,
-          category: shop.category,
+          category: shop.category || '',
           rating: shop.rating || 4.5,
-          isVerified: shop.is_verified,
+          isVerified: shop.is_verified || false,
           productCount: count || 0,
-          owner_id: shop.owner_id
+          owner_id: shop.owner_id,
+          latitude: Math.random() * 180 - 90, // Add random coordinates for demo
+          longitude: Math.random() * 360 - 180
         };
       })
     );
@@ -94,6 +98,9 @@ export async function getShops(): Promise<Shop[]> {
     return [];
   }
 }
+
+// Alias for getAllShops
+export const getAllShops = getShops;
 
 // Get shop by ID
 export async function getShopById(id: string): Promise<Shop | null> {
@@ -114,7 +121,7 @@ export async function getShopById(id: string): Promise<Shop | null> {
     }
     
     // Only return if it's a business account
-    if (!data.profiles || data.profiles.role !== 'business') {
+    if (!data.profiles || typeof data.profiles !== 'object' || data.profiles.role !== 'business') {
       console.error('Shop is not a valid business account');
       return null;
     }
@@ -134,16 +141,33 @@ export async function getShopById(id: string): Promise<Shop | null> {
       name: data.name,
       description: data.description,
       logo: data.logo_url,
-      coverImage: data.cover_image,
+      coverImage: data.cover_image || '',
       location: data.location,
-      category: data.category,
+      category: data.category || '',
       rating: data.rating || 4.5,
-      isVerified: data.is_verified,
+      isVerified: data.is_verified || false,
       productCount: count || 0,
-      owner_id: data.owner_id
+      owner_id: data.owner_id,
+      latitude: Math.random() * 180 - 90, // Add random coordinates for demo
+      longitude: Math.random() * 360 - 180
     };
   } catch (err) {
     console.error('Error in getShopById:', err);
+    return null;
+  }
+}
+
+// Get main shop from localStorage
+export async function getMainShop(): Promise<Shop | null> {
+  try {
+    const mainShopId = localStorage.getItem('mainShopId');
+    if (!mainShopId) {
+      return null;
+    }
+    
+    return await getShopById(mainShopId);
+  } catch (err) {
+    console.error('Error getting main shop:', err);
     return null;
   }
 }

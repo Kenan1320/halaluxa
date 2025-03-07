@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { getShops, Shop, getShopProducts, convertToModelProduct } from '@/services/shopService';
+import { getShops, Shop } from '@/services/shopService';
 import { useLocation } from '@/context/LocationContext';
 import ShopProductList from '@/components/shop/ShopProductList';
 import { Link } from 'react-router-dom';

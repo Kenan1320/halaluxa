@@ -48,7 +48,7 @@ export async function getProducts(): Promise<Product[]> {
     
     // Only return products from verified business accounts
     const validProducts = data.filter(product => 
-      product.profiles && product.profiles.role === 'business'
+      product.profiles && typeof product.profiles === 'object' && product.profiles.role === 'business'
     );
     
     return validProducts.map(customMapDbProductToModel);
@@ -76,7 +76,7 @@ export async function getProductById(id: string): Promise<Product | undefined> {
     }
     
     // Only return product if it's from a business account
-    if (!data.profiles || data.profiles.role !== 'business') {
+    if (!data.profiles || typeof data.profiles !== 'object' || data.profiles.role !== 'business') {
       console.error(`Product ${id} is not from a valid business account`);
       return undefined;
     }
@@ -235,7 +235,7 @@ export async function getFeaturedProducts(): Promise<Product[]> {
     
     // Only return products from business accounts
     const validProducts = data.filter(product => 
-      product.profiles && product.profiles.role === 'business'
+      product.profiles && typeof product.profiles === 'object' && product.profiles.role === 'business'
     );
     
     return validProducts.map(customMapDbProductToModel);
@@ -261,7 +261,7 @@ export async function getProductsByCategory(category: string): Promise<Product[]
     
     // Only return products from business accounts
     const validProducts = data.filter(product => 
-      product.profiles && product.profiles.role === 'business'
+      product.profiles && typeof product.profiles === 'object' && product.profiles.role === 'business'
     );
     
     return validProducts.map(customMapDbProductToModel);

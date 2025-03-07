@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { CartItem } from '@/models/cart';
 import { Product } from '@/models/product';
