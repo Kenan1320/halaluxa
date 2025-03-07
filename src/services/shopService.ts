@@ -311,7 +311,7 @@ function createMockShop(index: number): Shop {
 function createMockProduct(shopId: string, index: number): ShopProduct {
   const categories = ["Food", "Clothing", "Books", "Accessories", "Beauty"];
   const productNames = ["Organic Dates", "Modest Dress", "Prayer Rug", "Halal Meat", "Islamic Book", "Miswak", "Honey", "Olive Oil", "Attar Perfume", "Hijab"];
-  const shopIndex = parseInt(shopId.replace('shop-', '));
+  const shopIndex = parseInt(shopId.replace('shop-', ''));
   
   return {
     id: `product-${shopId}-${index}`,
