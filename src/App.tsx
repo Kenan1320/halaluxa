@@ -12,6 +12,7 @@ import { LocationProvider } from "@/context/LocationContext";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import AuthMiddleware from "@/components/auth/AuthMiddleware";
 import Navbar from "@/components/layout/Navbar";
+import SplashScreen from "@/components/splash/SplashScreen";
 
 // Pages
 import Index from "./pages/Index";
@@ -56,12 +57,26 @@ const queryClient = new QueryClient({
 const AppRoutes = () => {
   const location = useLocation();
   const { user } = useAuth();
+  const [showSplash, setShowSplash] = useState(true);
+  
+  useEffect(() => {
+    // Hide splash screen after 3 seconds
+    const timer = setTimeout(() => {
+      setShowSplash(false);
+    }, 3000);
+    
+    return () => clearTimeout(timer);
+  }, []);
   
   // Business users should only see the dashboard interface
   const showNavbar = !user || user.role !== 'business' || 
                     (!location.pathname.startsWith('/dashboard') && 
                      location.pathname !== '/login' && 
                      location.pathname !== '/signup');
+  
+  if (showSplash) {
+    return <SplashScreen />;
+  }
   
   return (
     <>
