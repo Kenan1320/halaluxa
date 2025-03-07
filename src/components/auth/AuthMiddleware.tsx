@@ -15,7 +15,7 @@ const AuthMiddleware = () => {
   const { isLoggedIn, user, refreshSession } = useAuth();
   const { toast } = useToast();
   
-  // Set up auth state listener
+  // Set up auth state listener and persist authentication
   useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (event, session) => {
@@ -35,12 +35,17 @@ const AuthMiddleware = () => {
           if (data?.role === 'business') {
             console.log('Business user signed in, redirecting to dashboard');
             navigate('/dashboard');
+            
+            toast({
+              title: "Business Dashboard",
+              description: "Welcome to your business dashboard",
+            });
+          } else {
+            toast({
+              title: "Logged in",
+              description: "You have been successfully logged in",
+            });
           }
-          
-          toast({
-            title: "Logged in",
-            description: "You have been successfully logged in",
-          });
         } else if (event === 'SIGNED_OUT') {
           toast({
             title: "Logged out",

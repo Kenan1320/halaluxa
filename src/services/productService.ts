@@ -18,8 +18,10 @@ const isBusinessAccount = (profilesData: any): boolean => {
   if (!profilesData) return false;
   if (typeof profilesData !== 'object') return false;
   if (profilesData === null) return false;
-  if (!('role' in profilesData)) return false;
-  return profilesData.role === 'business';
+  
+  return typeof profilesData === 'object' && 
+         'role' in profilesData && 
+         profilesData.role === 'business';
 };
 
 // Custom mapper for Supabase data to our model
@@ -49,13 +51,15 @@ export async function getProducts(): Promise<Product[]> {
       .select('*, profiles:seller_id(role)')
       .order('created_at', { ascending: false });
     
-    if (error) {
+    if (error || !data) {
       console.error('Error fetching products:', error);
       return [];
     }
     
-    // Only return products from verified business accounts
-    const validProducts = data.filter(product => isBusinessAccount(product.profiles));
+    // Only return products from verified business accounts with proper null checks
+    const validProducts = data.filter(product => 
+      product.profiles && isBusinessAccount(product.profiles)
+    );
     
     return validProducts.map(customMapDbProductToModel);
   } catch (err) {
@@ -81,8 +85,8 @@ export async function getProductById(id: string): Promise<Product | undefined> {
       return undefined;
     }
     
-    // Only return product if it's from a business account
-    if (!isBusinessAccount(data.profiles)) {
+    // Only return product if it's from a business account with proper null checks
+    if (!data.profiles || !isBusinessAccount(data.profiles)) {
       console.error(`Product ${id} is not from a valid business account`);
       return undefined;
     }

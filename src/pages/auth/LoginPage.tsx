@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
@@ -76,6 +75,9 @@ const LoginPage = () => {
           title: "Success",
           description: "Logged in successfully",
         });
+        
+        // Enable persistent login with localStorage
+        localStorage.setItem('supabase.auth.token', 'true');
         
         // Navigate to the appropriate destination based on role
         if (role === 'business') {

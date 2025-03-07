@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Product } from '@/models/product';
 
@@ -27,26 +28,31 @@ const isBusinessAccount = (profilesData: any): boolean => {
   if (!profilesData) return false;
   if (typeof profilesData !== 'object') return false;
   if (profilesData === null) return false;
-  if (!('role' in profilesData)) return false;
-  return profilesData.role === 'business';
+  
+  // Properly check if role exists and is a business account
+  return typeof profilesData === 'object' && 
+         'role' in profilesData && 
+         profilesData.role === 'business';
 };
 
 // Map database shop to our model
 const mapDbShopToModel = (shop: any, productCount: number = 0): Shop => {
+  if (!shop) return {} as Shop;
+  
   return {
     id: shop.id,
     name: shop.name,
     description: shop.description,
     logo: shop.logo_url,
-    coverImage: shop.cover_image || '', // Handle in a type-safe way
+    coverImage: shop.cover_image || '', 
     location: shop.location,
-    category: shop.category || '', // Handle in a type-safe way
+    category: shop.category || '', 
     rating: shop.rating || 4.5,
-    isVerified: shop.is_verified || false, // Handle in a type-safe way
+    isVerified: shop.is_verified || false,
     productCount: productCount,
     owner_id: shop.owner_id,
-    latitude: Math.random() * 180 - 90, // Add random coordinates for demo
-    longitude: Math.random() * 360 - 180
+    latitude: shop.latitude || Math.random() * 180 - 90, // Use real coordinates if available
+    longitude: shop.longitude || Math.random() * 360 - 180
   };
 };
 
@@ -83,13 +89,13 @@ export async function getShops(): Promise<Shop[]> {
       `)
       .order('name');
     
-    if (error) {
+    if (error || !data) {
       console.error('Error fetching shops:', error);
       return [];
     }
     
-    // Filter to include only real business accounts
-    const validShops = data.filter(shop => isBusinessAccount(shop.profiles));
+    // Filter to include only real business accounts with proper null checks
+    const validShops = data.filter(shop => shop.profiles && isBusinessAccount(shop.profiles));
     
     // For each shop, get the product count
     const shopsWithCounts = await Promise.all(
@@ -131,8 +137,8 @@ export async function getShopById(id: string): Promise<Shop | null> {
       return null;
     }
     
-    // Only return if it's a business account
-    if (!isBusinessAccount(data.profiles)) {
+    // Only return if it's a business account with proper null checks
+    if (!data.profiles || !isBusinessAccount(data.profiles)) {
       console.error('Shop is not a valid business account');
       return null;
     }
