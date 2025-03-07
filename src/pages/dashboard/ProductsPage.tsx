@@ -1,232 +1,160 @@
-
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
-import { Plus, Search, Filter, Edit, Trash2, RefreshCw } from 'lucide-react';
-import { getProductsBySeller, deleteProduct, Product } from '@/services/productService';
-import { subscribeToShopProducts } from '@/services/shopService';
-import { RealtimeChannel } from '@supabase/supabase-js';
+import { getProducts, deleteProduct } from '@/services/productService';
+import { Product } from '@/models/product';
+import { PlusCircle, Edit, Trash2, Search } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/context/AuthContext';
 
 const ProductsPage = () => {
   const [products, setProducts] = useState<Product[]>([]);
-  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [activeCategory, setActiveCategory] = useState<string>('all');
-  const [isDeleting, setIsDeleting] = useState<string | null>(null);
-  
-  const { user } = useAuth();
-  const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState('');
   const { toast } = useToast();
+  const { user } = useAuth();
   
-  // Function to load products
+  useEffect(() => {
+    loadProducts();
+  }, []);
+  
   const loadProducts = async () => {
-    if (!user?.id) return;
-    
     setIsLoading(true);
     try {
-      const data = await getProductsBySeller(user.id);
-      setProducts(data);
-      applyFilters(data, searchTerm, activeCategory);
+      const allProducts = await getProducts();
+      
+      // Only show products for the current seller
+      if (user) {
+        const sellerProducts = allProducts.filter(product => product.sellerId === user.id);
+        setProducts(sellerProducts);
+      } else {
+        setProducts([]);
+      }
     } catch (error) {
       console.error('Error loading products:', error);
       toast({
         title: "Error",
-        description: "Failed to load products. Please try again.",
-        variant: "destructive",
+        description: "Failed to load products",
+        variant: "destructive"
       });
     } finally {
       setIsLoading(false);
     }
   };
   
-  useEffect(() => {
-    loadProducts();
-    
-    // Set up real-time subscription for products
-    let subscription: RealtimeChannel | null = null;
-    
-    if (user?.id) {
-      subscription = subscribeToShopProducts(user.id, (updatedProducts) => {
-        setProducts(updatedProducts);
-        applyFilters(updatedProducts, searchTerm, activeCategory);
-      });
-    }
-    
-    return () => {
-      if (subscription) {
-        subscription.unsubscribe();
-      }
-    };
-  }, [user?.id]);
-  
-  // Apply filters based on search term and active category
-  const applyFilters = (productsToFilter: Product[], search: string, category: string) => {
-    let result = [...productsToFilter];
-    
-    // Apply search filter
-    if (search) {
-      const searchLower = search.toLowerCase();
-      result = result.filter(product => 
-        product.name.toLowerCase().includes(searchLower) || 
-        product.description.toLowerCase().includes(searchLower)
-      );
-    }
-    
-    // Apply category filter
-    if (category !== 'all') {
-      result = result.filter(product => product.category === category);
-    }
-    
-    setFilteredProducts(result);
-  };
-  
-  // Handle search input change
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setSearchTerm(value);
-    applyFilters(products, value, activeCategory);
-  };
-  
-  // Handle category filter change
-  const handleCategoryFilter = (category: string) => {
-    setActiveCategory(category);
-    applyFilters(products, searchTerm, category);
-  };
-  
-  // Handle product deletion
-  const handleDeleteProduct = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this product?')) {
-      setIsDeleting(id);
-      try {
-        const success = await deleteProduct(id);
-        if (success) {
-          toast({
-            title: "Success",
-            description: "Product deleted successfully",
-          });
-          
-          // Real-time update should handle this, but just in case:
-          loadProducts();
-        } else {
-          throw new Error("Failed to delete product");
-        }
-      } catch (error) {
-        console.error('Error deleting product:', error);
+  const handleDeleteProduct = async (productId: string) => {
+    try {
+      const success = await deleteProduct(productId);
+      
+      if (success) {
+        toast({
+          title: "Success",
+          description: "Product deleted successfully",
+        });
+        loadProducts();
+      } else {
         toast({
           title: "Error",
-          description: "Failed to delete product. Please try again.",
+          description: "Failed to delete product",
           variant: "destructive",
         });
-      } finally {
-        setIsDeleting(null);
       }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete product",
+        variant: "destructive",
+      });
     }
   };
   
-  // Get unique categories from products
-  const categories = ['all', ...Array.from(new Set(products.map(p => p.category)))];
+  const filteredProducts = products.filter(product => 
+    product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    product.description.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+  
+  if (isLoading) {
+    return (
+      <div>
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h1 className="text-2xl font-serif font-bold text-haluna-text">Your Products</h1>
+            <p className="text-haluna-text-light">Manage your products and inventory</p>
+          </div>
+        </div>
+        <div className="animate-pulse">
+          <div className="h-16 bg-gray-200 rounded-lg mb-4"></div>
+          <div className="h-64 bg-gray-200 rounded-lg mb-4"></div>
+        </div>
+      </div>
+    );
+  }
   
   return (
     <div>
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+      <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-2xl font-serif font-bold text-haluna-text">Products</h1>
-          <p className="text-haluna-text-light">Manage your product inventory</p>
+          <h1 className="text-2xl font-serif font-bold text-haluna-text">Your Products</h1>
+          <p className="text-haluna-text-light">Manage your products and inventory</p>
         </div>
-        <div className="mt-4 sm:mt-0">
-          <Button onClick={() => navigate('/dashboard/add-product')}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Product
-          </Button>
+        <Button href="/dashboard/products/new" className="flex items-center">
+          <PlusCircle className="h-4 w-4 mr-2" />
+          Add Product
+        </Button>
+      </div>
+      
+      <div className="mb-6">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-haluna-text-light h-4 w-4" />
+          <input
+            type="text"
+            placeholder="Search products..."
+            className="border rounded-lg pl-10 py-2 w-full focus:ring-1 focus:ring-haluna-primary focus:border-haluna-primary"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
         </div>
       </div>
       
-      {/* Search and filter */}
-      <div className="bg-white p-4 rounded-lg shadow-sm mb-6">
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="relative flex-1">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Search className="h-5 w-5 text-gray-400" />
-            </div>
-            <input
-              type="text"
-              className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-haluna-primary focus:border-haluna-primary sm:text-sm"
-              placeholder="Search products..."
-              value={searchTerm}
-              onChange={handleSearch}
-            />
-          </div>
-          
-          <div className="flex items-center overflow-x-auto pb-2 md:pb-0">
-            <Filter className="h-5 w-5 text-gray-500 mr-2 shrink-0" />
-            <div className="flex space-x-2">
-              {categories.map((category) => (
-                <button
-                  key={category}
-                  onClick={() => handleCategoryFilter(category)}
-                  className={`px-3 py-1 text-sm rounded-full whitespace-nowrap ${
-                    activeCategory === category
-                      ? 'bg-haluna-primary text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  {category.charAt(0).toUpperCase() + category.slice(1)}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      {/* Display loading state */}
-      {isLoading ? (
-        <div className="animate-pulse space-y-4">
-          <div className="h-20 bg-gray-200 rounded-lg"></div>
-          <div className="h-20 bg-gray-200 rounded-lg"></div>
-          <div className="h-20 bg-gray-200 rounded-lg"></div>
-        </div>
-      ) : filteredProducts.length === 0 ? (
-        // Empty state
+      {filteredProducts.length === 0 ? (
         <div className="bg-white rounded-lg shadow-sm p-8 text-center">
           <div className="h-16 w-16 bg-haluna-primary-light rounded-full flex items-center justify-center mx-auto mb-4">
-            <Plus className="h-8 w-8 text-haluna-primary" />
+            <PlusCircle className="h-8 w-8 text-haluna-primary" />
           </div>
           <h3 className="text-lg font-medium mb-2">No products found</h3>
           <p className="text-haluna-text-light mb-6">
             {products.length === 0
               ? "You haven't added any products yet. Start by adding your first product."
-              : "No products match your current filters. Try adjusting your search or category filters."}
+              : "No products match your search criteria. Try a different search term."}
           </p>
           {products.length === 0 && (
-            <Button onClick={() => navigate('/dashboard/add-product')}>
+            <Button href="/dashboard/products/new">
               Add Your First Product
             </Button>
           )}
         </div>
       ) : (
-        // Product list
         <div className="bg-white rounded-lg shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-haluna-text-light uppercase tracking-wider">
                     Product
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-haluna-text-light uppercase tracking-wider">
                     Category
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-haluna-text-light uppercase tracking-wider">
                     Price
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-haluna-text-light uppercase tracking-wider">
+                    Stock
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-haluna-text-light uppercase tracking-wider">
                     Status
                   </th>
-                  <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-haluna-text-light uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
@@ -244,8 +172,8 @@ const ProductsPage = () => {
                           />
                         </div>
                         <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">{product.name}</div>
-                          <div className="text-sm text-gray-500 line-clamp-1">{product.description}</div>
+                          <div className="text-sm font-medium text-haluna-text">{product.name}</div>
+                          <div className="text-sm text-haluna-text-light line-clamp-1">{product.description}</div>
                         </div>
                       </div>
                     </td>
@@ -254,8 +182,11 @@ const ProductsPage = () => {
                         {product.category}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-haluna-text">
                       ${product.price.toFixed(2)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-haluna-text">
+                      {product.inStock ? 'In Stock' : 'Out of Stock'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       {product.inStock ? (
@@ -271,21 +202,16 @@ const ProductsPage = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex justify-end space-x-2">
                         <Link 
-                          to={`/dashboard/edit-product/${product.id}`}
+                          to={`/dashboard/products/edit/${product.id}`}
                           className="text-indigo-600 hover:text-indigo-900 p-1 rounded-full hover:bg-indigo-50"
                         >
                           <Edit className="h-4 w-4" />
                         </Link>
                         <button 
                           onClick={() => handleDeleteProduct(product.id)}
-                          disabled={isDeleting === product.id}
-                          className="text-red-600 hover:text-red-900 p-1 rounded-full hover:bg-red-50 disabled:opacity-50"
+                          className="text-red-600 hover:text-red-900 p-1 rounded-full hover:bg-red-50"
                         >
-                          {isDeleting === product.id ? (
-                            <RefreshCw className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <Trash2 className="h-4 w-4" />
-                          )}
+                          <Trash2 className="h-4 w-4" />
                         </button>
                       </div>
                     </td>

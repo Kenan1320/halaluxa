@@ -15,58 +15,7 @@ const AuthMiddleware = () => {
   const { isLoggedIn, user, refreshSession } = useAuth();
   const { toast } = useToast();
   
-  // Ensure business owner has a shop
-  useEffect(() => {
-    const ensureBusinessShop = async () => {
-      if (isLoggedIn && user?.role === 'business') {
-        try {
-          // Check if the business owner already has a shop
-          const { data: existingShop, error: shopError } = await supabase
-            .from('shops')
-            .select('id')
-            .eq('owner_id', user.id)
-            .maybeSingle();
-            
-          if (shopError) {
-            console.error('Error checking for existing shop:', shopError);
-          }
-          
-          // If no shop exists, create one using profile data
-          if (!existingShop) {
-            console.log('Creating shop for business owner:', user.id);
-            const { error: createError } = await supabase
-              .from('shops')
-              .insert({
-                id: user.id,
-                name: user.shopName || 'My Business',
-                description: user.shopDescription || 'New business on Haluna',
-                owner_id: user.id,
-                location: user.shopLocation || 'Online',
-                logo_url: user.shopLogo || null,
-                is_verified: true, // All business accounts are verified by default
-                category: user.shopCategory || 'Other',
-                cover_image: null
-              });
-              
-            if (createError) {
-              console.error('Error creating shop:', createError);
-            } else {
-              toast({
-                title: "Business Shop Created",
-                description: "Your business shop has been set up successfully",
-              });
-            }
-          }
-        } catch (err) {
-          console.error('Error in shop verification:', err);
-        }
-      }
-    };
-    
-    ensureBusinessShop();
-  }, [isLoggedIn, user, toast]);
-  
-  // Set up auth state listener and persist authentication
+  // Set up auth state listener
   useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (event, session) => {
@@ -84,19 +33,14 @@ const AuthMiddleware = () => {
             .single();
             
           if (data?.role === 'business') {
-            console.log('Business owner signed in, redirecting to dashboard');
+            console.log('Business user signed in, redirecting to dashboard');
             navigate('/dashboard');
-            
-            toast({
-              title: "Business Dashboard",
-              description: "Welcome to your business dashboard",
-            });
-          } else {
-            toast({
-              title: "Logged in",
-              description: "You have been successfully logged in",
-            });
           }
+          
+          toast({
+            title: "Logged in",
+            description: "You have been successfully logged in",
+          });
         } else if (event === 'SIGNED_OUT') {
           toast({
             title: "Logged out",
@@ -142,7 +86,7 @@ const AuthMiddleware = () => {
             .single();
             
           if (profileData?.role === 'business' && !location.pathname.startsWith('/dashboard')) {
-            console.log('Business owner detected after session refresh, redirecting to dashboard');
+            console.log('Business user detected after session refresh, redirecting to dashboard');
             navigate('/dashboard');
           }
         }
@@ -154,7 +98,7 @@ const AuthMiddleware = () => {
     verifyAuth();
   }, [location.pathname, isLoggedIn, refreshSession, navigate]);
   
-  // Direct business owners to dashboard if they try to access shopper pages
+  // Direct business users to dashboard if they try to access shopper pages
   useEffect(() => {
     if (isLoggedIn && user?.role === 'business') {
       // Check if the user is on the homepage or other consumer pages
@@ -162,7 +106,7 @@ const AuthMiddleware = () => {
                                !['/login', '/signup'].includes(location.pathname);
       
       if (isOnConsumerPage) {
-        console.log('Business owner detected on consumer page, redirecting to dashboard');
+        console.log('Business user detected on consumer page, redirecting to dashboard');
         navigate('/dashboard');
       }
     }

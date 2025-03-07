@@ -29,12 +29,6 @@ if (typeof window !== 'undefined') {
     }
   `;
   document.head.appendChild(style);
-  
-  // Handle PWA display modes
-  if (window.matchMedia('(display-mode: standalone)').matches) {
-    // The app is running in standalone mode (installed on home screen)
-    document.documentElement.classList.add('pwa-standalone');
-  }
 }
 
 createRoot(document.getElementById("root")!).render(<App />);

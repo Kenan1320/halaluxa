@@ -9,7 +9,7 @@ import { useCart } from '@/context/CartContext';
 import { useLocation as useLocationContext } from '@/context/LocationContext';
 import { motion } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
-import { getShopById, Shop } from '@/services/shopService';
+import { getShopById, getMainShop, Shop } from '@/services/shopService';
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -43,11 +43,8 @@ const Navbar = () => {
   useEffect(() => {
     const loadMainShop = async () => {
       try {
-        const mainShopId = localStorage.getItem('mainShopId');
-        if (mainShopId) {
-          const shop = await getShopById(mainShopId);
-          setMainShop(shop);
-        }
+        const shop = await getMainShop();
+        setMainShop(shop);
       } catch (error) {
         console.error('Error loading main shop:', error);
       }

@@ -3,7 +3,6 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
 import { cva, type VariantProps } from "class-variance-authority";
-import { Slot } from "@radix-ui/react-slot";
 
 const buttonVariants = cva(
   "inline-flex items-center justify-center rounded-full font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50",
@@ -36,13 +35,10 @@ export interface ButtonProps
     VariantProps<typeof buttonVariants> {
   href?: string;
   to?: string;
-  asChild?: boolean;
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, href, to, asChild = false, ...props }, ref) => {
-    const Comp = asChild ? Slot : "button";
-    
+  ({ className, variant, size, href, to, ...props }, ref) => {
     if (href) {
       return (
         <a
@@ -64,7 +60,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     }
     
     return (
-      <Comp
+      <button
         className={cn(buttonVariants({ variant, size, className }))}
         ref={ref}
         {...props}

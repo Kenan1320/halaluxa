@@ -69,20 +69,15 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
   const navigate = useNavigate();
   const { toast } = useToast();
   
   const refreshSession = async () => {
     try {
-      setIsLoading(true);
       const { data, error } = await supabase.auth.getSession();
       
       if (error) {
         console.error('Error refreshing session:', error);
-        setIsLoggedIn(false);
-        setUser(null);
-        setIsLoading(false);
         return;
       }
       
@@ -97,7 +92,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           console.error('Error fetching user profile:', userError);
           setIsLoggedIn(false);
           setUser(null);
-          setIsLoading(false);
           return;
         }
         
@@ -138,38 +132,34 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       console.error('Refresh session error:', error);
       setIsLoggedIn(false);
       setUser(null);
-    } finally {
-      setIsLoading(false);
     }
   };
 
   useEffect(() => {
     const checkLoggedIn = async () => {
-      await refreshSession();
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('Session check error:', error);
+          return;
+        }
+        
+        if (data.session) {
+          await refreshSession();
+        } else {
+          localStorage.removeItem(USER_DATA_KEY);
+        }
+      } catch (error) {
+        console.error('Initial auth check error:', error);
+      }
     };
     
     checkLoggedIn();
-    
-    // Set up auth state change listener
-    const { data } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (session) {
-        await refreshSession();
-      } else {
-        setIsLoggedIn(false);
-        setUser(null);
-        localStorage.removeItem(USER_DATA_KEY);
-      }
-    });
-    
-    return () => {
-      data.subscription.unsubscribe();
-    };
   }, []);
   
   const login = async (email: string, password: string): Promise<UserRole | false> => {
     try {
-      setIsLoading(true);
-      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
@@ -229,14 +219,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setUser(userObj);
         setIsLoggedIn(true);
         localStorage.setItem(USER_DATA_KEY, JSON.stringify(userObj));
-        
-        // Redirect based on role
-        if (userRole === 'business') {
-          navigate('/dashboard');
-        } else {
-          navigate('/shop');
-        }
-        
         return userRole;
       }
       
@@ -255,8 +237,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         variant: "destructive",
       });
       return false;
-    } finally {
-      setIsLoading(false);
     }
   };
   
@@ -274,19 +254,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   ): Promise<boolean> => {
     try {
-      setIsLoading(true);
-      
-      // Business accounts must provide shop details
-      if (role === 'business' && (!shopDetails || !shopDetails.shopName)) {
-        toast({
-          title: "Signup Failed",
-          description: "Business accounts must provide shop details",
-          variant: "destructive",
-        });
-        return false;
-      }
-
-      // Create the user account
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
@@ -349,7 +316,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             owner_id: authData.user.id,
             location: shopDetails.shopLocation || 'Online',
             logo_url: shopDetails.shopLogo || null,
-            is_verified: true, // All business accounts are verified by default
           });
         
         if (shopError) {
@@ -386,13 +352,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         description: `Your account has been created successfully${role === 'business' ? ' and your shop is now live!' : '.'}`,
       });
       
-      // Redirect based on role
-      if (role === 'business') {
-        navigate('/dashboard');
-      } else {
-        navigate('/shop');
-      }
-      
       return true;
     } catch (error) {
       console.error('Signup failed', error);
@@ -402,15 +361,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         variant: "destructive",
       });
       return false;
-    } finally {
-      setIsLoading(false);
     }
   };
   
   const updateUserProfile = async (data: ProfileUpdateData): Promise<boolean> => {
     try {
-      setIsLoading(true);
-      
       if (!user) return false;
       
       const { error: updateError } = await supabase
@@ -470,6 +425,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       };
       
       localStorage.setItem(USER_DATA_KEY, JSON.stringify(updatedUser));
+      
+      const usersStr = localStorage.getItem('users');
+      if (usersStr) {
+        let users = JSON.parse(usersStr);
+        users = users.map((u: any) => {
+          if (u.id === user.id) {
+            return { ...u, ...data };
+          }
+          return u;
+        });
+        
+        localStorage.setItem('users', JSON.stringify(users));
+      }
+      
       setUser(updatedUser);
       
       toast({
@@ -486,14 +455,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         variant: "destructive",
       });
       return false;
-    } finally {
-      setIsLoading(false);
     }
   };
   
   const logout = async () => {
     try {
-      setIsLoading(true);
       await supabase.auth.signOut();
       
       setUser(null);
@@ -513,8 +479,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         description: "There was an error logging out. Please try again.",
         variant: "destructive",
       });
-    } finally {
-      setIsLoading(false);
     }
   };
   

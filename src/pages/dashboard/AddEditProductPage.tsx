@@ -1,11 +1,10 @@
-
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { Upload, X, CheckCircle, Plus, Image as ImageIcon } from 'lucide-react';
 import { productCategories } from '@/models/product';
-import { addProduct, getProductById, updateProduct, uploadProductImage } from '@/services/productService';
+import { addProduct, getProductById, updateProduct } from '@/services/productService';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -16,8 +15,6 @@ const AddEditProductPage = () => {
   const { user } = useAuth();
   
   const [isLoading, setIsLoading] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -44,7 +41,7 @@ const AddEditProductPage = () => {
               name: product.name,
               description: product.description,
               price: product.price.toString(),
-              stock: product.inStock ? '1' : '0',
+              stock: product.stock.toString(),
               category: product.category,
               isHalalCertified: product.isHalalCertified,
               details: product.details || {}
@@ -89,84 +86,39 @@ const AddEditProductPage = () => {
     setFormData(prev => ({ ...prev, [name]: checked }));
   };
   
-  const uploadImage = useCallback(async (file: File): Promise<string | null> => {
-    if (!user?.id) {
-      toast({
-        title: "Error",
-        description: "User authentication required for image upload",
-        variant: "destructive",
-      });
-      return null;
-    }
-
-    try {
-      // Create a unique filename
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
-      const filePath = `${user.id}/${fileName}`;
-      
-      // Upload the file
-      const { error: uploadError } = await supabase.storage
-        .from('product_images')
-        .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: true
-        });
-      
-      if (uploadError) {
-        console.error('Error uploading image:', uploadError);
-        throw new Error(uploadError.message);
-      }
-      
-      // Get the public URL
-      const { data } = supabase.storage
-        .from('product_images')
-        .getPublicUrl(filePath);
-      
-      return data?.publicUrl || null;
-    } catch (error) {
-      console.error('Error in uploadImage:', error);
-      throw error;
-    }
-  }, [user, toast]);
-  
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
     
-    setIsUploading(true);
-    setUploadProgress(0);
-    const totalFiles = files.length;
+    setIsLoading(true);
     const newPreviews: string[] = [];
-    let completedUploads = 0;
     
     try {
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
-        try {
-          const url = await uploadImage(file);
-          if (url) {
-            newPreviews.push(url);
-          }
-          completedUploads++;
-          setUploadProgress(Math.round((completedUploads / totalFiles) * 100));
-        } catch (error) {
-          console.error(`Failed to upload file ${i+1}:`, error);
-          toast({
-            title: "Upload Error",
-            description: `Failed to upload image ${i+1}. Please try again.`,
-            variant: "destructive",
-          });
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+        const filePath = `${user?.id}/${fileName}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('product_images')
+          .upload(filePath, file);
+        
+        if (uploadError) {
+          console.error('Error uploading image:', uploadError);
+          continue;
+        }
+        
+        const { data } = supabase.storage
+          .from('product_images')
+          .getPublicUrl(filePath);
+        
+        if (data?.publicUrl) {
+          newPreviews.push(data.publicUrl);
         }
       }
       
-      if (newPreviews.length > 0) {
-        setImagePreviews(prev => [...prev, ...newPreviews]);
-        toast({
-          title: "Success",
-          description: `Successfully uploaded ${newPreviews.length} image(s)`,
-        });
-      }
+      setImagePreviews(prev => [...prev, ...newPreviews]);
     } catch (error) {
       console.error('Error processing images:', error);
       toast({
@@ -175,10 +127,7 @@ const AddEditProductPage = () => {
         variant: "destructive",
       });
     } finally {
-      setIsUploading(false);
-      setUploadProgress(0);
-      // Reset the file input
-      e.target.value = '';
+      setIsLoading(false);
     }
   };
   
@@ -247,45 +196,36 @@ const AddEditProductPage = () => {
         name: formData.name,
         description: formData.description,
         price: parseFloat(formData.price),
-        inStock: parseInt(formData.stock) > 0,
+        stock: parseInt(formData.stock),
         category: formData.category,
         images: imagePreviews,
         isHalalCertified: formData.isHalalCertified,
         sellerId: user?.id || '',
-        sellerName: user?.shopName || user?.name || '',
         details: formData.details
       };
       
       if (id) {
         const product = await getProductById(id);
-        const updatedProduct = await updateProduct({
+        await updateProduct({
           ...productData,
           id,
           createdAt: product?.createdAt || new Date().toISOString()
         });
         
-        if (updatedProduct) {
-          toast({
-            title: "Success",
-            description: "Product updated successfully",
-          });
-          navigate('/dashboard/products');
-        } else {
-          throw new Error("Failed to update product");
-        }
+        toast({
+          title: "Success",
+          description: "Product updated successfully",
+        });
       } else {
-        const newProduct = await addProduct(productData);
+        await addProduct(productData);
         
-        if (newProduct) {
-          toast({
-            title: "Success",
-            description: "Product added successfully",
-          });
-          navigate('/dashboard/products');
-        } else {
-          throw new Error("Failed to add product");
-        }
+        toast({
+          title: "Success",
+          description: "Product added successfully",
+        });
       }
+      
+      navigate('/dashboard/products');
     } catch (error) {
       console.error('Error saving product:', error);
       toast({
@@ -425,9 +365,6 @@ const AddEditProductPage = () => {
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 h-32 flex flex-col items-center justify-center text-center">
                   <ImageIcon className="h-8 w-8 text-haluna-text-light mb-2" />
                   <p className="text-sm text-haluna-text-light mb-2">Add more images</p>
-                  <p className="text-xs text-haluna-text-light mb-4">
-                    Recommended: Square JPG or PNG, 1000x1000px or larger
-                  </p>
                   <input
                     type="file"
                     id="images"
@@ -442,9 +379,9 @@ const AddEditProductPage = () => {
                     variant="outline"
                     size="sm"
                     onClick={() => document.getElementById('images')?.click()}
-                    disabled={isUploading || isLoading}
+                    disabled={isLoading}
                   >
-                    {isUploading ? `Uploading ${uploadProgress}%` : 'Browse'}
+                    Browse
                   </Button>
                 </div>
               </div>
@@ -470,22 +407,11 @@ const AddEditProductPage = () => {
                       type="button"
                       variant="outline"
                       onClick={() => document.getElementById('initial-images')?.click()}
-                      disabled={isUploading || isLoading}
+                      disabled={isLoading}
                     >
-                      {isUploading ? `Uploading ${uploadProgress}%` : 'Browse Files'}
+                      Browse Files
                     </Button>
                   </div>
-                </div>
-              )}
-              
-              {isUploading && (
-                <div className="mt-4">
-                  <div className="w-full bg-gray-200 rounded-full h-2.5">
-                    <div className="bg-haluna-primary h-2.5 rounded-full" style={{ width: `${uploadProgress}%` }}></div>
-                  </div>
-                  <p className="text-xs text-center mt-2 text-haluna-text-light">
-                    Uploading images: {uploadProgress}% complete
-                  </p>
                 </div>
               )}
             </div>
@@ -560,13 +486,13 @@ const AddEditProductPage = () => {
               type="button"
               variant="outline"
               onClick={() => navigate('/dashboard/products')}
-              disabled={isLoading || isUploading}
+              disabled={isLoading}
             >
               Cancel
             </Button>
             <Button 
               type="submit"
-              disabled={isLoading || isUploading}
+              disabled={isLoading}
             >
               {isLoading ? (
                 <div className="flex items-center">
