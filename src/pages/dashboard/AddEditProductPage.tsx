@@ -41,7 +41,7 @@ const AddEditProductPage = () => {
               name: product.name,
               description: product.description,
               price: product.price.toString(),
-              stock: product.stock.toString(),
+              stock: product.inStock ? '1' : '0',
               category: product.category,
               isHalalCertified: product.isHalalCertified,
               details: product.details || {}
@@ -196,7 +196,7 @@ const AddEditProductPage = () => {
         name: formData.name,
         description: formData.description,
         price: parseFloat(formData.price),
-        stock: parseInt(formData.stock),
+        inStock: parseInt(formData.stock) > 0,
         category: formData.category,
         images: imagePreviews,
         isHalalCertified: formData.isHalalCertified,
@@ -365,6 +365,9 @@ const AddEditProductPage = () => {
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 h-32 flex flex-col items-center justify-center text-center">
                   <ImageIcon className="h-8 w-8 text-haluna-text-light mb-2" />
                   <p className="text-sm text-haluna-text-light mb-2">Add more images</p>
+                  <p className="text-xs text-haluna-text-light mb-4">
+                    Recommended: Square JPG or PNG, 1000x1000px or larger
+                  </p>
                   <input
                     type="file"
                     id="images"

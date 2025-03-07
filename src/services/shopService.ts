@@ -63,7 +63,11 @@ export async function getShops(): Promise<Shop[]> {
     
     // Filter to include only real business accounts
     const validShops = data.filter(shop => 
-      shop.profiles && typeof shop.profiles === 'object' && shop.profiles.role === 'business'
+      shop.profiles && 
+      typeof shop.profiles === 'object' && 
+      shop.profiles !== null &&
+      'role' in shop.profiles &&
+      shop.profiles.role === 'business'
     );
     
     // For each shop, get the product count
@@ -121,7 +125,11 @@ export async function getShopById(id: string): Promise<Shop | null> {
     }
     
     // Only return if it's a business account
-    if (!data.profiles || typeof data.profiles !== 'object' || data.profiles.role !== 'business') {
+    if (!data.profiles || 
+        typeof data.profiles !== 'object' || 
+        data.profiles === null ||
+        !('role' in data.profiles) ||
+        data.profiles.role !== 'business') {
       console.error('Shop is not a valid business account');
       return null;
     }
