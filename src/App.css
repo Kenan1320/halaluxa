@@ -74,12 +74,12 @@
 }
 
 .store-location:hover {
-  background-color: rgba(1, 191, 179, 0.05);
+  background-color: rgba(42, 134, 106, 0.05);
 }
 
 .store-location-active {
-  border-color: #01BFB3;
-  background-color: rgba(1, 191, 179, 0.1);
+  border-color: #2A866A;
+  background-color: rgba(42, 134, 106, 0.1);
 }
 
 /* Custom checkbox styles */
@@ -88,7 +88,7 @@
   display: block;
   width: 20px;
   height: 20px;
-  border: 2px solid #01BFB3;
+  border: 2px solid #2A866A;
   border-radius: 4px;
   cursor: pointer;
 }
@@ -106,7 +106,7 @@
 }
 
 .custom-checkbox.checked {
-  background-color: #01BFB3;
+  background-color: #2A866A;
 }
 
 /* Credit card input styling */
@@ -115,35 +115,6 @@
 }
 
 .card-input:focus {
-  border-color: #01BFB3;
-  box-shadow: 0 0 0 2px rgba(1, 191, 179, 0.2);
-}
-
-/* Haluna gradient backgrounds */
-.bg-haluna-gradient {
-  background: linear-gradient(to bottom, #01BFB3, #0E77D1, #6A3DE8);
-}
-
-.bg-haluna-gradient-horizontal {
-  background: linear-gradient(to right, #01BFB3, #0E77D1, #6A3DE8);
-}
-
-/* Gradient text */
-.text-haluna-gradient {
-  background: linear-gradient(to right, #01BFB3, #0E77D1, #6A3DE8);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-
-/* Gradient buttons */
-.btn-haluna-gradient {
-  background: linear-gradient(to right, #01BFB3, #0E77D1, #6A3DE8);
-  color: white;
-  transition: all 0.3s ease;
-}
-
-.btn-haluna-gradient:hover {
-  opacity: 0.9;
-  transform: translateY(-2px);
+  border-color: #2A866A;
+  box-shadow: 0 0 0 2px rgba(42, 134, 106, 0.2);
 }

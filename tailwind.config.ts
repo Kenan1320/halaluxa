@@ -54,21 +54,17 @@ export default {
 					foreground: 'hsl(var(--card-foreground))'
 				},
 				haluna: {
-					primary: 'var(--gradient-teal)', // Changed from green to teal
-					'primary-light': '#e6f5f4', // Updated to match teal
-					'primary-dark': '#019d92', // Darker teal
+					primary: '#2A866A',
+					'primary-light': '#e6f2ef',
+					'primary-dark': '#1e5c4a',
 					secondary: '#F9F5EB',
-					accent: '#F7C59F', // Kept orange accent
-					'accent-dark': '#e9a97e', // Kept orange accent dark
+					accent: '#F7C59F',
+					'accent-dark': '#e9a97e',
 					text: '#333333',
 					'text-light': '#666666',
 					cream: '#FFF8EB',
 					beige: '#F6E6C8',
 					sage: '#D4E2D4',
-					// Adding gradient colors
-					teal: 'var(--gradient-teal)',
-					blue: 'var(--gradient-blue)',
-					purple: 'var(--gradient-purple)',
 				},
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
@@ -152,11 +148,7 @@ export default {
 			fontFamily: {
 				sans: ['Montserrat', 'sans-serif'],
 				serif: ['Playfair Display', 'serif']
-			},
-			backgroundImage: {
-				'haluna-gradient': 'linear-gradient(to bottom, var(--gradient-teal), var(--gradient-blue), var(--gradient-purple))',
-				'haluna-gradient-horizontal': 'linear-gradient(to right, var(--gradient-teal), var(--gradient-blue), var(--gradient-purple))',
-			},
+			}
 		}
 	},
 	plugins: [require("tailwindcss-animate")],

@@ -109,7 +109,7 @@ const ProductGrid = () => {
                 
                 <div className="flex items-center justify-between">
                   <div>
-                    <span className="text-haluna-teal font-bold">${product.price.toFixed(2)}</span>
+                    <span className="text-[#2A866A] font-bold">${product.price.toFixed(2)}</span>
                   </div>
                   
                   <Button
@@ -126,7 +126,7 @@ const ProductGrid = () => {
                 <Button 
                   variant="outline"
                   size="sm"
-                  className="w-full mt-3 border-haluna-teal text-haluna-teal hover:bg-haluna-teal hover:text-white"
+                  className="w-full mt-3 border-[#2A866A] text-[#2A866A] hover:bg-[#2A866A] hover:text-white"
                 >
                   <Link to={`/product/${product.id}`} className="w-full h-full flex items-center justify-center">
                     <Eye className="h-4 w-4 mr-1" />
@@ -157,7 +157,7 @@ const ProductGrid = () => {
                     className="bg-white rounded-full p-2 shadow-md transform translate-y-4 group-hover:translate-y-0 transition-transform"
                     onClick={(e) => handleAddToCart(product, e)}
                   >
-                    <ShoppingCart className="h-4 w-4 text-haluna-teal" />
+                    <ShoppingCart className="h-4 w-4 text-[#2A866A]" />
                   </button>
                 </div>
               </div>
@@ -165,7 +165,7 @@ const ProductGrid = () => {
               <div className="pt-2 px-1">
                 <h3 className="font-medium text-sm text-gray-800 line-clamp-1">{product.name}</h3>
                 <div className="flex items-center justify-between mt-1">
-                  <span className="text-haluna-teal font-semibold text-sm">${product.price.toFixed(2)}</span>
+                  <span className="text-[#2A866A] font-semibold text-sm">${product.price.toFixed(2)}</span>
                 </div>
               </div>
             </div>

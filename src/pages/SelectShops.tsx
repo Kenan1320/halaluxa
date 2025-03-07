@@ -154,10 +154,10 @@ const SelectShops = () => {
             </p>
           </header>
           
-          <div className="bg-haluna-gradient/40 rounded-lg p-4 mb-8">
+          <div className="bg-[#E4F5F0]/40 rounded-lg p-4 mb-8">
             <div className="flex items-center gap-3 mb-3">
-              <Store className="w-5 h-5 text-white" />
-              <h2 className="font-medium text-white">Your Main Shop</h2>
+              <Store className="w-5 h-5 text-[#29866B]" />
+              <h2 className="font-medium">Your Main Shop</h2>
             </div>
             
             {mainShopId ? (
@@ -169,7 +169,7 @@ const SelectShops = () => {
                     className="w-10 h-10 object-cover rounded-full mr-3"
                   />
                 ) : (
-                  <div className="w-10 h-10 rounded-full bg-haluna-gradient flex items-center justify-center text-white mr-3">
+                  <div className="w-10 h-10 rounded-full bg-[#29866B] flex items-center justify-center text-white mr-3">
                     {shops.find(s => s.id === mainShopId)?.name.charAt(0) || 'S'}
                   </div>
                 )}
@@ -189,7 +189,7 @@ const SelectShops = () => {
           {Object.entries(locations).map(([location, locationShops]) => (
             <div key={location} className="mb-8">
               <div className="flex items-center gap-2 mb-3">
-                <MapPin className="w-4 h-4 text-[#01BFB3]" />
+                <MapPin className="w-4 h-4 text-[#29866B]" />
                 <h2 className="text-lg font-medium">{location}</h2>
               </div>
               
@@ -199,7 +199,7 @@ const SelectShops = () => {
                     key={shop.id}
                     className={`relative border rounded-lg p-4 cursor-pointer transition-all ${
                       selectedShops.includes(shop.id) 
-                        ? 'border-[#01BFB3] bg-gradient-to-r from-[#01BFB3]/10 via-[#0E77D1]/10 to-[#6A3DE8]/10' 
+                        ? 'border-[#29866B] bg-[#E4F5F0]/20' 
                         : 'border-gray-200 hover:border-gray-300'
                     }`}
                     onClick={() => toggleShopSelection(shop.id)}
@@ -208,7 +208,7 @@ const SelectShops = () => {
                   >
                     {/* Selection indicator */}
                     {selectedShops.includes(shop.id) && (
-                      <div className="absolute top-2 right-2 w-5 h-5 bg-haluna-gradient rounded-full flex items-center justify-center">
+                      <div className="absolute top-2 right-2 w-5 h-5 bg-[#29866B] rounded-full flex items-center justify-center">
                         <Check className="w-3 h-3 text-white" />
                       </div>
                     )}
@@ -240,7 +240,7 @@ const SelectShops = () => {
                           className="w-16 h-16 object-cover rounded-full mb-3"
                         />
                       ) : (
-                        <div className="w-16 h-16 rounded-full bg-[#F9F5EB] flex items-center justify-center text-[#01BFB3] mb-3">
+                        <div className="w-16 h-16 rounded-full bg-[#F9F5EB] flex items-center justify-center text-[#29866B] mb-3">
                           <span className="text-lg font-bold">{shop.name.charAt(0)}</span>
                         </div>
                       )}
@@ -249,7 +249,7 @@ const SelectShops = () => {
                       
                       {selectedShops.includes(shop.id) && mainShopId !== shop.id && (
                         <button 
-                          className="mt-3 text-xs px-3 py-1 bg-white border border-[#01BFB3] text-[#01BFB3] rounded-full hover:bg-haluna-gradient hover:text-white transition-colors hover:border-transparent"
+                          className="mt-3 text-xs px-3 py-1 bg-white border border-[#29866B] text-[#29866B] rounded-full hover:bg-[#29866B] hover:text-white transition-colors"
                           onClick={(e) => {
                             e.stopPropagation();
                             setAsMainShop(shop.id);
@@ -275,7 +275,7 @@ const SelectShops = () => {
             <Button 
               onClick={saveSelections}
               disabled={selectedShops.length === 0}
-              variant="teal"
+              className="bg-[#29866B] hover:bg-[#1e5c4a]"
             >
               Save Preferences
             </Button>

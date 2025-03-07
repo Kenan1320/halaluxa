@@ -10,14 +10,12 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-haluna-gradient text-white shadow-md hover:shadow-lg hover:opacity-90",
+        default: "bg-haluna-primary text-white hover:bg-haluna-primary-dark shadow-md hover:shadow-lg",
         destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
         outline: "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
         secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
-        link: "text-haluna-gradient underline-offset-4 hover:underline",
-        teal: "bg-[#01BFB3] text-white hover:bg-[#01BFB3]/90", // Kept teal variant
-        purple: "bg-[#6A3DE8] text-white hover:bg-[#6A3DE8]/90", // Kept purple variant
+        link: "text-haluna-primary underline-offset-4 hover:underline",
       },
       size: {
         default: "h-10 px-6 py-2 text-sm",
