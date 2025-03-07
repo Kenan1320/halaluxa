@@ -55,7 +55,7 @@ const SplashScreen = ({ onFinished }: SplashScreenProps) => {
   const brandName = "Haluna";
   
   // Rainbow color animation for Haluna text
-  const colors = ["#29866B", "#36A186", "#E4875E", "#F9A280", "#29866B"];
+  const colors = ["#29866B", "#36A186", "#9b87f5", "#7E69AB", "#29866B"];
 
   return (
     <AnimatePresence>
@@ -69,13 +69,13 @@ const SplashScreen = ({ onFinished }: SplashScreenProps) => {
           transition={{ duration: 0.8, ease: "easeInOut" }}
         >
           {/* Light green background matching the top nav */}
-          <div className="absolute inset-0 bg-[#E4F5F0]" />
+          <div className="absolute inset-0 bg-[#E4F5F0] dark:bg-[#1c2b29]" />
           
           {/* Wave animation container */}
           <div className="absolute inset-0 flex flex-col justify-end overflow-hidden">
             {/* First wave - Deep green (#29866B) */}
             <motion.div
-              className="w-full h-[60%] bg-[#29866B] rounded-t-[100%]"
+              className="w-full h-[60%] bg-[#29866B] dark:bg-[#1e5c4a] rounded-t-[100%]"
               initial={{ y: "100%" }}
               animate={{ 
                 y: "0%"
@@ -87,9 +87,9 @@ const SplashScreen = ({ onFinished }: SplashScreenProps) => {
               onAnimationComplete={() => setWaveComplete(true)}
             />
             
-            {/* Second wave - Warm orange (#E4875E) with blend into green */}
+            {/* Second wave - blend gradient with purple */}
             <motion.div
-              className="absolute bottom-0 w-full h-[45%] bg-gradient-to-t from-[#E4875E] to-[#29866B] rounded-t-[100%]"
+              className="absolute bottom-0 w-full h-[45%] bg-gradient-to-t from-[#9b87f5] to-[#29866B] dark:from-[#6E59A5] dark:to-[#1e5c4a] rounded-t-[100%]"
               initial={{ y: "100%" }}
               animate={{ 
                 y: "0%"
@@ -178,9 +178,9 @@ const SplashScreen = ({ onFinished }: SplashScreenProps) => {
                 ease: "easeOut"
               }}
             >
-              {/* Main orange ball */}
+              {/* Main orange ball - replaced with purple */}
               <motion.div
-                className="w-14 h-14 bg-[#E4875E] rounded-full flex items-center justify-center"
+                className="w-14 h-14 bg-[#9b87f5] dark:bg-[#7E69AB] rounded-full flex items-center justify-center"
                 animate={{ 
                   scale: [1, 1.08, 1],
                   opacity: [0.85, 0.92, 0.85] 
@@ -196,7 +196,7 @@ const SplashScreen = ({ onFinished }: SplashScreenProps) => {
               
               {/* Orbiting green ball */}
               <motion.div
-                className="absolute w-6 h-6 bg-[#29866B] rounded-full shadow-md"
+                className="absolute w-6 h-6 bg-[#29866B] dark:bg-[#36A186] rounded-full shadow-md"
                 animate={{
                   x: [15, 12, 0, -12, -15, -12, 0, 12, 15],
                   y: [0, 12, 15, 12, 0, -12, -15, -12, 0],
