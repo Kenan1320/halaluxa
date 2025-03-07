@@ -23,35 +23,32 @@ export interface ShopProduct extends Product {
   // ShopProduct already inherits all the required properties from Product
 }
 
-// Safely check if profiles data indicates this is a business account
-const isBusinessAccount = (profilesData: any): boolean => {
-  if (!profilesData) return false;
-  if (typeof profilesData !== 'object') return false;
-  if (profilesData === null) return false;
-  
-  // Properly check if role exists and is a business account
-  return typeof profilesData === 'object' && 
-         'role' in profilesData && 
-         profilesData.role === 'business';
-};
+// Type guard for business account
+function isBusinessAccount(data: any): boolean {
+  return data && 
+         typeof data === 'object' && 
+         data !== null &&
+         'role' in data && 
+         data.role === 'business';
+}
 
-// Map database shop to our model
+// Map database shop to our model with safe property access
 const mapDbShopToModel = (shop: any, productCount: number = 0): Shop => {
   if (!shop) return {} as Shop;
   
   return {
-    id: shop.id,
-    name: shop.name,
-    description: shop.description,
-    logo: shop.logo_url,
+    id: shop.id || '',
+    name: shop.name || '',
+    description: shop.description || '',
+    logo: shop.logo_url || '',
     coverImage: shop.cover_image || '', 
-    location: shop.location,
+    location: shop.location || '',
     category: shop.category || '', 
     rating: shop.rating || 4.5,
-    isVerified: shop.is_verified || false,
+    isVerified: shop.is_verified === true,
     productCount: productCount,
-    owner_id: shop.owner_id,
-    latitude: shop.latitude || Math.random() * 180 - 90, // Use real coordinates if available
+    owner_id: shop.owner_id || '',
+    latitude: shop.latitude || Math.random() * 180 - 90,
     longitude: shop.longitude || Math.random() * 360 - 180
   };
 };
@@ -80,7 +77,7 @@ export function convertToModelProduct(shopProduct: ShopProduct): Product {
 // Get all shops with real business accounts
 export async function getShops(): Promise<Shop[]> {
   try {
-    // Get only shops from business profiles
+    // Get shops with proper error handling
     const { data, error } = await supabase
       .from('shops')
       .select(`
@@ -94,22 +91,39 @@ export async function getShops(): Promise<Shop[]> {
       return [];
     }
     
-    // Filter to include only real business accounts with proper null checks
-    const validShops = data.filter(shop => shop.profiles && isBusinessAccount(shop.profiles));
+    // Ensure we have valid data before filtering
+    const validShops = data.filter(shop => {
+      try {
+        return shop && shop.profiles && isBusinessAccount(shop.profiles);
+      } catch (e) {
+        console.error('Error filtering shop:', e);
+        return false;
+      }
+    });
     
     // For each shop, get the product count
     const shopsWithCounts = await Promise.all(
       validShops.map(async (shop) => {
-        const { count, error: countError } = await supabase
-          .from('products')
-          .select('id', { count: 'exact', head: true })
-          .eq('seller_id', shop.owner_id);
+        try {
+          const { count, error: countError } = await supabase
+            .from('products')
+            .select('id', { count: 'exact', head: true })
+            .eq('seller_id', shop.owner_id);
+            
+          if (countError) {
+            console.error('Error counting products:', countError);
+          }
           
-        return mapDbShopToModel(shop, count || 0);
+          return mapDbShopToModel(shop, count || 0);
+        } catch (e) {
+          console.error('Error processing shop:', e);
+          return mapDbShopToModel(shop, 0);
+        }
       })
     );
     
-    return shopsWithCounts.filter(shop => shop.productCount && shop.productCount > 0);
+    // Return all shops, even if they have no products (to show newly created shops)
+    return shopsWithCounts;
   } catch (err) {
     console.error('Error in getShops:', err);
     return [];
@@ -137,7 +151,7 @@ export async function getShopById(id: string): Promise<Shop | null> {
       return null;
     }
     
-    // Only return if it's a business account with proper null checks
+    // Validate that it's a business account
     if (!data.profiles || !isBusinessAccount(data.profiles)) {
       console.error('Shop is not a valid business account');
       return null;

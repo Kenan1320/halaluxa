@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
@@ -6,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { LogIn, ArrowLeft, Lock, Mail } from 'lucide-react';
 import { motion } from 'framer-motion';
 import LoginSelector from './LoginSelector';
+import { supabase } from '@/integrations/supabase/client';
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -18,18 +20,25 @@ const LoginPage = () => {
   });
   const [loading, setLoading] = useState(false);
   const [userType, setUserType] = useState<'shopper' | 'business' | null>(null);
+  const [rememberedEmail, setRememberedEmail] = useState<string | null>(null);
 
   // Get the intended destination, if any
   const from = location.state?.from?.pathname || '/';
   
+  // Check for remembered login
+  useEffect(() => {
+    const savedEmail = localStorage.getItem('haluna_remembered_email');
+    if (savedEmail) {
+      setRememberedEmail(savedEmail);
+      setFormData(prev => ({ ...prev, email: savedEmail }));
+    }
+  }, []);
+  
   // If already logged in, redirect to appropriate page
   useEffect(() => {
     if (isLoggedIn) {
-      if (user?.role === 'business') {
-        navigate('/dashboard');
-      } else {
-        navigate('/shop');
-      }
+      const redirectPath = user?.role === 'business' ? '/dashboard' : '/shop';
+      navigate(redirectPath);
     }
   }, [isLoggedIn, user, navigate]);
 
@@ -58,7 +67,14 @@ const LoginPage = () => {
       
       if (role) {
         console.log('Login successful with role:', role);
-        console.log('User selected type:', userType);
+        
+        // Remember email if checkbox is checked
+        const rememberMe = (document.getElementById('remember') as HTMLInputElement)?.checked;
+        if (rememberMe) {
+          localStorage.setItem('haluna_remembered_email', formData.email);
+        } else {
+          localStorage.removeItem('haluna_remembered_email');
+        }
         
         // Check if the role matches the selected type
         if ((role === 'shopper' && userType === 'business') || (role === 'business' && userType === 'shopper')) {
@@ -81,7 +97,23 @@ const LoginPage = () => {
         
         // Navigate to the appropriate destination based on role
         if (role === 'business') {
-          navigate('/dashboard');
+          // For business owners, ensure they have a shop record
+          const { data: shopData, error: shopError } = await supabase
+            .from('shops')
+            .select('id')
+            .eq('owner_id', (await supabase.auth.getUser()).data.user?.id)
+            .maybeSingle();
+            
+          if (!shopData && !shopError) {
+            // If no shop exists, redirect to create shop flow
+            navigate('/dashboard/settings');
+            toast({
+              title: "Complete Your Shop Setup",
+              description: "Please complete your shop details to get started",
+            });
+          } else {
+            navigate('/dashboard');
+          }
         } else {
           navigate(from === '/' ? '/shop' : from);
         }
@@ -197,6 +229,7 @@ const LoginPage = () => {
               id="remember"
               type="checkbox"
               className="w-4 h-4 text-haluna-primary border-haluna-text-light rounded focus:ring-haluna-primary focus:ring-1"
+              defaultChecked={!!rememberedEmail}
             />
             <label htmlFor="remember" className="ml-2 text-sm text-haluna-text">
               Remember me

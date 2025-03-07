@@ -1,4 +1,3 @@
-
 import { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
@@ -14,6 +13,55 @@ const AuthMiddleware = () => {
   const navigate = useNavigate();
   const { isLoggedIn, user, refreshSession } = useAuth();
   const { toast } = useToast();
+  
+  // Ensure business owner has a shop
+  useEffect(() => {
+    const ensureBusinessShop = async () => {
+      if (isLoggedIn && user?.role === 'business') {
+        try {
+          // Check if the business owner already has a shop
+          const { data: existingShop, error: shopError } = await supabase
+            .from('shops')
+            .select('id')
+            .eq('owner_id', user.id)
+            .maybeSingle();
+            
+          if (shopError) {
+            console.error('Error checking for existing shop:', shopError);
+          }
+          
+          // If no shop exists, create one using profile data
+          if (!existingShop && user.shopName) {
+            console.log('Creating shop for business owner:', user.id);
+            const { error: createError } = await supabase
+              .from('shops')
+              .insert({
+                id: user.id,
+                name: user.shopName || 'My Shop',
+                description: user.shopDescription || 'New shop on Haluna',
+                owner_id: user.id,
+                location: user.shopLocation || 'Online',
+                logo_url: user.shopLogo || null,
+                is_verified: true, // All business accounts are verified by default
+              });
+              
+            if (createError) {
+              console.error('Error creating shop:', createError);
+            } else {
+              toast({
+                title: "Shop Created",
+                description: "Your shop has been set up successfully",
+              });
+            }
+          }
+        } catch (err) {
+          console.error('Error in shop verification:', err);
+        }
+      }
+    };
+    
+    ensureBusinessShop();
+  }, [isLoggedIn, user, toast]);
   
   // Set up auth state listener and persist authentication
   useEffect(() => {
