@@ -5,16 +5,18 @@ export interface Shop {
   name: string;
   description: string;
   location: string;
-  rating: number;
-  productCount: number;
-  isVerified: boolean;
+  address?: string;
   category: string;
-  logo: string | null;
-  coverImage: string | null;
-  ownerId: string;
+  logo_url?: string | null;
+  cover_image?: string | null;
+  owner_id: string;
   latitude: number | null;
   longitude: number | null;
-  distance: number | null;
+  rating: number;
+  product_count: number;
+  is_verified: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface ShopProduct {
@@ -24,8 +26,9 @@ export interface ShopProduct {
   description: string;
   category: string; 
   images: string[];
-  sellerId: string;
-  sellerName: string;
+  shop_id: string;
+  is_published: boolean;
+  is_halal_certified: boolean;
   rating: number;
 }
 
@@ -39,15 +42,38 @@ export interface ShopLocation {
   country?: string;
 }
 
-export interface ShopDisplaySettings {
+export interface ShopPaymentMethod {
   id: string;
-  shopId: string;
-  primaryColor: string | null;
-  secondaryColor: string | null;
-  fontFamily: string | null;
-  showRatings: boolean;
-  showProductCount: boolean;
-  featuredProducts: string[] | null;
-  bannerMessage: string | null;
+  shop_id: string;
+  method_type: 'bank' | 'paypal' | 'stripe';
+  account_name?: string;
+  account_number?: string;
+  bank_name?: string;
+  paypal_email?: string;
+  stripe_account_id?: string;
+  is_default: boolean;
+  is_active: boolean;
   created_at: string;
+  updated_at: string;
+}
+
+export interface ShopSale {
+  id: string;
+  shop_id: string;
+  order_id: string;
+  amount: number;
+  status: 'pending' | 'completed' | 'refunded';
+  created_at: string;
+  updated_at: string;
+}
+
+// Business signup form data
+export interface BusinessSignupFormData {
+  email: string;
+  password: string;
+  name: string;
+  shopName: string;
+  shopDescription: string;
+  shopCategory: string;
+  shopLocation: string;
 }

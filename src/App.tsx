@@ -12,6 +12,7 @@ import { LocationProvider } from "@/context/LocationContext";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import AuthMiddleware from "@/components/auth/AuthMiddleware";
 import Navbar from "@/components/layout/Navbar";
+import Footer from "@/components/layout/Footer";
 import { setupDatabaseTables } from "@/services/shopService";
 
 // Pages
@@ -32,6 +33,12 @@ import NotFound from "./pages/NotFound";
 import LoginPage from "./pages/auth/LoginPage";
 import SignUpPage from "./pages/auth/SignUpPage";
 import SelectShops from "./pages/SelectShops";
+
+// Business pages
+import BusinessLoginPage from "./pages/business/LoginPage";
+import BusinessSignupPage from "./pages/business/SignupPage";
+import GoogleAuthCallback from "./pages/business/GoogleAuthCallback";
+import CreateShopPage from "./pages/business/CreateShopPage";
 
 // Dashboard imports
 import DashboardLayout from "./components/layout/DashboardLayout";
@@ -58,15 +65,18 @@ const AppRoutes = () => {
   const location = useLocation();
   const { user } = useAuth();
   
-  // Business users should only see the dashboard interface
-  const showNavbar = !user || user.role !== 'business' || 
-                    (!location.pathname.startsWith('/dashboard') && 
-                     location.pathname !== '/login' && 
-                     location.pathname !== '/signup');
+  // Hide navbar on dashboard pages and auth pages
+  const hideNavbar = 
+    location.pathname.startsWith('/dashboard') ||
+    location.pathname.startsWith('/business/');
+  
+  // Hide footer on dashboard pages
+  const hideFooter = 
+    location.pathname.startsWith('/dashboard');
   
   return (
     <AuthMiddleware>
-      {showNavbar && <Navbar />}
+      {!hideNavbar && <Navbar />}
       <Routes>
         {/* Public routes */}
         <Route path="/" element={<Index />} />
@@ -82,7 +92,17 @@ const AppRoutes = () => {
         <Route path="/product/:productId" element={<ProductDetail />} />
         <Route path="/select-shops" element={<SelectShops />} />
         
-        {/* Protected shopper routes - explicitly disallow business users */}
+        {/* Business routes */}
+        <Route path="/business/login" element={<BusinessLoginPage />} />
+        <Route path="/business/signup" element={<BusinessSignupPage />} />
+        <Route path="/business/google-auth-callback" element={<GoogleAuthCallback />} />
+        <Route path="/business/create-shop" element={
+          <ProtectedRoute requiredRole="any">
+            <CreateShopPage />
+          </ProtectedRoute>
+        } />
+        
+        {/* Protected shopper routes */}
         <Route 
           path="/cart" 
           element={
@@ -128,7 +148,7 @@ const AppRoutes = () => {
         <Route 
           path="/dashboard" 
           element={
-            <ProtectedRoute requiredRole="business">
+            <ProtectedRoute requiredRole="any" isBusinessRoute={true}>
               <DashboardLayout />
             </ProtectedRoute>
           }
@@ -146,6 +166,7 @@ const AppRoutes = () => {
         {/* 404 route */}
         <Route path="*" element={<NotFound />} />
       </Routes>
+      {!hideFooter && <Footer />}
     </AuthMiddleware>
   );
 };
