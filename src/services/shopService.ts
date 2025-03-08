@@ -1,169 +1,145 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { Product } from '@/models/product';
-
-// Export Shop interface
-export interface Shop {
-  id: string;
-  name: string;
-  description: string;
-  location: string;
-  rating: number;
-  productCount: number;
-  isVerified: boolean;
-  category: string;
-  logo: string | null;
-  coverImage: string | null;
-  ownerId: string;
-  latitude?: number | null;
-  longitude?: number | null;
-  distance?: number | null;
-}
-
-export interface ShopProduct {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  category: string;
-  images: string[];
-  sellerId: string;
-  sellerName?: string;
-  rating?: number;
-}
+import { Shop, ShopProduct } from '@/models/shop';
+import { Json } from '@/integrations/supabase/types';
 
 // Get all shops
 export const getShops = async (): Promise<Shop[]> => {
   try {
-    // This is a mock implementation until tables are created in the database
-    // we'll return mock data
-    return getMockShops();
+    const { data, error } = await supabase
+      .from('shops')
+      .select('*');
+    
+    if (error) throw error;
+    
+    return data.map(shop => ({
+      id: shop.id,
+      name: shop.name,
+      description: shop.description || '',
+      location: shop.location || '',
+      rating: shop.rating || 0,
+      productCount: shop.product_count || 0,
+      isVerified: shop.is_verified || false,
+      category: shop.category || '',
+      logo: shop.logo_url || null,
+      coverImage: shop.cover_image || null,
+      ownerId: shop.owner_id,
+      latitude: shop.latitude || null,
+      longitude: shop.longitude || null
+    }));
   } catch (error) {
-    console.error('Error in getShops:', error);
-    return getMockShops();
-  }
-};
-
-// Create mock shops function
-const getMockShops = (): Shop[] => {
-  return [
-    {
-      id: "shop1",
-      name: "Organic Foods Market",
-      description: "Premium organic and halal foods from around the world.",
-      location: "New York, NY",
-      rating: 4.8,
-      productCount: 120,
-      isVerified: true,
-      category: "Food & Groceries",
-      logo: "/lovable-uploads/0c423741-0711-4e97-8c56-ca4fe31dc6ca.png",
-      coverImage: "/lovable-uploads/3617671c-bb85-4f25-91e2-9b8650560e48.png",
-      ownerId: "user1",
-      latitude: 40.7128,
-      longitude: -74.006,
-      distance: 1.2
-    },
-    {
-      id: "shop2",
-      name: "Halal Meats & More",
-      description: "Premium quality halal meats, hand-cut and delivered fresh.",
-      location: "Chicago, IL",
-      rating: 4.6,
-      productCount: 85,
-      isVerified: true,
-      category: "Food & Groceries",
-      logo: "/lovable-uploads/23c8a527-4c88-45b8-96c7-2e04ebee04eb.png",
-      coverImage: "/lovable-uploads/30853bea-af12-4b7d-9bf5-14f37b607a62.png",
-      ownerId: "user2",
-      latitude: 41.8781,
-      longitude: -87.6298,
-      distance: 2.5
-    },
-    {
-      id: "shop3",
-      name: "Modest Fashion House",
-      description: "Contemporary modest fashion for the modern woman.",
-      location: "Los Angeles, CA",
-      rating: 4.9,
-      productCount: 150,
-      isVerified: true,
-      category: "Fashion",
-      logo: "/lovable-uploads/34b3bad5-457b-4710-a89d-8760f86fb9e6.png",
-      coverImage: "/lovable-uploads/454d04bb-b4fa-4976-b180-1348c79670cb.png",
-      ownerId: "user3",
-      latitude: 34.0522,
-      longitude: -118.2437,
-      distance: 3.7
-    },
-    {
-      id: "shop4",
-      name: "Barakah Organics",
-      description: "Organic, ethically-sourced goods for conscious consumers.",
-      location: "Seattle, WA",
-      rating: 4.7,
-      productCount: 95,
-      isVerified: true,
-      category: "Food & Groceries",
-      logo: "/lovable-uploads/5a8664a8-ab5c-44b2-9474-8cbd43b5c56e.png",
-      coverImage: "/lovable-uploads/6246682a-f998-4df2-a39b-d271f55166b8.png",
-      ownerId: "user4",
-      latitude: 47.6062,
-      longitude: -122.3321,
-      distance: 4.1
-    }
-  ];
-};
-
-// Alias for getShops to fix import errors in multiple files
-export const getAllShops = getShops;
-
-// Get a specific shop by ID
-export const getShopById = async (shopId: string): Promise<Shop | null> => {
-  try {
-    // Mock implementation
-    const shops = getMockShops();
-    return shops.find(shop => shop.id === shopId) || null;
-  } catch (error) {
-    console.error('Error in getShopById:', error);
-    return null;
-  }
-};
-
-// Get products for a specific shop
-export const getShopProducts = async (shopId: string): Promise<ShopProduct[]> => {
-  try {
-    // Mock implementation
-    return [
-      {
-        id: "product1",
-        name: "Organic Honey",
-        description: "Pure, raw organic honey from sustainable sources.",
-        price: 12.99,
-        category: "Food & Groceries",
-        images: ["/lovable-uploads/6cd1c595-84b8-4075-9df0-e60a2595d32d.png"],
-        sellerId: shopId,
-        sellerName: "Organic Foods Market",
-        rating: 4.9
-      },
-      {
-        id: "product2",
-        name: "Grass-Fed Beef",
-        description: "Premium grass-fed, halal-certified beef.",
-        price: 24.99,
-        category: "Food & Groceries",
-        images: ["/lovable-uploads/0780684a-9c7f-4f32-affc-6f9ea641b814.png"],
-        sellerId: shopId,
-        sellerName: "Organic Foods Market",
-        rating: 4.8
-      }
-    ];
-  } catch (error) {
-    console.error('Error in getShopProducts:', error);
+    console.error('Error fetching shops:', error);
     return [];
   }
 };
 
-// Convert ShopProduct to Product model
+// Get shops alias for components using getAllShops
+export const getAllShops = getShops;
+
+// Get a shop by ID
+export const getShopById = async (id: string): Promise<Shop | null> => {
+  try {
+    const { data, error } = await supabase
+      .from('shops')
+      .select('*')
+      .eq('id', id)
+      .single();
+    
+    if (error) throw error;
+    
+    if (!data) return null;
+    
+    return {
+      id: data.id,
+      name: data.name,
+      description: data.description || '',
+      location: data.location || '',
+      rating: data.rating || 0,
+      productCount: data.product_count || 0,
+      isVerified: data.is_verified || false,
+      category: data.category || '',
+      logo: data.logo_url || null,
+      coverImage: data.cover_image || null,
+      ownerId: data.owner_id,
+      latitude: data.latitude || null,
+      longitude: data.longitude || null
+    };
+  } catch (error) {
+    console.error('Error fetching shop by ID:', error);
+    return null;
+  }
+};
+
+// Get the main shop for a business user
+export const getMainShop = async (userId?: string): Promise<Shop | null> => {
+  try {
+    const { data: userData } = await supabase.auth.getUser();
+    const uid = userId || userData.user?.id;
+    
+    if (!uid) {
+      throw new Error('User ID is required');
+    }
+    
+    const { data, error } = await supabase
+      .from('shops')
+      .select('*')
+      .eq('owner_id', uid)
+      .single();
+    
+    if (error) throw error;
+    
+    if (!data) return null;
+    
+    return {
+      id: data.id,
+      name: data.name,
+      description: data.description || '',
+      location: data.location || '',
+      rating: data.rating || 0,
+      productCount: data.product_count || 0,
+      isVerified: data.is_verified || false,
+      category: data.category || '',
+      logo: data.logo_url || null,
+      coverImage: data.cover_image || null,
+      ownerId: data.owner_id,
+      latitude: data.latitude || null,
+      longitude: data.longitude || null
+    };
+  } catch (error) {
+    console.error('Error fetching main shop for user:', error);
+    return null;
+  }
+};
+
+// Get all products for a shop
+export const getShopProducts = async (shopId: string): Promise<ShopProduct[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('products')
+      .select('*, shops(name)')
+      .eq('seller_id', shopId);
+    
+    if (error) throw error;
+    
+    return data.map(product => ({
+      id: product.id,
+      name: product.name,
+      description: product.description || '',
+      price: product.price,
+      category: product.category || '',
+      images: product.images || [],
+      sellerId: product.seller_id,
+      sellerName: product.shops?.name || '',
+      rating: product.rating || 0
+    }));
+  } catch (error) {
+    console.error('Error fetching shop products:', error);
+    return [];
+  }
+};
+
+// Convert a ShopProduct to a Product model
 export const convertToModelProduct = (shopProduct: ShopProduct): Product => {
   return {
     id: shopProduct.id,
@@ -171,131 +147,263 @@ export const convertToModelProduct = (shopProduct: ShopProduct): Product => {
     description: shopProduct.description,
     price: shopProduct.price,
     category: shopProduct.category,
-    images: shopProduct.images || [],
+    images: shopProduct.images,
     sellerId: shopProduct.sellerId,
-    sellerName: shopProduct.sellerName || 'Unknown Seller',
+    sellerName: shopProduct.sellerName,
+    rating: shopProduct.rating || 0,
     inStock: true,
-    rating: shopProduct.rating || 5,
     isHalalCertified: true,
-    createdAt: new Date().toISOString()
+    createdAt: new Date().toISOString(),
+    details: {}
   };
 };
 
 // Create a new shop
-export const createShop = async (shopData: Omit<Shop, 'id'>): Promise<Shop | null> => {
+export const createShop = async (shopData: Partial<Shop>): Promise<Shop | null> => {
   try {
-    // Mock implementation
-    const newShop: Shop = {
-      id: `shop${Date.now()}`,
-      name: shopData.name,
-      description: shopData.description,
-      location: shopData.location,
-      rating: shopData.rating || 0,
-      productCount: shopData.productCount || 0,
-      isVerified: shopData.isVerified || false,
-      category: shopData.category || 'General',
-      logo: shopData.logo,
-      coverImage: shopData.coverImage,
-      ownerId: shopData.ownerId,
-      latitude: shopData.latitude || null,
-      longitude: shopData.longitude || null
-    };
+    const { data: user } = await supabase.auth.getUser();
     
-    return newShop;
+    if (!user.user) {
+      throw new Error('User not authenticated');
+    }
+    
+    const { data, error } = await supabase
+      .from('shops')
+      .insert({
+        name: shopData.name,
+        description: shopData.description,
+        location: shopData.location,
+        category: shopData.category,
+        logo_url: shopData.logo,
+        cover_image: shopData.coverImage,
+        owner_id: user.user.id,
+        latitude: shopData.latitude,
+        longitude: shopData.longitude,
+        is_verified: false
+      })
+      .select()
+      .single();
+    
+    if (error) throw error;
+    
+    return {
+      id: data.id,
+      name: data.name,
+      description: data.description || '',
+      location: data.location || '',
+      rating: data.rating || 0,
+      productCount: data.product_count || 0,
+      isVerified: data.is_verified || false,
+      category: data.category || '',
+      logo: data.logo_url || null,
+      coverImage: data.cover_image || null,
+      ownerId: data.owner_id,
+      latitude: data.latitude || null,
+      longitude: data.longitude || null
+    };
   } catch (error) {
-    console.error('Error in createShop:', error);
+    console.error('Error creating shop:', error);
     return null;
   }
 };
 
-// Upload product image to Supabase storage
+// Update a shop
+export const updateShop = async (id: string, shopData: Partial<Shop>): Promise<Shop | null> => {
+  try {
+    const { data, error } = await supabase
+      .from('shops')
+      .update({
+        name: shopData.name,
+        description: shopData.description,
+        location: shopData.location,
+        category: shopData.category,
+        logo_url: shopData.logo,
+        cover_image: shopData.coverImage,
+        latitude: shopData.latitude,
+        longitude: shopData.longitude
+      })
+      .eq('id', id)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    
+    return {
+      id: data.id,
+      name: data.name,
+      description: data.description || '',
+      location: data.location || '',
+      rating: data.rating || 0,
+      productCount: data.product_count || 0,
+      isVerified: data.is_verified || false,
+      category: data.category || '',
+      logo: data.logo_url || null,
+      coverImage: data.cover_image || null,
+      ownerId: data.owner_id,
+      latitude: data.latitude || null,
+      longitude: data.longitude || null
+    };
+  } catch (error) {
+    console.error('Error updating shop:', error);
+    return null;
+  }
+};
+
+// Utility to subscribe to shops (for real-time updates)
+export const subscribeToShops = (callback: (shops: Shop[]) => void) => {
+  const subscription = supabase
+    .channel('shops-changes')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'shops' }, async () => {
+      const shops = await getShops();
+      callback(shops);
+    })
+    .subscribe();
+  
+  return subscription;
+};
+
+// Upload a product image to storage
 export const uploadProductImage = async (file: File): Promise<string | null> => {
   try {
-    const fileName = `${Math.random().toString(36).substring(2)}-${file.name}`;
-    const filePath = `product-images/${fileName}`;
+    const { data: user } = await supabase.auth.getUser();
     
-    const { data, error } = await supabase.storage
-      .from('images')
-      .upload(filePath, file);
-    
-    if (error) {
-      console.error('Error uploading image:', error);
-      return null;
+    if (!user.user) {
+      throw new Error('User not authenticated');
     }
     
-    const { data: urlData } = supabase.storage
-      .from('images')
+    const fileExt = file.name.split('.').pop();
+    const filePath = `${user.user.id}/${Math.random().toString(36).substring(2)}${Date.now()}.${fileExt}`;
+    
+    const { data, error } = await supabase.storage
+      .from('product-images')
+      .upload(filePath, file);
+    
+    if (error) throw error;
+    
+    const { data: urlData } = await supabase.storage
+      .from('product-images')
       .getPublicUrl(data.path);
     
     return urlData.publicUrl;
   } catch (error) {
-    console.error('Error in uploadProductImage:', error);
+    console.error('Error uploading product image:', error);
     return null;
   }
 };
 
-// Subscribe to real-time updates to shops
-export const subscribeToShops = (callback: (shops: Shop[]) => void) => {
-  // Mock subscription
-  getShops().then(shops => {
-    callback(shops);
-  });
-  
-  return {
-    unsubscribe: () => {
-      // Cleanup function for when subscription is no longer needed
-      console.log('Unsubscribed from shops');
+// Create a new product
+export const createProduct = async (productData: Partial<Product>): Promise<Product | null> => {
+  try {
+    const { data: user } = await supabase.auth.getUser();
+    
+    if (!user.user) {
+      throw new Error('User not authenticated');
     }
-  };
+    
+    // Get the shop ID for this user
+    const { data: shopData, error: shopError } = await supabase
+      .from('shops')
+      .select('id')
+      .eq('owner_id', user.user.id)
+      .single();
+    
+    if (shopError) throw shopError;
+    
+    // Add the product
+    const { data, error } = await supabase
+      .from('products')
+      .insert({
+        name: productData.name,
+        description: productData.description,
+        price: productData.price,
+        category: productData.category,
+        images: productData.images,
+        seller_id: shopData.id,
+        stock: productData.inStock ? 10 : 0,
+        is_halal_certified: productData.isHalalCertified,
+        details: productData.details as Json
+      })
+      .select()
+      .single();
+    
+    if (error) throw error;
+    
+    return {
+      id: data.id,
+      name: data.name,
+      description: data.description,
+      price: data.price,
+      category: data.category,
+      images: data.images,
+      sellerId: data.seller_id,
+      sellerName: '',
+      rating: data.rating || 0,
+      inStock: data.stock > 0,
+      isHalalCertified: data.is_halal_certified,
+      createdAt: data.created_at,
+      details: data.details as Record<string, any>
+    };
+  } catch (error) {
+    console.error('Error creating product:', error);
+    return null;
+  }
 };
 
-// Set a shop as the main shop
-export const setMainShop = async (shopId: string, userId: string): Promise<boolean> => {
+// Update a product
+export const updateProduct = async (id: string, productData: Partial<Product>): Promise<Product | null> => {
   try {
-    // Mock implementation 
-    console.log(`Setting shop ${shopId} as main shop for user ${userId}`);
+    const { data, error } = await supabase
+      .from('products')
+      .update({
+        name: productData.name,
+        description: productData.description,
+        price: productData.price,
+        category: productData.category,
+        images: productData.images,
+        stock: productData.inStock ? 10 : 0,
+        is_halal_certified: productData.isHalalCertified,
+        details: productData.details as Json
+      })
+      .eq('id', id)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    
+    return {
+      id: data.id,
+      name: data.name,
+      description: data.description,
+      price: data.price,
+      category: data.category,
+      images: data.images,
+      sellerId: data.seller_id,
+      sellerName: '',
+      rating: data.rating || 0,
+      inStock: data.stock > 0,
+      isHalalCertified: data.is_halal_certified,
+      createdAt: data.created_at,
+      details: data.details as Record<string, any>
+    };
+  } catch (error) {
+    console.error('Error updating product:', error);
+    return null;
+  }
+};
+
+// Delete a product
+export const deleteProduct = async (id: string): Promise<boolean> => {
+  try {
+    const { error } = await supabase
+      .from('products')
+      .delete()
+      .eq('id', id);
+    
+    if (error) throw error;
+    
     return true;
   } catch (error) {
-    console.error('Error in setMainShop:', error);
+    console.error('Error deleting product:', error);
     return false;
-  }
-};
-
-// Get the main shop for a user
-export const getMainShop = async (userId: string): Promise<Shop | null> => {
-  try {
-    // Mock implementation - returns first shop
-    const shops = await getShops();
-    return shops.length > 0 ? shops[0] : null;
-  } catch (error) {
-    console.error('Error in getMainShop:', error);
-    return null;
-  }
-};
-
-// Get nearby shops based on location
-export const getNearbyShopsByCoordinates = async (
-  latitude: number, 
-  longitude: number, 
-  radius: number = 20 // radius in km
-): Promise<Shop[]> => {
-  try {
-    // Mock implementation
-    const shops = await getShops();
-    
-    return shops.map(shop => {
-      if (shop.latitude && shop.longitude) {
-        // Calculate a simulated distance (just for demo purposes)
-        const distance = Math.sqrt(
-          Math.pow((shop.latitude - latitude) * 111, 2) + 
-          Math.pow((shop.longitude - longitude) * 111 * Math.cos(latitude * Math.PI/180), 2)
-        );
-        return { ...shop, distance };
-      }
-      return { ...shop, distance: Math.random() * 20 }; // Random distance for shops without coordinates
-    }).sort((a, b) => (a.distance || 100) - (b.distance || 100));
-  } catch (error) {
-    console.error('Error in getNearbyShopsByCoordinates:', error);
-    return [];
   }
 };

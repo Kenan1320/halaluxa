@@ -7,13 +7,13 @@ import { Link } from 'react-router-dom';
 
 interface ShopCardProps {
   shop: any;
-  index?: number; // Make index optional
+  index: number;
   featured?: boolean;
   minimal?: boolean;
 }
 
 // Using memo to prevent unnecessary re-renders
-const ShopCard = memo(({ shop, index = 0, featured = false, minimal = false }: ShopCardProps) => {
+const ShopCard = memo(({ shop, index, featured = false, minimal = false }: ShopCardProps) => {
   if (minimal) {
     return (
       <motion.div 

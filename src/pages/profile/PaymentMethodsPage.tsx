@@ -1,94 +1,95 @@
 
 import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { PlusCircle } from 'lucide-react';
-import { useAuth } from '@/context/AuthContext';
+import { Helmet } from 'react-helmet-async';
 import PaymentMethodList from '@/components/payment/PaymentMethodList';
 import PaymentMethodForm from '@/components/payment/PaymentMethodForm';
 import { PaymentMethod } from '@/models/shop';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { PlusCircle, ArrowLeft } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
-export default function PaymentMethodsPage() {
-  const { user } = useAuth();
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isEditMode, setIsEditMode] = useState(false);
+const PaymentMethodsPage: React.FC = () => {
+  const [showAddForm, setShowAddForm] = useState(false);
   const [methodToEdit, setMethodToEdit] = useState<PaymentMethod | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   
-  const handleAddMethodClick = () => {
-    setIsEditMode(false);
+  const handleSuccess = () => {
+    setShowAddForm(false);
     setMethodToEdit(null);
-    setIsDialogOpen(true);
+    setRefreshKey(prev => prev + 1);
   };
   
-  const handleEditMethod = (method: PaymentMethod) => {
-    setIsEditMode(true);
+  const handleEdit = (method: PaymentMethod) => {
     setMethodToEdit(method);
-    setIsDialogOpen(true);
+    setShowAddForm(true);
   };
-  
-  const handleMethodSuccess = () => {
-    setIsDialogOpen(false);
-    setRefreshKey(prev => prev + 1);
-  };
-  
-  const refreshMethods = () => {
-    setRefreshKey(prev => prev + 1);
-  };
-  
-  if (!user) {
-    return (
-      <div className="container mx-auto py-10 px-4">
-        <div className="p-8 text-center">
-          <p className="mb-4">Please log in to manage your payment methods.</p>
-          <Button>Log In</Button>
-        </div>
-      </div>
-    );
-  }
-  
+
   return (
-    <div className="container mx-auto py-10 px-4 max-w-4xl">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Payment Methods</h1>
-        <Button onClick={handleAddMethodClick} className="flex items-center">
-          <PlusCircle className="h-4 w-4 mr-2" />
-          Add Method
-        </Button>
-      </div>
+    <div className="container max-w-4xl mx-auto py-8 px-4">
+      <Helmet>
+        <title>Payment Methods | Haluna</title>
+      </Helmet>
       
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        {isEditMode && methodToEdit ? (
-          <PaymentMethodForm 
-            existingMethod={methodToEdit} 
-            onSuccess={handleMethodSuccess} 
-          />
-        ) : (
-          <PaymentMethodList 
-            key={refreshKey}
-            onEdit={handleEditMethod}
-            onMethodsChange={refreshMethods}
-          />
+      <div className="flex justify-between items-center mb-8">
+        <div className="flex items-center">
+          <Link to="/profile" className="mr-4">
+            <Button variant="ghost" size="sm">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Profile
+            </Button>
+          </Link>
+          <h1 className="text-2xl font-bold">Payment Methods</h1>
+        </div>
+        
+        {!showAddForm && (
+          <Button onClick={() => setShowAddForm(true)}>
+            <PlusCircle className="h-4 w-4 mr-2" />
+            Add Payment Method
+          </Button>
         )}
       </div>
       
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>{isEditMode ? 'Edit Payment Method' : 'Add Payment Method'}</DialogTitle>
-          </DialogHeader>
+      {showAddForm ? (
+        <div className="bg-white p-6 rounded-lg shadow-sm border mb-6">
+          <h2 className="text-xl font-semibold mb-4">
+            {methodToEdit ? 'Edit Payment Method' : 'Add New Payment Method'}
+          </h2>
           <PaymentMethodForm 
-            existingMethod={isEditMode ? methodToEdit : undefined} 
-            onSuccess={handleMethodSuccess} 
+            existingMethod={methodToEdit || undefined} 
+            onSuccess={handleSuccess} 
           />
-        </DialogContent>
-      </Dialog>
+          <div className="mt-4 text-center">
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setShowAddForm(false);
+                setMethodToEdit(null);
+              }}
+            >
+              Cancel
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <div className="bg-white p-6 rounded-lg shadow-sm border">
+          <h2 className="text-xl font-semibold mb-4">Your Payment Methods</h2>
+          <PaymentMethodList 
+            key={`payment-methods-${refreshKey}`}
+            onEdit={handleEdit}
+            onMethodsChange={() => setRefreshKey(prev => prev + 1)}
+          />
+        </div>
+      )}
+      
+      <div className="mt-8 text-sm text-gray-500 p-4 bg-gray-50 rounded-lg border">
+        <h3 className="font-medium text-gray-700 mb-2">About Payment Security</h3>
+        <p>
+          Your payment information is securely stored and processed according to the highest security standards.
+          We use encryption to protect your sensitive data and never store complete card numbers on our servers.
+        </p>
+      </div>
     </div>
   );
-}
+};
+
+export default PaymentMethodsPage;

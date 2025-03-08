@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { getShopById, getShopProducts, convertToModelProduct } from '@/services/shopService';
+import { getShopById, getShopProducts } from '@/services/shopService';
 import { ShopProduct } from '@/models/shop';
 import { Product } from '@/models/product';
 import ShopProductList from '@/components/shop/ShopProductList';
@@ -24,10 +24,23 @@ export default function ShopDetail() {
           // Load shop products
           const shopProducts = await getShopProducts(shopId);
           
-          // Convert ShopProduct to Product
-          const convertedProducts: Product[] = shopProducts.map(sp => 
-            convertToModelProduct(sp)
-          );
+          // Convert ShopProduct to Product using the convertToModelProduct function
+          // But we're reimplementing it here to avoid circular dependencies
+          const convertedProducts: Product[] = shopProducts.map(sp => ({
+            id: sp.id,
+            name: sp.name,
+            description: sp.description,
+            price: sp.price,
+            category: sp.category,
+            images: sp.images,
+            sellerId: sp.sellerId,
+            sellerName: sp.sellerName,
+            rating: sp.rating || 0,
+            inStock: true, // Default to true
+            isHalalCertified: true, // Default to true
+            createdAt: new Date().toISOString(), // Use current date
+            details: {}
+          }));
           
           setProducts(convertedProducts);
         }

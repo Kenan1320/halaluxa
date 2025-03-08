@@ -1,14 +1,14 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { getShopProducts, convertToModelProduct } from '@/services/shopService';
+import { getShops, Shop, getShopProducts, convertToModelProduct } from '@/services/shopService';
 import { useLocation } from '@/context/LocationContext';
 import ShopCard from '@/components/shop/ShopCard';
 import ShopProductList from '@/components/shop/ShopProductList';
 import { Link } from 'react-router-dom';
 
 const NearbyShops = () => {
-  const [shops, setShops] = useState([]);
+  const [shops, setShops] = useState<Shop[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { isLocationEnabled, location, getNearbyShops } = useLocation();
   const containerRef = useRef<HTMLDivElement>(null);

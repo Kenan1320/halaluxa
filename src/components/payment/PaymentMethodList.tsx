@@ -1,232 +1,249 @@
 
-import React, { useState, useEffect } from 'react';
-import { useAuth } from '@/context/AuthContext';
-import { getPaymentMethods, deletePaymentMethod, setDefaultPaymentMethod } from '@/services/paymentMethodService';
-import { PaymentMethod } from '@/models/shop';
+import React, { useEffect, useState } from 'react';
+import { CreditCard, DollarSign, Banknote, Trash2, CheckCircle, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { toast } from 'sonner';
-import { CreditCard, Trash2, CheckCircle, Edit2, DollarSign as DollarSignIcon, Banknote as BanknoteIcon } from 'lucide-react';
-import { Skeleton } from '@/components/ui/skeleton';
+import { getPaymentMethods, deletePaymentMethod, setDefaultPaymentMethod } from '@/services/paymentMethodService';
+import { useToast } from '@/hooks/use-toast';
+import { PaymentMethod } from '@/models/shop';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface PaymentMethodListProps {
-  onEdit: (method: PaymentMethod) => void;
-  onMethodsChange: () => void;
+  onEdit?: (method: PaymentMethod) => void;
+  onMethodsChange?: () => void;
 }
 
-export default function PaymentMethodList({ onEdit, onMethodsChange }: PaymentMethodListProps) {
-  const { user } = useAuth();
-  const [methods, setMethods] = useState<PaymentMethod[]>([]);
+const PaymentMethodList: React.FC<PaymentMethodListProps> = ({ onEdit, onMethodsChange }) => {
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [methodToDelete, setMethodToDelete] = useState<string | null>(null);
+  const { toast } = useToast();
   
-  useEffect(() => {
-    fetchMethods();
-  }, [user]);
-  
-  const fetchMethods = async () => {
-    if (!user) return;
-    
+  const fetchPaymentMethods = async () => {
     setIsLoading(true);
     try {
-      const paymentMethods = await getPaymentMethods(user.id);
-      setMethods(paymentMethods);
+      const methods = await getPaymentMethods();
+      setPaymentMethods(methods);
     } catch (error) {
       console.error('Error fetching payment methods:', error);
-      toast.error('Failed to load payment methods');
+      toast({
+        title: 'Error',
+        description: 'Failed to load payment methods',
+        variant: 'destructive',
+      });
     } finally {
       setIsLoading(false);
     }
   };
   
-  const handleDelete = async (id: string) => {
-    if (!user) return;
-    
-    try {
-      const success = await deletePaymentMethod(id, user.id);
-      if (success) {
-        toast.success('Payment method removed successfully');
-        fetchMethods();
-        onMethodsChange();
-      } else {
-        toast.error('Failed to remove payment method');
-      }
-    } catch (error) {
-      console.error('Error deleting payment method:', error);
-      toast.error('An error occurred while removing payment method');
-    }
-    
-    setMethodToDelete(null);
-  };
+  useEffect(() => {
+    fetchPaymentMethods();
+  }, []);
   
   const handleSetDefault = async (id: string) => {
-    if (!user) return;
-    
     try {
-      const success = await setDefaultPaymentMethod(id, user.id);
+      const success = await setDefaultPaymentMethod(id);
+      
       if (success) {
-        toast.success('Default payment method updated');
-        fetchMethods();
-        onMethodsChange();
-      } else {
-        toast.error('Failed to update default payment method');
+        toast({
+          title: 'Default payment method updated',
+          description: 'Your default payment method has been updated successfully.',
+        });
+        
+        fetchPaymentMethods();
+        if (onMethodsChange) onMethodsChange();
       }
     } catch (error) {
       console.error('Error setting default payment method:', error);
-      toast.error('An error occurred while updating default payment method');
+      toast({
+        title: 'Error',
+        description: 'Failed to set default payment method',
+        variant: 'destructive',
+      });
     }
   };
   
-  const getPaymentIcon = (method: PaymentMethod) => {
-    switch (method.paymentType) {
+  const handleDelete = async (id: string) => {
+    try {
+      const success = await deletePaymentMethod(id);
+      
+      if (success) {
+        toast({
+          title: 'Payment method deleted',
+          description: 'Your payment method has been deleted successfully.',
+        });
+        
+        setMethodToDelete(null);
+        fetchPaymentMethods();
+        if (onMethodsChange) onMethodsChange();
+      }
+    } catch (error) {
+      console.error('Error deleting payment method:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to delete payment method',
+        variant: 'destructive',
+      });
+    }
+  };
+  
+  const getPaymentIcon = (type: string) => {
+    switch (type) {
       case 'card':
-        return <CreditCard className="h-6 w-6 text-primary" />;
+        return <CreditCard className="h-6 w-6" />;
       case 'paypal':
-        return (
-          <div className="bg-[#0070BA] text-white p-1 rounded-full h-6 w-6 flex items-center justify-center">
-            <span className="font-bold text-xs">P</span>
-          </div>
-        );
+        return <DollarSign className="h-6 w-6" />;
       case 'applepay':
-        return (
-          <div className="bg-black text-white p-1 rounded-full h-6 w-6 flex items-center justify-center">
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M10 17a6 6 0 0 0 5.8-4M15 9a6 6 0 0 0-5.8 4" />
-              <path d="M17 9.3c-.5-.1-1.6-.2-2 .3-.5.7 1-.5 1-1 0-1-.2-1.3-.4-1.7a2 2 0 0 0-2.9-.3c-.2.2-.3.5-.3.800 0 .7 1.2 1 2 1.4.8.2 2 .5 2 1.5s-1 1.7-2 1.7c-.5 0-2 0-2-2"/>
-            </svg>
-          </div>
-        );
       case 'googlepay':
-        return (
-          <div className="bg-[#4285F4] text-white p-1 rounded-full h-6 w-6 flex items-center justify-center">
-            <span className="font-bold text-xs">G</span>
-          </div>
-        );
+        return <Banknote className="h-6 w-6" />;
       default:
-        return <DollarSignIcon className="h-6 w-6 text-primary" />;
+        return <CreditCard className="h-6 w-6" />;
     }
   };
   
   const getPaymentLabel = (method: PaymentMethod) => {
     switch (method.paymentType) {
       case 'card':
-        return `${method.cardBrand.toUpperCase()} •••• ${method.cardLastFour}`;
+        return `${method.cardBrand} •••• ${method.cardLastFour}`;
       case 'paypal':
-        return 'PayPal';
+        return 'PayPal Account';
       case 'applepay':
         return 'Apple Pay';
       case 'googlepay':
         return 'Google Pay';
       default:
-        return 'Payment Method';
+        return 'Unknown Payment Method';
     }
   };
   
   if (isLoading) {
     return (
       <div className="space-y-4">
-        {[1, 2, 3].map((index) => (
-          <div key={index} className="flex items-center justify-between border rounded-lg p-4">
-            <div className="flex items-center gap-3">
-              <Skeleton className="h-10 w-10 rounded-full" />
-              <div>
-                <Skeleton className="h-4 w-40" />
-                <Skeleton className="h-3 w-24 mt-2" />
+        {[1, 2].map((i) => (
+          <div 
+            key={i}
+            className="p-4 border rounded-md animate-pulse bg-gray-50 flex items-center justify-between"
+          >
+            <div className="flex items-center">
+              <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
+              <div className="ml-3">
+                <div className="h-4 bg-gray-200 rounded w-32"></div>
+                <div className="h-3 bg-gray-200 rounded w-24 mt-2"></div>
               </div>
             </div>
-            <Skeleton className="h-9 w-20" />
+            <div className="flex space-x-2">
+              <div className="w-8 h-8 bg-gray-200 rounded-full"></div>
+              <div className="w-8 h-8 bg-gray-200 rounded-full"></div>
+            </div>
           </div>
         ))}
       </div>
     );
   }
   
-  if (methods.length === 0) {
+  if (paymentMethods.length === 0) {
     return (
-      <div className="text-center py-10">
-        <div className="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-          <BanknoteIcon className="h-8 w-8 text-gray-400" />
-        </div>
-        <h3 className="text-lg font-medium mb-2">No payment methods found</h3>
-        <p className="text-gray-500 mb-6">Add a payment method to make purchases faster</p>
+      <div className="text-center py-8 border rounded-md bg-gray-50">
+        <p className="text-gray-500">No payment methods added yet.</p>
       </div>
     );
   }
-  
+
   return (
     <div className="space-y-4">
-      {methods.map((method) => (
-        <div key={method.id} className="flex items-center justify-between border rounded-lg p-4 hover:bg-gray-50 transition-colors">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center">
-              {getPaymentIcon(method)}
+      {paymentMethods.map((method) => (
+        <div
+          key={method.id}
+          className={`p-4 border rounded-md ${
+            method.isDefault ? 'bg-green-50 border-green-200' : 'bg-white'
+          } flex items-center justify-between`}
+        >
+          <div className="flex items-center">
+            <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center text-primary">
+              {getPaymentIcon(method.paymentType)}
             </div>
-            <div>
-              <div className="flex items-center">
-                <p className="font-medium">{getPaymentLabel(method)}</p>
+            <div className="ml-3">
+              <div className="font-medium flex items-center">
+                {getPaymentLabel(method)}
                 {method.isDefault && (
-                  <span className="ml-2 bg-green-100 text-green-800 text-xs px-2 py-0.5 rounded-full flex items-center">
+                  <span className="ml-2 text-xs text-green-600 bg-green-100 px-2 py-0.5 rounded-full flex items-center">
                     <CheckCircle className="h-3 w-3 mr-1" />
                     Default
                   </span>
                 )}
               </div>
-              <p className="text-sm text-gray-500">Added on {new Date(method.createdAt).toLocaleDateString()}</p>
+              <div className="text-sm text-gray-500">
+                Added on {new Date(method.createdAt).toLocaleDateString()}
+              </div>
             </div>
           </div>
           
-          <div className="flex gap-2">
+          <div className="flex space-x-2">
             {!method.isDefault && (
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => handleSetDefault(method.id)}
-                className="text-xs"
+                title="Set as default"
               >
-                Set as Default
+                <CheckCircle className="h-4 w-4" />
+                <span className="sr-only">Set as default</span>
               </Button>
             )}
             
             <Button
               variant="outline"
               size="sm"
-              onClick={() => onEdit(method)}
-              className="text-xs"
+              onClick={() => onEdit && onEdit(method)}
+              title="Edit"
             >
-              <Edit2 className="h-3.5 w-3.5 mr-1" />
-              Edit
+              <Edit className="h-4 w-4" />
+              <span className="sr-only">Edit</span>
             </Button>
             
-            <AlertDialog open={methodToDelete === method.id} onOpenChange={(open) => !open && setMethodToDelete(null)}>
-              <AlertDialogTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="text-red-500 hover:text-red-600 hover:bg-red-50 text-xs"
-                  onClick={() => setMethodToDelete(method.id)}
-                >
-                  <Trash2 className="h-3.5 w-3.5 mr-1" />
-                  Remove
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Remove payment method</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This will permanently remove this payment method from your account. Are you sure you want to continue?
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={() => handleDelete(method.id)} className="bg-red-500 hover:bg-red-600">
-                    Remove
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setMethodToDelete(method.id)}
+              title="Delete"
+              className="text-destructive hover:text-destructive"
+            >
+              <Trash2 className="h-4 w-4" />
+              <span className="sr-only">Delete</span>
+            </Button>
           </div>
         </div>
       ))}
+      
+      <AlertDialog open={!!methodToDelete} onOpenChange={() => setMethodToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete this payment method from your account.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => methodToDelete && handleDelete(methodToDelete)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
-}
+};
+
+export default PaymentMethodList;
