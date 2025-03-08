@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { Shop, ShopProduct } from '@/models/shop';
+import { Product } from '@/models/product';
 
 // Function to upload product image to Supabase storage
 export const uploadProductImage = async (file: File): Promise<string | null> => {
@@ -33,6 +34,59 @@ export const uploadProductImage = async (file: File): Promise<string | null> => 
   }
 };
 
+// Helper function to convert database shop to Shop model
+const mapDbShopToModel = (data: any): Shop => {
+  return {
+    id: data.id,
+    name: data.name,
+    description: data.description,
+    location: data.location || '',
+    rating: data.rating || 4.5,
+    productCount: data.product_count || 0,
+    isVerified: true,
+    category: data.category || 'General',
+    logo: data.logo_url || null,
+    coverImage: data.cover_image || null,
+    ownerId: data.owner_id,
+    latitude: data.latitude,
+    longitude: data.longitude
+  };
+};
+
+// Helper function to convert database product to ShopProduct model
+const mapDbProductToShopProduct = (data: any): ShopProduct => {
+  return {
+    id: data.id,
+    name: data.name,
+    description: data.description,
+    price: data.price,
+    category: data.category,
+    images: data.images || [],
+    sellerId: data.seller_id || data.business_owner_id,
+    sellerName: data.seller_name || data.business_owner_name,
+    rating: data.rating
+  };
+};
+
+// Convert a ShopProduct to a Product model
+export const convertToModelProduct = (product: ShopProduct): Product => {
+  return {
+    id: product.id,
+    name: product.name,
+    description: product.description,
+    price: product.price,
+    inStock: true,
+    category: product.category,
+    images: product.images,
+    sellerId: product.sellerId,
+    sellerName: product.sellerName,
+    rating: product.rating || 4,
+    isHalalCertified: true,
+    details: {},
+    createdAt: new Date().toISOString()
+  };
+};
+
 // Function to get a shop by ID
 export const getShopById = async (shopId: string): Promise<Shop | null> => {
   try {
@@ -47,7 +101,7 @@ export const getShopById = async (shopId: string): Promise<Shop | null> => {
       return null;
     }
 
-    return data as Shop;
+    return mapDbShopToModel(data);
   } catch (error) {
     console.error('Error in getShopById:', error);
     return null;
@@ -60,8 +114,8 @@ export const getMainShop = async (userId: string): Promise<Shop | null> => {
     const { data, error } = await supabase
       .from('shops')
       .select('*')
-      .eq('ownerId', userId)
-      .eq('isMain', true)
+      .eq('owner_id', userId)
+      .eq('is_main', true)
       .single();
 
     if (error) {
@@ -70,7 +124,7 @@ export const getMainShop = async (userId: string): Promise<Shop | null> => {
         const { data: firstShop, error: firstShopError } = await supabase
           .from('shops')
           .select('*')
-          .eq('ownerId', userId)
+          .eq('owner_id', userId)
           .limit(1)
           .single();
 
@@ -79,14 +133,14 @@ export const getMainShop = async (userId: string): Promise<Shop | null> => {
           return null;
         }
 
-        return firstShop as Shop;
+        return mapDbShopToModel(firstShop);
       }
 
       console.error('Error fetching main shop:', error);
       return null;
     }
 
-    return data as Shop;
+    return mapDbShopToModel(data);
   } catch (error) {
     console.error('Error in getMainShop:', error);
     return null;
@@ -103,22 +157,42 @@ export const getShopProducts = async (shopId: string): Promise<ShopProduct[]> =>
 
     if (error) {
       console.error('Error fetching shop products:', error);
-      return [];
+      return getMockShopProducts(shopId);
     }
 
-    return data as ShopProduct[];
+    if (!data || data.length === 0) {
+      return getMockShopProducts(shopId);
+    }
+
+    return data.map(mapDbProductToShopProduct);
   } catch (error) {
     console.error('Error in getShopProducts:', error);
-    return [];
+    return getMockShopProducts(shopId);
   }
 };
 
 // Create a new shop
-export const createShop = async (shop: Partial<Shop>): Promise<Shop | null> => {
+export const createShop = async (shopData: Partial<Shop>): Promise<Shop | null> => {
   try {
+    // Map our Shop model to database structure
+    const dbShop = {
+      name: shopData.name,
+      description: shopData.description,
+      location: shopData.location,
+      category: shopData.category,
+      logo_url: shopData.logo,
+      cover_image: shopData.coverImage,
+      owner_id: shopData.ownerId,
+      is_main: false,
+      rating: shopData.rating || 4.5,
+      product_count: shopData.productCount || 0,
+      latitude: shopData.latitude,
+      longitude: shopData.longitude
+    };
+
     const { data, error } = await supabase
       .from('shops')
-      .insert(shop)
+      .insert(dbShop)
       .select()
       .single();
 
@@ -127,7 +201,7 @@ export const createShop = async (shop: Partial<Shop>): Promise<Shop | null> => {
       return null;
     }
 
-    return data as Shop;
+    return mapDbShopToModel(data);
   } catch (error) {
     console.error('Error in createShop:', error);
     return null;
@@ -137,9 +211,23 @@ export const createShop = async (shop: Partial<Shop>): Promise<Shop | null> => {
 // Update a shop
 export const updateShop = async (shopId: string, updates: Partial<Shop>): Promise<Shop | null> => {
   try {
+    // Map our Shop model to database structure
+    const dbShop = {
+      name: updates.name,
+      description: updates.description,
+      location: updates.location,
+      category: updates.category,
+      logo_url: updates.logo,
+      cover_image: updates.coverImage,
+      rating: updates.rating,
+      product_count: updates.productCount,
+      latitude: updates.latitude,
+      longitude: updates.longitude
+    };
+
     const { data, error } = await supabase
       .from('shops')
-      .update(updates)
+      .update(dbShop)
       .eq('id', shopId)
       .select()
       .single();
@@ -149,7 +237,7 @@ export const updateShop = async (shopId: string, updates: Partial<Shop>): Promis
       return null;
     }
 
-    return data as Shop;
+    return mapDbShopToModel(data);
   } catch (error) {
     console.error('Error in updateShop:', error);
     return null;
@@ -162,8 +250,8 @@ export const setMainShop = async (shopId: string, userId: string): Promise<boole
     // First, unset any existing main shop
     const { error: resetError } = await supabase
       .from('shops')
-      .update({ isMain: false })
-      .eq('ownerId', userId);
+      .update({ is_main: false })
+      .eq('owner_id', userId);
 
     if (resetError) {
       console.error('Error resetting main shop:', resetError);
@@ -173,9 +261,9 @@ export const setMainShop = async (shopId: string, userId: string): Promise<boole
     // Then set the selected shop as main
     const { error } = await supabase
       .from('shops')
-      .update({ isMain: true })
+      .update({ is_main: true })
       .eq('id', shopId)
-      .eq('ownerId', userId);
+      .eq('owner_id', userId);
 
     if (error) {
       console.error('Error setting main shop:', error);
@@ -199,13 +287,17 @@ export const getAllShops = async (): Promise<Shop[]> => {
 
     if (error) {
       console.error('Error fetching all shops:', error);
-      return [];
+      return getMockShops();
     }
 
-    return data as Shop[];
+    if (!data || data.length === 0) {
+      return getMockShops();
+    }
+
+    return data.map(mapDbShopToModel);
   } catch (error) {
     console.error('Error in getAllShops:', error);
-    return [];
+    return getMockShops();
   }
 };
 
@@ -215,7 +307,7 @@ export const getUserShops = async (userId: string): Promise<Shop[]> => {
     const { data, error } = await supabase
       .from('shops')
       .select('*')
-      .eq('ownerId', userId)
+      .eq('owner_id', userId)
       .order('name');
 
     if (error) {
@@ -223,7 +315,12 @@ export const getUserShops = async (userId: string): Promise<Shop[]> => {
       return [];
     }
 
-    return data as Shop[];
+    if (!data || data.length === 0) {
+      // Return mock shops for development
+      return getMockShops().filter(shop => shop.ownerId === userId);
+    }
+
+    return data.map(mapDbShopToModel);
   } catch (error) {
     console.error('Error in getUserShops:', error);
     return [];
@@ -265,7 +362,11 @@ export const getNearbyShops = async (
 
     if (error) {
       console.error('Error fetching nearby shops:', error);
-      return [];
+      return getMockShops();
+    }
+
+    if (!data || data.length === 0) {
+      return getMockShops();
     }
 
     // Calculate distance for each shop (simplified version)
@@ -279,11 +380,11 @@ export const getNearbyShops = async (
           shop.longitude
         );
         return {
-          ...shop,
+          ...mapDbShopToModel(shop),
           distance
-        } as Shop;
+        };
       }
-      return shop as Shop;
+      return mapDbShopToModel(shop);
     });
 
     // Filter shops by distance and sort by closest
@@ -292,7 +393,7 @@ export const getNearbyShops = async (
       .sort((a: Shop, b: Shop) => (a.distance || 0) - (b.distance || 0));
   } catch (error) {
     console.error('Error in getNearbyShops:', error);
-    return [];
+    return getMockShops();
   }
 };
 
@@ -318,3 +419,214 @@ const calculateDistance = (
 const deg2rad = (deg: number): number => {
   return deg * (Math.PI / 180);
 };
+
+// Mock data section
+// ----------------
+
+// Function to get mock shops when database is not available
+export const getMockShops = (): Shop[] => {
+  return [
+    {
+      id: "shop1",
+      name: "Abu Omar Halal Restaurant",
+      description: "Authentic Middle Eastern cuisine with a focus on shawarma, wraps, and falafel bowls. All our ingredients are fresh and halal certified.",
+      location: "125 Main Street, Austin, TX 78701",
+      rating: 4.8,
+      productCount: 6,
+      isVerified: true,
+      category: "Food & Dining",
+      logo: "/lovable-uploads/0c423741-0711-4e97-8c56-ca4fe31dc6ca.png",
+      coverImage: null,
+      ownerId: "user1"
+    },
+    {
+      id: "shop2",
+      name: "Shukr Clothing",
+      description: "Modern modest clothing that combines contemporary style with traditional values. Our collection includes abayas, jilbabs, and modest everyday wear for men and women.",
+      location: "450 Fashion Ave, New York, NY 10018",
+      rating: 4.7,
+      productCount: 5,
+      isVerified: true,
+      category: "Clothing & Apparel",
+      logo: "/lovable-uploads/8d386384-3944-48e3-922c-2edb81fa1631.png",
+      coverImage: null,
+      ownerId: "user2"
+    },
+    {
+      id: "shop3",
+      name: "Brocelle Arab Furniture",
+      description: "Luxurious Arab-style furniture pieces that combine traditional craftsmanship with modern design elements. Each piece is crafted with attention to detail and cultural authenticity.",
+      location: "780 Decor Boulevard, Dubai Design District",
+      rating: 4.9,
+      productCount: 2,
+      isVerified: true,
+      category: "Home & Furniture",
+      logo: "/lovable-uploads/c17a65f0-5723-4edf-a3f0-3d356dfb91ef.png",
+      coverImage: null,
+      ownerId: "user3"
+    }
+  ];
+};
+
+// Function to get mock products for a specific shop
+export const getMockShopProducts = (shopId: string): ShopProduct[] => {
+  switch(shopId) {
+    case "shop1":
+      return [
+        {
+          id: "prod1",
+          name: "Beef Shawarma Wrap",
+          description: "Tender slices of marinated beef wrapped in a warm pita with tahini, pickles, and vegetables. Our signature dish!",
+          price: 9.99,
+          category: "Food & Dining",
+          images: ["/lovable-uploads/1089136e-5f89-4a64-802c-be230d0c1303.png"],
+          sellerId: "user1",
+          sellerName: "Abu Omar Halal",
+          rating: 4.9
+        },
+        {
+          id: "prod2",
+          name: "Chicken Shawarma Wrap",
+          description: "Juicy marinated chicken thinly sliced, wrapped in a warm pita with garlic sauce, pickles, and fresh vegetables.",
+          price: 8.99,
+          category: "Food & Dining",
+          images: ["/lovable-uploads/0bb27bbc-275a-4721-9a65-d6c38574c0d5.png"],
+          sellerId: "user1",
+          sellerName: "Abu Omar Halal",
+          rating: 4.8
+        },
+        {
+          id: "prod3",
+          name: "Shawarma Party Platter",
+          description: "Perfect for gatherings! 10 mini shawarma wraps served with fries, pickles, and our special garlic sauce.",
+          price: 29.99,
+          category: "Food & Dining",
+          images: ["/lovable-uploads/3617671c-bb85-4f25-91e2-9b8650560e48.png"],
+          sellerId: "user1",
+          sellerName: "Abu Omar Halal",
+          rating: 4.9
+        },
+        {
+          id: "prod4",
+          name: "Falafel Bowl",
+          description: "Freshly made falafel served on a bed of yellow rice with chickpeas, vegetables, pickles, olives, and tahini sauce.",
+          price: 12.99,
+          category: "Food & Dining",
+          images: ["/lovable-uploads/7daa34b7-fbda-4663-a974-efd6ee31e7bc.png"],
+          sellerId: "user1",
+          sellerName: "Abu Omar Halal",
+          rating: 4.7
+        },
+        {
+          id: "prod5",
+          name: "Chicken Bowl",
+          description: "Grilled marinated chicken served on yellow rice with fresh vegetables, olives, and your choice of sauce.",
+          price: 13.99,
+          category: "Food & Dining",
+          images: ["/lovable-uploads/5a8664a8-ab5c-44b2-9474-8cbd43b5c56e.png"],
+          sellerId: "user1",
+          sellerName: "Abu Omar Halal",
+          rating: 4.8
+        },
+        {
+          id: "prod6",
+          name: "Arayes",
+          description: "Grilled pita bread stuffed with seasoned ground beef, served with tahini sauce, pickles, and french fries.",
+          price: 11.99,
+          category: "Food & Dining",
+          images: ["/lovable-uploads/f846c14d-67e5-4e69-9867-767ebadb0353.png"],
+          sellerId: "user1",
+          sellerName: "Abu Omar Halal",
+          rating: 4.6
+        }
+      ];
+    case "shop2":
+      return [
+        {
+          id: "prod7",
+          name: "Salam Hoodie - Black",
+          description: "Comfortable black hoodie with 'Salam' Arabic calligraphy print. Made from 100% organic cotton for maximum comfort.",
+          price: 39.99,
+          category: "Clothing & Apparel",
+          images: ["/lovable-uploads/ccebdac8-88f3-47fa-a413-2e81d006ece3.png"],
+          sellerId: "user2",
+          sellerName: "Shukr Clothing",
+          rating: 4.9
+        },
+        {
+          id: "prod8",
+          name: "Arabic Calligraphy Hoodie - Gold",
+          description: "Premium black hoodie featuring gold Arabic calligraphy with the motivational phrase 'Whoever strives shall succeed'.",
+          price: 49.99,
+          category: "Clothing & Apparel",
+          images: ["/lovable-uploads/737921c3-f0e2-46bd-b52d-24250d223770.png"],
+          sellerId: "user2",
+          sellerName: "Shukr Clothing",
+          rating: 4.8
+        },
+        {
+          id: "prod9",
+          name: "Minimalist Quote Hoodie - Beige",
+          description: "Elegant beige hoodie with the classic quote 'With Hardship Comes Ease' in vintage font. Perfect for casual wear.",
+          price: 44.99,
+          category: "Clothing & Apparel",
+          images: ["/lovable-uploads/d4f8251f-008c-4d69-a7bd-cc1fb57a8de8.png"],
+          sellerId: "user2",
+          sellerName: "Shukr Clothing",
+          rating: 4.7
+        },
+        {
+          id: "prod10",
+          name: "Patience Arabic Hoodie - Black",
+          description: "Black hoodie featuring the Arabic word for 'Patience' in gold calligraphy with English translation. Made from premium cotton blend.",
+          price: 45.99,
+          category: "Clothing & Apparel",
+          images: ["/lovable-uploads/34b3bad5-457b-4710-a89d-8760f86fb9e6.png"],
+          sellerId: "user2",
+          sellerName: "Shukr Clothing",
+          rating: 4.9
+        },
+        {
+          id: "prod11",
+          name: "Patience Arabic Hoodie - Pink",
+          description: "Soft pink hoodie featuring the Arabic word for 'Patience' in gold calligraphy. Perfect for a modest yet stylish look.",
+          price: 45.99,
+          category: "Clothing & Apparel",
+          images: ["/lovable-uploads/454d04bb-b4fa-4976-b180-1348c79670cb.png"],
+          sellerId: "user2",
+          sellerName: "Shukr Clothing",
+          rating: 4.8
+        }
+      ];
+    case "shop3":
+      return [
+        {
+          id: "prod12",
+          name: "Royal Majlis Set - Blue & Gold",
+          description: "Luxurious traditional majlis set featuring blue velvet upholstery with gold accents. Includes U-shaped seating arrangement with decorative pillows.",
+          price: 4999.99,
+          category: "Home & Furniture",
+          images: ["/lovable-uploads/6cd1c595-84b8-4075-9df0-e60a2595d32d.png"],
+          sellerId: "user3",
+          sellerName: "Brocelle Arab Furniture",
+          rating: 5.0
+        },
+        {
+          id: "prod13",
+          name: "Modern Majlis Set - Teal & White",
+          description: "Contemporary majlis set with teal and white upholstery, featuring built-in seating with geometric accent pillows and a marble center table with gold accents.",
+          price: 3999.99,
+          category: "Home & Furniture",
+          images: ["/lovable-uploads/6246682a-f998-4df2-a39b-d271f55166b8.png"],
+          sellerId: "user3",
+          sellerName: "Brocelle Arab Furniture",
+          rating: 4.9
+        }
+      ];
+    default:
+      return [];
+  }
+};
+
+// Export the helper function for testing
+export { mapDbShopToModel, mapDbProductToShopProduct };

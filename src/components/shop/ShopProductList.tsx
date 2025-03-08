@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { ShoppingCart, Heart, ChevronRight, ChevronLeft } from 'lucide-react';
@@ -34,7 +35,7 @@ const ShopProductList = ({ shopId, products: initialProducts }: ShopProductListP
       try {
         setIsLoading(true);
         const shopProducts = await getShopProducts(shopId);
-        const modelProducts = shopProducts.map(convertToModelProduct);
+        const modelProducts = shopProducts.map(sp => convertToModelProduct(sp));
         setProducts(modelProducts);
       } catch (error) {
         console.error('Error loading shop products:', error);

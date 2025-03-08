@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -35,7 +36,7 @@ import {
 import { productCategories, Product } from '@/models/product';
 import { addProduct, getProductById, updateProduct } from '@/services/productService';
 import { ArrowLeft, Save } from 'lucide-react';
-import ImageUploader from '@/components/ui/ImageUploader';
+import { MultipleImagesUploader } from '@/components/ui/ImageUploader';
 
 // Define form schema
 const formSchema = z.object({
@@ -286,7 +287,7 @@ const AddEditProductPage = () => {
                 render={({ field }) => (
                   <FormItem>
                     <FormControl>
-                      <ImageUploader
+                      <MultipleImagesUploader
                         initialImages={field.value}
                         onImagesChange={field.onChange}
                       />
