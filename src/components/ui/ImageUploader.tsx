@@ -27,7 +27,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
 
     setIsUploading(true);
     try {
-      // Pass just the file parameter
+      // Call the uploadProductImage function with just the file parameter
       const url = await uploadProductImage(file);
       if (url) {
         setImage(url);
