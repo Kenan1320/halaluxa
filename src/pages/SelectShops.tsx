@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Check, Star, MapPin } from 'lucide-react';
@@ -92,7 +93,7 @@ const SelectShops = () => {
         <div className="text-center">Loading shops...</div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {shops.map(shop => (
+          {shops.map((shop, index) => (
             <motion.div
               key={shop.id}
               className={`bg-white rounded-lg shadow-md overflow-hidden transition-transform hover:scale-105 cursor-pointer ${selectedShopId === shop.id ? 'border-2 border-green-500' : ''}`}
@@ -145,4 +146,3 @@ const SelectShops = () => {
 };
 
 export default SelectShops;
-

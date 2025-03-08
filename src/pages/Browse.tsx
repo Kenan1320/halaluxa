@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useLocation as useLocationHook } from '@/context/LocationContext';
@@ -51,8 +52,8 @@ const Browse = () => {
       )}
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {shops.map((shop) => (
-          <ShopCard key={shop.id} shop={shop} />
+        {shops.map((shop, index) => (
+          <ShopCard key={shop.id} shop={shop} index={index} />
         ))}
       </div>
     </div>

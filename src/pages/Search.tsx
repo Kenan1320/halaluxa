@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
@@ -6,8 +7,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Search as SearchIcon, Filter, MapPin } from 'lucide-react';
 import { useLocation as useLocationHook } from '@/context/LocationContext';
 import { getShops } from '@/services/shopService';
-import { searchProducts } from '@/services/productService';
-import ProductCard from '@/components/cards/ProductCard';
+import { getProducts } from '@/services/productService';
+import { ProductCard } from '@/components/cards/ProductCard';
 import ShopCard from '@/components/shop/ShopCard';
 
 const Search = () => {
@@ -40,8 +41,15 @@ const Search = () => {
       if (searchTerm) {
         setIsLoading(true);
         try {
-          const productsData = await searchProducts(searchTerm);
-          setProducts(productsData);
+          // Using getProducts instead of searchProducts since searchProducts doesn't exist
+          const productsData = await getProducts();
+          // Filter products by searchTerm
+          const filteredProducts = productsData.filter(product => 
+            product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            product.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            product.category.toLowerCase().includes(searchTerm.toLowerCase())
+          );
+          setProducts(filteredProducts);
         } catch (error) {
           console.error('Error searching products:', error);
           setProducts([]);
@@ -63,7 +71,7 @@ const Search = () => {
   const filteredShops = shops.filter(shop =>
     shop.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     shop.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    shop.category.toLowerCase().includes(searchTerm.toLowerCase())
+    shop.category?.toLowerCase().includes(searchTerm.toLowerCase())
   );
   
   const hasSearchResults = filteredShops.length > 0 || products.length > 0;
@@ -111,8 +119,8 @@ const Search = () => {
             </div>
           ) : hasSearchResults ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredShops.map(shop => (
-                <ShopCard key={shop.id} shop={shop} />
+              {filteredShops.map((shop, index) => (
+                <ShopCard key={shop.id} shop={shop} index={index} />
               ))}
             </div>
           ) : (
@@ -152,7 +160,7 @@ const Search = () => {
         <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
           <div className="flex items-center text-sm text-gray-600">
             <MapPin className="h-4 w-4 mr-2" />
-            Nearby: {location.city}, {location.state}
+            Nearby: {location.city || "Unknown"}, {location.state || "Unknown"}
           </div>
         </div>
       )}

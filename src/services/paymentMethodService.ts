@@ -1,62 +1,64 @@
 
 import { supabase } from '@/integrations/supabase/client';
+import { PaymentMethod } from '@/models/shop';
 
-export interface PaymentMethod {
-  id: string;
-  userId: string;
-  paymentType: 'card' | 'paypal' | 'applepay' | 'googlepay';
-  cardLastFour: string;
-  cardBrand: string;
-  billingAddress: string;
-  isDefault: boolean;
-  createdAt: string;
-  updatedAt: string;
-  metadata: any;
-}
+// Mock data for payment methods
+const mockPaymentMethods: PaymentMethod[] = [
+  {
+    id: 'pm_1',
+    userId: 'user_1',
+    paymentType: 'card',
+    cardLastFour: '4242',
+    cardBrand: 'visa',
+    billingAddress: {
+      street: '123 Main St',
+      city: 'Anytown',
+      state: 'CA',
+      zip: '12345',
+      country: 'USA'
+    },
+    isDefault: true,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    metadata: {}
+  },
+  {
+    id: 'pm_2',
+    userId: 'user_1',
+    paymentType: 'paypal',
+    cardLastFour: '',
+    cardBrand: '',
+    billingAddress: {
+      street: '123 Main St',
+      city: 'Anytown',
+      state: 'CA',
+      zip: '12345',
+      country: 'USA'
+    },
+    isDefault: false,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    metadata: {}
+  }
+];
 
 // Get all payment methods for a user
 export const getPaymentMethods = async (userId: string): Promise<PaymentMethod[]> => {
   try {
-    // Mock implementation since the actual table doesn't exist
-    // In a real app, this would query the database
-    return [
-      {
-        id: '1',
-        userId,
-        paymentType: 'card',
-        cardLastFour: '4242',
-        cardBrand: 'Visa',
-        billingAddress: '123 Main St, New York, NY 10001',
-        isDefault: true,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        metadata: { nameOnCard: 'John Doe' }
-      },
-      {
-        id: '2',
-        userId,
-        paymentType: 'paypal',
-        cardLastFour: '',
-        cardBrand: '',
-        billingAddress: '456 Oak Ave, San Francisco, CA 94102',
-        isDefault: false,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        metadata: { email: 'john.doe@example.com' }
-      }
-    ];
+    // Mock implementation
+    return mockPaymentMethods.filter(method => method.userId === userId);
   } catch (error) {
     console.error('Error fetching payment methods:', error);
     return [];
   }
 };
 
-// Get a specific payment method
+// Get a specific payment method by ID
 export const getPaymentMethod = async (methodId: string): Promise<PaymentMethod | null> => {
   try {
     // Mock implementation
-    const methods = await getPaymentMethods('any-user');
-    return methods.find(method => method.id === methodId) || null;
+    const method = mockPaymentMethods.find(m => m.id === methodId);
+    return method || null;
   } catch (error) {
     console.error('Error fetching payment method:', error);
     return null;
@@ -64,36 +66,65 @@ export const getPaymentMethod = async (methodId: string): Promise<PaymentMethod 
 };
 
 // Add a new payment method
-export const addPaymentMethod = async (paymentData: {
-  userId: string;
-  cardLastFour: string;
-  cardBrand: string;
-  billingAddress: string;
-  isDefault: boolean;
-  metadata: any;
-}): Promise<boolean> => {
+export const addPaymentMethod = async (methodData: Omit<PaymentMethod, 'id' | 'createdAt' | 'updatedAt'>): Promise<PaymentMethod | null> => {
   try {
     // Mock implementation
-    console.log('Adding payment method:', paymentData);
-    return true;
+    const newMethod: PaymentMethod = {
+      id: `pm_${Date.now()}`,
+      ...methodData,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    
+    mockPaymentMethods.push(newMethod);
+    
+    // If this is set as default, update other methods
+    if (newMethod.isDefault) {
+      for (const method of mockPaymentMethods) {
+        if (method.id !== newMethod.id && method.userId === newMethod.userId) {
+          method.isDefault = false;
+        }
+      }
+    }
+    
+    return newMethod;
   } catch (error) {
     console.error('Error adding payment method:', error);
-    return false;
+    return null;
   }
 };
 
 // Update an existing payment method
-export const updatePaymentMethod = async (
-  methodId: string,
-  updates: Partial<PaymentMethod>
-): Promise<boolean> => {
+export const updatePaymentMethod = async (methodData: PaymentMethod): Promise<PaymentMethod | null> => {
   try {
     // Mock implementation
-    console.log('Updating payment method:', methodId, updates);
-    return true;
+    const index = mockPaymentMethods.findIndex(m => m.id === methodData.id);
+    
+    if (index === -1) {
+      throw new Error('Payment method not found');
+    }
+    
+    const updatedMethod = {
+      ...mockPaymentMethods[index],
+      ...methodData,
+      updatedAt: new Date().toISOString()
+    };
+    
+    mockPaymentMethods[index] = updatedMethod;
+    
+    // If this is set as default, update other methods
+    if (updatedMethod.isDefault) {
+      for (const method of mockPaymentMethods) {
+        if (method.id !== updatedMethod.id && method.userId === updatedMethod.userId) {
+          method.isDefault = false;
+        }
+      }
+    }
+    
+    return updatedMethod;
   } catch (error) {
     console.error('Error updating payment method:', error);
-    return false;
+    return null;
   }
 };
 
@@ -101,7 +132,32 @@ export const updatePaymentMethod = async (
 export const deletePaymentMethod = async (methodId: string, userId: string): Promise<boolean> => {
   try {
     // Mock implementation
-    console.log('Deleting payment method:', methodId, 'for user:', userId);
+    const initialLength = mockPaymentMethods.length;
+    
+    const filteredMethods = mockPaymentMethods.filter(m => m.id !== methodId);
+    
+    // Check if a method was actually removed
+    if (filteredMethods.length === initialLength) {
+      return false;
+    }
+    
+    // Replace the mock data
+    while (mockPaymentMethods.length > 0) {
+      mockPaymentMethods.pop();
+    }
+    
+    filteredMethods.forEach(m => mockPaymentMethods.push(m));
+    
+    // If the deleted method was the default, set another one as default
+    const wasDefault = initialLength > filteredMethods.length && !filteredMethods.some(m => m.isDefault && m.userId === userId);
+    
+    if (wasDefault && filteredMethods.some(m => m.userId === userId)) {
+      const firstUserMethod = filteredMethods.find(m => m.userId === userId);
+      if (firstUserMethod) {
+        firstUserMethod.isDefault = true;
+      }
+    }
+    
     return true;
   } catch (error) {
     console.error('Error deleting payment method:', error);
@@ -109,11 +165,23 @@ export const deletePaymentMethod = async (methodId: string, userId: string): Pro
   }
 };
 
-// Set a payment method as default
+// Set a payment method as the default
 export const setDefaultPaymentMethod = async (methodId: string, userId: string): Promise<boolean> => {
   try {
     // Mock implementation
-    console.log('Setting payment method as default:', methodId, 'for user:', userId);
+    const methodToUpdate = mockPaymentMethods.find(m => m.id === methodId);
+    
+    if (!methodToUpdate) {
+      throw new Error('Payment method not found');
+    }
+    
+    // Set all methods for this user to non-default
+    for (const method of mockPaymentMethods) {
+      if (method.userId === userId) {
+        method.isDefault = method.id === methodId;
+      }
+    }
+    
     return true;
   } catch (error) {
     console.error('Error setting default payment method:', error);
@@ -121,18 +189,13 @@ export const setDefaultPaymentMethod = async (methodId: string, userId: string):
   }
 };
 
-// Format payment method for display
-export const formatPaymentMethod = (method: PaymentMethod): string => {
-  switch (method.paymentType) {
-    case 'card':
-      return `${method.cardBrand} •••• ${method.cardLastFour}`;
-    case 'paypal':
-      return 'PayPal Account';
-    case 'applepay':
-      return 'Apple Pay';
-    case 'googlepay':
-      return 'Google Pay';
-    default:
-      return 'Payment Method';
+// Check if a user has any payment methods
+export const hasPaymentMethods = async (userId: string): Promise<boolean> => {
+  try {
+    // Mock implementation
+    return mockPaymentMethods.some(m => m.userId === userId);
+  } catch (error) {
+    console.error('Error checking payment methods:', error);
+    return false;
   }
 };

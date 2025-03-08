@@ -84,7 +84,8 @@ export default function ShopSetupForm({ onComplete, onSkip }: ShopSetupFormProps
       const shop = await createShop({
         name: shopData.name,
         description: shopData.description,
-        logo: logoPreview || undefined,
+        logo: logoPreview || null,
+        coverImage: null, // Add missing coverImage property
         category: shopData.category,
         location: shopData.location,
         rating: 0,

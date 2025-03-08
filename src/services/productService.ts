@@ -53,6 +53,29 @@ export async function getProducts(): Promise<Product[]> {
   }
 }
 
+// Search products by name, description, or category
+export async function searchProducts(searchTerm: string): Promise<Product[]> {
+  try {
+    if (!searchTerm) return [];
+    
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .or(`name.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%,category.ilike.%${searchTerm}%`)
+      .order('created_at', { ascending: false });
+    
+    if (error) {
+      console.error('Error searching products:', error);
+      return [];
+    }
+    
+    return data.map(mapDbProductToModel);
+  } catch (err) {
+    console.error('Error in searchProducts:', err);
+    return [];
+  }
+}
+
 // Alias for getAllProducts
 export const getAllProducts = getProducts;
 

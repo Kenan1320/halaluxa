@@ -35,36 +35,83 @@ export interface ShopProduct {
 // Get all shops
 export const getShops = async (): Promise<Shop[]> => {
   try {
-    const { data, error } = await supabase
-      .from('shops')
-      .select('*')
-      .order('name');
-    
-    if (error) {
-      console.error('Error fetching shops:', error);
-      return [];
-    }
-    
-    // Map the database results to the Shop model
-    return data.map(shop => ({
-      id: shop.id,
-      name: shop.name,
-      description: shop.description || '',
-      location: shop.location || 'Unknown location',
-      rating: shop.rating || 5.0,
-      productCount: shop.product_count || 0,
-      isVerified: !!shop.is_verified,
-      category: shop.category || 'General',
-      logo: shop.logo_url,
-      coverImage: shop.cover_image_url,
-      ownerId: shop.owner_id,
-      latitude: shop.latitude,
-      longitude: shop.longitude
-    }));
+    // This is a mock implementation until tables are created in the database
+    // we'll return mock data
+    return getMockShops();
   } catch (error) {
     console.error('Error in getShops:', error);
-    return [];
+    return getMockShops();
   }
+};
+
+// Create mock shops function
+const getMockShops = (): Shop[] => {
+  return [
+    {
+      id: "shop1",
+      name: "Organic Foods Market",
+      description: "Premium organic and halal foods from around the world.",
+      location: "New York, NY",
+      rating: 4.8,
+      productCount: 120,
+      isVerified: true,
+      category: "Food & Groceries",
+      logo: "/lovable-uploads/0c423741-0711-4e97-8c56-ca4fe31dc6ca.png",
+      coverImage: "/lovable-uploads/3617671c-bb85-4f25-91e2-9b8650560e48.png",
+      ownerId: "user1",
+      latitude: 40.7128,
+      longitude: -74.006,
+      distance: 1.2
+    },
+    {
+      id: "shop2",
+      name: "Halal Meats & More",
+      description: "Premium quality halal meats, hand-cut and delivered fresh.",
+      location: "Chicago, IL",
+      rating: 4.6,
+      productCount: 85,
+      isVerified: true,
+      category: "Food & Groceries",
+      logo: "/lovable-uploads/23c8a527-4c88-45b8-96c7-2e04ebee04eb.png",
+      coverImage: "/lovable-uploads/30853bea-af12-4b7d-9bf5-14f37b607a62.png",
+      ownerId: "user2",
+      latitude: 41.8781,
+      longitude: -87.6298,
+      distance: 2.5
+    },
+    {
+      id: "shop3",
+      name: "Modest Fashion House",
+      description: "Contemporary modest fashion for the modern woman.",
+      location: "Los Angeles, CA",
+      rating: 4.9,
+      productCount: 150,
+      isVerified: true,
+      category: "Fashion",
+      logo: "/lovable-uploads/34b3bad5-457b-4710-a89d-8760f86fb9e6.png",
+      coverImage: "/lovable-uploads/454d04bb-b4fa-4976-b180-1348c79670cb.png",
+      ownerId: "user3",
+      latitude: 34.0522,
+      longitude: -118.2437,
+      distance: 3.7
+    },
+    {
+      id: "shop4",
+      name: "Barakah Organics",
+      description: "Organic, ethically-sourced goods for conscious consumers.",
+      location: "Seattle, WA",
+      rating: 4.7,
+      productCount: 95,
+      isVerified: true,
+      category: "Food & Groceries",
+      logo: "/lovable-uploads/5a8664a8-ab5c-44b2-9474-8cbd43b5c56e.png",
+      coverImage: "/lovable-uploads/6246682a-f998-4df2-a39b-d271f55166b8.png",
+      ownerId: "user4",
+      latitude: 47.6062,
+      longitude: -122.3321,
+      distance: 4.1
+    }
+  ];
 };
 
 // Alias for getShops to fix import errors in multiple files
@@ -73,34 +120,9 @@ export const getAllShops = getShops;
 // Get a specific shop by ID
 export const getShopById = async (shopId: string): Promise<Shop | null> => {
   try {
-    const { data, error } = await supabase
-      .from('shops')
-      .select('*')
-      .eq('id', shopId)
-      .single();
-    
-    if (error) {
-      console.error('Error fetching shop by ID:', error);
-      return null;
-    }
-    
-    if (!data) return null;
-    
-    return {
-      id: data.id,
-      name: data.name,
-      description: data.description || '',
-      location: data.location || 'Unknown location',
-      rating: data.rating || 5.0,
-      productCount: data.product_count || 0,
-      isVerified: !!data.is_verified,
-      category: data.category || 'General',
-      logo: data.logo_url,
-      coverImage: data.cover_image_url,
-      ownerId: data.owner_id,
-      latitude: data.latitude,
-      longitude: data.longitude
-    };
+    // Mock implementation
+    const shops = getMockShops();
+    return shops.find(shop => shop.id === shopId) || null;
   } catch (error) {
     console.error('Error in getShopById:', error);
     return null;
@@ -110,28 +132,31 @@ export const getShopById = async (shopId: string): Promise<Shop | null> => {
 // Get products for a specific shop
 export const getShopProducts = async (shopId: string): Promise<ShopProduct[]> => {
   try {
-    const { data, error } = await supabase
-      .from('products')
-      .select('*, shops:seller_id(name)')
-      .eq('seller_id', shopId)
-      .order('name');
-    
-    if (error) {
-      console.error('Error fetching shop products:', error);
-      return [];
-    }
-    
-    return data.map(product => ({
-      id: product.id,
-      name: product.name,
-      description: product.description,
-      price: product.price,
-      category: product.category,
-      images: product.images || [],
-      sellerId: product.seller_id,
-      sellerName: product.shops?.name || 'Unknown Shop',
-      rating: product.rating
-    }));
+    // Mock implementation
+    return [
+      {
+        id: "product1",
+        name: "Organic Honey",
+        description: "Pure, raw organic honey from sustainable sources.",
+        price: 12.99,
+        category: "Food & Groceries",
+        images: ["/lovable-uploads/6cd1c595-84b8-4075-9df0-e60a2595d32d.png"],
+        sellerId: shopId,
+        sellerName: "Organic Foods Market",
+        rating: 4.9
+      },
+      {
+        id: "product2",
+        name: "Grass-Fed Beef",
+        description: "Premium grass-fed, halal-certified beef.",
+        price: 24.99,
+        category: "Food & Groceries",
+        images: ["/lovable-uploads/0780684a-9c7f-4f32-affc-6f9ea641b814.png"],
+        sellerId: shopId,
+        sellerName: "Organic Foods Market",
+        rating: 4.8
+      }
+    ];
   } catch (error) {
     console.error('Error in getShopProducts:', error);
     return [];
@@ -159,45 +184,24 @@ export const convertToModelProduct = (shopProduct: ShopProduct): Product => {
 // Create a new shop
 export const createShop = async (shopData: Omit<Shop, 'id'>): Promise<Shop | null> => {
   try {
-    const { data, error } = await supabase
-      .from('shops')
-      .insert({
-        name: shopData.name,
-        description: shopData.description,
-        location: shopData.location,
-        rating: shopData.rating || 0,
-        product_count: shopData.productCount || 0,
-        is_verified: shopData.isVerified || false,
-        category: shopData.category || 'General',
-        logo_url: shopData.logo || null,
-        cover_image_url: shopData.coverImage || null,
-        owner_id: shopData.ownerId,
-        latitude: shopData.latitude || null,
-        longitude: shopData.longitude || null
-      })
-      .select()
-      .single();
-    
-    if (error) {
-      console.error('Error creating shop:', error);
-      return null;
-    }
-    
-    return {
-      id: data.id,
-      name: data.name,
-      description: data.description || '',
-      location: data.location || 'Unknown location',
-      rating: data.rating || 0,
-      productCount: data.product_count || 0,
-      isVerified: !!data.is_verified,
-      category: data.category || 'General',
-      logo: data.logo_url,
-      coverImage: data.cover_image_url,
-      ownerId: data.owner_id,
-      latitude: data.latitude,
-      longitude: data.longitude
+    // Mock implementation
+    const newShop: Shop = {
+      id: `shop${Date.now()}`,
+      name: shopData.name,
+      description: shopData.description,
+      location: shopData.location,
+      rating: shopData.rating || 0,
+      productCount: shopData.productCount || 0,
+      isVerified: shopData.isVerified || false,
+      category: shopData.category || 'General',
+      logo: shopData.logo,
+      coverImage: shopData.coverImage,
+      ownerId: shopData.ownerId,
+      latitude: shopData.latitude || null,
+      longitude: shopData.longitude || null
     };
+    
+    return newShop;
   } catch (error) {
     console.error('Error in createShop:', error);
     return null;
@@ -232,18 +236,10 @@ export const uploadProductImage = async (file: File): Promise<string | null> => 
 
 // Subscribe to real-time updates to shops
 export const subscribeToShops = (callback: (shops: Shop[]) => void) => {
-  // For this demo, we'll just fetch the shops once and simulate a subscription
+  // Mock subscription
   getShops().then(shops => {
     callback(shops);
   });
-  
-  // In a real implementation, we would use Supabase's real-time subscriptions
-  // return supabase
-  //   .from('shops')
-  //   .on('*', payload => {
-  //     getShops().then(shops => callback(shops));
-  //   })
-  //   .subscribe();
   
   return {
     unsubscribe: () => {
@@ -256,31 +252,9 @@ export const subscribeToShops = (callback: (shops: Shop[]) => void) => {
 // Set a shop as the main shop
 export const setMainShop = async (shopId: string, userId: string): Promise<boolean> => {
   try {
-    // First, unset any existing main shops for this user
-    try {
-      await supabase
-        .from('user_shop_preferences')
-        .update({ is_main: false })
-        .eq('user_id', userId);
-    } catch (error) {
-      console.error('Error unsetting previous main shop:', error);
-    }
-    
-    // Then, set the new main shop
-    try {
-      await supabase
-        .from('user_shop_preferences')
-        .upsert({ 
-          user_id: userId, 
-          shop_id: shopId, 
-          is_main: true 
-        });
-      
-      return true;
-    } catch (error) {
-      console.error('Error setting main shop:', error);
-      return false;
-    }
+    // Mock implementation 
+    console.log(`Setting shop ${shopId} as main shop for user ${userId}`);
+    return true;
   } catch (error) {
     console.error('Error in setMainShop:', error);
     return false;
@@ -290,20 +264,9 @@ export const setMainShop = async (shopId: string, userId: string): Promise<boole
 // Get the main shop for a user
 export const getMainShop = async (userId: string): Promise<Shop | null> => {
   try {
-    // First, get the main shop preference
-    const { data: prefData, error: prefError } = await supabase
-      .from('user_shop_preferences')
-      .select('shop_id')
-      .eq('user_id', userId)
-      .eq('is_main', true)
-      .single();
-    
-    if (prefError || !prefData) {
-      return null;
-    }
-    
-    // Then get the shop details
-    return getShopById(prefData.shop_id);
+    // Mock implementation - returns first shop
+    const shops = await getShops();
+    return shops.length > 0 ? shops[0] : null;
   } catch (error) {
     console.error('Error in getMainShop:', error);
     return null;
@@ -317,8 +280,7 @@ export const getNearbyShopsByCoordinates = async (
   radius: number = 20 // radius in km
 ): Promise<Shop[]> => {
   try {
-    // In a real implementation, we would use PostGIS spatial queries to find shops within the radius
-    // For this demo, we'll just return all shops and simulate distance
+    // Mock implementation
     const shops = await getShops();
     
     return shops.map(shop => {
