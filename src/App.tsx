@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -151,10 +150,21 @@ const AppRoutes = () => {
   );
 };
 
-const App = () => {
-  const [showSplash, setShowSplash] = useState(false); // Changed to false to skip splash
-  
+function App() {
+  const [showSplash, setShowSplash] = useState(false);
+
   const handleSplashFinished = () => setShowSplash(false);
+
+  useEffect(() => {
+    // Run database setup when the app initializes
+    runDatabaseSetup().then((success) => {
+      if (success) {
+        console.log('Database initialized successfully');
+      } else {
+        console.warn('Database initialization may not be complete');
+      }
+    });
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>

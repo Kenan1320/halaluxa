@@ -1,8 +1,9 @@
 
-import React, { useState } from 'react';
-import { Upload, X, Image, Loader2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Upload, X, Image, Loader2, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { uploadProductImage } from '@/services/shopService';
+import { useToast } from '@/hooks/use-toast';
 
 interface ImageUploaderProps {
   initialImages?: string[];
@@ -18,40 +19,84 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
   const [images, setImages] = useState<string[]>(initialImages);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [failedUploads, setFailedUploads] = useState<File[]>([]);
+  const { toast } = useToast();
+
+  // Sync with initialImages if they change
+  useEffect(() => {
+    setImages(initialImages);
+  }, [initialImages]);
 
   const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (!files || files.length === 0) return;
 
     if (images.length + files.length > maxImages) {
-      alert(`You can upload a maximum of ${maxImages} images`);
+      toast({
+        title: "Too many images",
+        description: `You can upload a maximum of ${maxImages} images`,
+        variant: "destructive"
+      });
       return;
     }
 
     setIsUploading(true);
     setUploadProgress(0);
+    setFailedUploads([]);
 
     const newImages: string[] = [...images];
+    let failedFiles: File[] = [];
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       
+      // Check file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "File too large",
+          description: `${file.name} is too large. Maximum size is 5MB.`,
+          variant: "destructive"
+        });
+        failedFiles.push(file);
+        continue;
+      }
+      
       try {
+        setUploadProgress(Math.floor(i / files.length * 50)); // First half of progress
+        
         const imageUrl = await uploadProductImage(file, (progress) => {
-          setUploadProgress(progress);
+          // This progress is for this individual file, scale it to overall progress
+          const individualProgress = progress / 100;
+          const overallProgress = 50 + (i / files.length * 50) + (individualProgress * 50 / files.length);
+          setUploadProgress(Math.floor(overallProgress));
         });
         
         if (imageUrl) {
           newImages.push(imageUrl);
+        } else {
+          failedFiles.push(file);
+          toast({
+            title: "Upload failed",
+            description: `Failed to upload ${file.name}`,
+            variant: "destructive"
+          });
         }
       } catch (error) {
         console.error('Error uploading image:', error);
+        failedFiles.push(file);
+        toast({
+          title: "Upload error",
+          description: `Error uploading ${file.name}`,
+          variant: "destructive"
+        });
       }
     }
 
     setImages(newImages);
     onImagesChange(newImages);
     setIsUploading(false);
+    setUploadProgress(100);
+    setFailedUploads(failedFiles);
     
     // Reset the input
     event.target.value = '';
@@ -62,6 +107,26 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
     newImages.splice(index, 1);
     setImages(newImages);
     onImagesChange(newImages);
+  };
+  
+  const retryFailedUploads = async () => {
+    if (failedUploads.length === 0) return;
+    
+    // Create a FileList-like object
+    const dataTransfer = new DataTransfer();
+    failedUploads.forEach(file => dataTransfer.items.add(file));
+    
+    // Create a synthetic event
+    const event = {
+      target: {
+        files: dataTransfer.files,
+        value: ""
+      }
+    } as React.ChangeEvent<HTMLInputElement>;
+    
+    // Clear failed uploads and retry
+    setFailedUploads([]);
+    await handleUpload(event);
   };
 
   return (
@@ -91,6 +156,16 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
           <div className="w-24 h-24 border border-dashed rounded-md flex flex-col items-center justify-center">
             <Loader2 className="h-8 w-8 text-haluna-primary animate-spin" />
             <span className="text-xs mt-1">{uploadProgress}%</span>
+          </div>
+        )}
+        
+        {failedUploads.length > 0 && (
+          <div 
+            className="w-24 h-24 border border-dashed border-red-300 rounded-md flex flex-col items-center justify-center cursor-pointer hover:bg-red-50 transition-colors"
+            onClick={retryFailedUploads}
+          >
+            <RefreshCw className="h-6 w-6 text-red-500 mb-1" />
+            <span className="text-xs text-red-500">Retry {failedUploads.length} failed</span>
           </div>
         )}
         

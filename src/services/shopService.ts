@@ -67,10 +67,48 @@ export async function createShop(shopData: Partial<Shop>): Promise<Shop | null> 
       return null;
     }
     
+    // Also update the seller_accounts table to link the user to the shop
+    await linkUserToShop(shopData.ownerId!, data.id);
+    
     return mapDbShopToModel(data);
   } catch (error) {
     console.error('Error in createShop:', error);
     return null;
+  }
+}
+
+// Link a user to their shop in the seller_accounts table
+async function linkUserToShop(userId: string, shopId: string) {
+  try {
+    // Check if entry already exists
+    const { data: existingData } = await supabase
+      .from('seller_accounts')
+      .select('*')
+      .eq('user_id', userId)
+      .single();
+      
+    if (existingData) {
+      // Update existing record
+      await supabase
+        .from('seller_accounts')
+        .update({ shop_id: shopId, is_active: true })
+        .eq('user_id', userId);
+    } else {
+      // Create new record
+      await supabase
+        .from('seller_accounts')
+        .insert({
+          user_id: userId,
+          shop_id: shopId,
+          is_active: true,
+          created_at: new Date().toISOString()
+        });
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error linking user to shop:', error);
+    return false;
   }
 }
 
@@ -89,44 +127,86 @@ export async function uploadShopLogo(base64Image: string, ownerId: string) {
     const filePath = `shop_logos/${fileName}`;
     
     // Upload to Supabase Storage
-    return await supabase.storage
+    const uploadResult = await supabase.storage
       .from('shops')
       .upload(filePath, blob, {
         contentType,
         cacheControl: '3600'
       });
+      
+    if (uploadResult.error) {
+      throw uploadResult.error;
+    }
+    
+    // Get the public URL
+    const { data: urlData } = supabase.storage
+      .from('shops')
+      .getPublicUrl(filePath);
+      
+    // Return both the path and public URL
+    return { 
+      ...uploadResult, 
+      path: urlData.publicUrl
+    };
   } catch (error) {
     console.error('Error uploading logo:', error);
     throw error;
   }
 }
 
-// Upload product image
-export async function uploadProductImage(file: File, onProgress?: (progress: number) => void) {
-  try {
-    const fileName = `${Date.now()}_${file.name}`;
-    const filePath = `product_images/${fileName}`;
-    
-    const { data, error } = await supabase.storage
-      .from('products')
-      .upload(filePath, file, {
-        contentType: file.type,
-        cacheControl: '3600'
-      });
-    
-    if (error) {
-      throw error;
+// Upload product image with retry logic
+export async function uploadProductImage(file: File, onProgress?: (progress: number) => void): Promise<string | null> {
+  const maxRetries = 3;
+  let retryCount = 0;
+  
+  while (retryCount < maxRetries) {
+    try {
+      const fileName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+      const filePath = `product_images/${fileName}`;
+      
+      // Show initial progress
+      if (onProgress) onProgress(10);
+      
+      const { data, error } = await supabase.storage
+        .from('products')
+        .upload(filePath, file, {
+          contentType: file.type,
+          cacheControl: '3600',
+          upsert: true // Enable upsert to prevent duplicates
+        });
+      
+      // Update progress
+      if (onProgress) onProgress(70);
+      
+      if (error) {
+        throw error;
+      }
+      
+      const { data: urlData } = supabase.storage
+        .from('products')
+        .getPublicUrl(filePath);
+      
+      // Complete progress
+      if (onProgress) onProgress(100);
+      
+      return urlData.publicUrl;
+    } catch (error) {
+      console.error(`Error uploading product image (attempt ${retryCount + 1}):`, error);
+      retryCount++;
+      
+      // Only retry on network errors, not validation errors
+      if (error instanceof Error && 
+          !(error.message.includes('size') || error.message.includes('type'))) {
+        // Wait before retrying (exponential backoff)
+        await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+      } else {
+        // Don't retry for validation errors
+        break;
+      }
     }
-    
-    const { data: urlData } = supabase.storage
-      .from('products')
-      .getPublicUrl(filePath);
-    
-    return urlData.publicUrl;
-  } catch (error) {
-    console.error('Error uploading product image:', error);
-    return null;
   }
+  
+  return null;
 }
 
 // Helper function to convert base64 to blob
@@ -194,6 +274,26 @@ export async function getShopById(id: string): Promise<Shop | null> {
   }
 }
 
+// Get shops by owner ID
+export async function getShopsByOwnerId(ownerId: string): Promise<Shop[]> {
+  try {
+    const { data, error } = await supabase
+      .from('shops')
+      .select('*')
+      .eq('owner_id', ownerId);
+    
+    if (error) {
+      console.error(`Error fetching shops for owner ${ownerId}:`, error);
+      return [];
+    }
+    
+    return data.map(shop => mapDbShopToModel(shop));
+  } catch (error) {
+    console.error(`Error in getShopsByOwnerId for ${ownerId}:`, error);
+    return [];
+  }
+}
+
 // Get the main shop for a user
 export async function getMainShop(): Promise<Shop | null> {
   try {
@@ -218,7 +318,7 @@ export async function getFeaturedShops(limit = 6): Promise<Shop[]> {
     
     if (error) {
       console.error('Error fetching featured shops:', error);
-      return [];
+      return getMockShops().slice(0, limit);
     }
     
     return data.map(shop => mapDbShopToModel(shop));
@@ -539,4 +639,21 @@ function getMockShops(): Shop[] {
       distance: 5.3
     }
   ];
+}
+
+// Create a script to set up necessary database tables
+export async function setupDatabaseTables() {
+  try {
+    // Check for seller_accounts table and create if it doesn't exist
+    const { error } = await supabase.rpc('create_seller_accounts_if_not_exists');
+    
+    if (error) {
+      console.error('Error setting up tables:', error);
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error setting up database tables:', error);
+    return false;
+  }
 }
