@@ -1,5 +1,4 @@
-
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useLocation } from '@/context/LocationContext';
 import { Link } from 'react-router-dom';
@@ -32,12 +31,9 @@ const Index = () => {
     }
   }, [isLocationEnabled, requestLocation]);
 
-  // Subscribe to real-time shop updates and load selected shops
-  useEffect(() => {
-    setIsLoadingShops(true);
-    
-    // Load selected shops from localStorage
-    const loadSelectedShops = async () => {
+  // Load selected shops from localStorage
+  const loadSelectedShops = useCallback(async () => {
+    try {
       const savedShopIds = localStorage.getItem('selectedShops');
       if (savedShopIds) {
         const shopIds = JSON.parse(savedShopIds) as string[];
@@ -45,7 +41,14 @@ const Index = () => {
         const shops = await Promise.all(shopPromises);
         setSelectedShops(shops.filter((shop): shop is Shop => shop !== null));
       }
-    };
+    } catch (error) {
+      console.error('Error loading selected shops:', error);
+    }
+  }, []);
+
+  // Subscribe to real-time shop updates and load selected shops
+  useEffect(() => {
+    setIsLoadingShops(true);
     
     // Setup real-time subscription for shops
     const channel = subscribeToShops((shops) => {
@@ -73,16 +76,21 @@ const Index = () => {
     const initialLoad = async () => {
       await loadSelectedShops();
       
-      // Always get nearby shops based on location
-      const nearby = await getNearbyShops();
-      setNearbyShops(nearby);
-      
-      // If no selected shops, use 5 nearby shops as default
-      if ((!localStorage.getItem('selectedShops') || JSON.parse(localStorage.getItem('selectedShops') || '[]').length === 0) && nearby.length > 0) {
-        setSelectedShops(nearby.slice(0, 5));
+      try {
+        // Always get nearby shops based on location
+        const nearby = await getNearbyShops();
+        setNearbyShops(nearby);
+        
+        // If no selected shops, use 5 nearby shops as default
+        if ((!localStorage.getItem('selectedShops') || JSON.parse(localStorage.getItem('selectedShops') || '[]').length === 0) && nearby.length > 0) {
+          setSelectedShops(nearby.slice(0, 5));
+          localStorage.setItem('selectedShops', JSON.stringify(nearby.slice(0, 5).map(s => s.id)));
+        }
+      } catch (error) {
+        console.error('Error loading nearby shops:', error);
+      } finally {
+        setIsLoadingShops(false);
       }
-      
-      setIsLoadingShops(false);
     };
     
     initialLoad();
@@ -91,9 +99,9 @@ const Index = () => {
     return () => {
       channel.unsubscribe();
     };
-  }, [getNearbyShops]);
+  }, [getNearbyShops, loadSelectedShops, selectedShops.length]);
 
-  // Cycling shop index animation effect
+  // Cycling shop index animation effect with more efficient interval
   useEffect(() => {
     if (selectedShops.length === 0) return;
     
@@ -105,13 +113,12 @@ const Index = () => {
   }, [selectedShops.length]);
 
   // Get current hour to determine greeting
-  const currentHour = new Date().getHours();
-  let greeting = "Good morning";
-  if (currentHour >= 12 && currentHour < 18) {
-    greeting = "Good afternoon";
-  } else if (currentHour >= 18) {
-    greeting = "Good evening";
-  }
+  const greeting = useMemo(() => {
+    const currentHour = new Date().getHours();
+    if (currentHour < 12) return "Good morning";
+    if (currentHour < 18) return "Good afternoon";
+    return "Good evening";
+  }, []);
 
   return (
     <div className="min-h-screen pt-16 pb-20 bg-white">
@@ -152,7 +159,7 @@ const Index = () => {
             </Link>
           </div>
           
-          {/* Enhanced carousel with scaling effect */}
+          {/* Shop carousel */}
           <div ref={shopScrollRef} className="relative h-28 overflow-hidden">
             {selectedShops.length > 0 && (
               <div className="absolute inset-0 flex items-center justify-center">

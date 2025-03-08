@@ -28,3 +28,26 @@ export interface ShopProduct {
   sellerName: string;
   rating: number;
 }
+
+export interface ShopLocation {
+  latitude: number;
+  longitude: number;
+  address?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
+  country?: string;
+}
+
+export interface ShopDisplaySettings {
+  id: string;
+  shopId: string;
+  primaryColor: string | null;
+  secondaryColor: string | null;
+  fontFamily: string | null;
+  showRatings: boolean;
+  showProductCount: boolean;
+  featuredProducts: string[] | null;
+  bannerMessage: string | null;
+  created_at: string;
+}

@@ -11,7 +11,6 @@ import { LanguageProvider } from "@/context/LanguageContext";
 import { LocationProvider } from "@/context/LocationContext";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import AuthMiddleware from "@/components/auth/AuthMiddleware";
-import SplashScreen from "@/components/SplashScreen";
 import Navbar from "@/components/layout/Navbar";
 import { setupDatabaseTables } from "@/services/shopService";
 
@@ -163,44 +162,58 @@ const runDatabaseSetup = async (): Promise<boolean> => {
 };
 
 function App() {
-  const [showSplash, setShowSplash] = useState(false);
-
-  const handleSplashFinished = () => setShowSplash(false);
+  const [isDatabaseReady, setIsDatabaseReady] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(true);
 
   useEffect(() => {
     // Run database setup when the app initializes
-    runDatabaseSetup().then((success) => {
-      if (success) {
-        console.log('Database initialized successfully');
-      } else {
-        console.warn('Database initialization may not be complete');
+    const initApp = async () => {
+      try {
+        const success = await runDatabaseSetup();
+        setIsDatabaseReady(success);
+      } catch (error) {
+        console.error('Database initialization error:', error);
+        // Continue with app even if DB setup fails
+        setIsDatabaseReady(true);
+      } finally {
+        setIsInitializing(false);
       }
-    });
+    };
+    
+    initApp();
   }, []);
+
+  // Don't render anything until initialization is complete
+  if (isInitializing) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-white">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-[#2A866A] border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading application...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        {showSplash ? (
-          <SplashScreen onComplete={handleSplashFinished} />
-        ) : (
-          <BrowserRouter>
-            <LanguageProvider>
-              <AuthProvider>
-                <CartProvider>
-                  <LocationProvider>
-                    <AppRoutes />
-                  </LocationProvider>
-                </CartProvider>
-              </AuthProvider>
-            </LanguageProvider>
-          </BrowserRouter>
-        )}
+        <BrowserRouter>
+          <LanguageProvider>
+            <AuthProvider>
+              <CartProvider>
+                <LocationProvider>
+                  <AppRoutes />
+                </LocationProvider>
+              </CartProvider>
+            </AuthProvider>
+          </LanguageProvider>
+        </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>
   );
-};
+}
 
 export default App;

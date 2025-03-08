@@ -7,18 +7,18 @@ export const mapDbShopToModel = (dbShop: any): Shop => {
   return {
     id: dbShop.id,
     name: dbShop.name,
-    description: dbShop.description,
-    location: dbShop.location,
+    description: dbShop.description || '',
+    location: dbShop.location || '',
     rating: dbShop.rating || 0,
     productCount: dbShop.product_count || 0,
     isVerified: dbShop.is_verified || false,
     category: dbShop.category || 'General',
-    logo: dbShop.logo_url || null,
-    coverImage: dbShop.cover_image || null,
+    logo: dbShop.logo_url,
+    coverImage: dbShop.cover_image,
     ownerId: dbShop.owner_id,
-    latitude: dbShop.latitude || null,
-    longitude: dbShop.longitude || null,
-    distance: dbShop.distance || null
+    latitude: dbShop.latitude !== undefined ? Number(dbShop.latitude) : null,
+    longitude: dbShop.longitude !== undefined ? Number(dbShop.longitude) : null,
+    distance: dbShop.distance !== undefined ? Number(dbShop.distance) : null
   };
 };
 
