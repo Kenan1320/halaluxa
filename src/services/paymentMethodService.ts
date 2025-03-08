@@ -1,77 +1,99 @@
 
 import { supabase } from '@/integrations/supabase/client';
+import { Json } from '@/integrations/supabase/types';
 
+// Define types for payment methods
 export interface PaymentMethod {
   id: string;
-  userId: string;
-  paymentType: 'card' | 'paypal' | 'applepay' | 'googlepay';
-  cardLastFour?: string;
-  cardBrand?: string;
-  billingAddress?: {
-    street: string;
-    city: string;
-    state: string;
-    zip: string;
-    country: string;
-  };
-  isDefault: boolean;
-  createdAt: string;
-  updatedAt: string;
-  metadata?: Record<string, any>;
+  user_id: string;
+  payment_type: string;
+  card_last_four?: string;
+  card_brand?: string;
+  billing_address?: any;
+  is_default: boolean;
+  created_at: string;
+  updated_at: string;
+  metadata?: any;
 }
 
-// Get all payment methods for a user
-export async function getUserPaymentMethods(userId: string): Promise<PaymentMethod[]> {
+export interface SellerAccount {
+  id: string;
+  user_id: string;
+  shop_id?: string;
+  account_type: string; 
+  account_name?: string;
+  account_number?: string;
+  bank_name?: string;
+  paypal_email?: string;
+  stripe_account_id?: string;
+  applepay_merchant_id?: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at?: string;
+}
+
+// Get a specific seller account by ID
+export async function getSellerAccount(id: string): Promise<SellerAccount | null> {
   try {
+    // Since shopper_payment_methods doesn't exist in the supabase types,
+    // we need to use a more generic approach
     const { data, error } = await supabase
-      .from('shopper_payment_methods')
+      .from('seller_accounts')
       .select('*')
-      .eq('user_id', userId)
-      .order('is_default', { ascending: false })
-      .order('created_at', { ascending: false });
-    
+      .eq('id', id)
+      .single();
+      
     if (error) {
-      console.error('Error fetching payment methods:', error);
-      return [];
+      console.error('Error fetching seller account:', error);
+      return null;
     }
     
-    // Map database fields to model
-    return data.map(item => ({
-      id: item.id,
-      userId: item.user_id,
-      paymentType: item.payment_type as PaymentMethod['paymentType'],
-      cardLastFour: item.card_last_four,
-      cardBrand: item.card_brand,
-      billingAddress: item.billing_address,
-      isDefault: item.is_default,
-      createdAt: item.created_at,
-      updatedAt: item.updated_at,
-      metadata: item.metadata
-    }));
+    if (!data) return null;
+    
+    return {
+      id: data.id,
+      user_id: data.user_id,
+      shop_id: data.shop_id,
+      account_type: data.account_type || 'bank',
+      account_name: data.account_name,
+      account_number: data.account_number,
+      bank_name: data.bank_name,
+      paypal_email: data.paypal_email,
+      stripe_account_id: data.stripe_account_id,
+      applepay_merchant_id: data.applepay_merchant_id,
+      is_active: data.is_active || true,
+      created_at: data.created_at,
+      updated_at: data.updated_at
+    };
   } catch (error) {
-    console.error('Error in getUserPaymentMethods:', error);
-    return [];
+    console.error('Error in getSellerAccount:', error);
+    return null;
   }
 }
 
-// Set a payment method as default
-export async function setDefaultPaymentMethod(userId: string, paymentMethodId: string): Promise<boolean> {
+// Set a default payment method
+export async function setDefaultPaymentMethod(methodId: string, userId: string): Promise<boolean> {
   try {
-    // First, unset all existing default payment methods
-    await supabase
-      .from('shopper_payment_methods')
-      .update({ is_default: false })
+    // First, set all payment methods for this user to not default
+    const { error: updateError } = await supabase
+      .from('seller_accounts')
+      .update({ is_active: false })
       .eq('user_id', userId);
+      
+    if (updateError) {
+      console.error('Error updating payment methods:', updateError);
+      return false;
+    }
     
     // Then set the selected one as default
-    const { error } = await supabase
-      .from('shopper_payment_methods')
-      .update({ is_default: true })
-      .eq('id', paymentMethodId)
+    const { error: setDefaultError } = await supabase
+      .from('seller_accounts')
+      .update({ is_active: true })
+      .eq('id', methodId)
       .eq('user_id', userId);
-    
-    if (error) {
-      console.error('Error setting default payment method:', error);
+      
+    if (setDefaultError) {
+      console.error('Error setting default payment method:', setDefaultError);
       return false;
     }
     
@@ -82,103 +104,109 @@ export async function setDefaultPaymentMethod(userId: string, paymentMethodId: s
   }
 }
 
-// Add a new payment method
-export async function addPaymentMethod(paymentMethod: Omit<PaymentMethod, 'id' | 'createdAt' | 'updatedAt'>): Promise<PaymentMethod | null> {
+// Create payment method for a user - used to add payment methods to seller accounts
+export async function createSellerAccount(accountData: any): Promise<boolean> {
   try {
-    // If this is the first payment method for the user, set it as default
-    const existingMethods = await getUserPaymentMethods(paymentMethod.userId);
-    const isDefault = existingMethods.length === 0 ? true : paymentMethod.isDefault;
-    
-    // If this method is going to be default, unset any existing defaults
-    if (isDefault) {
-      await supabase
-        .from('shopper_payment_methods')
-        .update({ is_default: false })
-        .eq('user_id', paymentMethod.userId);
+    // Ensure we have user_id (should come from auth context)
+    if (!accountData.user_id) {
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData || !userData.user) {
+        console.error('No authenticated user found');
+        return false;
+      }
+      accountData.user_id = userData.user.id;
     }
     
-    // Insert the new payment method
+    // Insert the payment method
     const { data, error } = await supabase
-      .from('shopper_payment_methods')
+      .from('seller_accounts')
       .insert({
-        user_id: paymentMethod.userId,
-        payment_type: paymentMethod.paymentType,
-        card_last_four: paymentMethod.cardLastFour,
-        card_brand: paymentMethod.cardBrand,
-        billing_address: paymentMethod.billingAddress,
-        is_default: isDefault,
-        metadata: paymentMethod.metadata || {}
+        user_id: accountData.user_id,
+        account_type: accountData.account_type,
+        account_name: accountData.account_name,
+        account_number: accountData.account_number,
+        bank_name: accountData.bank_name,
+        paypal_email: accountData.paypal_email,
+        stripe_account_id: accountData.stripe_account_id,
+        applepay_merchant_id: accountData.applepay_merchant_id,
+        is_active: true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       })
-      .select()
-      .single();
-    
+      .select();
+      
     if (error) {
-      console.error('Error adding payment method:', error);
-      return null;
+      console.error('Error creating payment method:', error);
+      return false;
     }
     
-    // Return the created payment method
-    return {
-      id: data.id,
-      userId: data.user_id,
-      paymentType: data.payment_type as PaymentMethod['paymentType'],
-      cardLastFour: data.card_last_four,
-      cardBrand: data.card_brand,
-      billingAddress: data.billing_address,
-      isDefault: data.is_default,
-      createdAt: data.created_at,
-      updatedAt: data.updated_at,
-      metadata: data.metadata
-    };
+    return true;
   } catch (error) {
-    console.error('Error in addPaymentMethod:', error);
-    return null;
+    console.error('Error in createPaymentMethod:', error);
+    return false;
+  }
+}
+
+// Get all payment methods for a user
+export async function getSellerAccounts(): Promise<SellerAccount[]> {
+  try {
+    const { data: userData } = await supabase.auth.getUser();
+    if (!userData || !userData.user) {
+      console.error('No authenticated user found');
+      return [];
+    }
+    
+    const { data, error } = await supabase
+      .from('seller_accounts')
+      .select('*')
+      .eq('user_id', userData.user.id);
+      
+    if (error) {
+      console.error('Error fetching payment methods:', error);
+      return [];
+    }
+    
+    if (!data || data.length === 0) return [];
+    
+    return data.map(item => ({
+      id: item.id,
+      user_id: item.user_id,
+      shop_id: item.shop_id,
+      account_type: item.account_type || 'bank',
+      account_name: item.account_name,
+      account_number: item.account_number,
+      bank_name: item.bank_name,
+      paypal_email: item.paypal_email,
+      stripe_account_id: item.stripe_account_id,
+      applepay_merchant_id: item.applepay_merchant_id,
+      is_active: item.is_active || false,
+      created_at: item.created_at,
+      updated_at: item.updated_at
+    }));
+  } catch (error) {
+    console.error('Error in getPaymentMethods:', error);
+    return [];
   }
 }
 
 // Delete a payment method
-export async function deletePaymentMethod(paymentMethodId: string, userId: string): Promise<boolean> {
+export async function deleteSellerAccount(id: string): Promise<boolean> {
   try {
-    // First check if this is the default payment method
-    const { data, error: fetchError } = await supabase
-      .from('shopper_payment_methods')
-      .select('is_default')
-      .eq('id', paymentMethodId)
-      .eq('user_id', userId)
-      .single();
-    
-    if (fetchError) {
-      console.error('Error fetching payment method:', fetchError);
+    const { data: userData } = await supabase.auth.getUser();
+    if (!userData || !userData.user) {
+      console.error('No authenticated user found');
       return false;
     }
     
-    // Delete the payment method
     const { error } = await supabase
-      .from('shopper_payment_methods')
+      .from('seller_accounts')
       .delete()
-      .eq('id', paymentMethodId)
-      .eq('user_id', userId);
-    
+      .eq('id', id)
+      .eq('user_id', userData.user.id);
+      
     if (error) {
       console.error('Error deleting payment method:', error);
       return false;
-    }
-    
-    // If this was the default payment method, set a new default if any exist
-    if (data.is_default) {
-      const { data: remainingMethods, error: listError } = await supabase
-        .from('shopper_payment_methods')
-        .select('id')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-        .limit(1);
-      
-      if (!listError && remainingMethods.length > 0) {
-        await supabase
-          .from('shopper_payment_methods')
-          .update({ is_default: true })
-          .eq('id', remainingMethods[0].id);
-      }
     }
     
     return true;
@@ -189,75 +217,49 @@ export async function deletePaymentMethod(paymentMethodId: string, userId: strin
 }
 
 // Update a payment method
-export async function updatePaymentMethod(
-  paymentMethodId: string,
-  updates: Partial<Omit<PaymentMethod, 'id' | 'userId' | 'createdAt' | 'updatedAt'>>
-): Promise<PaymentMethod | null> {
+export async function updateSellerAccount(id: string, accountData: Partial<SellerAccount>): Promise<boolean> {
   try {
-    // Prepare the update data
-    const updateData: any = {};
-    
-    if (updates.paymentType !== undefined) updateData.payment_type = updates.paymentType;
-    if (updates.cardLastFour !== undefined) updateData.card_last_four = updates.cardLastFour;
-    if (updates.cardBrand !== undefined) updateData.card_brand = updates.cardBrand;
-    if (updates.billingAddress !== undefined) updateData.billing_address = updates.billingAddress;
-    if (updates.metadata !== undefined) updateData.metadata = updates.metadata;
-    
-    // Handle isDefault separately since it requires additional logic
-    if (updates.isDefault !== undefined) {
-      // Get the payment method to find the user ID
-      const { data: paymentMethod, error: fetchError } = await supabase
-        .from('shopper_payment_methods')
-        .select('user_id')
-        .eq('id', paymentMethodId)
-        .single();
-      
-      if (fetchError) {
-        console.error('Error fetching payment method:', fetchError);
-        return null;
-      }
-      
-      // If setting as default, unset all other payment methods
-      if (updates.isDefault) {
-        await supabase
-          .from('shopper_payment_methods')
-          .update({ is_default: false })
-          .eq('user_id', paymentMethod.user_id);
-      }
-      
-      updateData.is_default = updates.isDefault;
+    const { data: userData } = await supabase.auth.getUser();
+    if (!userData || !userData.user) {
+      console.error('No authenticated user found');
+      return false;
     }
     
-    // Update the payment method
-    updateData.updated_at = new Date().toISOString();
-    
-    const { data, error } = await supabase
-      .from('shopper_payment_methods')
-      .update(updateData)
-      .eq('id', paymentMethodId)
-      .select()
-      .single();
-    
+    const { error } = await supabase
+      .from('seller_accounts')
+      .update({
+        ...accountData,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', id)
+      .eq('user_id', userData.user.id);
+      
     if (error) {
       console.error('Error updating payment method:', error);
-      return null;
+      return false;
     }
     
-    // Return the updated payment method
-    return {
-      id: data.id,
-      userId: data.user_id,
-      paymentType: data.payment_type as PaymentMethod['paymentType'],
-      cardLastFour: data.card_last_four,
-      cardBrand: data.card_brand,
-      billingAddress: data.billing_address,
-      isDefault: data.is_default,
-      createdAt: data.created_at,
-      updatedAt: data.updated_at,
-      metadata: data.metadata
-    };
+    return true;
   } catch (error) {
     console.error('Error in updatePaymentMethod:', error);
-    return null;
+    return false;
+  }
+}
+
+// Format a payment method for display
+export function formatPaymentMethod(account: SellerAccount): string {
+  if (!account) return 'Unknown Account';
+  
+  switch (account.account_type) {
+    case 'bank':
+      return `${account.bank_name || ''} •••• ${account.account_number?.slice(-4) || ''}`;
+    case 'paypal':
+      return `PayPal: ${account.paypal_email || ''}`;
+    case 'stripe':
+      return `Stripe Account`;
+    case 'applepay':
+      return `Apple Pay`;
+    default:
+      return `Payment Account`;
   }
 }

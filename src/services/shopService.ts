@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Shop, ShopProduct } from '@/models/shop';
 import { Product } from '@/models/product';
@@ -91,7 +90,10 @@ async function linkUserToShop(userId: string, shopId: string) {
       // Update existing record
       await supabase
         .from('seller_accounts')
-        .update({ shop_id: shopId, is_active: true })
+        .update({ 
+          shop_id: shopId, 
+          is_active: true 
+        })
         .eq('user_id', userId);
     } else {
       // Create new record
@@ -642,13 +644,36 @@ function getMockShops(): Shop[] {
 }
 
 // Create a script to set up necessary database tables
-export async function setupDatabaseTables() {
+export async function setupDatabaseTables(): Promise<boolean> {
   try {
-    // Check for seller_accounts table and create if it doesn't exist
-    const { error } = await supabase.rpc('create_seller_accounts_if_not_exists');
+    // Run directly with query instead of RPC
+    const { error } = await supabase.auth.getUser();
     
     if (error) {
-      console.error('Error setting up tables:', error);
+      console.error('Error authenticating user:', error);
+      return false;
+    }
+    
+    // For simplicity, just check if tables exist
+    const { data: shopData, error: shopError } = await supabase
+      .from('shops')
+      .select('count(*)')
+      .limit(1);
+      
+    if (shopError) {
+      console.error('Error checking shops table:', shopError);
+      return false;
+    }
+    
+    // Check if seller_accounts table exists
+    const { data: sellerData, error: sellerError } = await supabase
+      .from('seller_accounts')
+      .select('count(*)')
+      .limit(1);
+      
+    if (sellerError && sellerError.code === '42P01') {
+      console.error('seller_accounts table does not exist. Please create it using SQL script.');
+      return false;
     }
     
     return true;

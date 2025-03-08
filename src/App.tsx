@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -12,6 +13,7 @@ import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import AuthMiddleware from "@/components/auth/AuthMiddleware";
 import SplashScreen from "@/components/SplashScreen";
 import Navbar from "@/components/layout/Navbar";
+import { setupDatabaseTables } from "@/services/shopService";
 
 // Pages
 import Index from "./pages/Index";
@@ -64,8 +66,7 @@ const AppRoutes = () => {
                      location.pathname !== '/signup');
   
   return (
-    <>
-      <AuthMiddleware />
+    <AuthMiddleware>
       {showNavbar && <Navbar />}
       <Routes>
         {/* Public routes */}
@@ -146,8 +147,19 @@ const AppRoutes = () => {
         {/* 404 route */}
         <Route path="*" element={<NotFound />} />
       </Routes>
-    </>
+    </AuthMiddleware>
   );
+};
+
+// Helper function to run database setup
+const runDatabaseSetup = async (): Promise<boolean> => {
+  try {
+    const success = await setupDatabaseTables();
+    return success;
+  } catch (error) {
+    console.error("Error setting up database:", error);
+    return false;
+  }
 };
 
 function App() {

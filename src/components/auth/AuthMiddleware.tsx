@@ -5,7 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import SplashScreen from '@/components/SplashScreen';
 import BusinessOnboarding from './BusinessOnboarding';
 
-interface AuthMiddlewareProps {
+export interface AuthMiddlewareProps {
   children: React.ReactNode;
 }
 
@@ -42,7 +42,7 @@ const AuthMiddleware = ({ children }: AuthMiddlewareProps) => {
     location.pathname === '/dashboard/settings';
 
   if (isInitializing || showSplash) {
-    return <SplashScreen />;
+    return <SplashScreen onComplete={() => setShowSplash(false)} />;
   }
 
   if (needsOnboarding && !isOnboardingOrSettings) {

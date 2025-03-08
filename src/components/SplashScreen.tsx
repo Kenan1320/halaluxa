@@ -1,7 +1,7 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 
-interface SplashScreenProps {
+export interface SplashScreenProps {
   onComplete: () => void;
 }
 

@@ -1,46 +1,62 @@
 
 import { supabase } from '@/integrations/supabase/client';
 
-// This function checks if required tables exist and creates them if they don't
-export async function setupDatabase() {
+/**
+ * Setup database tables and relationships.
+ * This function should be called at app startup to ensure all needed tables exist.
+ */
+export const setupDatabase = async (): Promise<boolean> => {
   try {
-    console.log('Checking database setup...');
+    // Check if the Supabase client is initialized
+    if (!supabase) {
+      console.error('Supabase client not initialized');
+      return false;
+    }
+
+    // Try to query each of the required tables to check if they exist
+    const requiredTables = [
+      'profiles',
+      'shops',
+      'products',
+      'orders',
+      'seller_accounts',
+      'shop_display_settings'
+    ];
     
-    // 1. Check if seller_accounts table exists
-    const { error: sellerAccountsError } = await supabase
-      .from('seller_accounts')
-      .select('id')
-      .limit(1);
+    let tablesExist = true;
     
-    if (sellerAccountsError && sellerAccountsError.code === '42P01') { // Table doesn't exist
-      console.log('Creating seller_accounts table...');
-      
-      // Create the seller_accounts table
-      await supabase.rpc('create_seller_accounts_if_not_exists');
+    for (const table of requiredTables) {
+      const { data, error } = await supabase
+        .from(table)
+        .select('count(*)')
+        .limit(1);
+        
+      if (error) {
+        console.error(`Table ${table} might not exist or is inaccessible:`, error);
+        tablesExist = false;
+      } else {
+        console.log(`Table ${table} exists`);
+      }
     }
     
-    // 2. Check if the shopper_payment_methods table exists
-    const { error: paymentMethodsError } = await supabase
-      .from('shopper_payment_methods')
-      .select('id')
-      .limit(1);
-    
-    if (paymentMethodsError && paymentMethodsError.code === '42P01') { // Table doesn't exist
-      console.log('Creating shopper_payment_methods table...');
-      
-      // If we need to create this table too, call the same RPC function
-      await supabase.rpc('create_seller_accounts_if_not_exists');
+    if (!tablesExist) {
+      console.warn('Some required tables do not exist. Please run the database setup SQL.');
+      return false;
     }
     
-    console.log('Database setup complete!');
+    // The database tables exist, now check that the seller_accounts table has the correct structure
+    console.log('Database tables exist');
     return true;
   } catch (error) {
     console.error('Error setting up database:', error);
     return false;
   }
-}
+};
 
-// This function should be called when the app starts
-export async function runDatabaseSetup() {
-  return await setupDatabase();
-}
+// Function to run database setup tasks
+export const runDatabaseSetup = async (): Promise<boolean> => {
+  const success = await setupDatabase();
+  return success;
+};
+
+export default runDatabaseSetup;

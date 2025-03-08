@@ -1,4 +1,5 @@
 
+// Shop model interfaces
 export interface Shop {
   id: string;
   name: string;
@@ -11,19 +12,19 @@ export interface Shop {
   logo: string | null;
   coverImage: string | null;
   ownerId: string;
-  latitude?: number | null;
-  longitude?: number | null;
-  distance?: number | null;
+  latitude: number | null;
+  longitude: number | null;
+  distance: number | null;
 }
 
 export interface ShopProduct {
   id: string;
   name: string;
-  description: string;
   price: number;
-  category: string;
+  description: string;
+  category: string; 
   images: string[];
   sellerId: string;
-  sellerName?: string;
-  rating?: number;
+  sellerName: string;
+  rating: number;
 }
