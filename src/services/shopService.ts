@@ -67,6 +67,9 @@ export const getShops = async (): Promise<Shop[]> => {
   }
 };
 
+// Alias for getShops to fix import errors in multiple files
+export const getAllShops = getShops;
+
 // Get a specific shop by ID
 export const getShopById = async (shopId: string): Promise<Shop | null> => {
   try {
@@ -126,7 +129,7 @@ export const getShopProducts = async (shopId: string): Promise<ShopProduct[]> =>
       category: product.category,
       images: product.images || [],
       sellerId: product.seller_id,
-      sellerName: product.shops?.name,
+      sellerName: product.shops?.name || 'Unknown Shop',
       rating: product.rating
     }));
   } catch (error) {
@@ -148,8 +151,57 @@ export const convertToModelProduct = (shopProduct: ShopProduct): Product => {
     sellerName: shopProduct.sellerName || 'Unknown Seller',
     inStock: true,
     rating: shopProduct.rating || 5,
-    isHalalCertified: true
+    isHalalCertified: true,
+    createdAt: new Date().toISOString()
   };
+};
+
+// Create a new shop
+export const createShop = async (shopData: Omit<Shop, 'id'>): Promise<Shop | null> => {
+  try {
+    const { data, error } = await supabase
+      .from('shops')
+      .insert({
+        name: shopData.name,
+        description: shopData.description,
+        location: shopData.location,
+        rating: shopData.rating || 0,
+        product_count: shopData.productCount || 0,
+        is_verified: shopData.isVerified || false,
+        category: shopData.category || 'General',
+        logo_url: shopData.logo || null,
+        cover_image_url: shopData.coverImage || null,
+        owner_id: shopData.ownerId,
+        latitude: shopData.latitude || null,
+        longitude: shopData.longitude || null
+      })
+      .select()
+      .single();
+    
+    if (error) {
+      console.error('Error creating shop:', error);
+      return null;
+    }
+    
+    return {
+      id: data.id,
+      name: data.name,
+      description: data.description || '',
+      location: data.location || 'Unknown location',
+      rating: data.rating || 0,
+      productCount: data.product_count || 0,
+      isVerified: !!data.is_verified,
+      category: data.category || 'General',
+      logo: data.logo_url,
+      coverImage: data.cover_image_url,
+      ownerId: data.owner_id,
+      latitude: data.latitude,
+      longitude: data.longitude
+    };
+  } catch (error) {
+    console.error('Error in createShop:', error);
+    return null;
+  }
 };
 
 // Upload product image to Supabase storage
@@ -205,33 +257,56 @@ export const subscribeToShops = (callback: (shops: Shop[]) => void) => {
 export const setMainShop = async (shopId: string, userId: string): Promise<boolean> => {
   try {
     // First, unset any existing main shops for this user
-    const { error: updateError } = await supabase
-      .from('user_shop_preferences')
-      .update({ is_main: false })
-      .eq('user_id', userId);
-    
-    if (updateError) {
-      console.error('Error unsetting previous main shop:', updateError);
+    try {
+      await supabase
+        .from('user_shop_preferences')
+        .update({ is_main: false })
+        .eq('user_id', userId);
+    } catch (error) {
+      console.error('Error unsetting previous main shop:', error);
     }
     
     // Then, set the new main shop
-    const { error } = await supabase
-      .from('user_shop_preferences')
-      .upsert({ 
-        user_id: userId, 
-        shop_id: shopId, 
-        is_main: true 
-      });
-    
-    if (error) {
+    try {
+      await supabase
+        .from('user_shop_preferences')
+        .upsert({ 
+          user_id: userId, 
+          shop_id: shopId, 
+          is_main: true 
+        });
+      
+      return true;
+    } catch (error) {
       console.error('Error setting main shop:', error);
       return false;
     }
-    
-    return true;
   } catch (error) {
     console.error('Error in setMainShop:', error);
     return false;
+  }
+};
+
+// Get the main shop for a user
+export const getMainShop = async (userId: string): Promise<Shop | null> => {
+  try {
+    // First, get the main shop preference
+    const { data: prefData, error: prefError } = await supabase
+      .from('user_shop_preferences')
+      .select('shop_id')
+      .eq('user_id', userId)
+      .eq('is_main', true)
+      .single();
+    
+    if (prefError || !prefData) {
+      return null;
+    }
+    
+    // Then get the shop details
+    return getShopById(prefData.shop_id);
+  } catch (error) {
+    console.error('Error in getMainShop:', error);
+    return null;
   }
 };
 

@@ -1,266 +1,271 @@
 
 import React, { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { CreditCard, DollarSign, Banknote } from 'lucide-react';
-import { addPaymentMethod, updatePaymentMethod } from '@/services/paymentMethodService';
+import { Card } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { PaymentMethod } from '@/models/shop';
+import { useAuth } from '@/context/AuthContext';
+import { addPaymentMethod } from '@/services/paymentMethodService';
 
-const formSchema = z.object({
-  paymentType: z.enum(['card', 'paypal', 'applepay', 'googlepay']),
-  cardNumber: z.string().optional().refine(val => !val || val.length === 16, {
-    message: 'Card number must be 16 digits',
-  }),
-  cardExpiry: z.string().optional().refine(val => !val || /^(0[1-9]|1[0-2])\/\d{2}$/.test(val), {
-    message: 'Expiry date must be in MM/YY format',
-  }),
-  cardCvc: z.string().optional().refine(val => !val || (val.length >= 3 && val.length <= 4), {
-    message: 'CVC must be 3 or 4 digits',
-  }),
-  cardName: z.string().optional(),
-  isDefault: z.boolean().default(false),
-});
-
-type FormValues = z.infer<typeof formSchema>;
-
-interface PaymentMethodFormProps {
-  existingMethod?: PaymentMethod;
-  onSuccess?: () => void;
-}
-
-const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({ existingMethod, onSuccess }) => {
-  const [isSubmitting, setIsSubmitting] = useState(false);
+const PaymentMethodForm = ({ onSuccess }: { onSuccess: () => void }) => {
+  const { user } = useAuth();
   const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
   
-  const { register, handleSubmit, watch, formState: { errors } } = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      paymentType: existingMethod?.paymentType || 'card',
-      isDefault: existingMethod?.isDefault || false,
-    }
+  const [cardNumber, setCardNumber] = useState('');
+  const [expiryDate, setExpiryDate] = useState('');
+  const [cvv, setCvv] = useState('');
+  const [nameOnCard, setNameOnCard] = useState('');
+  const [isDefault, setIsDefault] = useState(false);
+  
+  const [billingAddress, setBillingAddress] = useState({
+    street: '',
+    city: '',
+    state: '',
+    zip: '',
+    country: 'USA'
   });
   
-  const paymentType = watch('paymentType');
+  const formatCardNumber = (value: string) => {
+    return value
+      .replace(/\s/g, '')
+      .replace(/(\d{4})/g, '$1 ')
+      .trim();
+  };
   
-  const onSubmit = async (data: FormValues) => {
-    setIsSubmitting(true);
+  const formatExpiryDate = (value: string) => {
+    return value
+      .replace(/\D/g, '')
+      .replace(/(\d{2})(\d)/, '$1/$2')
+      .substring(0, 5);
+  };
+  
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!user) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to add a payment method",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setIsLoading(true);
     
     try {
-      const cardLastFour = data.cardNumber ? data.cardNumber.slice(-4) : undefined;
-      const cardBrand = determineCardBrand(data.cardNumber);
+      // Extract card data for submission
+      const cardLast4 = cardNumber.replace(/\s/g, '').slice(-4);
       
-      if (existingMethod) {
-        // Update existing payment method
-        const result = await updatePaymentMethod(existingMethod.id, {
-          paymentType: data.paymentType,
-          cardLastFour,
-          cardBrand,
-          isDefault: data.isDefault,
-          // Additional fields would be handled here
+      // Add the payment method
+      const success = await addPaymentMethod({
+        userId: user.id,
+        cardLastFour: cardLast4,
+        cardBrand: detectCardType(cardNumber),
+        billingAddress: `${billingAddress.street}, ${billingAddress.city}, ${billingAddress.state} ${billingAddress.zip}`,
+        isDefault,
+        metadata: { nameOnCard }
+      });
+      
+      if (success) {
+        toast({
+          title: "Success",
+          description: "Payment method added successfully"
         });
         
-        if (result) {
-          toast({
-            title: 'Payment method updated',
-            description: 'Your payment method has been updated successfully.',
-          });
-          if (onSuccess) onSuccess();
-        }
+        // Reset form
+        setCardNumber('');
+        setExpiryDate('');
+        setCvv('');
+        setNameOnCard('');
+        setIsDefault(false);
+        setBillingAddress({
+          street: '',
+          city: '',
+          state: '',
+          zip: '',
+          country: 'USA'
+        });
+        
+        // Trigger success callback
+        onSuccess();
       } else {
-        // Add new payment method
-        const result = await addPaymentMethod({
-          userId: '', // This will be set by the API based on the authenticated user
-          paymentType: data.paymentType,
-          cardLastFour,
-          cardBrand,
-          isDefault: data.isDefault,
-          // Additional fields would be handled here
+        toast({
+          title: "Error",
+          description: "Failed to add payment method",
+          variant: "destructive"
         });
-        
-        if (result) {
-          toast({
-            title: 'Payment method added',
-            description: 'Your new payment method has been added successfully.',
-          });
-          if (onSuccess) onSuccess();
-        }
       }
     } catch (error) {
-      console.error('Error saving payment method:', error);
+      console.error('Error adding payment method:', error);
       toast({
-        title: 'Error',
-        description: 'There was a problem saving your payment method.',
-        variant: 'destructive',
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive"
       });
     } finally {
-      setIsSubmitting(false);
+      setIsLoading(false);
     }
   };
   
-  // Simple function to determine card brand from number
-  const determineCardBrand = (cardNumber?: string): string => {
-    if (!cardNumber) return '';
+  const detectCardType = (cardNumber: string): string => {
+    const cleanNumber = cardNumber.replace(/\D/g, '');
     
-    // Very basic check - in a real app you'd want a more comprehensive check
-    if (cardNumber.startsWith('4')) return 'Visa';
-    if (cardNumber.startsWith('5')) return 'Mastercard';
-    if (cardNumber.startsWith('3')) return 'Amex';
-    if (cardNumber.startsWith('6')) return 'Discover';
+    if (/^4/.test(cleanNumber)) return 'Visa';
+    if (/^5[1-5]/.test(cleanNumber)) return 'Mastercard';
+    if (/^3[47]/.test(cleanNumber)) return 'American Express';
+    if (/^6(?:011|5)/.test(cleanNumber)) return 'Discover';
     
-    return 'Unknown';
+    return 'Card';
   };
-
+  
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      <div className="space-y-4">
-        <Label>Payment Method</Label>
-        <RadioGroup
-          defaultValue={paymentType}
-          {...register('paymentType')}
-          className="grid grid-cols-2 gap-4"
-        >
+    <Card className="p-6">
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label htmlFor="nameOnCard" className="block text-sm font-medium text-gray-700 mb-1">
+            Name on Card
+          </label>
+          <input
+            type="text"
+            id="nameOnCard"
+            value={nameOnCard}
+            onChange={(e) => setNameOnCard(e.target.value)}
+            required
+            className="w-full p-2 border border-gray-300 rounded-md focus:ring-haluna-primary focus:border-haluna-primary"
+            placeholder="Name as it appears on your card"
+          />
+        </div>
+        
+        <div>
+          <label htmlFor="cardNumber" className="block text-sm font-medium text-gray-700 mb-1">
+            Card Number
+          </label>
+          <input
+            type="text"
+            id="cardNumber"
+            value={cardNumber}
+            onChange={(e) => setCardNumber(formatCardNumber(e.target.value))}
+            required
+            maxLength={19}
+            className="w-full p-2 border border-gray-300 rounded-md focus:ring-haluna-primary focus:border-haluna-primary"
+            placeholder="1234 5678 9012 3456"
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            For testing, use any valid-format credit card number
+          </p>
+        </div>
+        
+        <div className="grid grid-cols-2 gap-4">
           <div>
-            <RadioGroupItem 
-              value="card" 
-              id="card" 
-              className="peer sr-only" 
-              {...register('paymentType')}
+            <label htmlFor="expiryDate" className="block text-sm font-medium text-gray-700 mb-1">
+              Expiry Date
+            </label>
+            <input
+              type="text"
+              id="expiryDate"
+              value={expiryDate}
+              onChange={(e) => setExpiryDate(formatExpiryDate(e.target.value))}
+              required
+              maxLength={5}
+              className="w-full p-2 border border-gray-300 rounded-md focus:ring-haluna-primary focus:border-haluna-primary"
+              placeholder="MM/YY"
             />
-            <Label
-              htmlFor="card"
-              className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
-            >
-              <CreditCard className="mb-3 h-6 w-6" />
-              <span className="text-sm font-medium">Credit Card</span>
-            </Label>
           </div>
-          
           <div>
-            <RadioGroupItem 
-              value="paypal" 
-              id="paypal" 
-              className="peer sr-only" 
-              {...register('paymentType')} 
-            />
-            <Label
-              htmlFor="paypal"
-              className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
-            >
-              <DollarSign className="mb-3 h-6 w-6" />
-              <span className="text-sm font-medium">PayPal</span>
-            </Label>
-          </div>
-          
-          <div>
-            <RadioGroupItem 
-              value="applepay" 
-              id="applepay" 
-              className="peer sr-only" 
-              {...register('paymentType')} 
-            />
-            <Label
-              htmlFor="applepay"
-              className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
-            >
-              <Banknote className="mb-3 h-6 w-6" />
-              <span className="text-sm font-medium">Apple Pay</span>
-            </Label>
-          </div>
-          
-          <div>
-            <RadioGroupItem 
-              value="googlepay" 
-              id="googlepay" 
-              className="peer sr-only" 
-              {...register('paymentType')} 
-            />
-            <Label
-              htmlFor="googlepay"
-              className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
-            >
-              <Banknote className="mb-3 h-6 w-6" />
-              <span className="text-sm font-medium">Google Pay</span>
-            </Label>
-          </div>
-        </RadioGroup>
-        {errors.paymentType && (
-          <p className="text-sm text-destructive">{errors.paymentType.message}</p>
-        )}
-      </div>
-      
-      {paymentType === 'card' && (
-        <div className="space-y-4">
-          <div className="grid gap-2">
-            <Label htmlFor="cardNumber">Card Number</Label>
-            <Input
-              id="cardNumber"
-              placeholder="1234 5678 9012 3456"
-              {...register('cardNumber')}
-            />
-            {errors.cardNumber && (
-              <p className="text-sm text-destructive">{errors.cardNumber.message}</p>
-            )}
-          </div>
-          
-          <div className="grid grid-cols-2 gap-4">
-            <div className="grid gap-2">
-              <Label htmlFor="cardExpiry">Expiry Date</Label>
-              <Input
-                id="cardExpiry"
-                placeholder="MM/YY"
-                {...register('cardExpiry')}
-              />
-              {errors.cardExpiry && (
-                <p className="text-sm text-destructive">{errors.cardExpiry.message}</p>
-              )}
-            </div>
-            
-            <div className="grid gap-2">
-              <Label htmlFor="cardCvc">CVC</Label>
-              <Input
-                id="cardCvc"
-                placeholder="123"
-                {...register('cardCvc')}
-              />
-              {errors.cardCvc && (
-                <p className="text-sm text-destructive">{errors.cardCvc.message}</p>
-              )}
-            </div>
-          </div>
-          
-          <div className="grid gap-2">
-            <Label htmlFor="cardName">Name on Card</Label>
-            <Input
-              id="cardName"
-              placeholder="J. Smith"
-              {...register('cardName')}
+            <label htmlFor="cvv" className="block text-sm font-medium text-gray-700 mb-1">
+              CVV
+            </label>
+            <input
+              type="text"
+              id="cvv"
+              value={cvv}
+              onChange={(e) => setCvv(e.target.value.replace(/\D/g, '').substring(0, 4))}
+              required
+              maxLength={4}
+              className="w-full p-2 border border-gray-300 rounded-md focus:ring-haluna-primary focus:border-haluna-primary"
+              placeholder="123"
             />
           </div>
         </div>
-      )}
-      
-      <div className="flex items-center space-x-2">
-        <input
-          type="checkbox"
-          id="isDefault"
-          className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-          {...register('isDefault')}
-        />
-        <Label htmlFor="isDefault" className="text-sm font-normal">
-          Set as default payment method
-        </Label>
-      </div>
-      
-      <Button type="submit" className="w-full" disabled={isSubmitting}>
-        {isSubmitting ? 'Saving...' : existingMethod ? 'Update Payment Method' : 'Add Payment Method'}
-      </Button>
-    </form>
+        
+        <div>
+          <h3 className="text-sm font-medium text-gray-700 mb-2">Billing Address</h3>
+          <div className="space-y-3">
+            <div>
+              <input
+                type="text"
+                value={billingAddress.street}
+                onChange={(e) => setBillingAddress({ ...billingAddress, street: e.target.value })}
+                required
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-haluna-primary focus:border-haluna-primary"
+                placeholder="Street Address"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <input
+                type="text"
+                value={billingAddress.city}
+                onChange={(e) => setBillingAddress({ ...billingAddress, city: e.target.value })}
+                required
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-haluna-primary focus:border-haluna-primary"
+                placeholder="City"
+              />
+              <input
+                type="text"
+                value={billingAddress.state}
+                onChange={(e) => setBillingAddress({ ...billingAddress, state: e.target.value })}
+                required
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-haluna-primary focus:border-haluna-primary"
+                placeholder="State"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <input
+                type="text"
+                value={billingAddress.zip}
+                onChange={(e) => setBillingAddress({ ...billingAddress, zip: e.target.value.replace(/\D/g, '') })}
+                required
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-haluna-primary focus:border-haluna-primary"
+                placeholder="ZIP Code"
+              />
+              <select
+                value={billingAddress.country}
+                onChange={(e) => setBillingAddress({ ...billingAddress, country: e.target.value })}
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-haluna-primary focus:border-haluna-primary"
+              >
+                <option value="USA">United States</option>
+                <option value="CAN">Canada</option>
+                <option value="GBR">United Kingdom</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        
+        <div className="flex items-center">
+          <input
+            type="checkbox"
+            id="isDefault"
+            checked={isDefault}
+            onChange={(e) => setIsDefault(e.target.checked)}
+            className="h-4 w-4 text-haluna-primary focus:ring-haluna-primary border-gray-300 rounded"
+          />
+          <label htmlFor="isDefault" className="ml-2 block text-sm text-gray-700">
+            Set as default payment method
+          </label>
+        </div>
+        
+        <div className="flex justify-end">
+          <Button
+            type="submit"
+            disabled={isLoading}
+            className="bg-haluna-primary hover:bg-haluna-primary-dark text-white"
+          >
+            {isLoading ? 'Adding...' : 'Add Payment Method'}
+          </Button>
+        </div>
+      </form>
+    </Card>
   );
 };
 

@@ -1,10 +1,11 @@
+
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import { getNearbyShopsByCoordinates } from '@/services/shopService';
-import { getUserLocation } from '@/services/locationService';
+import { getCurrentLocation } from '@/services/locationService';
 
-interface LocationContextProps {
+export interface LocationContextProps {
   isLocationEnabled: boolean;
-  location: { latitude: number; longitude: number } | null;
+  location: { latitude: number; longitude: number; city?: string; state?: string } | null;
   requestLocation: () => void;
   getNearbyShops: () => Promise<any[]>;
 }
@@ -13,13 +14,18 @@ const LocationContext = createContext<LocationContextProps | undefined>(undefine
 
 export const LocationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isLocationEnabled, setIsLocationEnabled] = useState(false);
-  const [location, setLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [location, setLocation] = useState<{ latitude: number; longitude: number; city?: string; state?: string } | null>(null);
   
   const requestLocation = useCallback(async () => {
     try {
-      const userLocation = await getUserLocation();
-      if (userLocation) {
-        setLocation(userLocation);
+      const locationInfo = await getCurrentLocation();
+      if (locationInfo) {
+        setLocation({
+          latitude: locationInfo.coordinates.latitude,
+          longitude: locationInfo.coordinates.longitude,
+          city: locationInfo.city,
+          state: locationInfo.state
+        });
         setIsLocationEnabled(true);
       } else {
         setIsLocationEnabled(false);
