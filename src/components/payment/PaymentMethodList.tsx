@@ -1,10 +1,11 @@
-
-import React, { useEffect, useState } from 'react';
-import { CreditCard, DollarSign, Banknote, Trash2, CheckCircle, Edit } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { getPaymentMethods, deletePaymentMethod, setDefaultPaymentMethod } from '@/services/paymentMethodService';
-import { useToast } from '@/hooks/use-toast';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { PaymentMethod } from '@/models/shop';
+import { getUserPaymentMethods, setDefaultPaymentMethod, deletePaymentMethod } from '@/services/paymentMethodService';
+import { useAuth } from '@/context/AuthContext';
+import { CreditCard, Trash2, CheckCircle, Plus } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,11 +27,13 @@ const PaymentMethodList: React.FC<PaymentMethodListProps> = ({ onEdit, onMethods
   const [isLoading, setIsLoading] = useState(true);
   const [methodToDelete, setMethodToDelete] = useState<string | null>(null);
   const { toast } = useToast();
-  
+  const navigate = useNavigate();
+  const { user } = useAuth();
+
   const fetchPaymentMethods = async () => {
     setIsLoading(true);
     try {
-      const methods = await getPaymentMethods();
+      const methods = await getUserPaymentMethods(user?.id || '');
       setPaymentMethods(methods);
     } catch (error) {
       console.error('Error fetching payment methods:', error);
@@ -43,11 +46,11 @@ const PaymentMethodList: React.FC<PaymentMethodListProps> = ({ onEdit, onMethods
       setIsLoading(false);
     }
   };
-  
+
   useEffect(() => {
     fetchPaymentMethods();
   }, []);
-  
+
   const handleSetDefault = async (id: string) => {
     try {
       const success = await setDefaultPaymentMethod(id);
@@ -70,7 +73,7 @@ const PaymentMethodList: React.FC<PaymentMethodListProps> = ({ onEdit, onMethods
       });
     }
   };
-  
+
   const handleDelete = async (id: string) => {
     try {
       const success = await deletePaymentMethod(id);
@@ -94,7 +97,7 @@ const PaymentMethodList: React.FC<PaymentMethodListProps> = ({ onEdit, onMethods
       });
     }
   };
-  
+
   const getPaymentIcon = (type: string) => {
     switch (type) {
       case 'card':
@@ -108,7 +111,7 @@ const PaymentMethodList: React.FC<PaymentMethodListProps> = ({ onEdit, onMethods
         return <CreditCard className="h-6 w-6" />;
     }
   };
-  
+
   const getPaymentLabel = (method: PaymentMethod) => {
     switch (method.paymentType) {
       case 'card':
@@ -123,7 +126,7 @@ const PaymentMethodList: React.FC<PaymentMethodListProps> = ({ onEdit, onMethods
         return 'Unknown Payment Method';
     }
   };
-  
+
   if (isLoading) {
     return (
       <div className="space-y-4">
@@ -148,7 +151,7 @@ const PaymentMethodList: React.FC<PaymentMethodListProps> = ({ onEdit, onMethods
       </div>
     );
   }
-  
+
   if (paymentMethods.length === 0) {
     return (
       <div className="text-center py-8 border rounded-md bg-gray-50">

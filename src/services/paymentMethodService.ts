@@ -2,276 +2,310 @@
 import { supabase } from '@/integrations/supabase/client';
 import { PaymentMethod } from '@/models/shop';
 
-// Get all payment methods for the current user
-export const getUserPaymentMethods = async (): Promise<PaymentMethod[]> => {
-  try {
-    const { data: userData } = await supabase.auth.getUser();
-    
-    if (!userData.user) {
-      throw new Error('User not authenticated');
-    }
-    
-    const { data, error } = await supabase
-      .from('shopper_payment_methods')
-      .select('*')
-      .eq('user_id', userData.user.id)
-      .order('created_at', { ascending: false });
-    
-    if (error) {
-      throw error;
-    }
-    
-    return data.map(transformPaymentMethod);
-  } catch (error) {
-    console.error('Error fetching payment methods:', error);
-    return [];
-  }
-};
-
-// Get a specific payment method by ID
-export const getPaymentMethod = async (id: string): Promise<PaymentMethod | null> => {
+// Get payment method by ID
+export const getPaymentMethod = async (methodId: string): Promise<PaymentMethod | null> => {
   try {
     const { data, error } = await supabase
-      .from('shopper_payment_methods')
+      .from('payment_methods')
       .select('*')
-      .eq('id', id)
+      .eq('id', methodId)
       .single();
     
     if (error) {
-      throw error;
+      console.error('Error fetching payment method:', error);
+      return null;
     }
     
-    return transformPaymentMethod(data);
+    if (!data) return null;
+    
+    return {
+      id: data.id,
+      userId: data.user_id,
+      paymentType: data.payment_type,
+      cardLastFour: data.card_last_four,
+      cardBrand: data.card_brand,
+      billingAddress: data.billing_address ? JSON.parse(data.billing_address) : undefined,
+      isDefault: !!data.is_default,
+      createdAt: data.created_at,
+      updatedAt: data.updated_at,
+      metadata: data.metadata ? JSON.parse(data.metadata) : {},
+    };
   } catch (error) {
-    console.error(`Error fetching payment method ${id}:`, error);
+    console.error('Error in getPaymentMethod:', error);
     return null;
   }
 };
 
-// Add a new payment method
-export const addPaymentMethod = async (paymentMethod: Partial<PaymentMethod>): Promise<PaymentMethod | null> => {
+// Get all payment methods for a user
+export const getUserPaymentMethods = async (userId: string): Promise<PaymentMethod[]> => {
   try {
-    const { data: userData } = await supabase.auth.getUser();
+    const { data, error } = await supabase
+      .from('payment_methods')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
     
-    if (!userData.user) {
-      throw new Error('User not authenticated');
+    if (error) {
+      console.error('Error fetching user payment methods:', error);
+      return [];
     }
     
-    // Check if this is the first payment method, make it default if so
-    const { count, error: countError } = await supabase
-      .from('shopper_payment_methods')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', userData.user.id);
-    
-    if (countError) {
-      throw countError;
-    }
-    
-    const isDefault = count === 0 ? true : paymentMethod.isDefault || false;
-    
-    // If this is set as default, unset other defaults
-    if (isDefault) {
-      await supabase
-        .from('shopper_payment_methods')
-        .update({ is_default: false })
-        .eq('user_id', userData.user.id);
-    }
-    
-    // Format the data for insertion
+    return data.map(method => ({
+      id: method.id,
+      userId: method.user_id,
+      paymentType: method.payment_type,
+      cardLastFour: method.card_last_four,
+      cardBrand: method.card_brand,
+      billingAddress: method.billing_address ? JSON.parse(method.billing_address) : undefined,
+      isDefault: !!method.is_default,
+      createdAt: method.created_at,
+      updatedAt: method.updated_at,
+      metadata: method.metadata ? JSON.parse(method.metadata) : {},
+    }));
+  } catch (error) {
+    console.error('Error in getUserPaymentMethods:', error);
+    return [];
+  }
+};
+
+// Add a new payment method
+export const addPaymentMethod = async (paymentMethodData: {
+  userId: string;
+  paymentType: 'card' | 'paypal' | 'applepay' | 'googlepay';
+  cardLastFour?: string;
+  cardBrand?: string;
+  billingAddress?: {
+    street: string;
+    city: string;
+    state: string;
+    zip: string;
+    country: string;
+  };
+  isDefault?: boolean;
+  metadata?: any;
+}): Promise<PaymentMethod | null> => {
+  try {
     const dbPaymentMethod = {
-      user_id: userData.user.id,
-      payment_type: paymentMethod.paymentType,
-      card_last_four: paymentMethod.cardLastFour,
-      card_brand: paymentMethod.cardBrand,
-      billing_address: paymentMethod.billingAddress ? JSON.stringify(paymentMethod.billingAddress) : null,
-      is_default: isDefault,
-      metadata: paymentMethod.metadata ? JSON.stringify(paymentMethod.metadata) : null
+      user_id: paymentMethodData.userId,
+      payment_type: paymentMethodData.paymentType,
+      card_last_four: paymentMethodData.cardLastFour || null,
+      card_brand: paymentMethodData.cardBrand || null,
+      billing_address: paymentMethodData.billingAddress ? JSON.stringify(paymentMethodData.billingAddress) : null,
+      is_default: !!paymentMethodData.isDefault,
+      metadata: paymentMethodData.metadata ? JSON.stringify(paymentMethodData.metadata) : null
     };
     
+    // If setting this payment method as default, unset any previous default
+    if (paymentMethodData.isDefault) {
+      await supabase
+        .from('payment_methods')
+        .update({ is_default: false })
+        .eq('user_id', paymentMethodData.userId)
+        .eq('is_default', true);
+    }
+    
     const { data, error } = await supabase
-      .from('shopper_payment_methods')
+      .from('payment_methods')
       .insert(dbPaymentMethod)
       .select()
       .single();
     
     if (error) {
-      throw error;
+      console.error('Error adding payment method:', error);
+      return null;
     }
     
-    return transformPaymentMethod(data);
+    return {
+      id: data.id,
+      userId: data.user_id,
+      paymentType: data.payment_type,
+      cardLastFour: data.card_last_four,
+      cardBrand: data.card_brand,
+      billingAddress: data.billing_address ? JSON.parse(data.billing_address) : undefined,
+      isDefault: !!data.is_default,
+      createdAt: data.created_at,
+      updatedAt: data.updated_at,
+      metadata: data.metadata ? JSON.parse(data.metadata) : {},
+    };
   } catch (error) {
-    console.error('Error adding payment method:', error);
+    console.error('Error in addPaymentMethod:', error);
     return null;
   }
 };
 
-// Update a payment method
-export const updatePaymentMethod = async (id: string, updates: Partial<PaymentMethod>): Promise<PaymentMethod | null> => {
+// Update an existing payment method
+export const updatePaymentMethod = async (
+  methodId: string,
+  updates: {
+    cardLastFour?: string;
+    cardBrand?: string;
+    billingAddress?: {
+      street: string;
+      city: string;
+      state: string;
+      zip: string;
+      country: string;
+    };
+    isDefault?: boolean;
+    metadata?: any;
+  }
+): Promise<PaymentMethod | null> => {
   try {
-    const { data: userData } = await supabase.auth.getUser();
-    
-    if (!userData.user) {
-      throw new Error('User not authenticated');
-    }
-    
-    // If setting as default, unset other defaults
-    if (updates.isDefault) {
-      await supabase
-        .from('shopper_payment_methods')
-        .update({ is_default: false })
-        .eq('user_id', userData.user.id)
-        .neq('id', id);
-    }
-    
-    // Format the data for update
     const dbUpdates: any = {};
     
-    if (updates.paymentType !== undefined) dbUpdates.payment_type = updates.paymentType;
-    if (updates.cardLastFour !== undefined) dbUpdates.card_last_four = updates.cardLastFour;
-    if (updates.cardBrand !== undefined) dbUpdates.card_brand = updates.cardBrand;
-    if (updates.billingAddress !== undefined) dbUpdates.billing_address = JSON.stringify(updates.billingAddress);
-    if (updates.isDefault !== undefined) dbUpdates.is_default = updates.isDefault;
-    if (updates.metadata !== undefined) dbUpdates.metadata = JSON.stringify(updates.metadata);
+    if (updates.cardLastFour !== undefined) {
+      dbUpdates.card_last_four = updates.cardLastFour;
+    }
+    
+    if (updates.cardBrand !== undefined) {
+      dbUpdates.card_brand = updates.cardBrand;
+    }
+    
+    if (updates.billingAddress !== undefined) {
+      dbUpdates.billing_address = JSON.stringify(updates.billingAddress);
+    }
+    
+    if (updates.metadata !== undefined) {
+      dbUpdates.metadata = JSON.stringify(updates.metadata);
+    }
+    
+    if (updates.isDefault) {
+      // Get the payment method to find its user_id
+      const { data: methodData } = await supabase
+        .from('payment_methods')
+        .select('user_id')
+        .eq('id', methodId)
+        .single();
+      
+      if (methodData) {
+        const userId = methodData.user_id;
+        
+        // Unset any previous default
+        await supabase
+          .from('payment_methods')
+          .update({ is_default: false })
+          .eq('user_id', userId)
+          .eq('is_default', true);
+      }
+      
+      dbUpdates.is_default = true;
+    }
     
     const { data, error } = await supabase
-      .from('shopper_payment_methods')
+      .from('payment_methods')
       .update(dbUpdates)
-      .eq('id', id)
-      .eq('user_id', userData.user.id)
+      .eq('id', methodId)
       .select()
       .single();
     
     if (error) {
-      throw error;
+      console.error('Error updating payment method:', error);
+      return null;
     }
     
-    return transformPaymentMethod(data);
+    return {
+      id: data.id,
+      userId: data.user_id,
+      paymentType: data.payment_type,
+      cardLastFour: data.card_last_four,
+      cardBrand: data.card_brand,
+      billingAddress: data.billing_address ? JSON.parse(data.billing_address) : undefined,
+      isDefault: !!data.is_default,
+      createdAt: data.created_at,
+      updatedAt: data.updated_at,
+      metadata: data.metadata ? JSON.parse(data.metadata) : {},
+    };
   } catch (error) {
-    console.error(`Error updating payment method ${id}:`, error);
+    console.error('Error in updatePaymentMethod:', error);
     return null;
   }
 };
 
 // Delete a payment method
-export const deletePaymentMethod = async (id: string): Promise<boolean> => {
+export const deletePaymentMethod = async (methodId: string): Promise<boolean> => {
   try {
-    const { data: userData } = await supabase.auth.getUser();
-    
-    if (!userData.user) {
-      throw new Error('User not authenticated');
-    }
-    
-    // Check if this is the default payment method
-    const { data: method, error: fetchError } = await supabase
-      .from('shopper_payment_methods')
-      .select('is_default')
-      .eq('id', id)
-      .eq('user_id', userData.user.id)
+    // If this is a default payment method, find another to make default
+    const { data: currentMethod } = await supabase
+      .from('payment_methods')
+      .select('user_id, is_default')
+      .eq('id', methodId)
       .single();
     
-    if (fetchError) {
-      throw fetchError;
-    }
-    
-    // Delete the payment method
-    const { error } = await supabase
-      .from('shopper_payment_methods')
-      .delete()
-      .eq('id', id)
-      .eq('user_id', userData.user.id);
-    
-    if (error) {
-      throw error;
-    }
-    
-    // If this was the default payment method, set a new default
-    if (method && method.is_default) {
-      const { data: availableMethods, error: listError } = await supabase
-        .from('shopper_payment_methods')
+    if (currentMethod && currentMethod.is_default) {
+      // Find another payment method for this user
+      const { data: otherMethods } = await supabase
+        .from('payment_methods')
         .select('id')
-        .eq('user_id', userData.user.id)
+        .eq('user_id', currentMethod.user_id)
+        .neq('id', methodId)
         .limit(1);
       
-      if (listError) {
-        throw listError;
-      }
-      
-      if (availableMethods && availableMethods.length > 0) {
+      if (otherMethods && otherMethods.length > 0) {
+        // Make another method the default
         await supabase
-          .from('shopper_payment_methods')
+          .from('payment_methods')
           .update({ is_default: true })
-          .eq('id', availableMethods[0].id);
+          .eq('id', otherMethods[0].id);
       }
+    }
+    
+    const { error } = await supabase
+      .from('payment_methods')
+      .delete()
+      .eq('id', methodId);
+    
+    if (error) {
+      console.error('Error deleting payment method:', error);
+      return false;
     }
     
     return true;
   } catch (error) {
-    console.error(`Error deleting payment method ${id}:`, error);
+    console.error('Error in deletePaymentMethod:', error);
     return false;
   }
 };
 
 // Set a payment method as default
-export const setDefaultPaymentMethod = async (id: string): Promise<boolean> => {
+export const setDefaultPaymentMethod = async (methodId: string): Promise<boolean> => {
   try {
-    const { data: userData } = await supabase.auth.getUser();
+    // Get the user ID for this payment method
+    const { data: methodData, error: methodError } = await supabase
+      .from('payment_methods')
+      .select('user_id')
+      .eq('id', methodId)
+      .single();
     
-    if (!userData.user) {
-      throw new Error('User not authenticated');
+    if (methodError || !methodData) {
+      console.error('Error finding payment method:', methodError);
+      return false;
     }
     
-    // First unset all defaults
-    await supabase
-      .from('shopper_payment_methods')
+    // Unset any previous default for this user
+    const { error: updateError } = await supabase
+      .from('payment_methods')
       .update({ is_default: false })
-      .eq('user_id', userData.user.id);
+      .eq('user_id', methodData.user_id)
+      .eq('is_default', true);
     
-    // Then set the new default
+    if (updateError) {
+      console.error('Error unsetting previous default payment method:', updateError);
+    }
+    
+    // Set this method as default
     const { error } = await supabase
-      .from('shopper_payment_methods')
+      .from('payment_methods')
       .update({ is_default: true })
-      .eq('id', id)
-      .eq('user_id', userData.user.id);
+      .eq('id', methodId);
     
     if (error) {
-      throw error;
+      console.error('Error setting default payment method:', error);
+      return false;
     }
     
     return true;
   } catch (error) {
-    console.error(`Error setting default payment method ${id}:`, error);
+    console.error('Error in setDefaultPaymentMethod:', error);
     return false;
   }
-};
-
-// Helper function to transform database record to PaymentMethod model
-const transformPaymentMethod = (data: any): PaymentMethod => {
-  let billingAddress;
-  
-  try {
-    billingAddress = data.billing_address ? JSON.parse(data.billing_address) : undefined;
-  } catch (e) {
-    billingAddress = undefined;
-  }
-  
-  let metadata;
-  
-  try {
-    metadata = data.metadata ? JSON.parse(data.metadata) : undefined;
-  } catch (e) {
-    metadata = undefined;
-  }
-  
-  return {
-    id: data.id,
-    userId: data.user_id,
-    paymentType: data.payment_type,
-    cardLastFour: data.card_last_four,
-    cardBrand: data.card_brand,
-    billingAddress,
-    isDefault: data.is_default,
-    createdAt: data.created_at,
-    updatedAt: data.updated_at,
-    metadata
-  };
 };
