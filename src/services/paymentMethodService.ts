@@ -1,28 +1,9 @@
 
 import { supabase } from '@/integrations/supabase/client';
+import { PaymentMethod } from '@/models/shop';
 
-export interface PaymentMethod {
-  id: string;
-  userId: string;
-  paymentType: 'card' | 'paypal' | 'applepay' | 'googlepay';
-  cardLastFour?: string;
-  cardBrand?: string;
-  billingAddress?: {
-    line1?: string;
-    line2?: string;
-    city?: string;
-    state?: string;
-    postalCode?: string;
-    country?: string;
-  };
-  isDefault: boolean;
-  createdAt: string;
-  updatedAt: string;
-  metadata?: Record<string, any>;
-}
-
-// Get payment methods for the current user
-export const getUserPaymentMethods = async (): Promise<PaymentMethod[]> => {
+// Function to get all payment methods for the current user
+export const getPaymentMethods = async (): Promise<PaymentMethod[]> => {
   try {
     const { data: user } = await supabase.auth.getUser();
     
@@ -30,6 +11,7 @@ export const getUserPaymentMethods = async (): Promise<PaymentMethod[]> => {
       throw new Error('User not authenticated');
     }
     
+    // To make this work, first make sure you've run the SQL script to create the table
     const { data, error } = await supabase
       .from('shopper_payment_methods')
       .select('*')
@@ -38,6 +20,7 @@ export const getUserPaymentMethods = async (): Promise<PaymentMethod[]> => {
     
     if (error) throw error;
     
+    // Map the data to our model
     return data.map(method => ({
       id: method.id,
       userId: method.user_id,
@@ -56,8 +39,8 @@ export const getUserPaymentMethods = async (): Promise<PaymentMethod[]> => {
   }
 };
 
-// Save a new payment method
-export const savePaymentMethod = async (method: Omit<PaymentMethod, 'id' | 'userId' | 'createdAt' | 'updatedAt'>): Promise<PaymentMethod | null> => {
+// Function to add a new payment method
+export const addPaymentMethod = async (paymentMethod: Omit<PaymentMethod, 'id' | 'createdAt' | 'updatedAt'>): Promise<PaymentMethod | null> => {
   try {
     const { data: user } = await supabase.auth.getUser();
     
@@ -65,25 +48,25 @@ export const savePaymentMethod = async (method: Omit<PaymentMethod, 'id' | 'user
       throw new Error('User not authenticated');
     }
     
-    // If this is the default method, unset any existing default
-    if (method.isDefault) {
+    // If this is the default method, unset other default methods
+    if (paymentMethod.isDefault) {
       await supabase
         .from('shopper_payment_methods')
         .update({ is_default: false })
-        .eq('user_id', user.user.id)
-        .eq('is_default', true);
+        .eq('user_id', user.user.id);
     }
     
+    // Insert the new payment method
     const { data, error } = await supabase
       .from('shopper_payment_methods')
       .insert({
         user_id: user.user.id,
-        payment_type: method.paymentType,
-        card_last_four: method.cardLastFour,
-        card_brand: method.cardBrand,
-        billing_address: method.billingAddress,
-        is_default: method.isDefault,
-        metadata: method.metadata
+        payment_type: paymentMethod.paymentType,
+        card_last_four: paymentMethod.cardLastFour,
+        card_brand: paymentMethod.cardBrand,
+        billing_address: paymentMethod.billingAddress,
+        is_default: paymentMethod.isDefault,
+        metadata: paymentMethod.metadata,
       })
       .select()
       .single();
@@ -103,12 +86,12 @@ export const savePaymentMethod = async (method: Omit<PaymentMethod, 'id' | 'user
       metadata: data.metadata
     };
   } catch (error) {
-    console.error('Error saving payment method:', error);
+    console.error('Error adding payment method:', error);
     return null;
   }
 };
 
-// Update an existing payment method
+// Function to update a payment method
 export const updatePaymentMethod = async (id: string, updates: Partial<PaymentMethod>): Promise<PaymentMethod | null> => {
   try {
     const { data: user } = await supabase.auth.getUser();
@@ -117,16 +100,16 @@ export const updatePaymentMethod = async (id: string, updates: Partial<PaymentMe
       throw new Error('User not authenticated');
     }
     
-    // If this is being set as default, unset any existing default
+    // If making this the default, unset other defaults
     if (updates.isDefault) {
       await supabase
         .from('shopper_payment_methods')
         .update({ is_default: false })
         .eq('user_id', user.user.id)
-        .eq('is_default', true)
         .neq('id', id);
     }
     
+    // Update the payment method
     const { data, error } = await supabase
       .from('shopper_payment_methods')
       .update({
@@ -136,7 +119,6 @@ export const updatePaymentMethod = async (id: string, updates: Partial<PaymentMe
         billing_address: updates.billingAddress,
         is_default: updates.isDefault,
         metadata: updates.metadata,
-        updated_at: new Date().toISOString()
       })
       .eq('id', id)
       .eq('user_id', user.user.id)
@@ -163,7 +145,7 @@ export const updatePaymentMethod = async (id: string, updates: Partial<PaymentMe
   }
 };
 
-// Delete a payment method
+// Function to delete a payment method
 export const deletePaymentMethod = async (id: string): Promise<boolean> => {
   try {
     const { data: user } = await supabase.auth.getUser();
@@ -187,7 +169,7 @@ export const deletePaymentMethod = async (id: string): Promise<boolean> => {
   }
 };
 
-// Set a payment method as default
+// Function to set a payment method as default
 export const setDefaultPaymentMethod = async (id: string): Promise<boolean> => {
   try {
     const { data: user } = await supabase.auth.getUser();
@@ -196,12 +178,11 @@ export const setDefaultPaymentMethod = async (id: string): Promise<boolean> => {
       throw new Error('User not authenticated');
     }
     
-    // First, unset any existing default
+    // First, unset all defaults
     await supabase
       .from('shopper_payment_methods')
       .update({ is_default: false })
-      .eq('user_id', user.user.id)
-      .eq('is_default', true);
+      .eq('user_id', user.user.id);
     
     // Then set the new default
     const { error } = await supabase
@@ -216,49 +197,5 @@ export const setDefaultPaymentMethod = async (id: string): Promise<boolean> => {
   } catch (error) {
     console.error('Error setting default payment method:', error);
     return false;
-  }
-};
-
-// Get the default payment method for the current user
-export const getDefaultPaymentMethod = async (): Promise<PaymentMethod | null> => {
-  try {
-    const { data: user } = await supabase.auth.getUser();
-    
-    if (!user.user) {
-      throw new Error('User not authenticated');
-    }
-    
-    const { data, error } = await supabase
-      .from('shopper_payment_methods')
-      .select('*')
-      .eq('user_id', user.user.id)
-      .eq('is_default', true)
-      .single();
-    
-    if (error) {
-      if (error.code === 'PGRST116') {
-        // No default payment method found
-        return null;
-      }
-      throw error;
-    }
-    
-    if (!data) return null;
-    
-    return {
-      id: data.id,
-      userId: data.user_id,
-      paymentType: data.payment_type,
-      cardLastFour: data.card_last_four,
-      cardBrand: data.card_brand,
-      billingAddress: data.billing_address,
-      isDefault: data.is_default,
-      createdAt: data.created_at,
-      updatedAt: data.updated_at,
-      metadata: data.metadata
-    };
-  } catch (error) {
-    console.error('Error fetching default payment method:', error);
-    return null;
   }
 };

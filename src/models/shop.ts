@@ -27,3 +27,22 @@ export interface ShopProduct {
   sellerName?: string;
   rating?: number;
 }
+
+export interface PaymentMethod {
+  id: string;
+  userId: string;
+  paymentType: 'card' | 'paypal' | 'applepay' | 'googlepay';
+  cardLastFour?: string;
+  cardBrand?: string;
+  billingAddress?: {
+    street: string;
+    city: string;
+    state: string;
+    zip: string;
+    country: string;
+  };
+  isDefault: boolean;
+  createdAt: string;
+  updatedAt: string;
+  metadata?: Record<string, any>;
+}

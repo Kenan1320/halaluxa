@@ -72,12 +72,19 @@ export const getShopById = async (id: string): Promise<Shop | null> => {
 };
 
 // Get the main shop for a business user
-export const getMainShop = async (userId: string): Promise<Shop | null> => {
+export const getMainShop = async (userId?: string): Promise<Shop | null> => {
   try {
+    const { data: userData } = await supabase.auth.getUser();
+    const uid = userId || userData.user?.id;
+    
+    if (!uid) {
+      throw new Error('User ID is required');
+    }
+    
     const { data, error } = await supabase
       .from('shops')
       .select('*')
-      .eq('owner_id', userId)
+      .eq('owner_id', uid)
       .single();
     
     if (error) throw error;
@@ -171,7 +178,8 @@ export const createShop = async (shopData: Partial<Shop>): Promise<Shop | null> 
         cover_image: shopData.coverImage,
         owner_id: user.user.id,
         latitude: shopData.latitude,
-        longitude: shopData.longitude
+        longitude: shopData.longitude,
+        is_verified: false
       })
       .select()
       .single();

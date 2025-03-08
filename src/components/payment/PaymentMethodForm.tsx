@@ -1,258 +1,265 @@
 
-import { useState } from 'react';
+import React, { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { CreditCard, PaypalIcon } from 'lucide-react';
+import { CreditCard, DollarSign, Banknote } from 'lucide-react';
+import { addPaymentMethod, updatePaymentMethod } from '@/services/paymentMethodService';
 import { useToast } from '@/hooks/use-toast';
-import { savePaymentMethod, PaymentMethod } from '@/services/paymentMethodService';
+import { PaymentMethod } from '@/models/shop';
+
+const formSchema = z.object({
+  paymentType: z.enum(['card', 'paypal', 'applepay', 'googlepay']),
+  cardNumber: z.string().optional().refine(val => !val || val.length === 16, {
+    message: 'Card number must be 16 digits',
+  }),
+  cardExpiry: z.string().optional().refine(val => !val || /^(0[1-9]|1[0-2])\/\d{2}$/.test(val), {
+    message: 'Expiry date must be in MM/YY format',
+  }),
+  cardCvc: z.string().optional().refine(val => !val || (val.length >= 3 && val.length <= 4), {
+    message: 'CVC must be 3 or 4 digits',
+  }),
+  cardName: z.string().optional(),
+  isDefault: z.boolean().default(false),
+});
+
+type FormValues = z.infer<typeof formSchema>;
 
 interface PaymentMethodFormProps {
-  onSuccess?: (paymentMethod: PaymentMethod) => void;
-  onCancel?: () => void;
+  existingMethod?: PaymentMethod;
+  onSuccess?: () => void;
 }
 
-const PaymentMethodForm = ({ onSuccess, onCancel }: PaymentMethodFormProps) => {
+const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({ existingMethod, onSuccess }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [paymentType, setPaymentType] = useState<'card' | 'paypal' | 'applepay' | 'googlepay'>('card');
-  const [cardData, setCardData] = useState({
-    cardNumber: '',
-    nameOnCard: '',
-    expiryDate: '',
-    cvv: '',
-    saveCard: true,
-    makeDefault: true
-  });
-  const [paypalData, setPaypalData] = useState({
-    email: '',
-    makeDefault: true
-  });
   const { toast } = useToast();
-
-  const handleCardInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setCardData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handlePaypalInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setPaypalData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  
+  const { register, handleSubmit, watch, formState: { errors } } = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      paymentType: existingMethod?.paymentType || 'card',
+      isDefault: existingMethod?.isDefault || false,
+    }
+  });
+  
+  const paymentType = watch('paymentType');
+  
+  const onSubmit = async (data: FormValues) => {
     setIsSubmitting(true);
-
+    
     try {
-      let paymentMethodData: Omit<PaymentMethod, 'id' | 'userId' | 'createdAt' | 'updatedAt'>;
-
-      if (paymentType === 'card') {
-        // In a real app, you would tokenize the card details with Stripe or another provider
-        // Here we're just using the last 4 digits of the card number for demonstration
-        const last4 = cardData.cardNumber.slice(-4);
-        
-        paymentMethodData = {
-          paymentType: 'card',
-          cardLastFour: last4,
-          cardBrand: determineCardBrand(cardData.cardNumber),
-          isDefault: cardData.makeDefault,
-          billingAddress: {}
-        };
-      } else if (paymentType === 'paypal') {
-        paymentMethodData = {
-          paymentType: 'paypal',
-          isDefault: paypalData.makeDefault,
-          metadata: {
-            email: paypalData.email
-          }
-        };
-      } else {
-        paymentMethodData = {
-          paymentType,
-          isDefault: true,
-          metadata: {}
-        };
-      }
-
-      const result = await savePaymentMethod(paymentMethodData);
+      const cardLastFour = data.cardNumber ? data.cardNumber.slice(-4) : undefined;
+      const cardBrand = determineCardBrand(data.cardNumber);
       
-      if (result) {
-        toast({
-          title: "Payment method saved",
-          description: "Your payment method has been saved successfully",
+      if (existingMethod) {
+        // Update existing payment method
+        const result = await updatePaymentMethod(existingMethod.id, {
+          paymentType: data.paymentType,
+          cardLastFour,
+          cardBrand,
+          isDefault: data.isDefault,
+          // Additional fields would be handled here
         });
-        if (onSuccess) onSuccess(result);
+        
+        if (result) {
+          toast({
+            title: 'Payment method updated',
+            description: 'Your payment method has been updated successfully.',
+          });
+          if (onSuccess) onSuccess();
+        }
       } else {
-        throw new Error("Failed to save payment method");
+        // Add new payment method
+        const result = await addPaymentMethod({
+          userId: '', // This will be set by the API based on the authenticated user
+          paymentType: data.paymentType,
+          cardLastFour,
+          cardBrand,
+          isDefault: data.isDefault,
+          // Additional fields would be handled here
+        });
+        
+        if (result) {
+          toast({
+            title: 'Payment method added',
+            description: 'Your new payment method has been added successfully.',
+          });
+          if (onSuccess) onSuccess();
+        }
       }
     } catch (error) {
-      console.error("Error saving payment method:", error);
+      console.error('Error saving payment method:', error);
       toast({
-        title: "Error",
-        description: "Failed to save payment method. Please try again.",
-        variant: "destructive"
+        title: 'Error',
+        description: 'There was a problem saving your payment method.',
+        variant: 'destructive',
       });
     } finally {
       setIsSubmitting(false);
     }
   };
-
-  const determineCardBrand = (cardNumber: string): string => {
-    // Basic logic to determine card brand - would be more sophisticated in a real app
-    if (cardNumber.startsWith('4')) return 'visa';
-    if (cardNumber.startsWith('5')) return 'mastercard';
-    if (cardNumber.startsWith('3')) return 'amex';
-    if (cardNumber.startsWith('6')) return 'discover';
-    return 'unknown';
+  
+  // Simple function to determine card brand from number
+  const determineCardBrand = (cardNumber?: string): string => {
+    if (!cardNumber) return '';
+    
+    // Very basic check - in a real app you'd want a more comprehensive check
+    if (cardNumber.startsWith('4')) return 'Visa';
+    if (cardNumber.startsWith('5')) return 'Mastercard';
+    if (cardNumber.startsWith('3')) return 'Amex';
+    if (cardNumber.startsWith('6')) return 'Discover';
+    
+    return 'Unknown';
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       <div className="space-y-4">
-        <Label>Select Payment Method</Label>
-        <RadioGroup 
-          value={paymentType} 
-          onValueChange={(value) => setPaymentType(value as any)}
+        <Label>Payment Method</Label>
+        <RadioGroup
+          defaultValue={paymentType}
+          {...register('paymentType')}
           className="grid grid-cols-2 gap-4"
         >
-          <div className={`border rounded-lg p-4 flex flex-col items-center space-y-2 ${paymentType === 'card' ? 'border-haluna-primary bg-haluna-primary-light/10' : ''}`}>
-            <RadioGroupItem value="card" id="card" className="sr-only" />
-            <CreditCard className="h-8 w-8" />
-            <Label htmlFor="card" className="cursor-pointer">Credit Card</Label>
+          <div>
+            <RadioGroupItem 
+              value="card" 
+              id="card" 
+              className="peer sr-only" 
+              {...register('paymentType')}
+            />
+            <Label
+              htmlFor="card"
+              className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
+            >
+              <CreditCard className="mb-3 h-6 w-6" />
+              <span className="text-sm font-medium">Credit Card</span>
+            </Label>
           </div>
           
-          <div className={`border rounded-lg p-4 flex flex-col items-center space-y-2 ${paymentType === 'paypal' ? 'border-haluna-primary bg-haluna-primary-light/10' : ''}`}>
-            <RadioGroupItem value="paypal" id="paypal" className="sr-only" />
-            <div className="h-8 w-8 flex items-center justify-center">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M7 11l3-9h6c1.7 0 3 1.3 3 3 0 3.7-3.3 5-7 5H9.4" />
-                <path d="M7 11l-2.9 8.2c-.3.8.3 1.8 1.3 1.8H9l1.1-3h8c3.7 0 6-2 6-5 0-1.7-1.3-3-3-3h-2.3" />
-              </svg>
-            </div>
-            <Label htmlFor="paypal" className="cursor-pointer">PayPal</Label>
+          <div>
+            <RadioGroupItem 
+              value="paypal" 
+              id="paypal" 
+              className="peer sr-only" 
+              {...register('paymentType')} 
+            />
+            <Label
+              htmlFor="paypal"
+              className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
+            >
+              <DollarSign className="mb-3 h-6 w-6" />
+              <span className="text-sm font-medium">PayPal</span>
+            </Label>
+          </div>
+          
+          <div>
+            <RadioGroupItem 
+              value="applepay" 
+              id="applepay" 
+              className="peer sr-only" 
+              {...register('paymentType')} 
+            />
+            <Label
+              htmlFor="applepay"
+              className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
+            >
+              <Banknote className="mb-3 h-6 w-6" />
+              <span className="text-sm font-medium">Apple Pay</span>
+            </Label>
+          </div>
+          
+          <div>
+            <RadioGroupItem 
+              value="googlepay" 
+              id="googlepay" 
+              className="peer sr-only" 
+              {...register('paymentType')} 
+            />
+            <Label
+              htmlFor="googlepay"
+              className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
+            >
+              <Banknote className="mb-3 h-6 w-6" />
+              <span className="text-sm font-medium">Google Pay</span>
+            </Label>
           </div>
         </RadioGroup>
+        {errors.paymentType && (
+          <p className="text-sm text-destructive">{errors.paymentType.message}</p>
+        )}
       </div>
-
+      
       {paymentType === 'card' && (
         <div className="space-y-4">
-          <div>
+          <div className="grid gap-2">
             <Label htmlFor="cardNumber">Card Number</Label>
-            <Input 
-              id="cardNumber" 
-              name="cardNumber" 
-              value={cardData.cardNumber}
-              onChange={handleCardInputChange}
+            <Input
+              id="cardNumber"
               placeholder="1234 5678 9012 3456"
-              required
+              {...register('cardNumber')}
             />
-          </div>
-          
-          <div>
-            <Label htmlFor="nameOnCard">Name on Card</Label>
-            <Input 
-              id="nameOnCard" 
-              name="nameOnCard" 
-              value={cardData.nameOnCard}
-              onChange={handleCardInputChange}
-              placeholder="John Doe"
-              required
-            />
+            {errors.cardNumber && (
+              <p className="text-sm text-destructive">{errors.cardNumber.message}</p>
+            )}
           </div>
           
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="expiryDate">Expiry Date</Label>
-              <Input 
-                id="expiryDate" 
-                name="expiryDate" 
-                value={cardData.expiryDate}
-                onChange={handleCardInputChange}
+            <div className="grid gap-2">
+              <Label htmlFor="cardExpiry">Expiry Date</Label>
+              <Input
+                id="cardExpiry"
                 placeholder="MM/YY"
-                required
+                {...register('cardExpiry')}
               />
+              {errors.cardExpiry && (
+                <p className="text-sm text-destructive">{errors.cardExpiry.message}</p>
+              )}
             </div>
             
-            <div>
-              <Label htmlFor="cvv">CVV</Label>
-              <Input 
-                id="cvv" 
-                name="cvv" 
-                value={cardData.cvv}
-                onChange={handleCardInputChange}
+            <div className="grid gap-2">
+              <Label htmlFor="cardCvc">CVC</Label>
+              <Input
+                id="cardCvc"
                 placeholder="123"
-                required
-                type="password"
-                maxLength={4}
+                {...register('cardCvc')}
               />
+              {errors.cardCvc && (
+                <p className="text-sm text-destructive">{errors.cardCvc.message}</p>
+              )}
             </div>
           </div>
           
-          <div className="flex items-center space-x-2">
-            <Checkbox 
-              id="saveCard" 
-              checked={cardData.saveCard}
-              onCheckedChange={(checked) => 
-                setCardData(prev => ({ ...prev, saveCard: checked as boolean }))
-              }
+          <div className="grid gap-2">
+            <Label htmlFor="cardName">Name on Card</Label>
+            <Input
+              id="cardName"
+              placeholder="J. Smith"
+              {...register('cardName')}
             />
-            <Label htmlFor="saveCard">Save this card for future purchases</Label>
-          </div>
-          
-          <div className="flex items-center space-x-2">
-            <Checkbox 
-              id="makeDefault" 
-              checked={cardData.makeDefault}
-              onCheckedChange={(checked) => 
-                setCardData(prev => ({ ...prev, makeDefault: checked as boolean }))
-              }
-            />
-            <Label htmlFor="makeDefault">Make this my default payment method</Label>
           </div>
         </div>
       )}
-
-      {paymentType === 'paypal' && (
-        <div className="space-y-4">
-          <div>
-            <Label htmlFor="paypalEmail">PayPal Email</Label>
-            <Input 
-              id="paypalEmail" 
-              name="email" 
-              value={paypalData.email}
-              onChange={handlePaypalInputChange}
-              placeholder="email@example.com"
-              type="email"
-              required
-            />
-          </div>
-          
-          <div className="flex items-center space-x-2">
-            <Checkbox 
-              id="makePaypalDefault" 
-              checked={paypalData.makeDefault}
-              onCheckedChange={(checked) => 
-                setPaypalData(prev => ({ ...prev, makeDefault: checked as boolean }))
-              }
-            />
-            <Label htmlFor="makePaypalDefault">Make this my default payment method</Label>
-          </div>
-        </div>
-      )}
-
-      <div className="flex justify-end space-x-2">
-        {onCancel && (
-          <Button type="button" variant="outline" onClick={onCancel}>
-            Cancel
-          </Button>
-        )}
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "Saving..." : "Save Payment Method"}
-        </Button>
+      
+      <div className="flex items-center space-x-2">
+        <input
+          type="checkbox"
+          id="isDefault"
+          className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+          {...register('isDefault')}
+        />
+        <Label htmlFor="isDefault" className="text-sm font-normal">
+          Set as default payment method
+        </Label>
       </div>
+      
+      <Button type="submit" className="w-full" disabled={isSubmitting}>
+        {isSubmitting ? 'Saving...' : existingMethod ? 'Update Payment Method' : 'Add Payment Method'}
+      </Button>
     </form>
   );
 };
