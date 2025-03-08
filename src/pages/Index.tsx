@@ -1,3 +1,4 @@
+
 import { useEffect, useState, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useLocation } from '@/context/LocationContext';
@@ -9,8 +10,6 @@ import ProductGrid from '@/components/home/ProductGrid';
 import NearbyShops from '@/components/home/NearbyShops';
 import { motion, useAnimationControls } from 'framer-motion';
 import { getShopById, Shop, subscribeToShops } from '@/services/shopService';
-import { ensureAbuOmarShop } from '@/scripts/createAbuOmarShop';
-import { ensureAbuOmarProducts } from '@/scripts/addAbuOmarProducts';
 
 const Index = () => {
   const { isLoggedIn, user } = useAuth();
@@ -20,7 +19,6 @@ const Index = () => {
   const [isLoadingShops, setIsLoadingShops] = useState(false);
   const [activeShopIndex, setActiveShopIndex] = useState(0);
   const shopScrollRef = useRef<HTMLDivElement>(null);
-  const shopAnimControls = useAnimationControls();
   
   // Scroll to top on page load
   useEffect(() => {
@@ -33,20 +31,6 @@ const Index = () => {
       requestLocation();
     }
   }, [isLocationEnabled, requestLocation]);
-
-  // Ensure Abu Omar shop and products exist
-  useEffect(() => {
-    const setupAbuOmar = async () => {
-      // First ensure the shop exists
-      const shopId = await ensureAbuOmarShop();
-      if (shopId) {
-        // Then ensure the products exist
-        await ensureAbuOmarProducts();
-      }
-    };
-    
-    setupAbuOmar();
-  }, []);
 
   // Subscribe to real-time shop updates and load selected shops
   useEffect(() => {
@@ -83,9 +67,6 @@ const Index = () => {
       
       setNearbyShops(shops);
       setIsLoadingShops(false);
-      
-      // Start the shop flowing animation
-      shopAnimControls.start("visible");
     });
     
     // Load selected shops and nearby shops initially
@@ -102,9 +83,6 @@ const Index = () => {
       }
       
       setIsLoadingShops(false);
-      
-      // Start the shop flowing animation
-      shopAnimControls.start("visible");
     };
     
     initialLoad();
@@ -113,7 +91,7 @@ const Index = () => {
     return () => {
       channel.unsubscribe();
     };
-  }, [getNearbyShops, selectedShops.length, shopAnimControls]);
+  }, [getNearbyShops]);
 
   // Cycling shop index animation effect
   useEffect(() => {
@@ -134,33 +112,6 @@ const Index = () => {
   } else if (currentHour >= 18) {
     greeting = "Good evening";
   }
-
-  // Animation variants for shop flow
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: { 
-      opacity: 1,
-      transition: {
-        when: "beforeChildren",
-        staggerChildren: 0.1,
-        delayChildren: 0.2
-      }
-    }
-  };
-  
-  const shopItemVariants = {
-    hidden: { opacity: 0, y: 20, scale: 0.9 },
-    visible: { 
-      opacity: 1, 
-      y: 0, 
-      scale: 1,
-      transition: {
-        type: "spring",
-        damping: 12,
-        stiffness: 200
-      }
-    }
-  };
 
   return (
     <div className="min-h-screen pt-16 pb-20 bg-white">
@@ -202,17 +153,11 @@ const Index = () => {
           </div>
           
           {/* Enhanced carousel with scaling effect */}
-          <motion.div
-            ref={shopScrollRef}
-            className="relative h-28 overflow-hidden"
-            variants={containerVariants}
-            initial="hidden"
-            animate={shopAnimControls}
-          >
+          <div ref={shopScrollRef} className="relative h-28 overflow-hidden">
             {selectedShops.length > 0 && (
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="w-full h-full flex items-center">
-                  {/* Create a continuous flow of logos */}
+                  {/* Create a continuous flow of logos - first set */}
                   <motion.div
                     className="flex absolute"
                     initial={{ x: "0%" }}
@@ -229,7 +174,6 @@ const Index = () => {
                       <motion.div
                         key={`${shop.id}-flow1-${index}`}
                         className="flex flex-col items-center mx-6 relative"
-                        variants={shopItemVariants}
                         animate={{
                           scale: activeShopIndex % selectedShops.length === index % selectedShops.length ? 1.15 : 1,
                           y: activeShopIndex % selectedShops.length === index % selectedShops.length ? -5 : 0,
@@ -243,7 +187,7 @@ const Index = () => {
                         <Link to={`/shop/${shop.id}`}>
                           <motion.div 
                             className="w-14 h-14 rounded-full bg-white shadow-sm flex items-center justify-center overflow-hidden"
-                            whileHover={{ scale: 1.1, rotate: 5, boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}
+                            whileHover={{ scale: 1.1, boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}
                             transition={{ type: "spring", stiffness: 400, damping: 10 }}
                           >
                             {shop.logo ? (
@@ -295,7 +239,6 @@ const Index = () => {
                       <motion.div
                         key={`${shop.id}-flow2-${index}`}
                         className="flex flex-col items-center mx-6 relative"
-                        variants={shopItemVariants}
                         animate={{
                           scale: activeShopIndex % selectedShops.length === index % selectedShops.length ? 1.15 : 1,
                           y: activeShopIndex % selectedShops.length === index % selectedShops.length ? -5 : 0,
@@ -309,7 +252,7 @@ const Index = () => {
                         <Link to={`/shop/${shop.id}`}>
                           <motion.div 
                             className="w-14 h-14 rounded-full bg-white shadow-sm flex items-center justify-center overflow-hidden"
-                            whileHover={{ scale: 1.1, rotate: 5, boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}
+                            whileHover={{ scale: 1.1, boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}
                             transition={{ type: "spring", stiffness: 400, damping: 10 }}
                           >
                             {shop.logo ? (
@@ -347,7 +290,7 @@ const Index = () => {
                 </div>
               </div>
             )}
-          </motion.div>
+          </div>
         </section>
         
         {/* Nearby Shops Section */}

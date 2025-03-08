@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Product, ProductDetails } from '@/models/product';
 
@@ -184,13 +185,13 @@ export async function getFeaturedProducts(): Promise<Product[]> {
     
     if (error) {
       console.error('Error fetching featured products:', error);
-      return getMockProducts();
+      return [];
     }
     
     return data.map(mapDbProductToModel);
   } catch (err) {
     console.error('Error in getFeaturedProducts:', err);
-    return getMockProducts();
+    return [];
   }
 }
 

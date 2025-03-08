@@ -10,7 +10,6 @@ import { useLocation as useLocationContext } from '@/context/LocationContext';
 import { motion } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
 import { getShopById, getMainShop, Shop } from '@/services/shopService';
-import { supabase } from '@/integrations/supabase/client';
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -44,12 +43,8 @@ const Navbar = () => {
   useEffect(() => {
     const loadMainShop = async () => {
       try {
-        const userData = await supabase.auth.getUser();
-        const userId = userData.data.user?.id;
-        if (userId) {
-          const shop = await getMainShop(userId);
-          setMainShop(shop);
-        }
+        const shop = await getMainShop();
+        setMainShop(shop);
       } catch (error) {
         console.error('Error loading main shop:', error);
       }
