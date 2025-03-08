@@ -1,5 +1,4 @@
 
-// Update the PaymentMethodForm component to pass properties correctly
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -49,7 +48,7 @@ export default function PaymentMethodForm({ existingMethod, onSuccess }: Payment
     try {
       const cardDetails = {
         userId: user.id,
-        paymentType: 'card',
+        paymentType: 'card' as 'card' | 'paypal' | 'applepay' | 'googlepay',
         cardLastFour: data.cardNumber.slice(-4),
         cardBrand: detectCardBrand(data.cardNumber),
         billingAddress: {
@@ -59,7 +58,7 @@ export default function PaymentMethodForm({ existingMethod, onSuccess }: Payment
           zip: '',
           country: ''
         },
-        isDefault: data.isDefault,
+        isDefault: Boolean(data.isDefault),
         metadata: {}
       };
       
@@ -155,8 +154,8 @@ export default function PaymentMethodForm({ existingMethod, onSuccess }: Payment
       <div className="flex items-center space-x-2">
         <Checkbox
           id="isDefault"
-          checked={isDefault}
-          onCheckedChange={(checked) => setValue('isDefault', checked)}
+          checked={Boolean(isDefault)}
+          onCheckedChange={(checked) => setValue('isDefault', Boolean(checked))}
         />
         <Label htmlFor="isDefault" className="cursor-pointer">
           Set as default payment method
