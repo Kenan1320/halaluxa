@@ -39,15 +39,17 @@ const Navbar = () => {
   useEffect(() => {
     const loadMainShop = async () => {
       try {
-        const shop = await getMainShop();
+        const shop = await getMainShop(user?.id || '');
         setMainShop(shop);
       } catch (error) {
         console.error('Error loading main shop:', error);
       }
     };
     
-    loadMainShop();
-  }, [location.pathname]);
+    if (user) {
+      loadMainShop();
+    }
+  }, [user, location.pathname]);
   
   const handleMainShopClick = () => {
     if (!mainShop) {

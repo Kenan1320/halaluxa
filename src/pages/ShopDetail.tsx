@@ -26,7 +26,25 @@ export default function ShopDetail() {
         const shopData = await getShopById(id);
         
         if (shopData) {
-          setShop(shopData);
+          // Fix the typing issue by creating a proper Shop type object
+          setShop({
+            id: shopData.id,
+            name: shopData.name,
+            description: shopData.description,
+            owner_id: shopData.owner_id,
+            category: shopData.category,
+            logo_url: shopData.logo_url || '',
+            cover_image: shopData.cover_image || '',
+            location: shopData.location || '',
+            address: shopData.address || '',
+            is_verified: shopData.is_verified || false,
+            rating: shopData.rating || 0,
+            product_count: shopData.product_count || 0,
+            latitude: shopData.latitude || 0,
+            longitude: shopData.longitude || 0,
+            created_at: shopData.created_at || '',
+            updated_at: shopData.updated_at || '',
+          });
           
           const shopProducts = await getShopProducts(id);
           // Map shop products to ensure sellerId and sellerName are set

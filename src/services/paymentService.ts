@@ -1,175 +1,191 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { PaymentIntent, PaymentResult, SellerAccount } from '@/models/payment';
+import { PaymentMethodData, SellerAccount } from '@/models/payment';
 
-export const processPayment = async (
-  amount: number,
-  paymentMethodId: string,
-  shopId: string
-): Promise<PaymentResult> => {
-  // Simulate a payment processing delay
-  await new Promise(resolve => setTimeout(resolve, 1500));
-
+/**
+ * Get seller accounts for a user
+ */
+export const getSellerAccounts = async (userId: string): Promise<SellerAccount[]> => {
+  if (!userId) return [];
+  
   try {
-    // Here would be integration with an actual payment gateway like Stripe
-    // For this demo we'll just simulate success
-
-    // Create a payment record
     const { data, error } = await supabase
-      .from('shop_sales')
-      .insert({
-        shop_id: shopId,
-        amount: amount,
-        status: 'completed',
-        order_id: `ORD-${Date.now()}`
-      })
+      .from('seller_accounts')
+      .select('*')
+      .eq('user_id', userId);
+    
+    if (error) {
+      console.error('Error fetching seller accounts:', error);
+      return [];
+    }
+    
+    // Transform database records to SellerAccount objects
+    return (data || []).map(account => ({
+      id: account.id,
+      userId: account.user_id,
+      shopId: account.shop_id,
+      isActive: account.is_active,
+      createdAt: account.created_at,
+      updatedAt: account.updated_at,
+      methodType: account.method_type as PaymentMethodData,
+      accountName: account.account_name,
+      accountNumber: account.account_number,
+      bankName: account.bank_name,
+      paypalEmail: account.paypal_email,
+      stripeAccountId: account.stripe_account_id,
+      applePayMerchantId: account.apple_pay_merchant_id,
+      isDefault: account.is_default
+    }));
+  } catch (error) {
+    console.error('Error getting seller accounts:', error);
+    return [];
+  }
+};
+
+/**
+ * Create a seller account
+ */
+export const createSellerAccount = async (accountData: Partial<SellerAccount>): Promise<SellerAccount | null> => {
+  try {
+    // Transform to database format
+    const dbData = {
+      user_id: accountData.userId,
+      shop_id: accountData.shopId,
+      is_active: accountData.isActive ?? true,
+      method_type: accountData.methodType,
+      account_name: accountData.accountName,
+      account_number: accountData.accountNumber,
+      bank_name: accountData.bankName,
+      paypal_email: accountData.paypalEmail,
+      stripe_account_id: accountData.stripeAccountId,
+      apple_pay_merchant_id: accountData.applePayMerchantId,
+      is_default: accountData.isDefault ?? false
+    };
+    
+    const { data, error } = await supabase
+      .from('seller_accounts')
+      .insert(dbData)
       .select()
       .single();
-
+    
     if (error) {
-      console.error('Error recording payment:', error);
-      return { 
-        success: false, 
-        message: 'Payment failed to record in the system', 
-        error: error.message 
-      };
+      console.error('Error creating seller account:', error);
+      return null;
     }
-
-    // Generate a receipt or confirmation
+    
+    // Transform back to SellerAccount format
     return {
-      success: true,
-      message: 'Payment successful',
-      transactionId: `TX-${Date.now()}`,
-      orderId: data.order_id,
-      orderDate: new Date().toISOString()
+      id: data.id,
+      userId: data.user_id,
+      shopId: data.shop_id,
+      isActive: data.is_active,
+      createdAt: data.created_at,
+      updatedAt: data.updated_at,
+      methodType: data.method_type as PaymentMethodData,
+      accountName: data.account_name,
+      accountNumber: data.account_number,
+      bankName: data.bank_name,
+      paypalEmail: data.paypal_email,
+      stripeAccountId: data.stripe_account_id,
+      applePayMerchantId: data.apple_pay_merchant_id,
+      isDefault: data.is_default
     };
   } catch (error) {
-    console.error('Payment processing error:', error);
+    console.error('Error creating seller account:', error);
+    return null;
+  }
+};
+
+/**
+ * Update a seller account
+ */
+export const updateSellerAccount = async (accountId: string, accountData: Partial<SellerAccount>): Promise<SellerAccount | null> => {
+  try {
+    // Transform to database format
+    const dbData: any = {};
+    
+    if (accountData.userId) dbData.user_id = accountData.userId;
+    if (accountData.shopId) dbData.shop_id = accountData.shopId;
+    if (accountData.isActive !== undefined) dbData.is_active = accountData.isActive;
+    if (accountData.methodType) dbData.method_type = accountData.methodType;
+    if (accountData.accountName) dbData.account_name = accountData.accountName;
+    if (accountData.accountNumber) dbData.account_number = accountData.accountNumber;
+    if (accountData.bankName) dbData.bank_name = accountData.bankName;
+    if (accountData.paypalEmail) dbData.paypal_email = accountData.paypalEmail;
+    if (accountData.stripeAccountId) dbData.stripe_account_id = accountData.stripeAccountId;
+    if (accountData.applePayMerchantId) dbData.apple_pay_merchant_id = accountData.applePayMerchantId;
+    if (accountData.isDefault !== undefined) dbData.is_default = accountData.isDefault;
+    
+    const { data, error } = await supabase
+      .from('seller_accounts')
+      .update(dbData)
+      .eq('id', accountId)
+      .select()
+      .single();
+    
+    if (error) {
+      console.error('Error updating seller account:', error);
+      return null;
+    }
+    
+    // Transform back to SellerAccount format
     return {
-      success: false,
-      message: 'Payment failed to process',
-      error
+      id: data.id,
+      userId: data.user_id,
+      shopId: data.shop_id,
+      isActive: data.is_active,
+      createdAt: data.created_at,
+      updatedAt: data.updated_at,
+      methodType: data.method_type as PaymentMethodData,
+      accountName: data.account_name,
+      accountNumber: data.account_number,
+      bankName: data.bank_name,
+      paypalEmail: data.paypal_email,
+      stripeAccountId: data.stripe_account_id,
+      applePayMerchantId: data.apple_pay_merchant_id,
+      isDefault: data.is_default
     };
+  } catch (error) {
+    console.error('Error updating seller account:', error);
+    return null;
   }
 };
 
-export const generatePaymentReceipt = (sellerAccount: SellerAccount, amount: number): string => {
-  // Format the payment information based on the payment method
-  const methodType = sellerAccount.methodType || 'bank';
-  let receiptText = '';
-  
-  if (methodType === 'bank') {
-    receiptText = `Bank Transfer to ${sellerAccount.bankName || 'Bank'}, Account: ${sellerAccount.accountName || ''} (${sellerAccount.accountNumber || ''})`;
-  } else if (methodType === 'paypal') {
-    receiptText = `PayPal Payment to ${sellerAccount.paypalEmail || 'seller@example.com'}`;
-  } else {
-    receiptText = `Payment via ${methodType.charAt(0).toUpperCase() + methodType.slice(1)}`;
+/**
+ * Format a seller account for display
+ */
+export const formatPaymentMethod = (account: SellerAccount): string => {
+  switch (account.methodType) {
+    case 'bank':
+      return `${account.bankName || 'Bank'} - ${account.accountNumber ? '•••• ' + account.accountNumber.slice(-4) : 'Account'}`;
+    case 'paypal':
+      return `PayPal - ${account.paypalEmail || 'Email'}`;
+    case 'stripe':
+      return `Stripe - ${account.stripeAccountId ? 'Connected Account' : 'Account'}`;
+    case 'applepay':
+      return `Apple Pay - ${account.applePayMerchantId ? 'Merchant Connected' : 'Account'}`;
+    default:
+      return 'Payment Method';
   }
-  
-  // Add the amount and date
-  const today = new Date();
-  const formattedDate = today.toLocaleDateString();
-  const formattedAmount = new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD'
-  }).format(amount);
-  
-  return `${receiptText}\nAmount: ${formattedAmount}\nDate: ${formattedDate}`;
 };
 
-export const createPaymentIntent = async (
-  amount: number,
-  currency: string = 'usd',
-  shopId: string
-): Promise<PaymentIntent> => {
-  // In a real application, you would call your backend, which would use
-  // the Stripe API to create a PaymentIntent. This is a placeholder.
-  await new Promise(resolve => setTimeout(resolve, 800));
-  
-  return {
-    id: `pi_${Date.now()}`,
-    amount: amount,
-    currency: currency,
-    status: 'created',
-    clientSecret: `sk_test_${Date.now()}_secret`
-  };
-};
-
-// Mock functions since these tables don't exist yet
-export const fetchPaymentMethods = async (userId: string) => {
-  console.log('Fetching payment methods for user:', userId);
-  // Return mock data since this table doesn't exist yet
-  return [];
-};
-
-export const addSellerPaymentMethod = async (userId: string, shopId: string, paymentMethod: Partial<SellerAccount>): Promise<SellerAccount> => {
-  console.log('Adding seller payment method:', { userId, shopId, paymentMethod });
-  
-  // Return a mock SellerAccount
-  return {
-    id: `sa_${Date.now()}`,
-    userId,
-    shopId,
-    methodType: paymentMethod.methodType,
-    accountName: paymentMethod.accountName,
-    accountNumber: paymentMethod.accountNumber,
-    bankName: paymentMethod.bankName,
-    paypalEmail: paymentMethod.paypalEmail,
-    stripeAccountId: paymentMethod.stripeAccountId,
-    isDefault: paymentMethod.isDefault || false,
-    isActive: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  };
-};
-
-export const fetchSellerPaymentMethod = async (userId: string, shopId: string): Promise<SellerAccount | null> => {
-  console.log('Fetching seller payment method:', { userId, shopId });
-  
-  // Return mock data
-  return null;
-};
-
-export const updateSellerPaymentMethod = async (methodId: string, paymentMethod: Partial<SellerAccount>): Promise<SellerAccount> => {
-  console.log('Updating seller payment method:', { methodId, paymentMethod });
-  
-  // Return mock data
-  return {
-    id: methodId,
-    userId: 'mock-user-id',
-    methodType: paymentMethod.methodType,
-    accountName: paymentMethod.accountName,
-    accountNumber: paymentMethod.accountNumber,
-    bankName: paymentMethod.bankName,
-    paypalEmail: paymentMethod.paypalEmail,
-    stripeAccountId: paymentMethod.stripeAccountId,
-    isDefault: paymentMethod.isDefault || false,
-    isActive: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  };
-};
-
-export const removeSellerPaymentMethod = async (methodId: string): Promise<void> => {
-  console.log('Removing seller payment method:', methodId);
-};
-
-// Add these functions to make existing code happy
-export const getSellerAccounts = async (userId: string) => {
-  console.log('Getting seller accounts for:', userId);
-  return [];
-};
-
-export const createSellerAccount = async (data: any) => {
-  console.log('Creating seller account:', data);
-  return { id: `sa_${Date.now()}` };
-};
-
-export const updateSellerAccount = async (id: string, data: any) => {
-  console.log('Updating seller account:', { id, data });
-  return { id };
-};
-
-export const formatPaymentMethod = (method: any) => {
-  return `Payment Method: ${method?.type || 'Unknown'}`;
+/**
+ * Create a payment intent
+ */
+export const createPaymentIntent = async (amount: number): Promise<{ clientSecret: string }> => {
+  try {
+    const { data, error } = await supabase.functions.invoke('create-payment-intent', {
+      body: { amount }
+    });
+    
+    if (error) {
+      console.error('Error creating payment intent:', error);
+      throw error;
+    }
+    
+    return { clientSecret: data.clientSecret };
+  } catch (error) {
+    console.error('Error creating payment intent:', error);
+    throw error;
+  }
 };

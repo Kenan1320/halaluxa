@@ -74,17 +74,20 @@ export const fetchProductById = async (productId: string): Promise<Product | nul
 /**
  * Adds a new product
  */
-export const addProduct = async (product: Omit<Partial<Product>, 'sellerId'>, sellerId: string): Promise<Product> => {
-  // Prepare the data for Supabase
-  const productData = {
-    ...product,
+export const addProduct = async (productData: Partial<Product>, sellerId: string): Promise<Product> => {
+  // Make sure required fields are present
+  const product = {
+    ...productData,
     seller_id: sellerId,
-    shop_id: product.shop_id
+    category: productData.category || 'Other',
+    name: productData.name || '',
+    description: productData.description || '',
+    price: productData.price || 0
   };
 
   const { data, error } = await supabase
     .from('products')
-    .insert(productData)
+    .insert(product)
     .select('*, shops(name)')
     .single();
 

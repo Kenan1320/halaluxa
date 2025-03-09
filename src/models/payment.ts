@@ -57,5 +57,6 @@ export interface SellerAccount {
   bankName?: string;
   paypalEmail?: string;
   stripeAccountId?: string;
+  applePayMerchantId?: string;
   isDefault?: boolean;
 }

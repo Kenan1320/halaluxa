@@ -9,11 +9,10 @@ import {
   getSellerAccounts,
   createSellerAccount,
   updateSellerAccount,
-  SellerAccount,
   formatPaymentMethod
 } from '@/services/paymentService';
+import { SellerAccount } from '@/models/payment';
 
-// Define the correct interface type
 interface PaymentFormData {
   methodType: "bank" | "paypal" | "stripe" | "applepay";
   accountName: string;
@@ -47,8 +46,8 @@ const PaymentAccountPage = () => {
   const fetchAccounts = async () => {
     setIsLoading(true);
     try {
-      // Fixed: pass an argument to getSellerAccounts
-      const accountsData = await getSellerAccounts({});
+      const userId = user?.id || '';
+      const accountsData = await getSellerAccounts(userId);
       setAccounts(accountsData);
     } catch (error) {
       console.error("Error fetching accounts:", error);
@@ -83,12 +82,10 @@ const PaymentAccountPage = () => {
     e.preventDefault();
     
     try {
-      // Convert form data to SellerAccount structure
       const accountData: Partial<SellerAccount> = {
         methodType: activeTab as "bank" | "paypal" | "stripe" | "applepay",
       };
       
-      // Add the appropriate fields based on the method type
       if (activeTab === 'bank') {
         accountData.accountName = formData.accountName;
         accountData.accountNumber = formData.accountNumber;
@@ -101,7 +98,15 @@ const PaymentAccountPage = () => {
         // Handle Apple Pay
       }
       
-      const result = await createSellerAccount(accountData, {});
+      const result = await createSellerAccount({
+        methodType: activeTab as "bank" | "paypal" | "stripe" | "applepay",
+        accountName: formData.accountName,
+        accountNumber: formData.accountNumber,
+        bankName: formData.bankName,
+        paypalEmail: formData.paypalEmail,
+        stripeAccountId: formData.stripeAccountId,
+        applePayMerchantId: formData.applePayMerchantId,
+      });
       
       if (result) {
         toast({
@@ -450,3 +455,4 @@ const PaymentAccountPage = () => {
 };
 
 export default PaymentAccountPage;
+

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Outlet, useNavigate, useOutletContext } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -13,7 +12,7 @@ interface DashboardContextType {
   shop: Shop;
 }
 
-const DashboardLayout = () => {
+const DashboardLayout = ({ children }) => {
   const { isLoggedIn, user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -22,34 +21,19 @@ const DashboardLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   
   useEffect(() => {
-    const fetchShopData = async () => {
-      if (!isLoggedIn || !user) {
-        navigate('/business/login');
-        return;
-      }
-      
-      try {
-        const shopData = await getCurrentUserShop();
-        if (!shopData) {
-          navigate('/business/create-shop');
-          return;
+    const loadShopData = async () => {
+      if (user) {
+        try {
+          const shopData = await getCurrentUserShop(user.id);
+          setShop(shopData);
+        } catch (error) {
+          console.error('Error loading shop data:', error);
         }
-        
-        setShop(shopData);
-      } catch (error) {
-        console.error('Error fetching shop data:', error);
-        toast({
-          title: 'Error',
-          description: 'Failed to load shop data',
-          variant: 'destructive',
-        });
-      } finally {
-        setIsLoading(false);
       }
     };
     
-    fetchShopData();
-  }, [isLoggedIn, user, navigate, toast]);
+    loadShopData();
+  }, [user]);
   
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);

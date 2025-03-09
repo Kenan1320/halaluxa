@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -15,7 +14,7 @@ interface ShopPreference {
   is_following: boolean;
   is_favorite: boolean;
   is_main_shop: boolean;
-  shop: Shop;
+  shop?: Shop;
 }
 
 const SelectShops = () => {
@@ -59,17 +58,16 @@ const SelectShops = () => {
     if (!user) return;
     
     try {
-      // Use the RPC function to get user shop preferences
-      const { data, error } = await supabase.rpc('get_user_shop_preferences', { 
-        user_id_param: user.id 
-      });
+      const { data, error } = await supabase
+        .from('user_shop_preferences')
+        .select('*')
+        .eq('user_id', user.id);
       
       if (error) {
         console.error('Error fetching user preferences:', error);
         return;
       }
       
-      // If there are preferences, set them up
       if (data && Array.isArray(data)) {
         const newSelectedShops = new Set<string>();
         let mainShop: string | null = null;
@@ -97,13 +95,11 @@ const SelectShops = () => {
       const newSelection = new Set(prev);
       if (newSelection.has(shopId)) {
         newSelection.delete(shopId);
-        // If the main shop is deselected, clear the main shop
         if (mainShopId === shopId) {
           setMainShopId(null);
         }
       } else {
         newSelection.add(shopId);
-        // If this is the first shop selected, make it the main shop
         if (newSelection.size === 1) {
           setMainShopId(shopId);
         }
@@ -129,44 +125,48 @@ const SelectShops = () => {
     try {
       setLoading(true);
       
-      // Process all shop preferences
       const updatePromises = Array.from(selectedShops).map(async (shopId) => {
         const isMainShop = shopId === mainShopId;
         const existingPref = savedPreferences.find(p => p.shop_id === shopId);
         
         if (existingPref) {
-          // Update existing preference
-          return supabase.rpc('update_user_shop_preference', {
-            p_user_id: user.id,
-            p_shop_id: shopId,
-            p_is_following: true,
-            p_is_favorite: existingPref.is_favorite,
-            p_is_main_shop: isMainShop
-          });
+          return supabase
+            .from('user_shop_preferences')
+            .update({
+              is_following: true,
+              is_favorite: existingPref.is_favorite,
+              is_main_shop: isMainShop,
+              updated_at: new Date().toISOString()
+            })
+            .eq('user_id', user.id)
+            .eq('shop_id', shopId);
         } else {
-          // Insert new preference
-          return supabase.rpc('insert_user_shop_preference', {
-            p_user_id: user.id,
-            p_shop_id: shopId,
-            p_is_following: true,
-            p_is_favorite: false,
-            p_is_main_shop: isMainShop
-          });
+          return supabase
+            .from('user_shop_preferences')
+            .insert({
+              user_id: user.id,
+              shop_id: shopId,
+              is_following: true,
+              is_favorite: false,
+              is_main_shop: isMainShop
+            });
         }
       });
       
-      // Remove shops that were deselected
-      savedPreferences.forEach(async (pref) => {
+      for (const pref of savedPreferences) {
         if (!selectedShops.has(pref.shop_id)) {
-          await supabase.rpc('update_user_shop_preference', {
-            p_user_id: user.id,
-            p_shop_id: pref.shop_id,
-            p_is_following: false,
-            p_is_favorite: pref.is_favorite,
-            p_is_main_shop: false
-          });
+          await supabase
+            .from('user_shop_preferences')
+            .update({
+              is_following: false,
+              is_favorite: pref.is_favorite,
+              is_main_shop: false,
+              updated_at: new Date().toISOString()
+            })
+            .eq('user_id', user.id)
+            .eq('shop_id', pref.shop_id);
         }
-      });
+      }
       
       await Promise.all(updatePromises);
       
@@ -175,7 +175,6 @@ const SelectShops = () => {
         description: 'Your shop preferences have been saved.',
       });
       
-      // Redirect to home page or another page
       navigate('/');
     } catch (err) {
       console.error('Error saving shop preferences:', err);

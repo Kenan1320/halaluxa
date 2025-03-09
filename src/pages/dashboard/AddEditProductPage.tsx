@@ -87,7 +87,10 @@ const AddEditProductPage = () => {
         return;
       }
       
-      if (!user.user_metadata?.shopId) {
+      const metadata = user.user_metadata || {};
+      const shopId = metadata.shopId;
+      
+      if (!shopId) {
         toast({
           title: 'Error',
           description: 'You must have a shop to add products.',
@@ -98,7 +101,7 @@ const AddEditProductPage = () => {
 
       const productData = {
         ...data,
-        shop_id: user.user_metadata.shopId,
+        shop_id: shopId,
       };
 
       if (id) {
@@ -158,10 +161,15 @@ const AddEditProductPage = () => {
               control={control}
               rules={{
                 required: 'Price is required',
-                valueAsNumber: true,
               }}
               render={({ field }) => (
-                <Input type="number" id="price" placeholder="Price" {...field} />
+                <Input 
+                  type="number" 
+                  id="price" 
+                  placeholder="Price" 
+                  {...field} 
+                  onChange={e => field.onChange(Number(e.target.value))}
+                />
               )}
             />
             {errors.price && <p className="text-red-500 text-sm">{errors.price.message}</p>}
@@ -237,11 +245,16 @@ const AddEditProductPage = () => {
               control={control}
               rules={{
                 required: 'Stock quantity is required',
-                valueAsNumber: true,
                 min: 0,
               }}
               render={({ field }) => (
-                <Input type="number" id="inStock" placeholder="Stock Quantity" {...field} />
+                <Input 
+                  type="number" 
+                  id="inStock" 
+                  placeholder="Stock Quantity" 
+                  {...field} 
+                  onChange={e => field.onChange(Number(e.target.value))}
+                />
               )}
             />
             {errors.inStock && <p className="text-red-500 text-sm">{errors.inStock.message}</p>}
