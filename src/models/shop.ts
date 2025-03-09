@@ -33,6 +33,9 @@ export interface ShopProduct {
   stock: number;
   created_at?: string;
   updated_at?: string;
+  // Add these properties to match Product interface requirements
+  sellerId: string;
+  sellerName?: string;
 }
 
 export interface ShopLocation {

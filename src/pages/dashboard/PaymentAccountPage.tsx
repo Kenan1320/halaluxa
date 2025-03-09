@@ -7,7 +7,6 @@ import { CreditCard, DollarSign, Trash2, AlertCircle, ChevronsUpDown, Plus, Chec
 import { useToast } from '@/hooks/use-toast';
 import { motion } from 'framer-motion';
 import { 
-  getSellerAccount,
   getSellerAccounts,
   createSellerAccount,
   updateSellerAccount,
@@ -15,11 +14,22 @@ import {
   formatPaymentMethod
 } from '@/services/paymentService';
 
+// Define the correct interface type
+interface PaymentFormData {
+  account_name: string;
+  account_number: string;
+  bank_name: string;
+  account_type: string;
+  paypal_email: string;
+  stripe_account_id: string;
+  applepay_merchant_id: string;
+}
+
 const PaymentAccountPage = () => {
   const [accounts, setAccounts] = useState<SellerAccount[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('bank');
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<PaymentFormData>({
     account_name: '',
     account_number: '',
     bank_name: '',
@@ -38,7 +48,8 @@ const PaymentAccountPage = () => {
   const fetchAccounts = async () => {
     setIsLoading(true);
     try {
-      const accountsData = await getSellerAccounts();
+      // Fixed: pass an argument to getSellerAccounts
+      const accountsData = await getSellerAccounts({});
       setAccounts(accountsData);
     } catch (error) {
       console.error("Error fetching accounts:", error);
@@ -79,7 +90,8 @@ const PaymentAccountPage = () => {
         account_type: activeTab,
       };
       
-      const result = await createSellerAccount(accountData);
+      // Fixed: pass required parameters to createSellerAccount
+      const result = await createSellerAccount(accountData, {});
       
       if (result) {
         toast({
@@ -364,7 +376,8 @@ const PaymentAccountPage = () => {
               >
                 <div className="flex items-center">
                   <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center mr-4">
-                    {getAccountTypeIcon(account.account_type)}
+                    {/* Fixed: access the method_type property instead of account_type */}
+                    {getAccountTypeIcon(account.method_type)}
                   </div>
                   <div>
                     <p className="font-medium">{formatPaymentMethod(account)}</p>

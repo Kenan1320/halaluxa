@@ -24,12 +24,13 @@ const mapDbProductToModel = (data: any): Product => {
     inStock: data.stock > 0,
     category: data.category,
     images: data.images || [],
-    sellerId: data.business_owner_id,
+    sellerId: data.shop_id || data.business_owner_id, // Support both field names
     sellerName: data.business_owner_name,
     rating: data.rating,
     isHalalCertified: data.is_halal_certified,
     details: safeJsonParse(data.details),
-    createdAt: data.created_at
+    createdAt: data.created_at,
+    stock: data.stock || 0
   };
 };
 
@@ -77,17 +78,17 @@ export async function getProductById(id: string): Promise<Product | undefined> {
   }
 }
 
-// Helper function to prepare product data for database
+// Helper function to prepare product data for database - avoid deep type instantiation
 const prepareProductForDb = (product: Partial<Product>) => {
-  const dbProduct: any = {
+  // Simple conversion without complex type operations
+  const dbProduct: Record<string, any> = {
     name: product.name,
     description: product.description,
     price: product.price,
-    stock: product.inStock ? 1 : 0,
+    stock: product.stock !== undefined ? product.stock : (product.inStock ? 1 : 0),
     category: product.category,
     images: product.images,
-    business_owner_id: product.sellerId,
-    business_owner_name: product.sellerName,
+    shop_id: product.sellerId,
     rating: product.rating,
     is_halal_certified: product.isHalalCertified,
     details: product.details ? JSON.stringify(product.details) : '{}'
@@ -222,7 +223,7 @@ export async function getProductsBySeller(sellerId: string): Promise<Product[]> 
     const { data, error } = await supabase
       .from('products')
       .select('*')
-      .eq('business_owner_id', sellerId)
+      .eq('shop_id', sellerId)
       .order('created_at', { ascending: false });
     
     if (error) {
@@ -257,7 +258,8 @@ export function getMockProducts(): Product[] {
         servings: "4 patties",
         ingredients: "100% grass-fed beef, salt, black pepper"
       },
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      stock: 10
     },
     {
       id: "2",
@@ -276,7 +278,8 @@ export function getMockProducts(): Product[] {
         origin: "Jordan",
         ingredients: "100% organic Medjool dates"
       },
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      stock: 25
     }
   ];
 }

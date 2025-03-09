@@ -1,7 +1,11 @@
 
-import { supabase } from '@/integrations/supabase/client';
+// Import the Shop model from the models folder
 import { Shop, ShopProduct, ShopPaymentMethod } from '@/models/shop';
+import { supabase } from '@/integrations/supabase/client';
 import { Product } from '@/models/product';
+
+// Re-export the Shop interface for backward compatibility
+export type { Shop, ShopProduct, ShopPaymentMethod };
 
 // Get all shops
 export async function getAllShops(): Promise<Shop[]> {
@@ -264,7 +268,10 @@ export async function getShopProducts(shopId: string): Promise<ShopProduct[]> {
       rating: product.rating || 0,
       stock: product.stock || 0,
       created_at: product.created_at,
-      updated_at: product.updated_at
+      updated_at: product.updated_at,
+      // Add required properties for interface compatibility
+      sellerId: product.shop_id,
+      sellerName: '' // This will be populated by the calling function if needed
     }));
   } catch (error) {
     console.error(`Error in getShopProducts for ${shopId}:`, error);
@@ -482,7 +489,9 @@ export function convertToShopProduct(product: Product, shopId: string): ShopProd
     is_published: false,
     is_halal_certified: product.isHalalCertified,
     rating: product.rating || 0,
-    stock: product.inStock ? 10 : 0 // Default to 10 if in stock
+    stock: product.inStock ? 10 : 0, // Default to 10 if in stock
+    sellerId: shopId,
+    sellerName: "" // This would typically be filled in by the service calling this function
   };
 }
 
@@ -496,7 +505,7 @@ export function convertToModelProduct(shopProduct: ShopProduct): Product {
     category: shopProduct.category,
     images: shopProduct.images,
     sellerId: shopProduct.shop_id,
-    sellerName: "", // This would typically be filled in by the service calling this function
+    sellerName: shopProduct.sellerName || "", 
     inStock: shopProduct.stock > 0,
     isHalalCertified: shopProduct.is_halal_certified,
     rating: shopProduct.rating,

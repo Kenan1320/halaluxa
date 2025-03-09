@@ -1,162 +1,212 @@
 
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
-import { getShopById, getShopProducts } from '@/services/shopService';
-import { ShopProduct } from '@/models/shop';
-import { Product } from '@/models/product';
+import { useParams, Link } from 'react-router-dom';
+import { MapPin, Phone, Clock, Star, MapIcon, ShoppingBag, UserCircle } from 'lucide-react';
+import { Container } from '@/components/ui/container';
 import ShopProductList from '@/components/shop/ShopProductList';
-import { MapPin, Check, Star, Package } from 'lucide-react';
+import { getShopById, getShopProducts, ShopProduct } from '@/services/shopService';
+import { Shop } from '@/models/shop';
+import { Button } from '@/components/ui/button';
+import { AspectRatio } from '@/components/ui/aspect-ratio';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useToast } from '@/hooks/use-toast';
 
 export default function ShopDetail() {
-  const { shopId } = useParams<{ shopId: string }>();
-  const [shop, setShop] = useState<any | null>(null);
-  const [products, setProducts] = useState<Product[]>([]);
+  const { id } = useParams<{ id: string }>();
+  const [shop, setShop] = useState<Shop | null>(null);
+  const [products, setProducts] = useState<ShopProduct[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-
+  const { toast } = useToast();
+  
   useEffect(() => {
-    const loadShopDetails = async () => {
-      setIsLoading(true);
-      if (shopId) {
-        const shopData = await getShopById(shopId);
+    const fetchShopData = async () => {
+      if (!id) return;
+      
+      try {
+        const shopData = await getShopById(id);
+        
         if (shopData) {
           setShop(shopData);
           
-          // Load shop products
-          const shopProducts = await getShopProducts(shopId);
-          
-          // Convert ShopProduct to Product using the convertToModelProduct function
-          // But we're reimplementing it here to avoid circular dependencies
-          const convertedProducts: Product[] = shopProducts.map(sp => ({
-            id: sp.id,
-            name: sp.name,
-            description: sp.description,
-            price: sp.price,
-            category: sp.category,
-            images: sp.images,
-            sellerId: sp.sellerId,
-            sellerName: sp.sellerName,
-            rating: sp.rating || 0,
-            inStock: true, // Default to true
-            isHalalCertified: true, // Default to true
-            createdAt: new Date().toISOString(), // Use current date
-            details: {}
+          const shopProducts = await getShopProducts(id);
+          // Map shop products to ensure sellerId and sellerName are set
+          const mappedProducts = shopProducts.map(product => ({
+            ...product,
+            sellerId: shopData.owner_id,
+            sellerName: shopData.name
           }));
           
-          setProducts(convertedProducts);
+          setProducts(mappedProducts);
+        } else {
+          toast({
+            title: 'Shop not found',
+            description: 'The shop you were looking for does not exist.',
+            variant: 'destructive',
+          });
         }
+      } catch (err) {
+        console.error('Error fetching shop details:', err);
+        toast({
+          title: 'Error',
+          description: 'Failed to load shop details. Please try again later.',
+          variant: 'destructive',
+        });
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     };
-
-    loadShopDetails();
-  }, [shopId]);
-
+    
+    fetchShopData();
+  }, [id, toast]);
+  
   if (isLoading) {
     return (
-      <div className="container mx-auto py-8 px-4">
-        <div className="animate-pulse">
-          <div className="h-48 bg-gray-200 rounded-lg mb-4"></div>
-          <div className="h-12 bg-gray-200 rounded-lg mb-4 w-1/3"></div>
-          <div className="h-8 bg-gray-200 rounded-lg mb-4"></div>
-          <div className="h-64 bg-gray-200 rounded-lg"></div>
-        </div>
+      <div className="py-20 flex justify-center">
+        <div className="animate-spin h-10 w-10 border-4 border-haluna-primary rounded-full border-t-transparent"></div>
       </div>
     );
   }
-
+  
   if (!shop) {
     return (
-      <div className="container mx-auto py-8 px-4">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold mb-4">Shop not found</h2>
-          <p>The shop you're looking for doesn't exist or has been removed.</p>
-        </div>
+      <div className="py-20 text-center">
+        <h2 className="text-2xl font-bold mb-4">Shop Not Found</h2>
+        <p className="mb-8">The shop you're looking for doesn't exist or may have been removed.</p>
+        <Link to="/shops">
+          <Button>Browse Other Shops</Button>
+        </Link>
       </div>
     );
   }
-
+  
   return (
-    <div className="container mx-auto py-6 px-4">
-      <div className="bg-white rounded-lg shadow-sm overflow-hidden mb-8">
-        {/* Shop Header with Cover Image */}
-        <div 
-          className="h-48 bg-cover bg-center flex items-end" 
-          style={{ 
-            backgroundImage: shop.coverImage 
-              ? `url(${shop.coverImage})` 
-              : 'linear-gradient(135deg, #2A866A, #1e5c4a)'
-          }}
-        >
-          <div className="w-full bg-black bg-opacity-30 p-4 flex items-center text-white">
-            <div className="flex-shrink-0 mr-4">
-              <div className="w-20 h-20 rounded-lg bg-white p-1 shadow-lg">
-                <img 
-                  src={shop.logo || '/placeholder.svg'} 
-                  alt={shop.name} 
-                  className="w-full h-full object-cover rounded-lg"
-                />
-              </div>
-            </div>
-            <div>
-              <h1 className="text-2xl font-serif font-bold animate-fade-in leading-tight">
-                {shop.name}
-              </h1>
-              <div className="flex items-center text-sm">
-                {shop.isVerified && (
-                  <span className="flex items-center mr-3">
-                    <Check className="h-4 w-4 mr-1 text-green-400" />
-                    Verified
-                  </span>
-                )}
-                <span className="flex items-center mr-3">
-                  <Star className="h-4 w-4 mr-1 text-yellow-400" fill="currentColor" />
-                  {shop.rating?.toFixed(1)}
-                </span>
-                <span className="flex items-center">
-                  <Package className="h-4 w-4 mr-1" />
-                  {shop.productCount} Products
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        {/* Shop Info */}
-        <div className="p-4">
-          <div className="flex items-start mb-4">
-            <MapPin className="h-5 w-5 text-gray-500 mr-2 mt-0.5 flex-shrink-0" />
-            <p className="text-gray-700">{shop.location}</p>
-          </div>
-          
-          <div className="mb-4">
-            <h2 className="text-lg font-medium mb-2">About {shop.name}</h2>
-            <p className="text-gray-700">{shop.description}</p>
-          </div>
-          
-          <div className="flex flex-wrap">
-            <span className="px-3 py-1 bg-haluna-primary-light text-haluna-primary rounded-full text-sm mr-2 mb-2">
-              {shop.category}
-            </span>
-          </div>
-        </div>
+    <div className="min-h-screen">
+      {/* Shop Cover Image */}
+      <div className="w-full h-56 md:h-72 bg-gray-200 relative">
+        {shop.cover_image ? (
+          <img 
+            src={shop.cover_image} 
+            alt={`${shop.name} cover`} 
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-r from-emerald-500 to-teal-500" />
+        )}
       </div>
-
-      {/* Product Listing */}
-      <h2 className="text-xl font-serif font-bold mb-6">Products from {shop.name}</h2>
       
-      {products.length > 0 ? (
-        <ShopProductList shopId={shop.id} products={products} />
-      ) : (
-        <div className="bg-white rounded-lg shadow-sm p-8 text-center">
-          <div className="h-16 w-16 bg-haluna-primary-light rounded-full flex items-center justify-center mx-auto mb-4">
-            <Package className="h-8 w-8 text-haluna-primary" />
+      <Container className="relative -mt-16 z-10">
+        <div className="bg-white rounded-lg shadow-md p-6">
+          {/* Shop Header */}
+          <div className="flex flex-col md:flex-row gap-6">
+            <div className="flex-shrink-0">
+              <div className="w-24 h-24 rounded-lg bg-white shadow-md border border-gray-100 p-1">
+                {shop.logo_url ? (
+                  <AspectRatio ratio={1/1}>
+                    <img 
+                      src={shop.logo_url} 
+                      alt={shop.name} 
+                      className="w-full h-full object-cover rounded"
+                    />
+                  </AspectRatio>
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded">
+                    <ShoppingBag className="h-10 w-10 text-gray-400" />
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            <div className="flex-1">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+                <div>
+                  <h1 className="text-2xl font-bold">{shop.name}</h1>
+                  <div className="flex items-center text-sm text-haluna-text-light mt-1">
+                    <MapPin className="h-4 w-4 mr-1" />
+                    <span>{shop.location}</span>
+                  </div>
+                </div>
+                
+                <div className="flex items-center mt-4 md:mt-0 space-x-2">
+                  {shop.is_verified && (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      <svg className="-ml-0.5 mr-1.5 h-2 w-2 text-green-400" fill="currentColor" viewBox="0 0 8 8">
+                        <circle cx="4" cy="4" r="3" />
+                      </svg>
+                      Verified
+                    </span>
+                  )}
+                  <div className="flex items-center">
+                    <Star className="h-4 w-4 text-yellow-400 mr-1" />
+                    <span className="text-sm font-medium">{shop.rating.toFixed(1)}</span>
+                  </div>
+                </div>
+              </div>
+              
+              <p className="mt-4 text-haluna-text">{shop.description}</p>
+              
+              <div className="flex flex-wrap gap-4 mt-4">
+                {shop.address && (
+                  <div className="flex items-center text-sm">
+                    <MapIcon className="h-4 w-4 text-haluna-text-light mr-2" />
+                    <span>{shop.address}</span>
+                  </div>
+                )}
+                <div className="flex items-center text-sm">
+                  <ShoppingBag className="h-4 w-4 text-haluna-text-light mr-2" />
+                  <span>{shop.product_count} Products</span>
+                </div>
+              </div>
+            </div>
           </div>
-          <h3 className="text-lg font-medium mb-2">No products available</h3>
-          <p className="text-haluna-text-light mb-6">
-            This shop hasn't added any products yet. Please check back later.
-          </p>
+          
+          {/* Tabs for Products, Reviews, etc. */}
+          <div className="mt-8">
+            <Tabs defaultValue="products">
+              <TabsList>
+                <TabsTrigger value="products">Products</TabsTrigger>
+                <TabsTrigger value="about">About</TabsTrigger>
+                <TabsTrigger value="reviews">Reviews</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="products" className="pt-6">
+                <ShopProductList 
+                  products={products} 
+                  isLoading={isLoading}
+                  emptyMessage="This shop has no products yet."
+                />
+              </TabsContent>
+              
+              <TabsContent value="about" className="pt-6">
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold">About {shop.name}</h3>
+                  <p>{shop.description}</p>
+                  
+                  <div className="space-y-2">
+                    <h4 className="font-medium">Location</h4>
+                    <p className="flex items-center">
+                      <MapPin className="h-4 w-4 mr-2 text-haluna-text-light" />
+                      {shop.address || shop.location}
+                    </p>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <h4 className="font-medium">Category</h4>
+                    <p>{shop.category}</p>
+                  </div>
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="reviews" className="pt-6">
+                <div className="text-center py-8">
+                  <UserCircle className="h-12 w-12 mx-auto text-gray-300" />
+                  <h3 className="text-lg font-medium mt-4">No Reviews Yet</h3>
+                  <p className="text-haluna-text-light mt-2">Be the first to review this shop</p>
+                </div>
+              </TabsContent>
+            </Tabs>
+          </div>
         </div>
-      )}
+      </Container>
     </div>
   );
 }
