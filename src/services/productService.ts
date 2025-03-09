@@ -1,239 +1,285 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { Product } from '@/models/product';
-import { toast } from 'sonner';
+import { Product, ProductDetails } from '@/models/product';
 
-/**
- * Fetches all products
- */
-export const fetchProducts = async (): Promise<Product[]> => {
-  const { data, error } = await supabase
-    .from('products')
-    .select('*, shops(name)')
-    .order('created_at', { ascending: false });
-
-  if (error) {
-    console.error('Error fetching products:', error);
-    throw error;
+// Helper function to safely handle JSON conversion
+const safeJsonParse = (data: any): ProductDetails => {
+  if (typeof data === 'string') {
+    try {
+      return JSON.parse(data);
+    } catch (e) {
+      return {};
+    }
   }
-
-  // Transform the data to match the Product type
-  return (data || []).map(item => ({
-    ...item,
-    sellerId: item.shop_id,
-    sellerName: item.shops?.name || 'Unknown Seller'
-  }));
+  return data || {};
 };
 
-/**
- * Fetches products by shop ID
- */
-export const fetchProductsByShopId = async (shopId: string): Promise<Product[]> => {
-  const { data, error } = await supabase
-    .from('products')
-    .select('*, shops(name)')
-    .eq('shop_id', shopId)
-    .order('created_at', { ascending: false });
-
-  if (error) {
-    console.error('Error fetching products by shop ID:', error);
-    throw error;
-  }
-
-  return (data || []).map(item => ({
-    ...item,
-    sellerId: item.shop_id,
-    sellerName: item.shops?.name || 'Unknown Seller'
-  }));
-};
-
-/**
- * Fetches a product by its ID
- */
-export const fetchProductById = async (productId: string): Promise<Product | null> => {
-  const { data, error } = await supabase
-    .from('products')
-    .select('*, shops(name)')
-    .eq('id', productId)
-    .single();
-
-  if (error) {
-    console.error('Error fetching product by ID:', error);
-    throw error;
-  }
-
-  if (!data) return null;
-
+// Custom mapper for Supabase data to our model
+const mapDbProductToModel = (data: any): Product => {
   return {
-    ...data,
-    sellerId: data.shop_id,
-    sellerName: data.shops?.name || 'Unknown Seller'
+    id: data.id,
+    name: data.name,
+    description: data.description,
+    price: data.price,
+    inStock: data.stock > 0,
+    category: data.category,
+    images: data.images || [],
+    sellerId: data.business_owner_id,
+    sellerName: data.business_owner_name,
+    rating: data.rating,
+    isHalalCertified: data.is_halal_certified,
+    details: safeJsonParse(data.details),
+    createdAt: data.created_at
   };
 };
 
-/**
- * Adds a new product
- */
-export const addProduct = async (productData: Partial<Product>, sellerId: string): Promise<Product> => {
-  // Make sure required fields are present
-  const product = {
-    ...productData,
-    seller_id: sellerId,
-    category: productData.category || 'Other',
-    name: productData.name || '',
-    description: productData.description || '',
-    price: productData.price || 0
+// Fetch all products
+export async function getProducts(): Promise<Product[]> {
+  try {
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (error) {
+      console.error('Error fetching products:', error);
+      return [];
+    }
+    
+    return data.map(mapDbProductToModel);
+  } catch (err) {
+    console.error('Error in getProducts:', err);
+    return [];
+  }
+}
+
+// Alias for getAllProducts
+export const getAllProducts = getProducts;
+
+// Fetch a single product by ID
+export async function getProductById(id: string): Promise<Product | undefined> {
+  try {
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .eq('id', id)
+      .maybeSingle();
+    
+    if (error || !data) {
+      console.error(`Error fetching product with id ${id}:`, error);
+      return undefined;
+    }
+    
+    return mapDbProductToModel(data);
+  } catch (err) {
+    console.error(`Error in getProductById for ${id}:`, err);
+    return undefined;
+  }
+}
+
+// Helper function to prepare product data for database
+const prepareProductForDb = (product: Partial<Product>) => {
+  const dbProduct: any = {
+    name: product.name,
+    description: product.description,
+    price: product.price,
+    stock: product.inStock ? 1 : 0,
+    category: product.category,
+    images: product.images,
+    business_owner_id: product.sellerId,
+    business_owner_name: product.sellerName,
+    rating: product.rating,
+    is_halal_certified: product.isHalalCertified,
+    details: product.details ? JSON.stringify(product.details) : '{}'
   };
-
-  const { data, error } = await supabase
-    .from('products')
-    .insert(product)
-    .select('*, shops(name)')
-    .single();
-
-  if (error) {
-    console.error('Error adding product:', error);
-    throw error;
+  
+  // Only include id if it exists (for updates)
+  if (product.id) {
+    dbProduct.id = product.id;
   }
-
-  return {
-    ...data,
-    sellerId: data.shop_id,
-    sellerName: data.shops?.name || 'Unknown Seller'
-  };
+  
+  return dbProduct;
 };
 
-/**
- * Updates an existing product
- */
-export const updateProduct = async (productId: string, product: Partial<Product>): Promise<Product> => {
-  const { data, error } = await supabase
-    .from('products')
-    .update(product)
-    .eq('id', productId)
-    .select('*, shops(name)')
-    .single();
-
-  if (error) {
-    console.error('Error updating product:', error);
-    throw error;
+// Add a new product
+export async function addProduct(product: Partial<Product>): Promise<Product | undefined> {
+  try {
+    const dbProduct = prepareProductForDb(product);
+    
+    const { data, error } = await supabase
+      .from('products')
+      .insert(dbProduct)
+      .select()
+      .single();
+    
+    if (error) {
+      console.error('Error creating product:', error);
+      return undefined;
+    }
+    
+    return mapDbProductToModel(data);
+  } catch (err) {
+    console.error('Error in addProduct:', err);
+    return undefined;
   }
+}
 
-  return {
-    ...data,
-    sellerId: data.shop_id,
-    sellerName: data.shops?.name || 'Unknown Seller'
-  };
-};
-
-/**
- * Deletes a product
- */
-export const deleteProduct = async (productId: string): Promise<void> => {
-  const { error } = await supabase
-    .from('products')
-    .delete()
-    .eq('id', productId);
-
-  if (error) {
-    console.error('Error deleting product:', error);
-    throw error;
+// Update an existing product
+export async function updateProduct(product: Partial<Product>): Promise<Product | undefined> {
+  try {
+    if (!product.id) {
+      console.error('Cannot update product without id');
+      return undefined;
+    }
+    
+    const dbProduct = prepareProductForDb(product);
+    
+    const { data, error } = await supabase
+      .from('products')
+      .update(dbProduct)
+      .eq('id', product.id)
+      .select()
+      .single();
+    
+    if (error) {
+      console.error('Error updating product:', error);
+      return undefined;
+    }
+    
+    return mapDbProductToModel(data);
+  } catch (err) {
+    console.error('Error in updateProduct:', err);
+    return undefined;
   }
-};
+}
 
-/**
- * Fetches featured products
- */
-export const fetchFeaturedProducts = async (limit: number = 8): Promise<Product[]> => {
-  const { data, error } = await supabase
-    .from('products')
-    .select('*, shops(name)')
-    .order('rating', { ascending: false })
-    .limit(limit);
-
-  if (error) {
-    console.error('Error fetching featured products:', error);
-    throw error;
+// Delete a product
+export async function deleteProduct(id: string): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from('products')
+      .delete()
+      .eq('id', id);
+    
+    if (error) {
+      console.error(`Error deleting product with id ${id}:`, error);
+      return false;
+    }
+    
+    return true;
+  } catch (err) {
+    console.error(`Error in deleteProduct for ${id}:`, err);
+    return false;
   }
+}
 
-  return (data || []).map(item => ({
-    ...item,
-    sellerId: item.shop_id,
-    sellerName: item.shops?.name || 'Unknown Seller'
-  }));
-};
-
-/**
- * Searches products by name or description
- */
-export const searchProducts = async (query: string): Promise<Product[]> => {
-  const { data, error } = await supabase
-    .from('products')
-    .select('*, shops(name)')
-    .or(`name.ilike.%${query}%, description.ilike.%${query}%`)
-    .order('created_at', { ascending: false });
-
-  if (error) {
-    console.error('Error searching products:', error);
-    throw error;
+// Get featured products (for home page)
+export async function getFeaturedProducts(): Promise<Product[]> {
+  try {
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .eq('is_halal_certified', true)
+      .order('created_at', { ascending: false })
+      .limit(6);
+    
+    if (error) {
+      console.error('Error fetching featured products:', error);
+      return [];
+    }
+    
+    return data.map(mapDbProductToModel);
+  } catch (err) {
+    console.error('Error in getFeaturedProducts:', err);
+    return [];
   }
+}
 
-  return (data || []).map(item => ({
-    ...item,
-    sellerId: item.shop_id,
-    sellerName: item.shops?.name || 'Unknown Seller'
-  }));
-};
-
-/**
- * Fetches products by category
- */
-export const fetchProductsByCategory = async (category: string): Promise<Product[]> => {
-  const { data, error } = await supabase
-    .from('products')
-    .select('*, shops(name)')
-    .eq('category', category)
-    .order('created_at', { ascending: false });
-
-  if (error) {
-    console.error('Error fetching products by category:', error);
-    throw error;
+// Get products by category
+export async function getProductsByCategory(category: string): Promise<Product[]> {
+  try {
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .eq('category', category)
+      .order('created_at', { ascending: false });
+    
+    if (error) {
+      console.error(`Error fetching products in category ${category}:`, error);
+      return [];
+    }
+    
+    return data.map(mapDbProductToModel);
+  } catch (err) {
+    console.error(`Error in getProductsByCategory for ${category}:`, err);
+    return [];
   }
+}
 
-  return (data || []).map(item => ({
-    ...item,
-    sellerId: item.shop_id,
-    sellerName: item.shops?.name || 'Unknown Seller'
-  }));
-};
-
-/**
- * Uploads product images
- */
-export const uploadProductImage = async (file: File, productId: string): Promise<string> => {
-  const fileExt = file.name.split('.').pop();
-  const fileName = `${productId}_${Date.now()}.${fileExt}`;
-  const filePath = `${fileName}`;
-
-  const { error: uploadError } = await supabase
-    .storage
-    .from('product-images')
-    .upload(filePath, file);
-
-  if (uploadError) {
-    console.error('Error uploading image:', uploadError);
-    throw uploadError;
+// Get products by business owner ID
+export async function getProductsBySeller(sellerId: string): Promise<Product[]> {
+  try {
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .eq('business_owner_id', sellerId)
+      .order('created_at', { ascending: false });
+    
+    if (error) {
+      console.error(`Error fetching products for business owner ${sellerId}:`, error);
+      return [];
+    }
+    
+    return data.map(mapDbProductToModel);
+  } catch (err) {
+    console.error(`Error in getProductsBySeller for ${sellerId}:`, err);
+    return [];
   }
+}
 
-  const { data } = supabase
-    .storage
-    .from('product-images')
-    .getPublicUrl(filePath);
+// Function to provide mock data when needed
+export function getMockProducts(): Product[] {
+  return [
+    {
+      id: "1",
+      name: "Halal Beef Burger Patties",
+      description: "Premium grass-fed beef patties, perfect for homemade burgers.",
+      price: 12.99,
+      inStock: true,
+      category: "Food & Groceries",
+      images: ["/lovable-uploads/0780684a-9c7f-4f32-affc-6f9ea641b814.png"],
+      sellerId: "seller1",
+      sellerName: "Halal Meats & More",
+      rating: 4.8,
+      isHalalCertified: true,
+      details: {
+        weight: "500g",
+        servings: "4 patties",
+        ingredients: "100% grass-fed beef, salt, black pepper"
+      },
+      createdAt: new Date().toISOString()
+    },
+    {
+      id: "2",
+      name: "Organic Medjool Dates",
+      description: "Sweet and succulent dates imported directly from the Middle East.",
+      price: 9.99,
+      inStock: true,
+      category: "Food & Groceries",
+      images: ["/lovable-uploads/d4ab324c-23f0-4fcc-9069-0afbc77d1c3e.png"],
+      sellerId: "seller2",
+      sellerName: "Barakah Organics",
+      rating: 4.9,
+      isHalalCertified: true,
+      details: {
+        weight: "250g",
+        origin: "Jordan",
+        ingredients: "100% organic Medjool dates"
+      },
+      createdAt: new Date().toISOString()
+    }
+  ];
+}
 
-  return data.publicUrl;
-};
-
-// Alias functions to support existing code
-export const getProductById = fetchProductById;
-export const getProducts = fetchProducts;
-export const getFeaturedProducts = fetchFeaturedProducts;
+// Export the Product type to make it available to other modules
+export type { Product };

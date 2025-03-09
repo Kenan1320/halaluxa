@@ -1,114 +1,62 @@
 
 import { supabase } from '@/integrations/supabase/client';
 
-export async function setupDatabase() {
-  console.log('Setting up database...');
-  
+/**
+ * Setup database tables and relationships.
+ * This function should be called at app startup to ensure all needed tables exist.
+ */
+export const setupDatabase = async (): Promise<boolean> => {
   try {
-    // Checking for users table
-    const { data: userData, error: userError } = await supabase
-      .from('profiles')
-      .select('id')
-      .limit(1);
-    
-    if (userError) {
-      console.error('Error checking profiles:', userError);
-    }
-    
-    console.log('Profiles check result:', userData);
-    
-    // Checking for products table
-    const { data: productData, error: productError } = await supabase
-      .from('products')
-      .select('id')
-      .limit(1);
-    
-    if (productError) {
-      console.error('Error checking products:', productError);
-    }
-    
-    console.log('Products check result:', productData);
-    
-    // Checking for shops table
-    const { data: shopData, error: shopError } = await supabase
-      .from('shops')
-      .select('id')
-      .limit(1);
-    
-    if (shopError) {
-      console.error('Error checking shops:', shopError);
-    }
-    
-    console.log('Shops check result:', shopData);
-    
-    // Check shop_payment_methods table
-    const { data: paymentMethodData, error: paymentMethodError } = await supabase
-      .from('shop_payment_methods')
-      .select('id')
-      .limit(1);
-    
-    if (paymentMethodError) {
-      console.error('Error checking shop_payment_methods:', paymentMethodError);
-    }
-    
-    console.log('Payment methods check result:', paymentMethodData);
-    
-    // Check shop_sales table
-    const { data: salesData, error: salesError } = await supabase
-      .from('shop_sales')
-      .select('id')
-      .limit(1);
-    
-    if (salesError) {
-      console.error('Error checking shop_sales:', salesError);
-    }
-    
-    console.log('Sales check result:', salesData);
-    
-    // Setup storage if needed
-    await setupStorage();
-    
-    console.log('Database setup completed');
-    return true;
-  } catch (error) {
-    console.error('Database setup failed:', error);
-    return false;
-  }
-}
-
-async function setupStorage() {
-  try {
-    // Check if required storage buckets exist
-    const { data: buckets, error: bucketsError } = await supabase
-      .storage
-      .listBuckets();
-    
-    if (bucketsError) {
-      console.error('Error checking storage buckets:', bucketsError);
+    // Check if the Supabase client is initialized
+    if (!supabase) {
+      console.error('Supabase client not initialized');
       return false;
     }
+
+    // Try to query each of the required tables to check if they exist
+    const requiredTables = [
+      'profiles',
+      'shops',
+      'products',
+      'orders',
+      'seller_accounts',
+      'shop_display_settings'
+    ];
     
-    // Check if 'public' bucket exists, create if not
-    const publicBucketExists = buckets.some(bucket => bucket.name === 'public');
-    if (!publicBucketExists) {
-      const { error: createBucketError } = await supabase
-        .storage
-        .createBucket('public', {
-          public: true
-        });
-      
-      if (createBucketError) {
-        console.error('Error creating public bucket:', createBucketError);
+    let tablesExist = true;
+    
+    for (const table of requiredTables) {
+      const { data, error } = await supabase
+        .from(table)
+        .select('count(*)')
+        .limit(1);
+        
+      if (error) {
+        console.error(`Table ${table} might not exist or is inaccessible:`, error);
+        tablesExist = false;
+      } else {
+        console.log(`Table ${table} exists`);
       }
     }
     
-    console.log('Storage setup completed');
+    if (!tablesExist) {
+      console.warn('Some required tables do not exist. Please run the database setup SQL.');
+      return false;
+    }
+    
+    // The database tables exist, now check that the seller_accounts table has the correct structure
+    console.log('Database tables exist');
     return true;
   } catch (error) {
-    console.error('Storage setup failed:', error);
+    console.error('Error setting up database:', error);
     return false;
   }
-}
+};
 
-// Run the database setup
-setupDatabase();
+// Function to run database setup tasks
+export const runDatabaseSetup = async (): Promise<boolean> => {
+  const success = await setupDatabase();
+  return success;
+};
+
+export default runDatabaseSetup;

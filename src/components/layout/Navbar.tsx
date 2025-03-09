@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X, Search, ShoppingCart, User, MapPin, Store, AlertCircle } from 'lucide-react';
@@ -23,10 +24,12 @@ const Navbar = () => {
   const { isLocationEnabled, requestLocation, location: userLocation } = useLocationContext();
   const { toast } = useToast();
   
+  // Close mobile menu when route changes
   useEffect(() => {
     setMobileMenuOpen(false);
   }, [location]);
   
+  // Handle scroll for navbar styles
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
@@ -36,20 +39,19 @@ const Navbar = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
   
+  // Load main shop from localStorage
   useEffect(() => {
     const loadMainShop = async () => {
       try {
-        const shop = await getMainShop(user?.id || '');
+        const shop = await getMainShop();
         setMainShop(shop);
       } catch (error) {
         console.error('Error loading main shop:', error);
       }
     };
     
-    if (user) {
-      loadMainShop();
-    }
-  }, [user, location.pathname]);
+    loadMainShop();
+  }, [location.pathname]);
   
   const handleMainShopClick = () => {
     if (!mainShop) {
@@ -75,6 +77,7 @@ const Navbar = () => {
       style={{ height: '70px' }}
     >
       <div className="container mx-auto px-4 h-full flex justify-between items-center">
+        {/* Menu Button */}
         <button
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           className="p-2 text-[#2A866A]"
@@ -87,11 +90,14 @@ const Navbar = () => {
           )}
         </button>
         
+        {/* Logo - with advanced animation */}
         <div className="flex items-center ml-3 mr-auto">
           <Link to="/" className="flex items-center">
             <span className="text-lg font-serif font-bold text-[#2A866A]">Haluna</span>
             
+            {/* Advanced animated logo design */}
             <div className="relative ml-1">
+              {/* Main orange ball */}
               <motion.div 
                 className="w-5 h-5 bg-[#E4875E] rounded-full"
                 animate={{
@@ -104,6 +110,7 @@ const Navbar = () => {
                 }}
               />
               
+              {/* Orbiting green ball */}
               <motion.div
                 className="w-2 h-2 bg-[#2A866B] rounded-full absolute"
                 animate={{
@@ -120,7 +127,9 @@ const Navbar = () => {
           </Link>
         </div>
         
+        {/* Right side buttons */}
         <div className="flex items-center gap-4">
+          {/* Location Button */}
           <motion.button 
             onClick={requestLocation}
             className="p-2 rounded-full text-[#2A866A] hover:bg-[#d5efe8] transition-colors"
@@ -130,6 +139,7 @@ const Navbar = () => {
             <MapPin className="h-6 w-6" />
           </motion.button>
           
+          {/* Main Shop Button */}
           <motion.button 
             onClick={handleMainShopClick}
             className="relative p-2 rounded-full text-[#2A866A] hover:bg-[#d5efe8] transition-colors"
@@ -138,9 +148,9 @@ const Navbar = () => {
           >
             {mainShop ? (
               <>
-                {mainShop.logo_url ? (
+                {mainShop.logo ? (
                   <div className="w-6 h-6 rounded-full overflow-hidden">
-                    <img src={mainShop.logo_url} alt={mainShop.name} className="w-full h-full object-cover" />
+                    <img src={mainShop.logo} alt={mainShop.name} className="w-full h-full object-cover" />
                   </div>
                 ) : (
                   <Store className="h-6 w-6" />
@@ -174,6 +184,7 @@ const Navbar = () => {
             )}
           </motion.button>
           
+          {/* Select Shops Button */}
           <motion.div
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -186,6 +197,7 @@ const Navbar = () => {
             </Link>
           </motion.div>
           
+          {/* Cart Button */}
           <motion.div
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -203,6 +215,7 @@ const Navbar = () => {
             </Link>
           </motion.div>
           
+          {/* User Profile */}
           <motion.div
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -217,6 +230,7 @@ const Navbar = () => {
         </div>
       </div>
       
+      {/* Mobile menu */}
       {mobileMenuOpen && (
         <div className="container mx-auto px-4 py-4 bg-white border-t border-gray-100">
           <div className="md:hidden mb-4">
@@ -258,6 +272,7 @@ const Navbar = () => {
             >
               <span>Browse</span>
             </Link>
+            {/* Select Shops link */}
             <Link
               to="/select-shops"
               className={`flex items-center gap-3 p-3 rounded-lg transition ${

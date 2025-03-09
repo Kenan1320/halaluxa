@@ -1,133 +1,281 @@
 
 import { NavLink } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { 
-  Home, 
-  Package, 
-  ShoppingCart, 
-  Users, 
-  Settings, 
-  CreditCard, 
-  BarChart2, 
-  LogOut, 
-  X
+  LayoutDashboard, Package, ShoppingBag, Users, Settings, 
+  ChevronDown, CreditCard, BarChart, HelpCircle, PieChart,
+  Menu, X, Smartphone, Monitor
 } from 'lucide-react';
-import { Shop } from '@/models/shop';
-import { supabase } from '@/integrations/supabase/client';
-import { useNavigate } from 'react-router-dom';
-import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { useState, useEffect } from 'react';
+import { useIsMobile } from '@/hooks/use-mobile';
 
-interface DashboardSidebarProps {
-  shop: Shop;
-  onClose: () => void;
+interface SidebarLinkProps {
+  to: string;
+  icon: React.ReactNode;
+  children: React.ReactNode;
+  end?: boolean;
+  onClick?: () => void;
 }
 
-const DashboardSidebar = ({ shop, onClose }: DashboardSidebarProps) => {
-  const navigate = useNavigate();
-  const { toast } = useToast();
+const SidebarLink = ({ to, icon, children, end = false, onClick }: SidebarLinkProps) => (
+  <NavLink
+    to={to}
+    end={end}
+    onClick={onClick}
+    className={({ isActive }) => cn(
+      'flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200',
+      isActive 
+        ? 'bg-haluna-primary text-white shadow-sm' 
+        : 'text-haluna-text hover:bg-haluna-primary-light hover:text-haluna-primary'
+    )}
+  >
+    {icon}
+    <span>{children}</span>
+  </NavLink>
+);
+
+const DashboardSidebar = () => {
+  const [isProductsOpen, setIsProductsOpen] = useState(false);
+  const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<'mobile' | 'desktop'>(
+    localStorage.getItem('dashboardViewMode') as 'mobile' | 'desktop' || 'mobile'
+  );
   
-  const handleLogout = async () => {
-    try {
-      await supabase.auth.signOut();
-      toast({
-        title: 'Logged out',
-        description: 'You have been successfully logged out',
-      });
-      navigate('/');
-    } catch (error) {
-      console.error('Error logging out:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to log out',
-        variant: 'destructive',
-      });
+  const isMobile = useIsMobile();
+  
+  // Close sidebar when route changes on mobile
+  useEffect(() => {
+    return () => {
+      if (isMobile) {
+        setIsMobileSidebarOpen(false);
+      }
+    };
+  }, [isMobile]);
+  
+  // Save view mode preference
+  useEffect(() => {
+    localStorage.setItem('dashboardViewMode', viewMode);
+  }, [viewMode]);
+  
+  const toggleViewMode = () => {
+    setViewMode(prev => prev === 'mobile' ? 'desktop' : 'mobile');
+  };
+  
+  const closeSidebar = () => {
+    if (isMobile) {
+      setIsMobileSidebarOpen(false);
     }
   };
   
-  return (
-    <div className="flex flex-col h-full">
+  // Mobile sidebar trigger button that stays fixed on screen
+  const MobileSidebarTrigger = () => (
+    <Button
+      variant="outline" 
+      size="icon"
+      onClick={() => setIsMobileSidebarOpen(true)}
+      className="fixed top-16 left-4 z-50 rounded-full shadow-md bg-white md:hidden"
+    >
+      <Menu className="h-5 w-5" />
+    </Button>
+  );
+  
+  // Actual sidebar content
+  const SidebarContent = () => (
+    <aside className={cn(
+      "bg-white border-r shadow-sm overflow-y-auto transition-all duration-300 ease-in-out",
+      isMobile ? (
+        isMobileSidebarOpen 
+          ? "fixed inset-y-0 left-0 w-64 z-50" 
+          : "fixed inset-y-0 -left-64 w-64 z-50"
+      ) : "w-64 h-screen fixed"
+    )}>
       <div className="p-4 border-b flex items-center justify-between">
-        <NavLink to="/" className="flex items-center">
-          <img src="/logo.png" alt="Haluna" className="h-8" />
-        </NavLink>
-        <button 
-          onClick={onClose}
-          className="lg:hidden text-gray-500 hover:text-gray-700"
-        >
-          <X size={20} />
-        </button>
-      </div>
-      
-      <div className="p-4 border-b">
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-emerald-100 flex items-center justify-center rounded-full">
-            {shop.logo_url ? (
-              <img src={shop.logo_url} alt={shop.name} className="w-full h-full object-cover rounded-full" />
-            ) : (
-              <span className="text-emerald-700 font-semibold">{shop.name.charAt(0)}</span>
-            )}
+        <div className="flex items-center gap-2">
+          <div className="flex items-center">
+            <span className="text-xl font-serif font-bold text-haluna-primary">Haluna</span>
+            <div className="relative ml-1">
+              <div className="w-5 h-5 bg-gradient-to-br from-orange-300 to-orange-400 rounded-full shadow-sm"></div>
+              <div className="absolute top-1/4 left-1/4 w-1/2 h-1/2 bg-white rounded-full opacity-30"></div>
+            </div>
           </div>
-          <div>
-            <h3 className="font-medium text-sm text-gray-900">{shop.name}</h3>
-            <p className="text-xs text-gray-500">{shop.category}</p>
-          </div>
+        </div>
+        
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={toggleViewMode}
+            title={viewMode === 'mobile' ? "Switch to desktop view" : "Switch to mobile view"}
+            className="text-haluna-text-light hover:text-haluna-primary"
+          >
+            {viewMode === 'mobile' 
+              ? <Monitor className="h-4 w-4" /> 
+              : <Smartphone className="h-4 w-4" />
+            }
+          </Button>
+          
+          {isMobile && (
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={() => setIsMobileSidebarOpen(false)}
+              className="md:hidden"
+            >
+              <X className="h-5 w-5" />
+            </Button>
+          )}
         </div>
       </div>
       
-      <nav className="flex-1 overflow-y-auto p-2">
-        <ul className="space-y-1">
-          <NavItem to="/dashboard" icon={<Home size={18} />} label="Dashboard" />
-          <NavItem to="/dashboard/products" icon={<Package size={18} />} label="Products" />
-          <NavItem to="/dashboard/orders" icon={<ShoppingCart size={18} />} label="Orders" />
-          <NavItem to="/dashboard/customers" icon={<Users size={18} />} label="Customers" />
-          <NavItem to="/dashboard/analytics" icon={<BarChart2 size={18} />} label="Analytics" />
-          <NavItem to="/dashboard/payment-account" icon={<CreditCard size={18} />} label="Payments" />
-          <NavItem to="/dashboard/settings" icon={<Settings size={18} />} label="Settings" />
-        </ul>
+      <nav className="px-3 py-4 space-y-1.5">
+        <SidebarLink 
+          to="/dashboard" 
+          icon={<LayoutDashboard className="h-5 w-5" />} 
+          end
+          onClick={closeSidebar}
+        >
+          Overview
+        </SidebarLink>
+        
+        <Collapsible 
+          open={isProductsOpen} 
+          onOpenChange={setIsProductsOpen}
+          className="space-y-1.5"
+        >
+          <CollapsibleTrigger asChild>
+            <Button 
+              variant="ghost" 
+              className="w-full justify-between text-haluna-text hover:bg-haluna-primary-light hover:text-haluna-primary px-3 py-2 h-auto"
+            >
+              <div className="flex items-center gap-3">
+                <Package className="h-5 w-5" />
+                <span>Products</span>
+              </div>
+              <ChevronDown 
+                className={cn(
+                  "h-4 w-4 transition-transform duration-200", 
+                  isProductsOpen && "transform rotate-180"
+                )} 
+              />
+            </Button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="pl-8 space-y-1.5 animate-slideDown">
+            <SidebarLink 
+              to="/dashboard/products" 
+              icon={<Package className="h-4 w-4" />}
+              onClick={closeSidebar}
+            >
+              All Products
+            </SidebarLink>
+            <SidebarLink 
+              to="/dashboard/products/new" 
+              icon={<Package className="h-4 w-4" />}
+              onClick={closeSidebar}
+            >
+              Add New
+            </SidebarLink>
+          </CollapsibleContent>
+        </Collapsible>
+        
+        <SidebarLink 
+          to="/dashboard/orders" 
+          icon={<ShoppingBag className="h-5 w-5" />}
+          onClick={closeSidebar}
+        >
+          Orders
+        </SidebarLink>
+        
+        <SidebarLink 
+          to="/dashboard/customers" 
+          icon={<Users className="h-5 w-5" />}
+          onClick={closeSidebar}
+        >
+          Customers
+        </SidebarLink>
+        
+        <Collapsible 
+          open={isAnalyticsOpen} 
+          onOpenChange={setIsAnalyticsOpen}
+          className="space-y-1.5"
+        >
+          <CollapsibleTrigger asChild>
+            <Button 
+              variant="ghost" 
+              className="w-full justify-between text-haluna-text hover:bg-haluna-primary-light hover:text-haluna-primary px-3 py-2 h-auto"
+            >
+              <div className="flex items-center gap-3">
+                <BarChart className="h-5 w-5" />
+                <span>Analytics</span>
+              </div>
+              <ChevronDown 
+                className={cn(
+                  "h-4 w-4 transition-transform duration-200", 
+                  isAnalyticsOpen && "transform rotate-180"
+                )} 
+              />
+            </Button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="pl-8 space-y-1.5 animate-slideDown">
+            <SidebarLink 
+              to="/dashboard/analytics/sales" 
+              icon={<PieChart className="h-4 w-4" />}
+              onClick={closeSidebar}
+            >
+              Sales Reports
+            </SidebarLink>
+            <SidebarLink 
+              to="/dashboard/analytics/customers" 
+              icon={<Users className="h-4 w-4" />}
+              onClick={closeSidebar}
+            >
+              Customer Insights
+            </SidebarLink>
+          </CollapsibleContent>
+        </Collapsible>
+        
+        <SidebarLink 
+          to="/dashboard/payment-account" 
+          icon={<CreditCard className="h-5 w-5" />}
+          onClick={closeSidebar}
+        >
+          Payment Account
+        </SidebarLink>
+        
+        <SidebarLink 
+          to="/dashboard/settings" 
+          icon={<Settings className="h-5 w-5" />}
+          onClick={closeSidebar}
+        >
+          Settings
+        </SidebarLink>
+        
+        <SidebarLink 
+          to="/dashboard/help" 
+          icon={<HelpCircle className="h-5 w-5" />}
+          onClick={closeSidebar}
+        >
+          Help & Support
+        </SidebarLink>
       </nav>
-      
-      <div className="p-4 border-t">
-        <button
-          onClick={handleLogout}
-          className="flex items-center px-3 py-2 text-sm text-gray-700 rounded-lg w-full hover:bg-gray-100 transition-colors"
-        >
-          <LogOut size={18} className="mr-2 text-gray-500" />
-          <span>Logout</span>
-        </button>
-      </div>
-    </div>
+    </aside>
   );
-};
-
-interface NavItemProps {
-  to: string;
-  icon: React.ReactNode;
-  label: string;
-}
-
-const NavItem = ({ to, icon, label }: NavItemProps) => {
+  
   return (
-    <li>
-      <NavLink
-        to={to}
-        className={({ isActive }) => `
-          flex items-center px-3 py-2 text-sm rounded-lg transition-colors
-          ${isActive 
-            ? 'bg-emerald-50 text-emerald-700 font-medium' 
-            : 'text-gray-700 hover:bg-gray-100'}
-        `}
-        end={to === '/dashboard'}
-      >
-        <motion.div 
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.95 }}
-          className="mr-2 text-current"
-        >
-          {icon}
-        </motion.div>
-        <span>{label}</span>
-      </NavLink>
-    </li>
+    <>
+      <MobileSidebarTrigger />
+      <SidebarContent />
+      
+      {/* Overlay for mobile sidebar */}
+      {isMobile && isMobileSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/30 z-40 md:hidden"
+          onClick={() => setIsMobileSidebarOpen(false)}
+        />
+      )}
+    </>
   );
 };
 

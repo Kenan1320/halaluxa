@@ -177,7 +177,7 @@ const Shop = () => {
                         <Heart className="h-4 w-4 text-haluna-text" />
                       </button>
                     </div>
-                    {product.is_halal_certified && (
+                    {product.isHalalCertified && (
                       <div className="absolute top-3 left-3 bg-haluna-primary text-white text-xs px-2 py-1 rounded-full">
                         Halal Certified
                       </div>

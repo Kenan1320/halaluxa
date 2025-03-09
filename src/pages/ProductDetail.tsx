@@ -189,7 +189,7 @@ const ProductDetail = () => {
 
               <div className="flex items-center justify-between mb-6">
                 <div className="text-2xl font-bold text-haluna-primary">${product.price.toFixed(2)}</div>
-                {product.is_halal_certified && (
+                {product.isHalalCertified && (
                   <span className="bg-haluna-primary text-white text-xs px-2 py-1 rounded-full">
                     Halal Certified
                   </span>

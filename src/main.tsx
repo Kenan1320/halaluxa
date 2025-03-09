@@ -1,8 +1,7 @@
+
 import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
-import './App.css'
-import './styles/scrollbar-hide.css'
 
 // Optimize animation performance
 if (typeof window !== 'undefined') {

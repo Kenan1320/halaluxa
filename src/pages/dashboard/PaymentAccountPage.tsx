@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,35 +7,26 @@ import { CreditCard, DollarSign, Trash2, AlertCircle, ChevronsUpDown, Plus, Chec
 import { useToast } from '@/hooks/use-toast';
 import { motion } from 'framer-motion';
 import { 
+  getSellerAccount,
   getSellerAccounts,
   createSellerAccount,
   updateSellerAccount,
+  SellerAccount,
   formatPaymentMethod
 } from '@/services/paymentService';
-import { SellerAccount } from '@/models/payment';
-
-interface PaymentFormData {
-  methodType: "bank" | "paypal" | "stripe" | "applepay";
-  accountName: string;
-  accountNumber: string;
-  bankName: string;
-  paypalEmail: string;
-  stripeAccountId: string;
-  applePayMerchantId: string;
-}
 
 const PaymentAccountPage = () => {
   const [accounts, setAccounts] = useState<SellerAccount[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('bank');
-  const [formData, setFormData] = useState<PaymentFormData>({
-    methodType: 'bank',
-    accountName: '',
-    accountNumber: '',
-    bankName: '',
-    paypalEmail: '',
-    stripeAccountId: '',
-    applePayMerchantId: '',
+  const [formData, setFormData] = useState({
+    account_name: '',
+    account_number: '',
+    bank_name: '',
+    account_type: 'bank',
+    paypal_email: '',
+    stripe_account_id: '',
+    applepay_merchant_id: '',
   });
   const [isFormVisible, setIsFormVisible] = useState(false);
   const { toast } = useToast();
@@ -46,8 +38,7 @@ const PaymentAccountPage = () => {
   const fetchAccounts = async () => {
     setIsLoading(true);
     try {
-      const userId = user?.id || '';
-      const accountsData = await getSellerAccounts(userId);
+      const accountsData = await getSellerAccounts();
       setAccounts(accountsData);
     } catch (error) {
       console.error("Error fetching accounts:", error);
@@ -68,13 +59,13 @@ const PaymentAccountPage = () => {
 
   const resetForm = () => {
     setFormData({
-      methodType: activeTab as "bank" | "paypal" | "stripe" | "applepay",
-      accountName: '',
-      accountNumber: '',
-      bankName: '',
-      paypalEmail: '',
-      stripeAccountId: '',
-      applePayMerchantId: '',
+      account_name: '',
+      account_number: '',
+      bank_name: '',
+      account_type: activeTab,
+      paypal_email: '',
+      stripe_account_id: '',
+      applepay_merchant_id: '',
     });
   };
 
@@ -82,31 +73,13 @@ const PaymentAccountPage = () => {
     e.preventDefault();
     
     try {
-      const accountData: Partial<SellerAccount> = {
-        methodType: activeTab as "bank" | "paypal" | "stripe" | "applepay",
+      // Set account type based on active tab
+      const accountData = {
+        ...formData,
+        account_type: activeTab,
       };
       
-      if (activeTab === 'bank') {
-        accountData.accountName = formData.accountName;
-        accountData.accountNumber = formData.accountNumber;
-        accountData.bankName = formData.bankName;
-      } else if (activeTab === 'paypal') {
-        accountData.paypalEmail = formData.paypalEmail;
-      } else if (activeTab === 'stripe') {
-        accountData.stripeAccountId = formData.stripeAccountId;
-      } else if (activeTab === 'applepay') {
-        // Handle Apple Pay
-      }
-      
-      const result = await createSellerAccount({
-        methodType: activeTab as "bank" | "paypal" | "stripe" | "applepay",
-        accountName: formData.accountName,
-        accountNumber: formData.accountNumber,
-        bankName: formData.bankName,
-        paypalEmail: formData.paypalEmail,
-        stripeAccountId: formData.stripeAccountId,
-        applePayMerchantId: formData.applePayMerchantId,
-      });
+      const result = await createSellerAccount(accountData);
       
       if (result) {
         toast({
@@ -132,7 +105,7 @@ const PaymentAccountPage = () => {
     setActiveTab(value);
     setFormData((prev) => ({
       ...prev,
-      methodType: value as "bank" | "paypal" | "stripe" | "applepay",
+      account_type: value,
     }));
   };
 
@@ -234,46 +207,46 @@ const PaymentAccountPage = () => {
               <form onSubmit={handleSubmit}>
                 <TabsContent value="bank" className="space-y-4">
                   <div>
-                    <label htmlFor="accountName" className="block text-sm font-medium mb-1">
+                    <label htmlFor="account_name" className="block text-sm font-medium mb-1">
                       Account Holder Name
                     </label>
                     <input
-                      id="accountName"
-                      name="accountName"
+                      id="account_name"
+                      name="account_name"
                       type="text"
                       required
                       className="w-full rounded-md border p-2"
-                      value={formData.accountName}
+                      value={formData.account_name}
                       onChange={handleInputChange}
                     />
                   </div>
                   
                   <div>
-                    <label htmlFor="accountNumber" className="block text-sm font-medium mb-1">
+                    <label htmlFor="account_number" className="block text-sm font-medium mb-1">
                       Account Number
                     </label>
                     <input
-                      id="accountNumber"
-                      name="accountNumber"
+                      id="account_number"
+                      name="account_number"
                       type="text"
                       required
                       className="w-full rounded-md border p-2"
-                      value={formData.accountNumber}
+                      value={formData.account_number}
                       onChange={handleInputChange}
                     />
                   </div>
                   
                   <div>
-                    <label htmlFor="bankName" className="block text-sm font-medium mb-1">
+                    <label htmlFor="bank_name" className="block text-sm font-medium mb-1">
                       Bank Name
                     </label>
                     <input
-                      id="bankName"
-                      name="bankName"
+                      id="bank_name"
+                      name="bank_name"
                       type="text"
                       required
                       className="w-full rounded-md border p-2"
-                      value={formData.bankName}
+                      value={formData.bank_name}
                       onChange={handleInputChange}
                     />
                   </div>
@@ -281,16 +254,16 @@ const PaymentAccountPage = () => {
                 
                 <TabsContent value="paypal" className="space-y-4">
                   <div>
-                    <label htmlFor="paypalEmail" className="block text-sm font-medium mb-1">
+                    <label htmlFor="paypal_email" className="block text-sm font-medium mb-1">
                       PayPal Email
                     </label>
                     <input
-                      id="paypalEmail"
-                      name="paypalEmail"
+                      id="paypal_email"
+                      name="paypal_email"
                       type="email"
                       required
                       className="w-full rounded-md border p-2"
-                      value={formData.paypalEmail}
+                      value={formData.paypal_email}
                       onChange={handleInputChange}
                     />
                   </div>
@@ -305,16 +278,16 @@ const PaymentAccountPage = () => {
                 
                 <TabsContent value="stripe" className="space-y-4">
                   <div>
-                    <label htmlFor="stripeAccountId" className="block text-sm font-medium mb-1">
+                    <label htmlFor="stripe_account_id" className="block text-sm font-medium mb-1">
                       Stripe Account ID
                     </label>
                     <input
-                      id="stripeAccountId"
-                      name="stripeAccountId"
+                      id="stripe_account_id"
+                      name="stripe_account_id"
                       type="text"
                       required
                       className="w-full rounded-md border p-2"
-                      value={formData.stripeAccountId}
+                      value={formData.stripe_account_id}
                       onChange={handleInputChange}
                     />
                   </div>
@@ -329,16 +302,16 @@ const PaymentAccountPage = () => {
                 
                 <TabsContent value="applepay" className="space-y-4">
                   <div>
-                    <label htmlFor="applePayMerchantId" className="block text-sm font-medium mb-1">
+                    <label htmlFor="applepay_merchant_id" className="block text-sm font-medium mb-1">
                       Apple Pay Merchant ID
                     </label>
                     <input
-                      id="applePayMerchantId"
-                      name="applePayMerchantId"
+                      id="applepay_merchant_id"
+                      name="applepay_merchant_id"
                       type="text"
                       required
                       className="w-full rounded-md border p-2"
-                      value={formData.applePayMerchantId}
+                      value={formData.applepay_merchant_id}
                       onChange={handleInputChange}
                     />
                   </div>
@@ -391,12 +364,12 @@ const PaymentAccountPage = () => {
               >
                 <div className="flex items-center">
                   <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center mr-4">
-                    {getAccountTypeIcon(account.methodType)}
+                    {getAccountTypeIcon(account.account_type)}
                   </div>
                   <div>
                     <p className="font-medium">{formatPaymentMethod(account)}</p>
                     <p className="text-sm text-haluna-text-light">
-                      Added on {new Date(account.createdAt).toLocaleDateString()}
+                      Added on {new Date(account.created_at).toLocaleDateString()}
                     </p>
                   </div>
                 </div>
@@ -455,4 +428,3 @@ const PaymentAccountPage = () => {
 };
 
 export default PaymentAccountPage;
-

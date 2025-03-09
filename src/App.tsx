@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -11,8 +12,7 @@ import { LocationProvider } from "@/context/LocationContext";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import AuthMiddleware from "@/components/auth/AuthMiddleware";
 import Navbar from "@/components/layout/Navbar";
-import Footer from "@/components/layout/Footer";
-import { setupDatabaseTables } from "@/scripts/setupDatabaseTables";
+import { setupDatabaseTables } from "@/services/shopService";
 
 // Pages
 import Index from "./pages/Index";
@@ -32,12 +32,6 @@ import NotFound from "./pages/NotFound";
 import LoginPage from "./pages/auth/LoginPage";
 import SignUpPage from "./pages/auth/SignUpPage";
 import SelectShops from "./pages/SelectShops";
-
-// Business pages
-import BusinessLoginPage from "./pages/business/LoginPage";
-import BusinessSignupPage from "./pages/business/SignupPage";
-import GoogleAuthCallback from "./pages/business/GoogleAuthCallback";
-import CreateShopPage from "./pages/business/CreateShopPage";
 
 // Dashboard imports
 import DashboardLayout from "./components/layout/DashboardLayout";
@@ -64,18 +58,15 @@ const AppRoutes = () => {
   const location = useLocation();
   const { user } = useAuth();
   
-  // Hide navbar on dashboard pages and auth pages
-  const hideNavbar = 
-    location.pathname.startsWith('/dashboard') ||
-    location.pathname.startsWith('/business/');
-  
-  // Hide footer on dashboard pages
-  const hideFooter = 
-    location.pathname.startsWith('/dashboard');
+  // Business users should only see the dashboard interface
+  const showNavbar = !user || user.role !== 'business' || 
+                    (!location.pathname.startsWith('/dashboard') && 
+                     location.pathname !== '/login' && 
+                     location.pathname !== '/signup');
   
   return (
     <AuthMiddleware>
-      {!hideNavbar && <Navbar />}
+      {showNavbar && <Navbar />}
       <Routes>
         {/* Public routes */}
         <Route path="/" element={<Index />} />
@@ -91,17 +82,7 @@ const AppRoutes = () => {
         <Route path="/product/:productId" element={<ProductDetail />} />
         <Route path="/select-shops" element={<SelectShops />} />
         
-        {/* Business routes */}
-        <Route path="/business/login" element={<BusinessLoginPage />} />
-        <Route path="/business/signup" element={<BusinessSignupPage />} />
-        <Route path="/business/google-auth-callback" element={<GoogleAuthCallback />} />
-        <Route path="/business/create-shop" element={
-          <ProtectedRoute requiredRole="any">
-            <CreateShopPage />
-          </ProtectedRoute>
-        } />
-        
-        {/* Protected shopper routes */}
+        {/* Protected shopper routes - explicitly disallow business users */}
         <Route 
           path="/cart" 
           element={
@@ -147,7 +128,7 @@ const AppRoutes = () => {
         <Route 
           path="/dashboard" 
           element={
-            <ProtectedRoute requiredRole="any" isBusinessRoute={true}>
+            <ProtectedRoute requiredRole="business">
               <DashboardLayout />
             </ProtectedRoute>
           }
@@ -165,28 +146,45 @@ const AppRoutes = () => {
         {/* 404 route */}
         <Route path="*" element={<NotFound />} />
       </Routes>
-      {!hideFooter && <Footer />}
     </AuthMiddleware>
   );
 };
 
+// Helper function to run database setup
+const runDatabaseSetup = async (): Promise<boolean> => {
+  try {
+    const success = await setupDatabaseTables();
+    return success;
+  } catch (error) {
+    console.error("Error setting up database:", error);
+    return false;
+  }
+};
+
 function App() {
-  const [isLoading, setIsLoading] = useState(false);
+  const [isDatabaseReady, setIsDatabaseReady] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(true);
 
   useEffect(() => {
-    // Run database setup in the background without blocking UI
+    // Run database setup when the app initializes
     const initApp = async () => {
       try {
-        await setupDatabaseTables();
+        const success = await runDatabaseSetup();
+        setIsDatabaseReady(success);
       } catch (error) {
         console.error('Database initialization error:', error);
+        // Continue with app even if DB setup fails
+        setIsDatabaseReady(true);
+      } finally {
+        setIsInitializing(false);
       }
     };
     
     initApp();
   }, []);
 
-  if (isLoading) {
+  // Don't render anything until initialization is complete
+  if (isInitializing) {
     return (
       <div className="flex items-center justify-center h-screen bg-white">
         <div className="text-center">

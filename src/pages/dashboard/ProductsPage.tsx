@@ -23,6 +23,7 @@ const ProductsPage = () => {
     try {
       const allProducts = await getProducts();
       
+      // Only show products for the current seller
       if (user) {
         const sellerProducts = allProducts.filter(product => product.sellerId === user.id);
         setProducts(sellerProducts);
@@ -43,13 +44,21 @@ const ProductsPage = () => {
   
   const handleDeleteProduct = async (productId: string) => {
     try {
-      await deleteProduct(productId);
+      const success = await deleteProduct(productId);
       
-      toast({
-        title: "Success",
-        description: "Product deleted successfully",
-      });
-      loadProducts();
+      if (success) {
+        toast({
+          title: "Success",
+          description: "Product deleted successfully",
+        });
+        loadProducts();
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to delete product",
+          variant: "destructive",
+        });
+      }
     } catch (error) {
       toast({
         title: "Error",
