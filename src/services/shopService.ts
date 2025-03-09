@@ -547,7 +547,7 @@ export const convertToModelProduct = (shopProduct: ShopProduct): Product => {
 };
 
 // Create a product for a shop
-export async function createProductForShop(shopId: string, product: Partial<Product>): Promise<Product | null> => {
+export const createProductForShop = async (shopId: string, product: Partial<Product>): Promise<Product | null> => {
   try {
     const { data, error } = await supabase
       .from('products')
@@ -558,7 +558,7 @@ export async function createProductForShop(shopId: string, product: Partial<Prod
         category: product.category,
         images: product.images || [],
         shop_id: shopId,
-        is_published: true,
+        is_published: product.isPublished !== undefined ? product.isPublished : true,
         is_halal_certified: product.isHalalCertified || false,
         stock: product.inStock !== undefined ? (product.inStock ? 1 : 0) : 1,
         long_description: product.longDescription || '',
