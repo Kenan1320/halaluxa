@@ -30,6 +30,7 @@ export interface ShopProduct {
   is_published: boolean;
   is_halal_certified: boolean;
   rating: number;
+  stock: number;
 }
 
 export interface ShopLocation {
@@ -77,3 +78,25 @@ export interface BusinessSignupFormData {
   shopCategory: string;
   shopLocation: string;
 }
+
+// Shop categories for dropdown menus
+export const shopCategories = [
+  "Food & Groceries",
+  "Clothing & Fashion",
+  "Beauty & Personal Care",
+  "Health & Wellness",
+  "Home & Kitchen",
+  "Books & Media",
+  "Electronics",
+  "Toys & Games",
+  "Sports & Outdoors",
+  "Baby & Kids",
+  "Jewelry & Accessories",
+  "Halal Meat & Poultry",
+  "Modest Fashion",
+  "Islamic Books & Media",
+  "Prayer Supplies",
+  "Eid & Ramadan",
+  "Home Decor",
+  "Other"
+];

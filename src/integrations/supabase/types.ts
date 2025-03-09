@@ -49,15 +49,16 @@ export type Database = {
           description: string
           details: Json | null
           id: string
-          images: string[]
-          is_halal_certified: boolean
+          images: string[] | null
+          is_halal_certified: boolean | null
           is_published: boolean | null
           long_description: string | null
           name: string
           price: number
           rating: number | null
-          shop_id: string | null
-          stock: number
+          shop_id: string
+          stock: number | null
+          updated_at: string
         }
         Insert: {
           category: string
@@ -65,15 +66,16 @@ export type Database = {
           description: string
           details?: Json | null
           id?: string
-          images?: string[]
-          is_halal_certified?: boolean
+          images?: string[] | null
+          is_halal_certified?: boolean | null
           is_published?: boolean | null
           long_description?: string | null
           name: string
           price: number
           rating?: number | null
-          shop_id?: string | null
-          stock?: number
+          shop_id: string
+          stock?: number | null
+          updated_at?: string
         }
         Update: {
           category?: string
@@ -81,15 +83,16 @@ export type Database = {
           description?: string
           details?: Json | null
           id?: string
-          images?: string[]
-          is_halal_certified?: boolean
+          images?: string[] | null
+          is_halal_certified?: boolean | null
           is_published?: boolean | null
           long_description?: string | null
           name?: string
           price?: number
           rating?: number | null
-          shop_id?: string | null
-          stock?: number
+          shop_id?: string
+          stock?: number | null
+          updated_at?: string
         }
         Relationships: [
           {
@@ -166,7 +169,7 @@ export type Database = {
           account_name: string | null
           account_number: string | null
           bank_name: string | null
-          created_at: string | null
+          created_at: string
           id: string
           is_active: boolean | null
           is_default: boolean | null
@@ -174,13 +177,13 @@ export type Database = {
           paypal_email: string | null
           shop_id: string
           stripe_account_id: string | null
-          updated_at: string | null
+          updated_at: string
         }
         Insert: {
           account_name?: string | null
           account_number?: string | null
           bank_name?: string | null
-          created_at?: string | null
+          created_at?: string
           id?: string
           is_active?: boolean | null
           is_default?: boolean | null
@@ -188,13 +191,13 @@ export type Database = {
           paypal_email?: string | null
           shop_id: string
           stripe_account_id?: string | null
-          updated_at?: string | null
+          updated_at?: string
         }
         Update: {
           account_name?: string | null
           account_number?: string | null
           bank_name?: string | null
-          created_at?: string | null
+          created_at?: string
           id?: string
           is_active?: boolean | null
           is_default?: boolean | null
@@ -202,7 +205,7 @@ export type Database = {
           paypal_email?: string | null
           shop_id?: string
           stripe_account_id?: string | null
-          updated_at?: string | null
+          updated_at?: string
         }
         Relationships: [
           {
@@ -217,30 +220,30 @@ export type Database = {
       shop_sales: {
         Row: {
           amount: number
-          created_at: string | null
+          created_at: string
           id: string
           order_id: string
           shop_id: string
-          status: string | null
-          updated_at: string | null
+          status: string
+          updated_at: string
         }
         Insert: {
           amount: number
-          created_at?: string | null
+          created_at?: string
           id?: string
           order_id: string
           shop_id: string
-          status?: string | null
-          updated_at?: string | null
+          status: string
+          updated_at?: string
         }
         Update: {
           amount?: number
-          created_at?: string | null
+          created_at?: string
           id?: string
           order_id?: string
           shop_id?: string
-          status?: string | null
-          updated_at?: string | null
+          status?: string
+          updated_at?: string
         }
         Relationships: [
           {
@@ -262,57 +265,57 @@ export type Database = {
       shops: {
         Row: {
           address: string | null
-          category: string | null
+          category: string
           cover_image: string | null
-          created_at: string | null
-          description: string | null
+          created_at: string
+          description: string
           id: string
           is_verified: boolean | null
           latitude: number | null
-          location: string | null
+          location: string
           logo_url: string | null
           longitude: number | null
           name: string
           owner_id: string
           product_count: number | null
           rating: number | null
-          updated_at: string | null
+          updated_at: string
         }
         Insert: {
           address?: string | null
-          category?: string | null
+          category: string
           cover_image?: string | null
-          created_at?: string | null
-          description?: string | null
+          created_at?: string
+          description: string
           id?: string
           is_verified?: boolean | null
           latitude?: number | null
-          location?: string | null
+          location: string
           logo_url?: string | null
           longitude?: number | null
           name: string
           owner_id: string
           product_count?: number | null
           rating?: number | null
-          updated_at?: string | null
+          updated_at?: string
         }
         Update: {
           address?: string | null
-          category?: string | null
+          category?: string
           cover_image?: string | null
-          created_at?: string | null
-          description?: string | null
+          created_at?: string
+          description?: string
           id?: string
           is_verified?: boolean | null
           latitude?: number | null
-          location?: string | null
+          location?: string
           logo_url?: string | null
           longitude?: number | null
           name?: string
           owner_id?: string
           product_count?: number | null
           rating?: number | null
-          updated_at?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
@@ -1200,6 +1203,12 @@ export type Database = {
           "": unknown
         }
         Returns: unknown
+      }
+      is_business_owner: {
+        Args: {
+          user_id: string
+        }
+        Returns: boolean
       }
       json: {
         Args: {

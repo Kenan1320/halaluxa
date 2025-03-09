@@ -4,7 +4,7 @@ import { Shop, ShopProduct, ShopPaymentMethod } from '@/models/shop';
 import { Product } from '@/models/product';
 
 // Get all shops
-export async function getShops(): Promise<Shop[]> {
+export async function getAllShops(): Promise<Shop[]> {
   try {
     const { data, error } = await supabase
       .from('shops')
@@ -18,7 +18,7 @@ export async function getShops(): Promise<Shop[]> {
     
     return data as Shop[];
   } catch (error) {
-    console.error('Error in getShops:', error);
+    console.error('Error in getAllShops:', error);
     return [];
   }
 }
@@ -71,6 +71,27 @@ export async function getCurrentUserShop(): Promise<Shop | null> {
   }
 }
 
+// Create a new shop
+export async function createShop(shopData: Partial<Shop>): Promise<Shop | null> {
+  try {
+    const { data, error } = await supabase
+      .from('shops')
+      .insert(shopData)
+      .select()
+      .single();
+    
+    if (error) {
+      console.error('Error creating shop:', error);
+      return null;
+    }
+    
+    return data as Shop;
+  } catch (error) {
+    console.error('Error in createShop:', error);
+    return null;
+  }
+}
+
 // Update shop
 export async function updateShop(shopData: Partial<Shop>): Promise<Shop | null> {
   try {
@@ -105,7 +126,7 @@ export async function uploadShopLogo(file: File, shopId: string): Promise<string
     const filePath = `shop-logos/${fileName}`;
     
     const { error: uploadError } = await supabase.storage
-      .from('shops')
+      .from('public')
       .upload(filePath, file);
     
     if (uploadError) {
@@ -114,7 +135,7 @@ export async function uploadShopLogo(file: File, shopId: string): Promise<string
     }
     
     const { data: urlData } = supabase.storage
-      .from('shops')
+      .from('public')
       .getPublicUrl(filePath);
     
     return urlData.publicUrl;
@@ -147,7 +168,8 @@ export async function getShopProducts(shopId: string): Promise<ShopProduct[]> {
       shop_id: product.shop_id,
       is_published: product.is_published,
       is_halal_certified: product.is_halal_certified,
-      rating: product.rating || 0
+      rating: product.rating || 0,
+      stock: product.stock || 0
     }));
   } catch (error) {
     console.error(`Error in getShopProducts for ${shopId}:`, error);
@@ -171,6 +193,26 @@ export async function toggleProductPublishStatus(productId: string, isPublished:
     return true;
   } catch (error) {
     console.error('Error in toggleProductPublishStatus:', error);
+    return false;
+  }
+}
+
+// Toggle halal certification status
+export async function toggleHalalCertifiedStatus(productId: string, isHalalCertified: boolean): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from('products')
+      .update({ is_halal_certified: isHalalCertified })
+      .eq('id', productId);
+    
+    if (error) {
+      console.error('Error toggling halal certification status:', error);
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error in toggleHalalCertifiedStatus:', error);
     return false;
   }
 }
@@ -291,17 +333,17 @@ export async function setupDatabaseTables(): Promise<boolean> {
       return false;
     }
     
-    // Check if 'shops' bucket exists, create if not
-    const shopsBucketExists = buckets.some(bucket => bucket.name === 'shops');
-    if (!shopsBucketExists) {
+    // Check if 'public' bucket exists, create if not
+    const publicBucketExists = buckets.some(bucket => bucket.name === 'public');
+    if (!publicBucketExists) {
       const { error: createBucketError } = await supabase
         .storage
-        .createBucket('shops', {
+        .createBucket('public', {
           public: true
         });
       
       if (createBucketError) {
-        console.error('Error creating shops bucket:', createBucketError);
+        console.error('Error creating public bucket:', createBucketError);
       }
     }
     
@@ -324,6 +366,26 @@ export function convertToShopProduct(product: Product, shopId: string): ShopProd
     shop_id: shopId,
     is_published: false,
     is_halal_certified: product.isHalalCertified,
-    rating: product.rating || 0
+    rating: product.rating || 0,
+    stock: product.stock || 0
+  };
+}
+
+// Convert ShopProduct to Product model
+export function convertToModelProduct(shopProduct: ShopProduct): Product {
+  return {
+    id: shopProduct.id,
+    name: shopProduct.name,
+    description: shopProduct.description,
+    price: shopProduct.price,
+    category: shopProduct.category,
+    images: shopProduct.images,
+    sellerId: shopProduct.shop_id,
+    sellerName: "", // This would typically be filled in by the service calling this function
+    inStock: shopProduct.stock > 0,
+    isHalalCertified: shopProduct.is_halal_certified,
+    rating: shopProduct.rating,
+    createdAt: new Date().toISOString(), // Default value
+    stock: shopProduct.stock || 0
   };
 }
