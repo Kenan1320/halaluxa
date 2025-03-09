@@ -9,6 +9,53 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      business_profiles: {
+        Row: {
+          business_documents: Json | null
+          business_verified: boolean | null
+          created_at: string
+          id: string
+          shop_category: string | null
+          shop_description: string | null
+          shop_location: string | null
+          shop_logo: string | null
+          shop_name: string | null
+          updated_at: string
+        }
+        Insert: {
+          business_documents?: Json | null
+          business_verified?: boolean | null
+          created_at?: string
+          id: string
+          shop_category?: string | null
+          shop_description?: string | null
+          shop_location?: string | null
+          shop_logo?: string | null
+          shop_name?: string | null
+          updated_at?: string
+        }
+        Update: {
+          business_documents?: Json | null
+          business_verified?: boolean | null
+          created_at?: string
+          id?: string
+          shop_category?: string | null
+          shop_description?: string | null
+          shop_location?: string | null
+          shop_logo?: string | null
+          shop_name?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_profiles_id_fkey"
+            columns: ["id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       orders: {
         Row: {
           created_at: string | null
@@ -107,57 +154,42 @@ export type Database = {
       profiles: {
         Row: {
           address: string | null
+          avatar_url: string | null
           city: string | null
           created_at: string
-          email: string | null
+          email: string
           id: string
-          is_business_owner: boolean | null
           name: string | null
           phone: string | null
-          role: string | null
-          shop_category: string | null
-          shop_description: string | null
-          shop_location: string | null
-          shop_logo: string | null
-          shop_name: string | null
+          role: string
           state: string | null
           updated_at: string
           zip: string | null
         }
         Insert: {
           address?: string | null
+          avatar_url?: string | null
           city?: string | null
           created_at?: string
-          email?: string | null
+          email: string
           id: string
-          is_business_owner?: boolean | null
           name?: string | null
           phone?: string | null
-          role?: string | null
-          shop_category?: string | null
-          shop_description?: string | null
-          shop_location?: string | null
-          shop_logo?: string | null
-          shop_name?: string | null
+          role: string
           state?: string | null
           updated_at?: string
           zip?: string | null
         }
         Update: {
           address?: string | null
+          avatar_url?: string | null
           city?: string | null
           created_at?: string
-          email?: string | null
+          email?: string
           id?: string
-          is_business_owner?: boolean | null
           name?: string | null
           phone?: string | null
-          role?: string | null
-          shop_category?: string | null
-          shop_description?: string | null
-          shop_location?: string | null
-          shop_logo?: string | null
-          shop_name?: string | null
+          role?: string
           state?: string | null
           updated_at?: string
           zip?: string | null
@@ -342,6 +374,54 @@ export type Database = {
           srtext?: string | null
         }
         Relationships: []
+      }
+      user_shop_preferences: {
+        Row: {
+          created_at: string
+          id: string
+          is_favorite: boolean | null
+          is_following: boolean | null
+          is_main_shop: boolean | null
+          shop_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_favorite?: boolean | null
+          is_following?: boolean | null
+          is_main_shop?: boolean | null
+          shop_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_favorite?: boolean | null
+          is_following?: boolean | null
+          is_main_shop?: boolean | null
+          shop_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_shop_preferences_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_shop_preferences_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
