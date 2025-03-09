@@ -26,6 +26,8 @@ export const mapDbShopToModel = (dbShop: any): Shop => {
 // Create a new shop
 export async function createShop(shopData: Partial<Shop>): Promise<Shop | null> {
   try {
+    console.log('Creating shop with data:', shopData);
+    
     // First upload the logo if it exists
     let logoUrl = null;
     if (shopData.logo && shopData.logo.startsWith('data:')) {
@@ -37,6 +39,7 @@ export async function createShop(shopData: Partial<Shop>): Promise<Shop | null> 
       }
       
       logoUrl = uploadResult?.path;
+      console.log('Logo uploaded successfully:', logoUrl);
     }
     
     // Prepare shop data for database
@@ -55,6 +58,8 @@ export async function createShop(shopData: Partial<Shop>): Promise<Shop | null> 
       longitude: shopData.longitude || null
     };
     
+    console.log('Shop data prepared for insert:', dbShopData);
+    
     // Insert the shop
     const { data, error } = await supabase
       .from('shops')
@@ -67,8 +72,9 @@ export async function createShop(shopData: Partial<Shop>): Promise<Shop | null> 
       return null;
     }
     
-    // No need to update seller_accounts as it's been replaced by shop_payment_methods
-    // However, we can associate user with shop by updating the business_profile
+    console.log('Shop inserted successfully:', data);
+    
+    // Associate user with shop by updating the business_profile
     await associateUserWithShop(shopData.ownerId!, data.id);
     
     return mapDbShopToModel(data);
@@ -81,16 +87,18 @@ export async function createShop(shopData: Partial<Shop>): Promise<Shop | null> 
 // Link a user to their shop in the business_profiles table
 async function associateUserWithShop(userId: string, shopId: string) {
   try {
+    console.log('Associating user with shop:', { userId, shopId });
+    
     // Update the business_profile to include the shop_id
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('business_profiles')
-      .update({ 
-        shop_id: shopId
-      })
+      .update({ shop_id: shopId })
       .eq('id', userId);
       
     if (error) {
       console.error('Error associating user with shop:', error);
+    } else {
+      console.log('User associated with shop successfully');
     }
     
     return true;
@@ -103,6 +111,8 @@ async function associateUserWithShop(userId: string, shopId: string) {
 // Upload shop logo to supabase storage
 export async function uploadShopLogo(base64Image: string, ownerId: string) {
   try {
+    console.log('Uploading shop logo');
+    
     // Convert base64 to blob
     const formatData = base64Image.split(';base64,');
     const contentType = formatData[0].split(':')[1];
@@ -114,6 +124,8 @@ export async function uploadShopLogo(base64Image: string, ownerId: string) {
     const fileName = `${ownerId}_${Date.now()}.${fileExt}`;
     const filePath = `shop_logos/${fileName}`;
     
+    console.log('Preparing to upload to path:', filePath);
+    
     // Upload to Supabase Storage
     const uploadResult = await supabase.storage
       .from('shops')
@@ -123,6 +135,7 @@ export async function uploadShopLogo(base64Image: string, ownerId: string) {
       });
       
     if (uploadResult.error) {
+      console.error('Upload error:', uploadResult.error);
       throw uploadResult.error;
     }
     
@@ -131,6 +144,8 @@ export async function uploadShopLogo(base64Image: string, ownerId: string) {
       .from('shops')
       .getPublicUrl(filePath);
       
+    console.log('Logo uploaded, public URL:', urlData.publicUrl);
+    
     // Return both the path and public URL
     return { 
       ...uploadResult, 
@@ -140,61 +155,6 @@ export async function uploadShopLogo(base64Image: string, ownerId: string) {
     console.error('Error uploading logo:', error);
     throw error;
   }
-}
-
-// Upload product image with retry logic
-export async function uploadProductImage(file: File, onProgress?: (progress: number) => void): Promise<string | null> {
-  const maxRetries = 3;
-  let retryCount = 0;
-  
-  while (retryCount < maxRetries) {
-    try {
-      const fileName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
-      const filePath = `product_images/${fileName}`;
-      
-      // Show initial progress
-      if (onProgress) onProgress(10);
-      
-      const { data, error } = await supabase.storage
-        .from('products')
-        .upload(filePath, file, {
-          contentType: file.type,
-          cacheControl: '3600',
-          upsert: true // Enable upsert to prevent duplicates
-        });
-      
-      // Update progress
-      if (onProgress) onProgress(70);
-      
-      if (error) {
-        throw error;
-      }
-      
-      const { data: urlData } = supabase.storage
-        .from('products')
-        .getPublicUrl(filePath);
-      
-      // Complete progress
-      if (onProgress) onProgress(100);
-      
-      return urlData.publicUrl;
-    } catch (error) {
-      console.error(`Error uploading product image (attempt ${retryCount + 1}):`, error);
-      retryCount++;
-      
-      // Only retry on network errors, not validation errors
-      if (error instanceof Error && 
-          !(error.message.includes('size') || error.message.includes('type'))) {
-        // Wait before retrying (exponential backoff)
-        await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
-      } else {
-        // Don't retry for validation errors
-        break;
-      }
-    }
-  }
-  
-  return null;
 }
 
 // Helper function to convert base64 to blob
@@ -398,8 +358,8 @@ export async function getShopProducts(shopId: string): Promise<ShopProduct[]> {
       price: product.price,
       category: product.category,
       images: product.images || [],
-      sellerId: product.seller_id,
-      sellerName: product.seller_name,
+      sellerId: product.seller_id || shopId, // Use the provided shopId as fallback
+      sellerName: product.seller_name || '', // Use empty string as fallback
       rating: product.rating || 0
     }));
   } catch (error) {
@@ -632,7 +592,7 @@ function getMockShops(): Shop[] {
 // Create a script to set up necessary database tables
 export async function setupDatabaseTables(): Promise<boolean> {
   try {
-    // Run directly with query instead of RPC
+    // Check if the user is authenticated
     const { error } = await supabase.auth.getUser();
     
     if (error) {
@@ -640,7 +600,7 @@ export async function setupDatabaseTables(): Promise<boolean> {
       return false;
     }
     
-    // For simplicity, just check if tables exist
+    // For simplicity, just check if shops table exists
     const { data: shopData, error: shopError } = await supabase
       .from('shops')
       .select('count(*)')
@@ -651,20 +611,76 @@ export async function setupDatabaseTables(): Promise<boolean> {
       return false;
     }
     
-    // Check if seller_accounts table exists
-    const { data: sellerData, error: sellerError } = await supabase
-      .from('seller_accounts')
+    // Check if shop_payment_methods table exists
+    const { data: paymentData, error: paymentError } = await supabase
+      .from('shop_payment_methods')
       .select('count(*)')
       .limit(1);
       
-    if (sellerError && sellerError.code === '42P01') {
-      console.error('seller_accounts table does not exist. Please create it using SQL script.');
+    if (paymentError) {
+      console.error('shop_payment_methods table does not exist. Please create it using SQL script.');
       return false;
     }
     
+    console.log('Database tables are set up correctly');
     return true;
   } catch (error) {
     console.error('Error setting up database tables:', error);
     return false;
   }
+}
+
+// Upload product image with retry logic
+export async function uploadProductImage(file: File, onProgress?: (progress: number) => void): Promise<string | null> {
+  const maxRetries = 3;
+  let retryCount = 0;
+  
+  while (retryCount < maxRetries) {
+    try {
+      const fileName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+      const filePath = `product_images/${fileName}`;
+      
+      // Show initial progress
+      if (onProgress) onProgress(10);
+      
+      const { data, error } = await supabase.storage
+        .from('products')
+        .upload(filePath, file, {
+          contentType: file.type,
+          cacheControl: '3600',
+          upsert: true // Enable upsert to prevent duplicates
+        });
+      
+      // Update progress
+      if (onProgress) onProgress(70);
+      
+      if (error) {
+        throw error;
+      }
+      
+      const { data: urlData } = supabase.storage
+        .from('products')
+        .getPublicUrl(filePath);
+      
+      // Complete progress
+      if (onProgress) onProgress(100);
+      
+      return urlData.publicUrl;
+    } catch (error) {
+      console.error(`Error uploading product image (attempt ${retryCount + 1}):`, error);
+      retryCount++;
+      
+      // Only retry on network errors, not validation errors
+      if (error instanceof Error && 
+          !(error.message.includes('size') || error.message.includes('type'))) {
+        // Wait before retrying (exponential backoff)
+        await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+      } else {
+        // Don't retry for validation errors
+        break;
+      }
+    }
+  }
+  
+  return null;
 }

@@ -144,7 +144,7 @@ export const createSellerAccount = async (
       throw new Error('Shop not found for current user');
     }
     
-    // Convert account_type from accountData to method_type for the new table
+    // Prepare the payment method data
     const shopPaymentMethod = {
       user_id: user.user.id,
       shop_id: shopData.id,
@@ -169,7 +169,7 @@ export const createSellerAccount = async (
       throw error;
     }
     
-    return data;
+    return data as SellerAccount;
   } catch (error) {
     console.error('Error creating payment method:', error);
     return null;
@@ -196,7 +196,7 @@ export const getSellerAccount = async (): Promise<SellerAccount | null> => {
       throw error;
     }
     
-    return data;
+    return data as SellerAccount;
   } catch (error) {
     console.error('Error fetching payment method:', error);
     return null;
@@ -222,7 +222,7 @@ export const getSellerAccounts = async (): Promise<SellerAccount[]> => {
       throw error;
     }
     
-    return data || [];
+    return data as SellerAccount[];
   } catch (error) {
     console.error('Error fetching payment methods:', error);
     return [];
@@ -279,7 +279,7 @@ export const updateSellerAccount = async (
       throw error;
     }
     
-    return data;
+    return data as SellerAccount;
   } catch (error) {
     console.error('Error updating payment method:', error);
     return null;

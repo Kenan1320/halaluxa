@@ -101,6 +101,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Helper function to load user data from DB
   const loadUserData = async (userId: string) => {
     try {
+      console.log('Loading user data for:', userId);
+      
       // Get user profile from database
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
@@ -108,7 +110,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         .eq('id', userId)
         .single();
       
-      if (profileError) throw profileError;
+      if (profileError) {
+        console.error('Profile load error:', profileError);
+        throw profileError;
+      }
+      
+      console.log('Loaded profile:', profile);
       
       // If the user is a business, also get business profile
       let businessProfile = null;
@@ -119,15 +126,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           .eq('id', userId)
           .single();
         
-        if (!businessError) {
+        if (businessError) {
+          console.error('Business profile load error:', businessError);
+        } else {
           businessProfile = businessData;
+          console.log('Loaded business profile:', businessProfile);
         }
       }
       
       // Safely ensure role is either 'shopper' or 'business'
-      const safeRole = (profile.role === 'shopper' || profile.role === 'business') 
-        ? profile.role 
-        : 'shopper' as 'shopper' | 'business';
+      const safeRole = profile.role === 'business' 
+        ? 'business' as const
+        : 'shopper' as const;
       
       // Combine profile and business profile data
       const userData: User = {
@@ -153,6 +163,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         userData.businessVerified = businessProfile.business_verified;
       }
       
+      console.log('Final user data:', userData);
+      
       setUser(userData);
       setIsLoggedIn(true);
     } catch (error) {
@@ -165,13 +177,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Login function
   const login = async (email: string, password: string): Promise<string | null> => {
     try {
+      console.log('Attempting login for:', email);
+      
       // Sign in with Supabase
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Login error:', error);
+        throw error;
+      }
+      
+      console.log('Login successful:', data);
       
       // Load user data
       await loadUserData(data.user.id);
@@ -192,6 +211,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     role: 'shopper' | 'business'
   ): Promise<boolean> => {
     try {
+      console.log('Registering new user:', { email, name, role });
+      
       // Sign up with Supabase
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -204,7 +225,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         },
       });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Registration error:', error);
+        throw error;
+      }
+      
+      console.log('Registration response:', data);
       
       // If registration is successful but email confirmation is required
       if (data?.user && !data?.session) {
@@ -247,6 +273,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (!user) return false;
     
     try {
+      console.log('Updating user with:', updates);
+      
       // Separate updates for profile and business_profile tables
       const profileUpdates: any = {};
       const businessUpdates: any = {};
@@ -274,7 +302,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           .update(profileUpdates)
           .eq('id', user.id);
         
-        if (profileError) throw profileError;
+        if (profileError) {
+          console.error('Profile update error:', profileError);
+          throw profileError;
+        }
       }
       
       // Update business profile if there are business updates and user is a business
@@ -284,7 +315,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           .update(businessUpdates)
           .eq('id', user.id);
         
-        if (businessError) throw businessError;
+        if (businessError) {
+          console.error('Business profile update error:', businessError);
+          throw businessError;
+        }
       }
       
       // Update local user state

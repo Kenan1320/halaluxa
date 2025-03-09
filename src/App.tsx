@@ -12,7 +12,7 @@ import { LocationProvider } from "@/context/LocationContext";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import AuthMiddleware from "@/components/auth/AuthMiddleware";
 import Navbar from "@/components/layout/Navbar";
-import { setupDatabaseTables } from "@/services/shopService";
+import { initializeDatabase } from "@/scripts/databaseSetup";
 
 // Pages
 import Index from "./pages/Index";
@@ -153,7 +153,9 @@ const AppRoutes = () => {
 // Helper function to run database setup
 const runDatabaseSetup = async (): Promise<boolean> => {
   try {
-    const success = await setupDatabaseTables();
+    console.log('Running database setup...');
+    const success = await initializeDatabase();
+    console.log('Database setup complete, success:', success);
     return success;
   } catch (error) {
     console.error("Error setting up database:", error);
@@ -169,8 +171,10 @@ function App() {
     // Run database setup when the app initializes
     const initApp = async () => {
       try {
+        console.log('Initializing application...');
         const success = await runDatabaseSetup();
         setIsDatabaseReady(success);
+        console.log('Database ready:', success);
       } catch (error) {
         console.error('Database initialization error:', error);
         // Continue with app even if DB setup fails

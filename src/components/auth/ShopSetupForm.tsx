@@ -80,6 +80,8 @@ export default function ShopSetupForm({ onComplete, onSkip }: ShopSetupFormProps
     setIsLoading(true);
     
     try {
+      console.log('Creating shop with data:', shopData);
+      
       // Create the shop
       const shop = await createShop({
         name: shopData.name,
@@ -94,8 +96,10 @@ export default function ShopSetupForm({ onComplete, onSkip }: ShopSetupFormProps
       });
       
       if (shop) {
+        console.log('Shop created successfully:', shop);
+        
         // Update business profile with shop details using business_profiles table
-        await supabase
+        const { error: updateError } = await supabase
           .from('business_profiles')
           .update({
             shop_name: shopData.name,
@@ -105,6 +109,10 @@ export default function ShopSetupForm({ onComplete, onSkip }: ShopSetupFormProps
             shop_logo: logoPreview
           })
           .eq('id', user.id);
+        
+        if (updateError) {
+          console.error('Error updating business profile:', updateError);
+        }
           
         // Also update the user context
         await updateUser({
@@ -122,6 +130,7 @@ export default function ShopSetupForm({ onComplete, onSkip }: ShopSetupFormProps
         
         onComplete();
       } else {
+        console.error('Failed to create shop');
         toast({
           title: "Error",
           description: "Failed to create shop. Please try again.",
