@@ -495,20 +495,22 @@ export function convertToShopProduct(product: Product, shopId: string): ShopProd
 }
 
 // Convert ShopProduct to Product model
-export function convertToModelProduct(shopProduct: any): Product {
+export const convertToModelProduct = (shopProduct: ShopProduct): Product => {
   return {
     id: shopProduct.id,
     name: shopProduct.name,
-    description: shopProduct.description,
     price: shopProduct.price,
+    description: shopProduct.description,
     category: shopProduct.category,
-    inStock: shopProduct.stock > 0,
     images: shopProduct.images || [],
     sellerId: shopProduct.shop_id,
-    sellerName: shopProduct.shop_name,
+    sellerName: shopProduct.sellerName || '',
     rating: shopProduct.rating || 0,
-    isHalalCertified: shopProduct.is_halal_certified || false,
-    details: typeof shopProduct.details === 'string' ? JSON.parse(shopProduct.details) : shopProduct.details || {},
-    createdAt: shopProduct.created_at
+    isPublished: shopProduct.is_published,
+    isHalalCertified: shopProduct.is_halal_certified,
+    inStock: shopProduct.stock !== undefined ? Boolean(shopProduct.stock) : true,
+    longDescription: shopProduct.long_description || '',
+    details: shopProduct.details || {},
+    createdAt: shopProduct.created_at || new Date().toISOString()
   };
-}
+};

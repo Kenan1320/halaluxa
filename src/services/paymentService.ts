@@ -1,22 +1,56 @@
+import { supabase } from "@/integrations/supabase/client";
+import { Cart } from "@/models/cart";
+import { v4 as uuidv4 } from 'uuid';
+import { PaymentResult, SellerAccount } from "@/models/payment";
 
-import { supabase } from '@/integrations/supabase/client';
-import { Shop } from '@/models/shop';
-
-export interface SellerAccount {
-  id: string;
-  user_id: string;
-  shop_id: string;
-  method_type: 'bank' | 'paypal' | 'stripe' | 'applepay';
-  account_name?: string;
-  account_number?: string;
-  bank_name?: string;
-  paypal_email?: string;
-  stripe_account_id?: string;
-  applepay_merchant_id?: string;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
-}
+// Process a payment and create an order
+export const processPayment = async (
+  cart: Cart,
+  paymentMethodDetails: any,
+  shippingDetails: any
+): Promise<PaymentResult> => {
+  try {
+    // Generate an order ID
+    const orderId = uuidv4();
+    const orderDate = new Date().toISOString();
+    
+    // In a real app, we would process the payment with a payment provider
+    // For demo purposes, we'll simulate a successful payment
+    
+    // Create an order in the database
+    const { error } = await supabase
+      .from('orders')
+      .insert({
+        id: orderId,
+        user_id: supabase.auth.getUser().then(res => res.data.user?.id),
+        date: orderDate,
+        total: cart.totalPrice,
+        items: cart.items,
+        status: 'paid',
+        shipping_details: shippingDetails
+      });
+    
+    if (error) {
+      console.error('Error creating order:', error);
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+    
+    return {
+      success: true,
+      orderId,
+      orderDate
+    };
+  } catch (error: any) {
+    console.error('Payment processing error:', error);
+    return {
+      success: false,
+      error: error.message || 'An error occurred during payment processing'
+    };
+  }
+};
 
 // Format payment method for display
 export function formatPaymentMethod(account: SellerAccount): string {
@@ -303,30 +337,5 @@ export async function setDefaultSellerAccount(accountId: string, shopId: string)
   } catch (error) {
     console.error(`Error in setDefaultSellerAccount for ${accountId}:`, error);
     return false;
-  }
-}
-
-// Process a payment
-export async function processPayment(
-  orderId: string,
-  paymentDetails: any,
-  options: { successUrl?: string; cancelUrl?: string }
-): Promise<{ success: boolean; redirectUrl?: string; error?: string }> {
-  try {
-    // Placeholder for payment processing logic
-    console.log(`Processing payment for order ${orderId}`);
-    
-    // Return success with a redirect URL
-    return {
-      success: true,
-      redirectUrl: options.successUrl || `/order-confirmation?id=${orderId}`
-    };
-  } catch (error: any) {
-    console.error('Payment processing error:', error);
-    return {
-      success: false,
-      error: error.message || 'Payment processing failed',
-      redirectUrl: options.cancelUrl || '/checkout?error=payment_failed'
-    };
   }
 }
