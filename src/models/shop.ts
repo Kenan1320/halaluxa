@@ -51,3 +51,22 @@ export interface ShopDisplaySettings {
   bannerMessage: string | null;
   created_at: string;
 }
+
+// Categories for shops and products
+export const shopCategories = [
+  "Clothing & Apparel",
+  "Food & Beverages",
+  "Home & Kitchen",
+  "Beauty & Personal Care",
+  "Health & Wellness",
+  "Electronics",
+  "Books & Media",
+  "Arts & Crafts",
+  "Toys & Games",
+  "Sports & Outdoors",
+  "Jewelry & Accessories",
+  "Baby & Kids",
+  "Pet Supplies",
+  "Automotive",
+  "Other"
+];

@@ -1,61 +1,34 @@
-import { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
-import DashboardSidebar from './DashboardSidebar';
-import DashboardHeader from './DashboardHeader';
-import { Outlet } from 'react-router-dom';
-import { useIsMobile } from '@/hooks/use-mobile';
-import { cn } from '@/lib/utils';
 
-const DashboardLayout = () => {
-  const isMobile = useIsMobile();
-  const [viewMode, setViewMode] = useState<'mobile' | 'desktop'>(
-    localStorage.getItem('dashboardViewMode') as 'mobile' | 'desktop' || 'mobile'
-  );
-  
-  useEffect(() => {
-    const handleStorageChange = () => {
-      setViewMode(localStorage.getItem('dashboardViewMode') as 'mobile' | 'desktop' || 'mobile');
-    };
-    
-    window.addEventListener('storage', handleStorageChange);
-    
-    const interval = setInterval(() => {
-      const currentViewMode = localStorage.getItem('dashboardViewMode') as 'mobile' | 'desktop' || 'mobile';
-      if (currentViewMode !== viewMode) {
-        setViewMode(currentViewMode);
-      }
-    }, 1000);
-    
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      clearInterval(interval);
-    };
-  }, [viewMode]);
-  
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, []);
+import { useState, ReactNode } from 'react';
+import DashboardHeader from './DashboardHeader';
+import DashboardSidebar from './DashboardSidebar';
+import { supabase } from '@/integrations/supabase/client';
+
+interface DashboardLayoutProps {
+  children: ReactNode;
+}
+
+const DashboardLayout = ({ children }: DashboardLayoutProps) => {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const toggleSidebar = () => {
+    setSidebarOpen(!sidebarOpen);
+  };
+
+  const closeSidebar = () => {
+    setSidebarOpen(false);
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <DashboardSidebar />
-      
-      <div className={cn(
-        "min-h-screen flex flex-col transition-all duration-300",
-        isMobile || viewMode === 'mobile' ? "ml-0" : "ml-64"
-      )}>
-        <DashboardHeader />
-        
-        <motion.main 
-          className="flex-1 p-4 md:p-6 transition-all"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-        >
-          <div className="max-w-7xl mx-auto">
-            <Outlet />
+    <div className="min-h-screen flex flex-col">
+      <DashboardHeader toggleSidebar={toggleSidebar} />
+      <div className="flex flex-1 pt-16">
+        <DashboardSidebar isOpen={sidebarOpen} closeSidebar={closeSidebar} />
+        <main className="flex-1 p-6 bg-gray-50">
+          <div className="container mx-auto">
+            {children}
           </div>
-        </motion.main>
+        </main>
       </div>
     </div>
   );

@@ -2,38 +2,21 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-
-// Define the user type
-export interface User {
-  id: string;
-  email: string;
-  name: string | null;
-  avatar?: string | null;
-  role: 'shopper' | 'business';
-  shopName?: string | null;
-  shopDescription?: string | null;
-  shopCategory?: string | null;
-  shopLocation?: string | null;
-  shopLogo?: string | null;
-  phone?: string | null;
-  address?: string | null;
-  city?: string | null;
-  state?: string | null;
-  zip?: string | null;
-}
+import { User, BusinessProfile } from '@/models/user';
 
 // Define the context type
 interface AuthContextType {
   isLoggedIn: boolean;
   isInitializing: boolean;
   user: User | null;
+  businessProfile: BusinessProfile | null;
   login: (email: string, password: string) => Promise<string | null>;
   register: (email: string, password: string, name: string, role: 'shopper' | 'business') => Promise<boolean>;
-  signup: (email: string, password: string, name: string, role: 'shopper' | 'business') => Promise<boolean>;
+  googleSignIn: (role: 'shopper' | 'business') => Promise<void>;
   logout: () => Promise<void>;
   updateUser: (updates: Partial<User>) => Promise<boolean>;
   refreshSession: () => Promise<void>;
-  updateUserProfile: (updates: Partial<User>) => Promise<boolean>;
+  updateBusinessProfile: (updates: Partial<BusinessProfile>) => Promise<boolean>;
 }
 
 // Create the context with default values
@@ -41,13 +24,14 @@ const AuthContext = createContext<AuthContextType>({
   isLoggedIn: false,
   isInitializing: true,
   user: null,
+  businessProfile: null,
   login: async () => null,
   register: async () => false,
-  signup: async () => false,
+  googleSignIn: async () => {},
   logout: async () => {},
   updateUser: async () => false,
   refreshSession: async () => {},
-  updateUserProfile: async () => false,
+  updateBusinessProfile: async () => false,
 });
 
 // Export the hook for using the auth context
@@ -58,6 +42,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
   const [user, setUser] = useState<User | null>(null);
+  const [businessProfile, setBusinessProfile] = useState<BusinessProfile | null>(null);
   const { toast } = useToast();
   
   // Initialize: check if user is already logged in
@@ -68,37 +53,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const { data: { session } } = await supabase.auth.getSession();
         
         if (session?.user) {
-          // Get user profile from the database
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
-          
-          if (profile) {
-            setUser({
-              id: session.user.id,
-              email: session.user.email || '',
-              name: profile.name || session.user.user_metadata?.full_name || null,
-              avatar: session.user.user_metadata?.avatar_url || null,
-              role: profile.role as 'shopper' | 'business',
-              shopName: profile.shop_name || null,
-              shopDescription: profile.shop_description || null,
-              shopCategory: profile.shop_category || null,
-              shopLocation: profile.shop_location || null,
-              shopLogo: profile.shop_logo || null,
-              phone: profile.phone || null,
-              address: profile.address || null,
-              city: profile.city || null,
-              state: profile.state || null,
-              zip: profile.zip || null,
-            });
-            setIsLoggedIn(true);
-          }
+          await fetchUserData(session.user.id);
+        } else {
+          setIsInitializing(false);
         }
       } catch (error) {
         console.error('Error initializing auth:', error);
-      } finally {
         setIsInitializing(false);
       }
     };
@@ -109,51 +69,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' && session?.user) {
         // Get user profile from database
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
-        
-        if (profile) {
-          // Check if this was a social sign-in and we need to update the role
-          const storedUserType = localStorage.getItem('signupUserType');
-          if (storedUserType && (storedUserType === 'shopper' || storedUserType === 'business')) {
-            // Update the role in the database
-            await supabase
-              .from('profiles')
-              .update({ role: storedUserType })
-              .eq('id', session.user.id);
-            
-            // Update the local profile object
-            profile.role = storedUserType;
-            
-            // Clear the stored user type
-            localStorage.removeItem('signupUserType');
-          }
-          
-          setUser({
-            id: session.user.id,
-            email: session.user.email || '',
-            name: profile.name || session.user.user_metadata?.full_name || null,
-            avatar: session.user.user_metadata?.avatar_url || null,
-            role: profile.role as 'shopper' | 'business',
-            shopName: profile.shop_name || null,
-            shopDescription: profile.shop_description || null,
-            shopCategory: profile.shop_category || null,
-            shopLocation: profile.shop_location || null,
-            shopLogo: profile.shop_logo || null,
-            phone: profile.phone || null,
-            address: profile.address || null,
-            city: profile.city || null,
-            state: profile.state || null,
-            zip: profile.zip || null,
-          });
-          setIsLoggedIn(true);
-        }
+        await fetchUserData(session.user.id);
       } else if (event === 'SIGNED_OUT') {
         setIsLoggedIn(false);
         setUser(null);
+        setBusinessProfile(null);
       }
     });
     
@@ -162,6 +82,69 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       subscription.unsubscribe();
     };
   }, []);
+  
+  // Fetch user data from the database
+  const fetchUserData = async (userId: string) => {
+    try {
+      // Get user profile
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+      
+      if (error) {
+        throw error;
+      }
+      
+      if (profile) {
+        const userData: User = {
+          id: userId,
+          email: profile.email,
+          name: profile.name,
+          avatar: profile.avatar_url,
+          role: profile.role as 'shopper' | 'business',
+          phone: profile.phone,
+          address: profile.address,
+          city: profile.city,
+          state: profile.state,
+          zip: profile.zip,
+          createdAt: profile.created_at,
+        };
+        
+        setUser(userData);
+        setIsLoggedIn(true);
+        
+        // If the user is a business owner, fetch their business profile
+        if (profile.role === 'business') {
+          const { data: businessData, error: businessError } = await supabase
+            .from('business_profiles')
+            .select('*')
+            .eq('id', userId)
+            .single();
+          
+          if (!businessError && businessData) {
+            setBusinessProfile({
+              id: businessData.id,
+              shopName: businessData.shop_name,
+              shopDescription: businessData.shop_description,
+              shopLogo: businessData.shop_logo,
+              shopCategory: businessData.shop_category,
+              shopLocation: businessData.shop_location,
+              businessVerified: businessData.business_verified,
+              businessDocuments: businessData.business_documents || {},
+              createdAt: businessData.created_at,
+              updatedAt: businessData.updated_at,
+            });
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+    } finally {
+      setIsInitializing(false);
+    }
+  };
   
   // Login function
   const login = async (email: string, password: string): Promise<string | null> => {
@@ -174,36 +157,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       if (error) throw error;
       
-      // Get user profile
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', data.user.id)
-        .single();
+      await fetchUserData(data.user.id);
       
-      if (profile) {
-        setUser({
-          id: data.user.id,
-          email: data.user.email || '',
-          name: profile.name || null,
-          role: profile.role as 'shopper' | 'business',
-          shopName: profile.shop_name || null,
-          shopDescription: profile.shop_description || null,
-          shopCategory: profile.shop_category || null,
-          shopLocation: profile.shop_location || null,
-          shopLogo: profile.shop_logo || null,
-          phone: profile.phone || null,
-          address: profile.address || null,
-          city: profile.city || null,
-          state: profile.state || null,
-          zip: profile.zip || null,
-        });
-        
-        setIsLoggedIn(true);
-        return profile.role;
-      }
-      
-      return null;
+      return user?.role || null;
     } catch (error) {
       console.error('Error during login:', error);
       return null;
@@ -243,51 +199,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       // If registration is successful and user is logged in immediately
       if (data?.user && data?.session) {
-        // Get or create user profile
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', data.user.id)
-          .single();
-        
-        if (profileError && profileError.code !== 'PGRST116') {
-          // Error other than "not found"
-          throw profileError;
-        }
-        
-        // If profile doesn't exist, it should have been created by the database trigger
-        // But we'll update it with the name and role just to be sure
-        if (!profile) {
-          await supabase
-            .from('profiles')
-            .update({ name, role })
-            .eq('id', data.user.id);
-        } else {
-          // Update existing profile with role
-          await supabase
-            .from('profiles')
-            .update({ role })
-            .eq('id', data.user.id);
-        }
-        
-        setUser({
-          id: data.user.id,
-          email: data.user.email || '',
-          name,
-          role,
-          shopName: null,
-          shopDescription: null,
-          shopCategory: null,
-          shopLocation: null,
-          shopLogo: null,
-          phone: null,
-          address: null,
-          city: null,
-          state: null,
-          zip: null,
-        });
-        
-        setIsLoggedIn(true);
+        await fetchUserData(data.user.id);
         return true;
       }
       
@@ -298,8 +210,30 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
   
-  // Alias for register
-  const signup = register;
+  // Google Sign In
+  const googleSignIn = async (role: 'shopper' | 'business') => {
+    try {
+      // Store the role in local storage temporarily
+      localStorage.setItem('signup_role', role);
+      
+      await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth-callback`,
+          queryParams: {
+            role: role, // Pass the role as a query parameter
+          },
+        },
+      });
+    } catch (error) {
+      console.error('Error during Google sign in:', error);
+      toast({
+        title: "Error",
+        description: "Could not sign in with Google. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
   
   // Logout function
   const logout = async (): Promise<void> => {
@@ -307,6 +241,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       await supabase.auth.signOut();
       setIsLoggedIn(false);
       setUser(null);
+      setBusinessProfile(null);
     } catch (error) {
       console.error('Error during logout:', error);
     }
@@ -321,11 +256,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const dbUpdates: any = {};
       
       if (updates.name !== undefined) dbUpdates.name = updates.name;
-      if (updates.shopName !== undefined) dbUpdates.shop_name = updates.shopName;
-      if (updates.shopDescription !== undefined) dbUpdates.shop_description = updates.shopDescription;
-      if (updates.shopCategory !== undefined) dbUpdates.shop_category = updates.shopCategory;
-      if (updates.shopLocation !== undefined) dbUpdates.shop_location = updates.shopLocation;
-      if (updates.shopLogo !== undefined) dbUpdates.shop_logo = updates.shopLogo;
+      if (updates.avatar !== undefined) dbUpdates.avatar_url = updates.avatar;
       if (updates.phone !== undefined) dbUpdates.phone = updates.phone;
       if (updates.address !== undefined) dbUpdates.address = updates.address;
       if (updates.city !== undefined) dbUpdates.city = updates.city;
@@ -353,48 +284,53 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
   
+  // Update business profile
+  const updateBusinessProfile = async (updates: Partial<BusinessProfile>): Promise<boolean> => {
+    if (!user || user.role !== 'business' || !businessProfile) return false;
+    
+    try {
+      // Prepare updates for the business_profiles table
+      const dbUpdates: any = {};
+      
+      if (updates.shopName !== undefined) dbUpdates.shop_name = updates.shopName;
+      if (updates.shopDescription !== undefined) dbUpdates.shop_description = updates.shopDescription;
+      if (updates.shopLogo !== undefined) dbUpdates.shop_logo = updates.shopLogo;
+      if (updates.shopCategory !== undefined) dbUpdates.shop_category = updates.shopCategory;
+      if (updates.shopLocation !== undefined) dbUpdates.shop_location = updates.shopLocation;
+      if (updates.businessDocuments !== undefined) dbUpdates.business_documents = updates.businessDocuments;
+      
+      // Update business profile in database
+      const { error } = await supabase
+        .from('business_profiles')
+        .update(dbUpdates)
+        .eq('id', user.id);
+      
+      if (error) throw error;
+      
+      // Update local business profile state
+      setBusinessProfile({
+        ...businessProfile,
+        ...updates,
+      });
+      
+      return true;
+    } catch (error) {
+      console.error('Error updating business profile:', error);
+      return false;
+    }
+  };
+  
   // Refresh session function
   const refreshSession = async (): Promise<void> => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       
       if (session?.user) {
-        // Get user profile from the database
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
-        
-        if (profile) {
-          setUser({
-            id: session.user.id,
-            email: session.user.email || '',
-            name: profile.name || session.user.user_metadata?.full_name || null,
-            avatar: session.user.user_metadata?.avatar_url || null,
-            role: profile.role as 'shopper' | 'business',
-            shopName: profile.shop_name || null,
-            shopDescription: profile.shop_description || null,
-            shopCategory: profile.shop_category || null,
-            shopLocation: profile.shop_location || null,
-            shopLogo: profile.shop_logo || null,
-            phone: profile.phone || null,
-            address: profile.address || null,
-            city: profile.city || null,
-            state: profile.state || null,
-            zip: profile.zip || null,
-          });
-          setIsLoggedIn(true);
-        }
+        await fetchUserData(session.user.id);
       }
     } catch (error) {
       console.error('Error refreshing session:', error);
     }
-  };
-  
-  // Update user profile function (alias for updateUser for compatibility)
-  const updateUserProfile = async (updates: Partial<User>): Promise<boolean> => {
-    return updateUser(updates);
   };
   
   // Provide the auth context to children
@@ -403,13 +339,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       isLoggedIn,
       isInitializing,
       user,
+      businessProfile,
       login,
       register,
-      signup,
+      googleSignIn,
       logout,
       updateUser,
       refreshSession,
-      updateUserProfile,
+      updateBusinessProfile,
     }}>
       {children}
     </AuthContext.Provider>

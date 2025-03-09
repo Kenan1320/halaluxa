@@ -13,8 +13,17 @@ const ProtectedRoute = ({
   requiredRole = 'any',
   businessAllowed = true
 }: ProtectedRouteProps) => {
-  const { isLoggedIn, user } = useAuth();
+  const { isLoggedIn, user, isInitializing } = useAuth();
   const location = useLocation();
+  
+  // If still initializing auth, show nothing (or you could show a loading spinner)
+  if (isInitializing) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-haluna-primary"></div>
+      </div>
+    );
+  }
   
   if (!isLoggedIn) {
     // Redirect to login if not logged in
