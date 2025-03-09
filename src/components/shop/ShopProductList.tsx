@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { getShopProducts, convertToModelProduct } from '@/services/shopService';
 import { useToast } from '@/hooks/use-toast';
-import ProductCard from '@/components/cards/ProductCard';
+import { ProductCard } from '@/components/cards/ProductCard';
 import { Product } from '@/models/product';
 import { Skeleton } from '@/components/ui/skeleton';
 

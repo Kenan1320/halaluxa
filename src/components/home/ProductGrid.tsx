@@ -2,7 +2,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Product } from '@/models/product';
-import ProductCard from '@/components/cards/ProductCard';
+import { ProductCard } from '@/components/cards/ProductCard';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface ProductGridProps {

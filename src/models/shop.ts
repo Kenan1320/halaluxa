@@ -1,110 +1,73 @@
 
-// Shop model interfaces
 export interface Shop {
   id: string;
   name: string;
   description: string;
-  location: string;
-  address?: string;
-  category: string;
-  logo_url?: string | null;
-  cover_image?: string | null;
   owner_id: string;
-  latitude: number | null;
-  longitude: number | null;
-  rating: number;
-  product_count: number;
-  is_verified: boolean;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface ShopProduct {
-  id: string;
-  name: string;
-  price: number;
-  description: string;
-  category: string; 
-  images: string[];
-  shop_id: string;
-  is_published: boolean;
-  is_halal_certified: boolean;
-  rating: number;
-  stock: number;
-  created_at?: string;
-  updated_at?: string;
-  // Properties to match Product interface requirements
-  sellerId: string;
-  sellerName?: string;
-  inStock?: boolean;
-  isHalalCertified?: boolean;
-  createdAt?: string;
-}
-
-export interface ShopLocation {
+  owner_name?: string;
+  category: string;
+  address: string;
   latitude: number;
   longitude: number;
-  address?: string;
-  city?: string;
-  state?: string;
-  zipCode?: string;
-  country?: string;
-}
-
-export interface ShopPaymentMethod {
-  id: string;
-  shop_id: string;
-  method_type: 'bank' | 'paypal' | 'stripe';
-  account_name?: string;
-  account_number?: string;
-  bank_name?: string;
-  paypal_email?: string;
-  stripe_account_id?: string;
-  is_default: boolean;
-  is_active: boolean;
+  distance?: number;
+  location: string;
+  logo_url: string;
+  cover_image: string;
+  is_verified: boolean;
+  rating?: number;
+  product_count?: number;
+  phone?: string;
+  email?: string;
   created_at: string;
   updated_at: string;
+  delivery_radius?: number;
+  delivery_fee?: number;
+  min_order?: number;
+  tags?: string[];
 }
 
-export interface ShopSale {
-  id: string;
-  shop_id: string;
-  order_id: string;
-  amount: number;
-  status: 'pending' | 'completed' | 'refunded';
-  created_at: string;
-  updated_at: string;
+export interface ShopFilter {
+  radius?: number;
+  category?: string;
+  rating?: number;
+  tags?: string[];
+  orderBy?: 'distance' | 'rating' | 'newest';
 }
 
-// Business signup form data
-export interface BusinessSignupFormData {
-  email: string;
-  password: string;
+export interface CreateShopInput {
   name: string;
-  shopName: string;
-  shopDescription: string;
-  shopCategory: string;
-  shopLocation: string;
+  description: string;
+  category: string;
+  address: string;
+  location: string;
+  latitude?: number;
+  longitude?: number;
+  logo_url?: string;
+  cover_image?: string;
+  phone?: string;
+  email?: string;
+  delivery_radius?: number;
+  delivery_fee?: number;
+  min_order?: number;
+  tags?: string[];
 }
 
-// Shop categories for dropdown menus
-export const shopCategories = [
-  "Food & Groceries",
-  "Clothing & Fashion",
-  "Beauty & Personal Care",
-  "Health & Wellness",
-  "Home & Kitchen",
-  "Books & Media",
-  "Electronics",
-  "Toys & Games",
-  "Sports & Outdoors",
-  "Baby & Kids",
-  "Jewelry & Accessories",
-  "Halal Meat & Poultry",
-  "Modest Fashion",
-  "Islamic Books & Media",
-  "Prayer Supplies",
-  "Eid & Ramadan",
-  "Home Decor",
-  "Other"
-];
+export interface UpdateShopInput {
+  name?: string;
+  description?: string;
+  category?: string;
+  address?: string;
+  location?: string;
+  latitude?: number;
+  longitude?: number;
+  logo_url?: string;
+  cover_image?: string;
+  phone?: string;
+  email?: string;
+  delivery_radius?: number;
+  delivery_fee?: number;
+  min_order?: number;
+  tags?: string[];
+}
+
+export type ShopFilterBy = 'all' | 'nearby' | 'featured' | 'popular' | 'new';

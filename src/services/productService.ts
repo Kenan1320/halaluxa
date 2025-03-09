@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Product, ProductDetails } from '@/models/product';
 
@@ -114,6 +115,7 @@ export async function addProduct(product: Partial<Product>): Promise<Product | u
   }
 }
 
+// Kept only one version of updateProduct and renamed the second one to updateProductById
 export async function updateProduct(product: Partial<Product>): Promise<Product | undefined> {
   try {
     if (!product.id) {
@@ -161,6 +163,18 @@ export async function deleteProduct(id: string): Promise<boolean> {
   }
 }
 
+// Helper function for handling image uploads
+export const uploadProductImage = async (imageData: string): Promise<string | null> => {
+  try {
+    // In a real implementation, this would upload to storage
+    // For now we'll just return the image data as is
+    return imageData;
+  } catch (error) {
+    console.error('Error uploading product image:', error);
+    return null;
+  }
+};
+
 export const createProduct = async (productData: Partial<Product>): Promise<Product | null> => {
   try {
     if (productData.images && productData.images.length > 0) {
@@ -184,11 +198,10 @@ export const createProduct = async (productData: Partial<Product>): Promise<Prod
         category: productData.category,
         images: productData.images || [],
         shop_id: productData.sellerId,
-        is_published: productData.isPublished !== undefined ? productData.isPublished : true,
+        is_published: true, // Default value since isPublished is not in Product interface
         is_halal_certified: productData.isHalalCertified || false,
-        inStock: productData.inStock !== undefined ? productData.inStock : true,
-        long_description: productData.longDescription || '',
-        details: productData.details || {}
+        stock: productData.inStock !== undefined ? (productData.inStock ? 1 : 0) : 1,
+        details: productData.details ? JSON.stringify(productData.details) : '{}'
       })
       .select()
       .single();
@@ -205,7 +218,7 @@ export const createProduct = async (productData: Partial<Product>): Promise<Prod
   }
 };
 
-export const updateProduct = async (id: string, productData: Partial<Product>): Promise<Product | null> => {
+export const updateProductById = async (id: string, productData: Partial<Product>): Promise<Product | null> => {
   try {
     const updateData: any = {
       ...productData,
@@ -221,19 +234,13 @@ export const updateProduct = async (id: string, productData: Partial<Product>): 
       delete updateData.isHalalCertified;
     }
     
-    if (productData.isPublished !== undefined) {
-      updateData.is_published = productData.isPublished;
-      delete updateData.isPublished;
-    }
-    
     if (productData.inStock !== undefined) {
-      updateData.inStock = productData.inStock;
+      updateData.stock = productData.inStock ? 1 : 0;
       delete updateData.inStock;
     }
     
-    if (productData.longDescription !== undefined) {
-      updateData.long_description = productData.longDescription;
-      delete updateData.longDescription;
+    if (productData.description !== undefined) {
+      updateData.description = productData.description;
     }
 
     if (productData.images && productData.images.length > 0) {
@@ -262,7 +269,7 @@ export const updateProduct = async (id: string, productData: Partial<Product>): 
 
     return mapDbProductToModel(data);
   } catch (error) {
-    console.error('Error in updateProduct:', error);
+    console.error('Error in updateProductById:', error);
     return null;
   }
 };
@@ -278,9 +285,8 @@ export const bulkUploadProducts = async (products: Record<string, any>[]): Promi
       shop_id: product.shop_id,
       is_published: product.is_published !== undefined ? product.is_published : true,
       is_halal_certified: product.is_halal_certified || false,
-      inStock: product.inStock !== undefined ? product.inStock : true,
-      long_description: product.long_description || '',
-      details: product.details || {}
+      stock: product.inStock !== undefined ? (product.inStock ? 1 : 0) : 1,
+      details: product.details ? JSON.stringify(product.details) : '{}'
     }));
 
     const { error } = await supabase
