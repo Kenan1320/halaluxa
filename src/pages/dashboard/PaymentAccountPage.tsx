@@ -23,7 +23,7 @@ const PaymentAccountPage = () => {
     account_name: '',
     account_number: '',
     bank_name: '',
-    account_type: 'bank',
+    method_type: 'bank',
     paypal_email: '',
     stripe_account_id: '',
     applepay_merchant_id: '',
@@ -62,7 +62,7 @@ const PaymentAccountPage = () => {
       account_name: '',
       account_number: '',
       bank_name: '',
-      account_type: activeTab,
+      method_type: activeTab,
       paypal_email: '',
       stripe_account_id: '',
       applepay_merchant_id: '',
@@ -73,10 +73,10 @@ const PaymentAccountPage = () => {
     e.preventDefault();
     
     try {
-      // Set account type based on active tab
+      // Set method_type based on active tab
       const accountData = {
         ...formData,
-        account_type: activeTab,
+        method_type: activeTab as 'bank' | 'paypal' | 'stripe' | 'applepay' | 'other',
       };
       
       const result = await createSellerAccount(accountData);
@@ -105,7 +105,7 @@ const PaymentAccountPage = () => {
     setActiveTab(value);
     setFormData((prev) => ({
       ...prev,
-      account_type: value,
+      method_type: value,
     }));
   };
 
@@ -364,7 +364,7 @@ const PaymentAccountPage = () => {
               >
                 <div className="flex items-center">
                   <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center mr-4">
-                    {getAccountTypeIcon(account.account_type)}
+                    {getAccountTypeIcon(account.method_type)}
                   </div>
                   <div>
                     <p className="font-medium">{formatPaymentMethod(account)}</p>
@@ -378,6 +378,30 @@ const PaymentAccountPage = () => {
                     variant="outline"
                     size="sm"
                     className="flex items-center text-red-500 hover:text-red-700 hover:bg-red-50"
+                    onClick={async () => {
+                      try {
+                        // Soft-delete by setting is_active to false
+                        const result = await updateSellerAccount({
+                          id: account.id,
+                          is_active: false
+                        });
+                        
+                        if (result) {
+                          toast({
+                            title: "Success",
+                            description: "Payment method removed"
+                          });
+                          fetchAccounts();
+                        }
+                      } catch (error) {
+                        console.error("Error removing payment method:", error);
+                        toast({
+                          title: "Error",
+                          description: "Could not remove payment method",
+                          variant: "destructive"
+                        });
+                      }
+                    }}
                   >
                     <Trash2 className="h-4 w-4 mr-1" />
                     Remove

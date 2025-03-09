@@ -1,62 +1,70 @@
 
+// Replace the getTableNames function that used to check for seller_accounts
 import { supabase } from '@/integrations/supabase/client';
 
-/**
- * Setup database tables and relationships.
- * This function should be called at app startup to ensure all needed tables exist.
- */
-export const setupDatabase = async (): Promise<boolean> => {
+// Main setup function
+export async function setupDatabase() {
   try {
-    // Check if the Supabase client is initialized
-    if (!supabase) {
-      console.error('Supabase client not initialized');
+    console.log('Starting database setup...');
+    
+    // Check for necessary tables
+    const tablesExist = await checkTables();
+    if (!tablesExist) {
+      console.error('Database tables setup incomplete');
       return false;
     }
+    
+    console.log('Database setup complete');
+    return true;
+  } catch (error) {
+    console.error('Error in database setup:', error);
+    return false;
+  }
+}
 
-    // Try to query each of the required tables to check if they exist
+// Check if required tables exist
+async function checkTables() {
+  try {
+    console.log('Checking database tables...');
+    
+    // Define the tables we need to check for
     const requiredTables = [
       'profiles',
+      'business_profiles',
       'shops',
       'products',
       'orders',
-      'seller_accounts',
-      'shop_display_settings'
+      'shop_payment_methods'
     ];
     
-    let tablesExist = true;
+    // Get list of existing tables
+    const { data: existingTables, error } = await supabase
+      .from('pg_tables')
+      .select('tablename')
+      .eq('schemaname', 'public');
     
-    for (const table of requiredTables) {
-      const { data, error } = await supabase
-        .from(table)
-        .select('count(*)')
-        .limit(1);
-        
-      if (error) {
-        console.error(`Table ${table} might not exist or is inaccessible:`, error);
-        tablesExist = false;
-      } else {
-        console.log(`Table ${table} exists`);
-      }
-    }
-    
-    if (!tablesExist) {
-      console.warn('Some required tables do not exist. Please run the database setup SQL.');
+    if (error) {
+      console.error('Error checking tables:', error);
       return false;
     }
     
-    // The database tables exist, now check that the seller_accounts table has the correct structure
-    console.log('Database tables exist');
+    // Check if all required tables exist
+    const tableNames = existingTables.map(t => t.tablename);
+    const missingTables = requiredTables.filter(table => !tableNames.includes(table));
+    
+    if (missingTables.length > 0) {
+      console.error('Missing required tables:', missingTables);
+      return false;
+    }
+    
     return true;
   } catch (error) {
-    console.error('Error setting up database:', error);
+    console.error('Error checking tables:', error);
     return false;
   }
-};
+}
 
-// Function to run database setup tasks
-export const runDatabaseSetup = async (): Promise<boolean> => {
-  const success = await setupDatabase();
-  return success;
-};
-
-export default runDatabaseSetup;
+// Run the setup
+setupDatabase().then(success => {
+  console.log('Database setup result:', success ? 'Success' : 'Failed');
+});

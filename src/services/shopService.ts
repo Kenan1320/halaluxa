@@ -1,6 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { Shop, ShopProduct } from '@/models/shop';
 import { Product } from '@/models/product';
+import { Json } from '@/integrations/supabase/types';
 
 // Mapping database fields to model fields
 export const mapDbShopToModel = (dbShop: any): Shop => {
@@ -66,8 +67,9 @@ export async function createShop(shopData: Partial<Shop>): Promise<Shop | null> 
       return null;
     }
     
-    // Also update the seller_accounts table to link the user to the shop
-    await linkUserToShop(shopData.ownerId!, data.id);
+    // No need to update seller_accounts as it's been replaced by shop_payment_methods
+    // However, we can associate user with shop by updating the business_profile
+    await associateUserWithShop(shopData.ownerId!, data.id);
     
     return mapDbShopToModel(data);
   } catch (error) {
@@ -76,40 +78,24 @@ export async function createShop(shopData: Partial<Shop>): Promise<Shop | null> 
   }
 }
 
-// Link a user to their shop in the seller_accounts table
-async function linkUserToShop(userId: string, shopId: string) {
+// Link a user to their shop in the business_profiles table
+async function associateUserWithShop(userId: string, shopId: string) {
   try {
-    // Check if entry already exists
-    const { data: existingData } = await supabase
-      .from('seller_accounts')
-      .select('*')
-      .eq('user_id', userId)
-      .single();
+    // Update the business_profile to include the shop_id
+    const { error } = await supabase
+      .from('business_profiles')
+      .update({ 
+        shop_id: shopId
+      })
+      .eq('id', userId);
       
-    if (existingData) {
-      // Update existing record
-      await supabase
-        .from('seller_accounts')
-        .update({ 
-          shop_id: shopId, 
-          is_active: true 
-        })
-        .eq('user_id', userId);
-    } else {
-      // Create new record
-      await supabase
-        .from('seller_accounts')
-        .insert({
-          user_id: userId,
-          shop_id: shopId,
-          is_active: true,
-          created_at: new Date().toISOString()
-        });
+    if (error) {
+      console.error('Error associating user with shop:', error);
     }
     
     return true;
   } catch (error) {
-    console.error('Error linking user to shop:', error);
+    console.error('Error associating user with shop:', error);
     return false;
   }
 }

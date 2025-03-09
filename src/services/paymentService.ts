@@ -4,18 +4,22 @@ import { CartItem } from '@/models/cart';
 import { Product } from '@/models/product';
 import { Json } from '@/integrations/supabase/types';
 
-// Update the interface to include the new fields added to the seller_accounts table
+// Update the interface to match the new shop_payment_methods table
 export interface SellerAccount {
   id: string;
-  seller_id: string;
-  account_name: string;
-  account_number: string;
-  bank_name: string;
-  created_at: string;
-  account_type: string;
+  shop_id: string;
+  user_id: string;
+  method_type: 'bank' | 'paypal' | 'stripe' | 'applepay' | 'other';
+  account_name?: string;
+  account_number?: string;
+  bank_name?: string;
   paypal_email?: string;
   stripe_account_id?: string;
   applepay_merchant_id?: string;
+  is_default: boolean;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 interface PaymentResult {
@@ -118,7 +122,7 @@ export const getUserOrders = async (): Promise<OrderDetails[]> => {
   }
 };
 
-// Create a seller account with payment details
+// Create a payment method for a seller
 export const createSellerAccount = async (
   accountData: Partial<SellerAccount>
 ): Promise<SellerAccount | null> => {
@@ -129,21 +133,35 @@ export const createSellerAccount = async (
       throw new Error('User not authenticated');
     }
     
-    // Ensure required fields are present
-    const completeAccountData = {
-      seller_id: user.user.id,
-      account_name: accountData.account_name || 'Default Account',
-      account_number: accountData.account_number || 'N/A',
-      bank_name: accountData.bank_name || 'N/A',
-      account_type: accountData.account_type || 'bank',
+    // First we need to get the user's shop id
+    const { data: shopData } = await supabase
+      .from('shops')
+      .select('id')
+      .eq('owner_id', user.user.id)
+      .single();
+    
+    if (!shopData?.id) {
+      throw new Error('Shop not found for current user');
+    }
+    
+    // Convert account_type from accountData to method_type for the new table
+    const shopPaymentMethod = {
+      user_id: user.user.id,
+      shop_id: shopData.id,
+      method_type: accountData.method_type || 'bank', 
+      account_name: accountData.account_name,
+      account_number: accountData.account_number,
+      bank_name: accountData.bank_name,
       paypal_email: accountData.paypal_email,
       stripe_account_id: accountData.stripe_account_id,
-      applepay_merchant_id: accountData.applepay_merchant_id
+      applepay_merchant_id: accountData.applepay_merchant_id,
+      is_default: accountData.is_default || false,
+      is_active: true
     };
     
     const { data, error } = await supabase
-      .from('seller_accounts')
-      .insert(completeAccountData)
+      .from('shop_payment_methods')
+      .insert(shopPaymentMethod)
       .select()
       .single();
     
@@ -153,12 +171,12 @@ export const createSellerAccount = async (
     
     return data;
   } catch (error) {
-    console.error('Error creating seller account:', error);
+    console.error('Error creating payment method:', error);
     return null;
   }
 };
 
-// Get seller account for current user
+// Get payment methods for current user's shop
 export const getSellerAccount = async (): Promise<SellerAccount | null> => {
   try {
     const { data: user } = await supabase.auth.getUser();
@@ -168,9 +186,10 @@ export const getSellerAccount = async (): Promise<SellerAccount | null> => {
     }
     
     const { data, error } = await supabase
-      .from('seller_accounts')
+      .from('shop_payment_methods')
       .select('*')
-      .eq('seller_id', user.user.id)
+      .eq('user_id', user.user.id)
+      .is('is_default', true)
       .maybeSingle();
     
     if (error) {
@@ -179,12 +198,12 @@ export const getSellerAccount = async (): Promise<SellerAccount | null> => {
     
     return data;
   } catch (error) {
-    console.error('Error fetching seller account:', error);
+    console.error('Error fetching payment method:', error);
     return null;
   }
 };
 
-// Get all seller accounts for current user
+// Get all payment methods for current user's shop
 export const getSellerAccounts = async (): Promise<SellerAccount[]> => {
   try {
     const { data: user } = await supabase.auth.getUser();
@@ -194,9 +213,10 @@ export const getSellerAccounts = async (): Promise<SellerAccount[]> => {
     }
     
     const { data, error } = await supabase
-      .from('seller_accounts')
+      .from('shop_payment_methods')
       .select('*')
-      .eq('seller_id', user.user.id);
+      .eq('user_id', user.user.id)
+      .eq('is_active', true);
     
     if (error) {
       throw error;
@@ -204,7 +224,7 @@ export const getSellerAccounts = async (): Promise<SellerAccount[]> => {
     
     return data || [];
   } catch (error) {
-    console.error('Error fetching seller accounts:', error);
+    console.error('Error fetching payment methods:', error);
     return [];
   }
 };
@@ -236,8 +256,20 @@ export const updateSellerAccount = async (
       throw new Error('Account ID is required for update');
     }
     
+    // First ensure this payment method belongs to the user
+    const { data: existingMethod } = await supabase
+      .from('shop_payment_methods')
+      .select('id')
+      .eq('id', accountData.id)
+      .eq('user_id', user.user.id)
+      .single();
+      
+    if (!existingMethod) {
+      throw new Error('Payment method not found or not authorized');
+    }
+    
     const { data, error } = await supabase
-      .from('seller_accounts')
+      .from('shop_payment_methods')
       .update(accountData)
       .eq('id', accountData.id)
       .select()
@@ -249,14 +281,14 @@ export const updateSellerAccount = async (
     
     return data;
   } catch (error) {
-    console.error('Error updating seller account:', error);
+    console.error('Error updating payment method:', error);
     return null;
   }
 };
 
 // Format payment method based on account type
 export const formatPaymentMethod = (account: SellerAccount): string => {
-  switch (account.account_type) {
+  switch (account.method_type) {
     case 'bank':
       return `${account.bank_name} - ${account.account_number}`;
     case 'paypal':

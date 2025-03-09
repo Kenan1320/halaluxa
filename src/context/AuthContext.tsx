@@ -124,13 +124,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
       }
       
+      // Safely ensure role is either 'shopper' or 'business'
+      const safeRole = (profile.role === 'shopper' || profile.role === 'business') 
+        ? profile.role 
+        : 'shopper' as 'shopper' | 'business';
+      
       // Combine profile and business profile data
       const userData: User = {
         id: userId,
         email: profile.email,
         name: profile.name,
         avatar_url: profile.avatar_url,
-        role: profile.role,
+        role: safeRole,
         phone: profile.phone,
         address: profile.address,
         city: profile.city,
