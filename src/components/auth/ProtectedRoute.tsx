@@ -13,11 +13,20 @@ const ProtectedRoute = ({
   requiredRole = 'any',
   businessAllowed = true
 }: ProtectedRouteProps) => {
-  const { isLoggedIn, user } = useAuth();
+  const { isLoggedIn, user, isInitializing } = useAuth();
   const location = useLocation();
   
+  // If still initializing authentication, show a loading state
+  if (isInitializing) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-haluna-primary"></div>
+      </div>
+    );
+  }
+  
+  // Redirect to login if not logged in
   if (!isLoggedIn) {
-    // Redirect to login if not logged in
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
   
@@ -27,6 +36,7 @@ const ProtectedRoute = ({
     return <Navigate to="/dashboard" replace />;
   }
   
+  // Check for specific role requirements
   if (requiredRole !== 'any' && user?.role !== requiredRole) {
     // Redirect if user doesn't have the required role
     const redirectPath = user?.role === 'business' ? '/dashboard' : '/shop';

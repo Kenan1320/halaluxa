@@ -8,18 +8,21 @@ export interface User {
   id: string;
   email: string;
   name: string | null;
-  avatar?: string | null;
+  avatar_url?: string | null;
   role: 'shopper' | 'business';
-  shopName?: string | null;
-  shopDescription?: string | null;
-  shopCategory?: string | null;
-  shopLocation?: string | null;
-  shopLogo?: string | null;
+  // Profile fields
   phone?: string | null;
   address?: string | null;
   city?: string | null;
   state?: string | null;
   zip?: string | null;
+  // Business specific fields
+  shopName?: string | null;
+  shopDescription?: string | null;
+  shopCategory?: string | null;
+  shopLocation?: string | null;
+  shopLogo?: string | null;
+  businessVerified?: boolean;
 }
 
 // Define the context type
@@ -68,33 +71,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const { data: { session } } = await supabase.auth.getSession();
         
         if (session?.user) {
-          // Get user profile from the database
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
-          
-          if (profile) {
-            setUser({
-              id: session.user.id,
-              email: session.user.email || '',
-              name: profile.name || session.user.user_metadata?.full_name || null,
-              avatar: session.user.user_metadata?.avatar_url || null,
-              role: profile.role as 'shopper' | 'business',
-              shopName: profile.shop_name || null,
-              shopDescription: profile.shop_description || null,
-              shopCategory: profile.shop_category || null,
-              shopLocation: profile.shop_location || null,
-              shopLogo: profile.shop_logo || null,
-              phone: profile.phone || null,
-              address: profile.address || null,
-              city: profile.city || null,
-              state: profile.state || null,
-              zip: profile.zip || null,
-            });
-            setIsLoggedIn(true);
-          }
+          await loadUserData(session.user.id);
         }
       } catch (error) {
         console.error('Error initializing auth:', error);
@@ -108,49 +85,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' && session?.user) {
-        // Get user profile from database
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
-        
-        if (profile) {
-          // Check if this was a social sign-in and we need to update the role
-          const storedUserType = localStorage.getItem('signupUserType');
-          if (storedUserType && (storedUserType === 'shopper' || storedUserType === 'business')) {
-            // Update the role in the database
-            await supabase
-              .from('profiles')
-              .update({ role: storedUserType })
-              .eq('id', session.user.id);
-            
-            // Update the local profile object
-            profile.role = storedUserType;
-            
-            // Clear the stored user type
-            localStorage.removeItem('signupUserType');
-          }
-          
-          setUser({
-            id: session.user.id,
-            email: session.user.email || '',
-            name: profile.name || session.user.user_metadata?.full_name || null,
-            avatar: session.user.user_metadata?.avatar_url || null,
-            role: profile.role as 'shopper' | 'business',
-            shopName: profile.shop_name || null,
-            shopDescription: profile.shop_description || null,
-            shopCategory: profile.shop_category || null,
-            shopLocation: profile.shop_location || null,
-            shopLogo: profile.shop_logo || null,
-            phone: profile.phone || null,
-            address: profile.address || null,
-            city: profile.city || null,
-            state: profile.state || null,
-            zip: profile.zip || null,
-          });
-          setIsLoggedIn(true);
-        }
+        await loadUserData(session.user.id);
       } else if (event === 'SIGNED_OUT') {
         setIsLoggedIn(false);
         setUser(null);
@@ -162,6 +97,65 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       subscription.unsubscribe();
     };
   }, []);
+
+  // Helper function to load user data from DB
+  const loadUserData = async (userId: string) => {
+    try {
+      // Get user profile from database
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+      
+      if (profileError) throw profileError;
+      
+      // If the user is a business, also get business profile
+      let businessProfile = null;
+      if (profile.role === 'business') {
+        const { data: businessData, error: businessError } = await supabase
+          .from('business_profiles')
+          .select('*')
+          .eq('id', userId)
+          .single();
+        
+        if (!businessError) {
+          businessProfile = businessData;
+        }
+      }
+      
+      // Combine profile and business profile data
+      const userData: User = {
+        id: userId,
+        email: profile.email,
+        name: profile.name,
+        avatar_url: profile.avatar_url,
+        role: profile.role,
+        phone: profile.phone,
+        address: profile.address,
+        city: profile.city,
+        state: profile.state,
+        zip: profile.zip
+      };
+      
+      // Add business fields if applicable
+      if (businessProfile) {
+        userData.shopName = businessProfile.shop_name;
+        userData.shopDescription = businessProfile.shop_description;
+        userData.shopCategory = businessProfile.shop_category;
+        userData.shopLocation = businessProfile.shop_location;
+        userData.shopLogo = businessProfile.shop_logo;
+        userData.businessVerified = businessProfile.business_verified;
+      }
+      
+      setUser(userData);
+      setIsLoggedIn(true);
+    } catch (error) {
+      console.error('Error loading user data:', error);
+      setUser(null);
+      setIsLoggedIn(false);
+    }
+  };
   
   // Login function
   const login = async (email: string, password: string): Promise<string | null> => {
@@ -174,36 +168,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       if (error) throw error;
       
-      // Get user profile
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', data.user.id)
-        .single();
+      // Load user data
+      await loadUserData(data.user.id);
       
-      if (profile) {
-        setUser({
-          id: data.user.id,
-          email: data.user.email || '',
-          name: profile.name || null,
-          role: profile.role as 'shopper' | 'business',
-          shopName: profile.shop_name || null,
-          shopDescription: profile.shop_description || null,
-          shopCategory: profile.shop_category || null,
-          shopLocation: profile.shop_location || null,
-          shopLogo: profile.shop_logo || null,
-          phone: profile.phone || null,
-          address: profile.address || null,
-          city: profile.city || null,
-          state: profile.state || null,
-          zip: profile.zip || null,
-        });
-        
-        setIsLoggedIn(true);
-        return profile.role;
-      }
-      
-      return null;
+      // Return the role for role-specific redirects
+      return user?.role || null;
     } catch (error) {
       console.error('Error during login:', error);
       return null;
@@ -243,51 +212,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       // If registration is successful and user is logged in immediately
       if (data?.user && data?.session) {
-        // Get or create user profile
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', data.user.id)
-          .single();
-        
-        if (profileError && profileError.code !== 'PGRST116') {
-          // Error other than "not found"
-          throw profileError;
-        }
-        
-        // If profile doesn't exist, it should have been created by the database trigger
-        // But we'll update it with the name and role just to be sure
-        if (!profile) {
-          await supabase
-            .from('profiles')
-            .update({ name, role })
-            .eq('id', data.user.id);
-        } else {
-          // Update existing profile with role
-          await supabase
-            .from('profiles')
-            .update({ role })
-            .eq('id', data.user.id);
-        }
-        
-        setUser({
-          id: data.user.id,
-          email: data.user.email || '',
-          name,
-          role,
-          shopName: null,
-          shopDescription: null,
-          shopCategory: null,
-          shopLocation: null,
-          shopLogo: null,
-          phone: null,
-          address: null,
-          city: null,
-          state: null,
-          zip: null,
-        });
-        
-        setIsLoggedIn(true);
+        await loadUserData(data.user.id);
         return true;
       }
       
@@ -317,28 +242,45 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (!user) return false;
     
     try {
-      // Prepare updates for the profiles table
-      const dbUpdates: any = {};
+      // Separate updates for profile and business_profile tables
+      const profileUpdates: any = {};
+      const businessUpdates: any = {};
       
-      if (updates.name !== undefined) dbUpdates.name = updates.name;
-      if (updates.shopName !== undefined) dbUpdates.shop_name = updates.shopName;
-      if (updates.shopDescription !== undefined) dbUpdates.shop_description = updates.shopDescription;
-      if (updates.shopCategory !== undefined) dbUpdates.shop_category = updates.shopCategory;
-      if (updates.shopLocation !== undefined) dbUpdates.shop_location = updates.shopLocation;
-      if (updates.shopLogo !== undefined) dbUpdates.shop_logo = updates.shopLogo;
-      if (updates.phone !== undefined) dbUpdates.phone = updates.phone;
-      if (updates.address !== undefined) dbUpdates.address = updates.address;
-      if (updates.city !== undefined) dbUpdates.city = updates.city;
-      if (updates.state !== undefined) dbUpdates.state = updates.state;
-      if (updates.zip !== undefined) dbUpdates.zip = updates.zip;
+      // Map user fields to profile fields
+      if (updates.name !== undefined) profileUpdates.name = updates.name;
+      if (updates.avatar_url !== undefined) profileUpdates.avatar_url = updates.avatar_url;
+      if (updates.phone !== undefined) profileUpdates.phone = updates.phone;
+      if (updates.address !== undefined) profileUpdates.address = updates.address;
+      if (updates.city !== undefined) profileUpdates.city = updates.city;
+      if (updates.state !== undefined) profileUpdates.state = updates.state;
+      if (updates.zip !== undefined) profileUpdates.zip = updates.zip;
       
-      // Update user in database
-      const { error } = await supabase
-        .from('profiles')
-        .update(dbUpdates)
-        .eq('id', user.id);
+      // Map business fields to business_profile fields
+      if (updates.shopName !== undefined) businessUpdates.shop_name = updates.shopName;
+      if (updates.shopDescription !== undefined) businessUpdates.shop_description = updates.shopDescription;
+      if (updates.shopCategory !== undefined) businessUpdates.shop_category = updates.shopCategory;
+      if (updates.shopLocation !== undefined) businessUpdates.shop_location = updates.shopLocation;
+      if (updates.shopLogo !== undefined) businessUpdates.shop_logo = updates.shopLogo;
       
-      if (error) throw error;
+      // Update profile if there are profile updates
+      if (Object.keys(profileUpdates).length > 0) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .update(profileUpdates)
+          .eq('id', user.id);
+        
+        if (profileError) throw profileError;
+      }
+      
+      // Update business profile if there are business updates and user is a business
+      if (Object.keys(businessUpdates).length > 0 && user.role === 'business') {
+        const { error: businessError } = await supabase
+          .from('business_profiles')
+          .update(businessUpdates)
+          .eq('id', user.id);
+        
+        if (businessError) throw businessError;
+      }
       
       // Update local user state
       setUser({
@@ -359,33 +301,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const { data: { session } } = await supabase.auth.getSession();
       
       if (session?.user) {
-        // Get user profile from the database
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
-        
-        if (profile) {
-          setUser({
-            id: session.user.id,
-            email: session.user.email || '',
-            name: profile.name || session.user.user_metadata?.full_name || null,
-            avatar: session.user.user_metadata?.avatar_url || null,
-            role: profile.role as 'shopper' | 'business',
-            shopName: profile.shop_name || null,
-            shopDescription: profile.shop_description || null,
-            shopCategory: profile.shop_category || null,
-            shopLocation: profile.shop_location || null,
-            shopLogo: profile.shop_logo || null,
-            phone: profile.phone || null,
-            address: profile.address || null,
-            city: profile.city || null,
-            state: profile.state || null,
-            zip: profile.zip || null,
-          });
-          setIsLoggedIn(true);
-        }
+        await loadUserData(session.user.id);
       }
     } catch (error) {
       console.error('Error refreshing session:', error);
