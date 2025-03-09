@@ -1,3 +1,4 @@
+
 export interface Product {
   id: string;
   name: string;
@@ -9,7 +10,7 @@ export interface Product {
   rating?: number;
   is_halal_certified?: boolean;
   is_published?: boolean;
-  inStock?: number; // Change from boolean to number to match usage
+  inStock?: number; // Number for quantity in stock
   stock?: number;
   created_at?: string;
   updated_at?: string;
@@ -18,3 +19,18 @@ export interface Product {
   sellerId: string;
   sellerName: string;
 }
+
+// Common product categories 
+export const productCategories = [
+  'Food',
+  'Beverages',
+  'Beauty',
+  'Health',
+  'Clothing',
+  'Home',
+  'Electronics',
+  'Sports',
+  'Toys',
+  'Books',
+  'Other'
+];

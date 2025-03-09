@@ -9,8 +9,8 @@ import CategoryScroll from '@/components/home/CategoryScroll';
 import LocationBar from '@/components/home/LocationBar';
 import Features from '@/components/home/Features';
 import NearbyShops from '@/components/home/NearbyShops';
-import { getShops, getAllShops, Shop } from '@/services/shopService';
-import { getFeaturedProducts } from '@/services/productService';
+import { fetchShops, Shop } from '@/services/shopService';
+import { fetchFeaturedProducts } from '@/services/productService';
 import { useToast } from '@/hooks/use-toast';
 
 export default function Index() {
@@ -21,10 +21,12 @@ export default function Index() {
   const { toast } = useToast();
 
   useEffect(() => {
-    const fetchShops = async () => {
+    const fetchAllData = async () => {
       try {
-        const allShops = await getAllShops();
+        setIsLoadingShops(true);
+        const allShops = await fetchShops();
         setShops(allShops);
+        setIsLoadingShops(false);
       } catch (err) {
         console.error('Error fetching shops:', err);
         toast({
@@ -32,15 +34,14 @@ export default function Index() {
           description: 'Failed to load shops. Please try again later.',
           variant: 'destructive',
         });
-      } finally {
         setIsLoadingShops(false);
       }
-    };
 
-    const fetchProducts = async () => {
       try {
-        const featuredProducts = await getFeaturedProducts();
+        setIsLoadingProducts(true);
+        const featuredProducts = await fetchFeaturedProducts();
         setProducts(featuredProducts);
+        setIsLoadingProducts(false);
       } catch (err) {
         console.error('Error fetching products:', err);
         toast({
@@ -48,25 +49,23 @@ export default function Index() {
           description: 'Failed to load products. Please try again later.',
           variant: 'destructive',
         });
-      } finally {
         setIsLoadingProducts(false);
       }
     };
 
-    fetchShops();
-    fetchProducts();
+    fetchAllData();
   }, [toast]);
 
   const popularShops = shops
     .filter(shop => shop.product_count > 0 && shop.is_verified)
-    .sort((a, b) => b.product_count - a.product_count)
+    .sort((a, b) => (b.product_count || 0) - (a.product_count || 0))
     .slice(0, 4);
 
   // Subscribe to shop updates (this is a replacement for the real-time subscription)
   useEffect(() => {
     const setupSubscription = async () => {
       try {
-        const unsubscribe = await getAllShops().then(updatedShops => {
+        const unsubscribe = await fetchShops().then(updatedShops => {
           setShops(updatedShops);
           return () => {}; // Return a no-op cleanup function
         });

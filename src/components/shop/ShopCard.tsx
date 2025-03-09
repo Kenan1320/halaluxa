@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Shop } from '@/models/shop';
+import { Shop } from '@/services/shopService';
 import { StarIcon, MapPinIcon, CheckCircleIcon } from 'lucide-react';
 
 export interface ShopCardProps {
@@ -119,3 +119,6 @@ export const ShopCard = ({
     </Card>
   );
 };
+
+// Add a default export for components that import it directly
+export default ShopCard;

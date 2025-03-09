@@ -1,306 +1,290 @@
-
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { useAuth } from '@/context/AuthContext';
-import { toast } from 'sonner';
-import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
+import { useNavigate, useParams } from 'react-router-dom';
+import { useForm, Controller } from 'react-hook-form';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ImageUploader } from '@/components/ui/ImageUploader';
-import { fetchProductById, updateProduct, addProduct } from '@/services/productService';
-import { Product } from '@/models/product';
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { useToast } from '@/hooks/use-toast';
+import { Product, productCategories } from '@/models/product';
+import { addProduct, updateProduct, fetchProductById } from '@/services/productService';
+import { useAuth } from '@/context/AuthContext';
+import ImageUploader from '@/components/ui/ImageUploader';
+
+interface FormData {
+  name: string;
+  description: string;
+  long_description: string;
+  price: number;
+  category: string;
+  images: string[];
+  is_halal_certified: boolean;
+  is_published: boolean;
+  inStock: number;
+  details: any;
+  shop_id: string;
+}
 
 const AddEditProductPage = () => {
-  const { productId } = useParams<{ productId: string }>();
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const { user } = useAuth();
-  const [loading, setLoading] = useState(false);
-  const [imageUrls, setImageUrls] = useState<string[]>([]);
-  const [isNew, setIsNew] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [initialValues, setInitialValues] = useState<Partial<FormData>>({});
 
-  const form = useForm({
-    defaultValues: {
-      name: '',
-      description: '',
-      price: 0,
-      category: '',
-      is_halal_certified: false,
-      is_published: true,
-      inStock: 1, // Changed from boolean to number
-    },
+  const { control, handleSubmit, setValue, formState: { errors } } = useForm<FormData>({
+    defaultValues: initialValues,
+    mode: 'onChange',
   });
 
   useEffect(() => {
-    if (productId && productId !== 'new') {
-      setIsNew(false);
-      loadProduct(productId);
-    }
-  }, [productId]);
-
-  const loadProduct = async (id: string) => {
-    try {
-      setLoading(true);
-      const product = await fetchProductById(id);
-      if (product) {
-        form.reset({
-          name: product.name,
-          description: product.description,
-          price: product.price,
-          category: product.category,
-          is_halal_certified: product.is_halal_certified || false,
-          is_published: product.is_published !== false,
-          inStock: product.inStock || 1,
-        });
-        if (product.images) {
-          setImageUrls(product.images);
+    if (id) {
+      const loadProduct = async () => {
+        setIsLoading(true);
+        try {
+          const product = await fetchProductById(id);
+          if (product) {
+            setInitialValues(product);
+            Object.keys(product).forEach(key => {
+              setValue(key as keyof FormData, product[key]);
+            });
+          } else {
+            toast({
+              title: 'Error',
+              description: 'Product not found',
+              variant: 'destructive',
+            });
+            navigate('/dashboard/products');
+          }
+        } catch (error) {
+          console.error('Error loading product:', error);
+          toast({
+            title: 'Error',
+            description: 'Failed to load product. Please try again.',
+            variant: 'destructive',
+          });
+        } finally {
+          setIsLoading(false);
         }
-      }
-    } catch (error) {
-      toast.error('Failed to load product');
-      console.error(error);
-    } finally {
-      setLoading(false);
+      };
+      loadProduct();
     }
-  };
+  }, [id, setValue, navigate, toast]);
 
-  const onSubmit = async (data: any) => {
-    if (!user) {
-      toast.error('You must be logged in to perform this action');
-      return;
-    }
-
+  const onSubmit = async (data: FormData) => {
+    setIsLoading(true);
     try {
-      setLoading(true);
-      const productData: Partial<Product> = {
-        name: data.name,
-        description: data.description,
-        price: data.price,
-        category: data.category,
-        images: imageUrls.length > 0 ? imageUrls : undefined,
-        is_halal_certified: data.is_halal_certified,
-        is_published: data.is_published,
-        inStock: data.inStock,
-        sellerId: user.id,
-        sellerName: user.user_metadata?.full_name || user.email || 'Unknown Seller',
+      if (!user) {
+        toast({
+          title: 'Error',
+          description: 'You must be logged in to perform this action.',
+          variant: 'destructive',
+        });
+        return;
+      }
+      
+      if (!user.user_metadata?.shopId) {
+        toast({
+          title: 'Error',
+          description: 'You must have a shop to add products.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      const productData = {
+        ...data,
+        shop_id: user.user_metadata.shopId,
       };
 
-      if (isNew) {
-        // It's a new product
-        await addProduct(productData, user.id);
-        toast.success('Product added successfully');
+      if (id) {
+        await updateProduct(id, productData);
+        toast({
+          title: 'Success',
+          description: 'Product updated successfully!',
+        });
       } else {
-        // It's an existing product
-        await updateProduct(productId!, productData);
-        toast.success('Product updated successfully');
+        await addProduct(productData, user.id);
+        toast({
+          title: 'Success',
+          description: 'Product added successfully!',
+        });
       }
       navigate('/dashboard/products');
     } catch (error) {
-      console.error('Error saving product:', error);
-      toast.error('Failed to save product');
+      console.error('Error submitting form:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to save product. Please try again.',
+        variant: 'destructive',
+      });
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
-  const handleImagesChange = (urls: string[]) => {
-    setImageUrls(urls);
+  const handleImagesChange = (images: string[]) => {
+    setValue('images', images);
   };
 
   return (
-    <div className="container py-10">
-      <Card className="max-w-3xl mx-auto">
-        <CardHeader>
-          <CardTitle>{isNew ? 'Add New Product' : 'Edit Product'}</CardTitle>
-          <CardDescription>
-            {isNew ? 'Create a new product to sell in your shop' : 'Update your product details'}
-          </CardDescription>
-        </CardHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)}>
-            <CardContent className="space-y-6">
-              <FormField
-                control={form.control}
-                name="name"
-                rules={{ required: 'Product name is required' }}
+    <div className="container mx-auto py-10">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold">{id ? 'Edit Product' : 'Add New Product'}</h1>
+      </div>
+      
+      <form onSubmit={handleSubmit(onSubmit)} className="max-w-3xl mx-auto">
+        <div className="grid gap-6 mb-6 md:grid-cols-2">
+          <div>
+            <Label htmlFor="name">Product Name</Label>
+            <Controller
+              name="name"
+              control={control}
+              rules={{ required: 'Product name is required' }}
+              render={({ field }) => (
+                <Input type="text" id="name" placeholder="Product Name" {...field} />
+              )}
+            />
+            {errors.name && <p className="text-red-500 text-sm">{errors.name.message}</p>}
+          </div>
+          <div>
+            <Label htmlFor="price">Price</Label>
+            <Controller
+              name="price"
+              control={control}
+              rules={{
+                required: 'Price is required',
+                valueAsNumber: true,
+              }}
+              render={({ field }) => (
+                <Input type="number" id="price" placeholder="Price" {...field} />
+              )}
+            />
+            {errors.price && <p className="text-red-500 text-sm">{errors.price.message}</p>}
+          </div>
+        </div>
+        
+        <div className="mb-6">
+          <Label htmlFor="description">Description</Label>
+          <Controller
+            name="description"
+            control={control}
+            rules={{ required: 'Description is required' }}
+            render={({ field }) => (
+              <Textarea id="description" placeholder="Description" {...field} />
+            )}
+          />
+          {errors.description && <p className="text-red-500 text-sm">{errors.description.message}</p>}
+        </div>
+        
+        <div className="mb-6">
+          <Label htmlFor="long_description">Long Description</Label>
+          <Controller
+            name="long_description"
+            control={control}
+            render={({ field }) => (
+              <Textarea id="long_description" placeholder="Long Description" {...field} />
+            )}
+          />
+        </div>
+        
+        <div className="mb-6">
+          <Label htmlFor="category">Category</Label>
+          <Controller
+            name="category"
+            control={control}
+            rules={{ required: 'Category is required' }}
+            render={({ field }) => (
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {productCategories.map(category => (
+                    <SelectItem key={category} value={category}>{category}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
+          {errors.category && <p className="text-red-500 text-sm">{errors.category.message}</p>}
+        </div>
+        
+        <div className="mb-6">
+          <Label>Images</Label>
+          <Controller
+            name="images"
+            control={control}
+            defaultValue={[]}
+            render={({ field }) => (
+              <ImageUploader
+                initialImages={field.value}
+                onImagesChange={handleImagesChange}
+              />
+            )}
+          />
+        </div>
+        
+        <div className="grid gap-6 mb-6 md:grid-cols-2">
+          <div>
+            <Label htmlFor="inStock">Stock Quantity</Label>
+            <Controller
+              name="inStock"
+              control={control}
+              rules={{
+                required: 'Stock quantity is required',
+                valueAsNumber: true,
+                min: 0,
+              }}
+              render={({ field }) => (
+                <Input type="number" id="inStock" placeholder="Stock Quantity" {...field} />
+              )}
+            />
+            {errors.inStock && <p className="text-red-500 text-sm">{errors.inStock.message}</p>}
+          </div>
+          <div>
+            <Label className="flex items-center space-x-2" htmlFor="is_halal_certified">
+              <span>Halal Certified</span>
+              <Controller
+                name="is_halal_certified"
+                control={control}
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Product Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter product name" {...field} />
-                    </FormControl>
-                    <FormDescription>The name of your product as it will appear to customers.</FormDescription>
-                    <FormMessage />
-                  </FormItem>
+                  <Switch
+                    id="is_halal_certified"
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
                 )}
               />
-
-              <FormField
-                control={form.control}
-                name="description"
-                rules={{ required: 'Description is required' }}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Description</FormLabel>
-                    <FormControl>
-                      <Textarea placeholder="Describe your product" rows={4} {...field} />
-                    </FormControl>
-                    <FormDescription>Provide details about your product.</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <FormField
-                  control={form.control}
-                  name="price"
-                  rules={{ 
-                    required: 'Price is required',
-                    min: { value: 0, message: 'Price cannot be negative' }
-                  }}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Price</FormLabel>
-                      <FormControl>
-                        <Input type="number" step="0.01" {...field} 
-                          onChange={e => field.onChange(parseFloat(e.target.value))} />
-                      </FormControl>
-                      <FormDescription>The price in USD.</FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+            </Label>
+          </div>
+        </div>
+        
+        <div className="mb-6 flex items-center space-x-2">
+          <Label className="flex items-center space-x-2" htmlFor="is_published">
+            <span>Published</span>
+            <Controller
+              name="is_published"
+              control={control}
+              render={({ field }) => (
+                <Switch
+                  id="is_published"
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
                 />
-
-                <FormField
-                  control={form.control}
-                  name="category"
-                  rules={{ required: 'Category is required' }}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Category</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g., Electronics, Clothing" {...field} />
-                      </FormControl>
-                      <FormDescription>Product category.</FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <FormField
-                control={form.control}
-                name="inStock"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Items in Stock</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="number" 
-                        min="0" 
-                        {...field} 
-                        onChange={e => field.onChange(parseInt(e.target.value))} 
-                      />
-                    </FormControl>
-                    <FormDescription>Number of items currently available.</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <FormField
-                  control={form.control}
-                  name="is_halal_certified"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                      <div className="space-y-0.5">
-                        <FormLabel className="text-base">Halal Certified</FormLabel>
-                        <FormDescription>
-                          Indicate if this product is halal certified.
-                        </FormDescription>
-                      </div>
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="is_published"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                      <div className="space-y-0.5">
-                        <FormLabel className="text-base">Published</FormLabel>
-                        <FormDescription>
-                          Make this product visible to customers.
-                        </FormDescription>
-                      </div>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <div>
-                <FormLabel>Product Images</FormLabel>
-                <ImageUploader
-                  bucket="product-images"
-                  existingUrls={imageUrls}
-                  onImagesChange={handleImagesChange}
-                  maxImages={5}
-                />
-                <FormDescription className="mt-2">
-                  Upload up to 5 images. The first image will be the main product image.
-                </FormDescription>
-              </div>
-            </CardContent>
-            <CardFooter className="flex justify-between">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => navigate('/dashboard/products')}
-                disabled={loading}
-              >
-                Cancel
-              </Button>
-              <Button type="submit" disabled={loading}>
-                {loading ? 'Saving...' : isNew ? 'Add Product' : 'Update Product'}
-              </Button>
-            </CardFooter>
-          </form>
-        </Form>
-      </Card>
+              )}
+            />
+          </Label>
+        </div>
+        
+        <Button type="submit" disabled={isLoading}>
+          {isLoading ? 'Saving...' : 'Save Product'}
+        </Button>
+      </form>
     </div>
   );
 };

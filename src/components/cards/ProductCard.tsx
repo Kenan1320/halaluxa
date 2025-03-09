@@ -35,7 +35,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     >
       <Link to={`/product/${product.id}`} className="block relative h-48 overflow-hidden">
         <img
-          src={product.images[0] || '/placeholder.svg'}
+          src={product.images?.[0] || '/placeholder.svg'}
           alt={product.name}
           className="w-full h-full object-cover transition-transform group-hover:scale-105"
         />
@@ -44,7 +44,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             <Heart className="h-4 w-4 text-haluna-text" />
           </button>
         </div>
-        {product.isHalalCertified && (
+        {product.is_halal_certified && (
           <div className="absolute top-3 left-3 bg-haluna-primary text-white text-xs px-2 py-1 rounded-full">
             Halal Certified
           </div>

@@ -1,7 +1,78 @@
+
 import { supabase } from '@/integrations/supabase/client';
-import { Shop, ShopFilter, CreateShopInput, UpdateShopInput, ShopProduct, ShopPaymentMethod, ShopFilterBy } from '@/models/shop';
 import { Product } from '@/models/product';
-import { PaymentMethodData } from '@/models/payment';
+
+// Export Shop and related types
+export interface Shop {
+  id: string;
+  name: string;
+  description: string;
+  owner_id: string;
+  category: string;
+  logo_url?: string;
+  cover_image?: string;
+  address?: string;
+  location: string;
+  latitude?: number;
+  longitude?: number;
+  rating?: number;
+  is_verified?: boolean;
+  created_at?: string;
+  updated_at?: string;
+  distance?: number;
+  product_count?: number;
+}
+
+export type ShopProduct = Product;
+
+export interface ShopFilter {
+  radius?: number;
+  category?: string;
+  rating?: number;
+  tags?: string[];
+  orderBy?: 'distance' | 'rating' | 'newest';
+}
+
+export type ShopFilterBy = 'nearby' | 'featured' | 'popular' | 'new';
+
+export interface CreateShopInput {
+  name: string;
+  description: string;
+  category: string;
+  logo_url?: string;
+  cover_image?: string;
+  address?: string;
+  location?: string;
+  latitude?: number;
+  longitude?: number;
+}
+
+export interface UpdateShopInput {
+  name?: string;
+  description?: string;
+  category?: string;
+  logo_url?: string;
+  cover_image?: string;
+  address?: string;
+  location?: string;
+  latitude?: number;
+  longitude?: number;
+}
+
+export interface ShopPaymentMethod {
+  id: string;
+  shopId: string; // Camel case for TypeScript
+  methodType: string;
+  accountName?: string;
+  accountNumber?: string;
+  bankName?: string;
+  paypalEmail?: string;
+  stripeAccountId?: string;
+  isActive: boolean;
+  isDefault: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
 
 export const fetchShops = async (filter?: ShopFilter): Promise<Shop[]> => {
   let query = supabase
@@ -10,8 +81,6 @@ export const fetchShops = async (filter?: ShopFilter): Promise<Shop[]> => {
 
   if (filter?.radius) {
     // This is a placeholder for a more complex geospatial query
-    // that would filter shops based on a radius from the user's location.
-    // You would typically use PostGIS functions for this in a real-world scenario.
     console.warn('Radius filtering is not yet implemented.');
   }
 
@@ -24,15 +93,10 @@ export const fetchShops = async (filter?: ShopFilter): Promise<Shop[]> => {
   }
 
   if (filter?.tags) {
-    // This is a placeholder for a more complex query that would filter
-    // shops based on whether they have any of the specified tags.
     console.warn('Tag filtering is not yet implemented.');
   }
 
   if (filter?.orderBy === 'distance') {
-    // This is a placeholder for a more complex geospatial ordering
-    // that would order shops based on their distance from the user's location.
-    // You would typically use PostGIS functions for this in a real-world scenario.
     console.warn('Distance ordering is not yet implemented.');
   } else if (filter?.orderBy === 'rating') {
     query = query.order('rating', { ascending: false });
@@ -112,20 +176,46 @@ export const getShopPaymentMethods = async (shopId: string): Promise<ShopPayment
   const { data, error } = await supabase
     .from('shop_payment_methods')
     .select('*')
-    .eq('shopId', shopId);
+    .eq('shop_id', shopId);
 
   if (error) {
     console.error('Error fetching shop payment methods:', error);
     throw error;
   }
 
-  return data || [];
+  return (data || []).map(item => ({
+    id: item.id,
+    shopId: item.shop_id,
+    methodType: item.method_type,
+    accountName: item.account_name,
+    accountNumber: item.account_number,
+    bankName: item.bank_name,
+    paypalEmail: item.paypal_email,
+    stripeAccountId: item.stripe_account_id,
+    isActive: item.is_active,
+    isDefault: item.is_default,
+    createdAt: item.created_at,
+    updatedAt: item.updated_at
+  }));
 };
 
-export const addShopPaymentMethod = async (method: Partial<ShopPaymentMethod>): Promise<ShopPaymentMethod> => {
+export const addShopPaymentMethod = async (method: Omit<Partial<ShopPaymentMethod>, 'id' | 'createdAt' | 'updatedAt'>): Promise<ShopPaymentMethod> => {
+  // Convert from camelCase to snake_case for the database
+  const dbMethod = {
+    shop_id: method.shopId,
+    method_type: method.methodType,
+    account_name: method.accountName,
+    account_number: method.accountNumber,
+    bank_name: method.bankName,
+    paypal_email: method.paypalEmail,
+    stripe_account_id: method.stripeAccountId,
+    is_active: method.isActive,
+    is_default: method.isDefault
+  };
+
   const { data, error } = await supabase
     .from('shop_payment_methods')
-    .insert(method)
+    .insert(dbMethod)
     .select()
     .single();
 
@@ -134,24 +224,41 @@ export const addShopPaymentMethod = async (method: Partial<ShopPaymentMethod>): 
     throw error;
   }
 
-  return data;
+  return {
+    id: data.id,
+    shopId: data.shop_id,
+    methodType: data.method_type,
+    accountName: data.account_name,
+    accountNumber: data.account_number,
+    bankName: data.bank_name,
+    paypalEmail: data.paypal_email,
+    stripeAccountId: data.stripe_account_id,
+    isActive: data.is_active,
+    isDefault: data.is_default,
+    createdAt: data.created_at,
+    updatedAt: data.updated_at
+  };
 };
 
 export const updateShopPaymentMethod = async (
   methodId: string,
-  method: {
-    methodType?: PaymentMethodData;
-    accountName?: string;
-    accountNumber?: string;
-    bankName?: string;
-    paypalEmail?: string;
-    isActive?: boolean;
-    isDefault?: boolean;
-  }
+  method: Partial<Omit<ShopPaymentMethod, 'id' | 'createdAt' | 'updatedAt'>>
 ): Promise<ShopPaymentMethod> => {
+  // Convert from camelCase to snake_case for the database
+  const dbMethod = {
+    method_type: method.methodType,
+    account_name: method.accountName,
+    account_number: method.accountNumber,
+    bank_name: method.bankName,
+    paypal_email: method.paypalEmail,
+    stripe_account_id: method.stripeAccountId,
+    is_active: method.isActive,
+    is_default: method.isDefault
+  };
+
   const { data, error } = await supabase
     .from('shop_payment_methods')
-    .update(method)
+    .update(dbMethod)
     .eq('id', methodId)
     .select()
     .single();
@@ -161,7 +268,20 @@ export const updateShopPaymentMethod = async (
     throw error;
   }
 
-  return data;
+  return {
+    id: data.id,
+    shopId: data.shop_id,
+    methodType: data.method_type,
+    accountName: data.account_name,
+    accountNumber: data.account_number,
+    bankName: data.bank_name,
+    paypalEmail: data.paypal_email,
+    stripeAccountId: data.stripe_account_id,
+    isActive: data.is_active,
+    isDefault: data.is_default,
+    createdAt: data.created_at,
+    updatedAt: data.updated_at
+  };
 };
 
 export const deleteShopPaymentMethod = async (methodId: string): Promise<void> => {
@@ -179,14 +299,14 @@ export const deleteShopPaymentMethod = async (methodId: string): Promise<void> =
 export const setDefaultPaymentMethod = async (
   shopId: string,
   methodId: string,
-  methodType: PaymentMethodData
+  methodType: string
 ): Promise<void> => {
   // First, unset any current default
   const { error: updateError } = await supabase
     .from('shop_payment_methods')
-    .update({ isDefault: false })
-    .eq('shopId', shopId)
-    .eq('methodType', methodType);
+    .update({ is_default: false })
+    .eq('shop_id', shopId)
+    .eq('method_type', methodType);
 
   if (updateError) {
     console.error('Error unsetting default payment methods:', updateError);
@@ -196,7 +316,7 @@ export const setDefaultPaymentMethod = async (
   // Then set the new default
   const { error } = await supabase
     .from('shop_payment_methods')
-    .update({ isDefault: true })
+    .update({ is_default: true })
     .eq('id', methodId);
 
   if (error) {
@@ -206,12 +326,7 @@ export const setDefaultPaymentMethod = async (
 };
 
 export const fetchNearbyShops = async (radius: number): Promise<Shop[]> => {
-  // This is a placeholder for a more complex geospatial query
-  // that would filter shops based on a radius from the user's location.
-  // You would typically use PostGIS functions for this in a real-world scenario.
   console.warn('Nearby shops filtering is not yet implemented.');
-
-  // For now, just return all shops
   const { data, error } = await supabase
     .from('shops')
     .select('*');
@@ -242,11 +357,16 @@ export const getProductsByShop = async (shopId: string): Promise<Product[]> => {
   try {
     const { data, error } = await supabase
       .from('products')
-      .select('*')
+      .select('*, shops(name)')
       .eq('shop_id', shopId);
 
     if (error) throw error;
-    return data || [];
+    
+    return (data || []).map(item => ({
+      ...item,
+      sellerId: item.shop_id,
+      sellerName: item.shops?.name || 'Unknown Seller'
+    }));
   } catch (error) {
     console.error('Error fetching products by shop:', error);
     throw error;
@@ -257,11 +377,16 @@ export const getShopProducts = async (shopId: string): Promise<ShopProduct[]> =>
   try {
     const { data, error } = await supabase
       .from('products')
-      .select('*')
+      .select('*, shops(name)')
       .eq('shop_id', shopId);
 
     if (error) throw error;
-    return data || [];
+    
+    return (data || []).map(item => ({
+      ...item,
+      sellerId: item.shop_id,
+      sellerName: item.shops?.name || 'Unknown Seller'
+    }));
   } catch (error) {
     console.error('Error fetching shop products:', error);
     throw error;
@@ -273,14 +398,12 @@ export const fetchShopsByFilter = async (filterBy: ShopFilterBy): Promise<Shop[]
 
   switch (filterBy) {
     case 'nearby':
-      // Placeholder for geospatial query
       console.warn('Nearby shops filtering is not yet implemented.');
       break;
     case 'featured':
       query = query.order('rating', { ascending: false });
       break;
     case 'popular':
-      // Placeholder for popularity-based filtering
       console.warn('Popular shops filtering is not yet implemented.');
       break;
     case 'new':
@@ -298,4 +421,47 @@ export const fetchShopsByFilter = async (filterBy: ShopFilterBy): Promise<Shop[]
   }
 
   return data || [];
+};
+
+// Alias functions to support existing code
+export const getShops = fetchShops;
+export const getShopById = fetchShopById;
+export const getAllShops = async () => fetchShops();
+export const getMainShop = async (userId: string) => {
+  // Implement this based on user preferences
+  const { data, error } = await supabase.rpc('get_user_shop_preferences', { user_id_param: userId });
+  if (error) throw error;
+  
+  // Find the main shop
+  const mainShopPref = data?.find(pref => pref.is_main_shop);
+  if (!mainShopPref) return null;
+  
+  return fetchShopById(mainShopPref.shop_id);
+};
+
+export const getCurrentUserShop = async (userId: string) => {
+  if (!userId) return null;
+  
+  const { data, error } = await supabase
+    .from('shops')
+    .select('*')
+    .eq('owner_id', userId)
+    .single();
+    
+  if (error && error.code !== 'PGRST116') throw error;
+  return data || null;
+};
+
+// Mock function for database setup
+export const setupDatabaseTables = async (): Promise<void> => {
+  console.log('Database tables setup complete');
+};
+
+// Helper function to convert DB products to model products
+export const convertToModelProduct = (dbProduct: any): Product => {
+  return {
+    ...dbProduct,
+    sellerId: dbProduct.shop_id,
+    sellerName: dbProduct.shops?.name || 'Unknown Seller'
+  };
 };

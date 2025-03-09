@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 export const fetchProducts = async (): Promise<Product[]> => {
   const { data, error } = await supabase
     .from('products')
-    .select('*')
+    .select('*, shops(name)')
     .order('created_at', { ascending: false });
 
   if (error) {
@@ -17,7 +17,12 @@ export const fetchProducts = async (): Promise<Product[]> => {
     throw error;
   }
 
-  return data || [];
+  // Transform the data to match the Product type
+  return (data || []).map(item => ({
+    ...item,
+    sellerId: item.shop_id,
+    sellerName: item.shops?.name || 'Unknown Seller'
+  }));
 };
 
 /**
@@ -26,7 +31,7 @@ export const fetchProducts = async (): Promise<Product[]> => {
 export const fetchProductsByShopId = async (shopId: string): Promise<Product[]> => {
   const { data, error } = await supabase
     .from('products')
-    .select('*')
+    .select('*, shops(name)')
     .eq('shop_id', shopId)
     .order('created_at', { ascending: false });
 
@@ -35,7 +40,11 @@ export const fetchProductsByShopId = async (shopId: string): Promise<Product[]> 
     throw error;
   }
 
-  return data || [];
+  return (data || []).map(item => ({
+    ...item,
+    sellerId: item.shop_id,
+    sellerName: item.shops?.name || 'Unknown Seller'
+  }));
 };
 
 /**
@@ -44,7 +53,7 @@ export const fetchProductsByShopId = async (shopId: string): Promise<Product[]> 
 export const fetchProductById = async (productId: string): Promise<Product | null> => {
   const { data, error } = await supabase
     .from('products')
-    .select('*')
+    .select('*, shops(name)')
     .eq('id', productId)
     .single();
 
@@ -53,20 +62,30 @@ export const fetchProductById = async (productId: string): Promise<Product | nul
     throw error;
   }
 
-  return data;
+  if (!data) return null;
+
+  return {
+    ...data,
+    sellerId: data.shop_id,
+    sellerName: data.shops?.name || 'Unknown Seller'
+  };
 };
 
 /**
  * Adds a new product
  */
-export const addProduct = async (product: Partial<Product>, sellerId: string): Promise<Product> => {
+export const addProduct = async (product: Omit<Partial<Product>, 'sellerId'>, sellerId: string): Promise<Product> => {
+  // Prepare the data for Supabase
+  const productData = {
+    ...product,
+    seller_id: sellerId,
+    shop_id: product.shop_id
+  };
+
   const { data, error } = await supabase
     .from('products')
-    .insert({
-      ...product,
-      sellerId: sellerId
-    })
-    .select()
+    .insert(productData)
+    .select('*, shops(name)')
     .single();
 
   if (error) {
@@ -74,7 +93,11 @@ export const addProduct = async (product: Partial<Product>, sellerId: string): P
     throw error;
   }
 
-  return data;
+  return {
+    ...data,
+    sellerId: data.shop_id,
+    sellerName: data.shops?.name || 'Unknown Seller'
+  };
 };
 
 /**
@@ -85,7 +108,7 @@ export const updateProduct = async (productId: string, product: Partial<Product>
     .from('products')
     .update(product)
     .eq('id', productId)
-    .select()
+    .select('*, shops(name)')
     .single();
 
   if (error) {
@@ -93,7 +116,11 @@ export const updateProduct = async (productId: string, product: Partial<Product>
     throw error;
   }
 
-  return data;
+  return {
+    ...data,
+    sellerId: data.shop_id,
+    sellerName: data.shops?.name || 'Unknown Seller'
+  };
 };
 
 /**
@@ -117,7 +144,7 @@ export const deleteProduct = async (productId: string): Promise<void> => {
 export const fetchFeaturedProducts = async (limit: number = 8): Promise<Product[]> => {
   const { data, error } = await supabase
     .from('products')
-    .select('*')
+    .select('*, shops(name)')
     .order('rating', { ascending: false })
     .limit(limit);
 
@@ -126,7 +153,11 @@ export const fetchFeaturedProducts = async (limit: number = 8): Promise<Product[
     throw error;
   }
 
-  return data || [];
+  return (data || []).map(item => ({
+    ...item,
+    sellerId: item.shop_id,
+    sellerName: item.shops?.name || 'Unknown Seller'
+  }));
 };
 
 /**
@@ -135,7 +166,7 @@ export const fetchFeaturedProducts = async (limit: number = 8): Promise<Product[
 export const searchProducts = async (query: string): Promise<Product[]> => {
   const { data, error } = await supabase
     .from('products')
-    .select('*')
+    .select('*, shops(name)')
     .or(`name.ilike.%${query}%, description.ilike.%${query}%`)
     .order('created_at', { ascending: false });
 
@@ -144,7 +175,11 @@ export const searchProducts = async (query: string): Promise<Product[]> => {
     throw error;
   }
 
-  return data || [];
+  return (data || []).map(item => ({
+    ...item,
+    sellerId: item.shop_id,
+    sellerName: item.shops?.name || 'Unknown Seller'
+  }));
 };
 
 /**
@@ -153,7 +188,7 @@ export const searchProducts = async (query: string): Promise<Product[]> => {
 export const fetchProductsByCategory = async (category: string): Promise<Product[]> => {
   const { data, error } = await supabase
     .from('products')
-    .select('*')
+    .select('*, shops(name)')
     .eq('category', category)
     .order('created_at', { ascending: false });
 
@@ -162,7 +197,11 @@ export const fetchProductsByCategory = async (category: string): Promise<Product
     throw error;
   }
 
-  return data || [];
+  return (data || []).map(item => ({
+    ...item,
+    sellerId: item.shop_id,
+    sellerName: item.shops?.name || 'Unknown Seller'
+  }));
 };
 
 /**
@@ -190,3 +229,8 @@ export const uploadProductImage = async (file: File, productId: string): Promise
 
   return data.publicUrl;
 };
+
+// Alias functions to support existing code
+export const getProductById = fetchProductById;
+export const getProducts = fetchProducts;
+export const getFeaturedProducts = fetchFeaturedProducts;

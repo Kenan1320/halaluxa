@@ -1,8 +1,9 @@
+
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { getShops, Shop, getShopProducts, convertToModelProduct } from '@/services/shopService';
+import { fetchShops, Shop, getProductsByShop, convertToModelProduct } from '@/services/shopService';
 import { useLocation } from '@/context/LocationContext';
-import ShopCard from '@/components/shop/ShopCard';
+import { ShopCard } from '@/components/shop/ShopCard';
 import ShopProductList from '@/components/shop/ShopProductList';
 import { Link } from 'react-router-dom';
 

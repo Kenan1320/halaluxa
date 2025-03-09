@@ -12,7 +12,7 @@ import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import AuthMiddleware from "@/components/auth/AuthMiddleware";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
-import { setupDatabaseTables } from "@/services/shopService";
+import { setupDatabaseTables } from "@/scripts/setupDatabaseTables";
 
 // Pages
 import Index from "./pages/Index";

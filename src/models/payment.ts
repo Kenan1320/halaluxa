@@ -50,7 +50,7 @@ export interface SellerAccount {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
-  // Add these properties to match what's being used in the code
+  // Payment method properties
   methodType?: PaymentMethodData;
   accountName?: string;
   accountNumber?: string;
