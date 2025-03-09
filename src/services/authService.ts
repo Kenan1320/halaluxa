@@ -1,17 +1,22 @@
 
-// Add or update necessary imports
 import { supabase } from '@/integrations/supabase/client';
-import { UserProfile, BusinessSignupFormData } from '@/models/shop';
+import { UserProfile } from '@/models/shop';
 
-// Define AuthResponse type
-interface AuthResponse {
-  success: boolean;
-  error?: string;
-  data?: any;
+export interface AuthUser {
+  id: string;
+  email: string;
+  role?: string;
+  name?: string;
 }
 
-// Login function
-export const loginWithEmail = async (email: string, password: string): Promise<AuthResponse> => {
+export interface AuthResponse {
+  success: boolean;
+  message: string;
+  user?: AuthUser;
+  error?: any;
+}
+
+export const signIn = async (email: string, password: string): Promise<AuthResponse> => {
   try {
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
@@ -19,21 +24,43 @@ export const loginWithEmail = async (email: string, password: string): Promise<A
     });
 
     if (error) {
-      return { success: false, error: error.message };
+      throw error;
     }
 
-    return { success: true, data };
-  } catch (error) {
-    console.error('Login error:', error);
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : 'An unknown error occurred' 
+    // Fetch additional user data from profiles
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', data.user.id)
+      .single();
+
+    if (profileError) {
+      console.warn('Profile not found:', profileError);
+    }
+
+    const user: AuthUser = {
+      id: data.user.id,
+      email: data.user.email || '',
+      role: profile?.role || 'shopper',
+      name: profile?.name || '',
+    };
+
+    return {
+      success: true,
+      message: 'Logged in successfully',
+      user,
+    };
+  } catch (error: any) {
+    console.error('Error signing in:', error);
+    return {
+      success: false,
+      message: error.message || 'Failed to sign in',
+      error,
     };
   }
 };
 
-// Signup function
-export const signupWithEmail = async (email: string, password: string): Promise<AuthResponse> => {
+export const signUp = async (email: string, password: string, name: string): Promise<AuthResponse> => {
   try {
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -41,154 +68,244 @@ export const signupWithEmail = async (email: string, password: string): Promise<
     });
 
     if (error) {
-      return { success: false, error: error.message };
+      throw error;
     }
 
-    // Create a basic profile for the new user
     if (data.user) {
+      // Update the profile
       const { error: profileError } = await supabase
         .from('profiles')
-        .insert([
-          { 
-            id: data.user.id,
-            email: email,
-            user_id: data.user.id 
-          }
-        ]);
+        .update({ name, role: 'shopper' })
+        .eq('id', data.user.id);
 
       if (profileError) {
-        console.error('Error creating profile:', profileError);
+        console.error('Error updating profile:', profileError);
       }
-    }
 
-    return { success: true, data };
-  } catch (error) {
-    console.error('Signup error:', error);
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : 'An unknown error occurred' 
+      const user: AuthUser = {
+        id: data.user.id,
+        email: data.user.email || '',
+        role: 'shopper',
+        name,
+      };
+
+      return {
+        success: true,
+        message: 'Account created successfully',
+        user,
+      };
+    } else {
+      return {
+        success: false,
+        message: 'Account created but user data missing',
+      };
+    }
+  } catch (error: any) {
+    console.error('Error signing up:', error);
+    return {
+      success: false,
+      message: error.message || 'Failed to create account',
+      error,
     };
   }
 };
 
-// Create business account function
-export const createBusinessAccount = async (formData: BusinessSignupFormData): Promise<AuthResponse> => {
-  try {
-    // First, create the user account
-    const { data, error } = await supabase.auth.signUp({
-      email: formData.email,
-      password: formData.password,
-    });
-
-    if (error) {
-      return { success: false, error: error.message };
-    }
-
-    if (!data.user) {
-      return { success: false, error: 'User creation failed' };
-    }
-
-    // Then create a profile for the business owner
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .insert([
-        {
-          id: data.user.id,
-          user_id: data.user.id,
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone,
-          is_business_owner: true,
-          shop_name: formData.businessName,
-          shop_description: formData.businessDescription,
-          shop_category: formData.businessCategory,
-          shop_location: formData.location,
-        }
-      ]);
-
-    if (profileError) {
-      console.error('Error creating business profile:', profileError);
-      return { success: false, error: profileError.message };
-    }
-
-    return { success: true, data };
-  } catch (error) {
-    console.error('Business signup error:', error);
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : 'An unknown error occurred' 
-    };
-  }
-};
-
-// Logout function
-export const logout = async (): Promise<AuthResponse> => {
+export const signOut = async (): Promise<AuthResponse> => {
   try {
     const { error } = await supabase.auth.signOut();
-    
+
     if (error) {
-      return { success: false, error: error.message };
+      throw error;
     }
-    
-    return { success: true };
-  } catch (error) {
-    console.error('Logout error:', error);
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : 'An unknown error occurred' 
+
+    return {
+      success: true,
+      message: 'Logged out successfully',
+    };
+  } catch (error: any) {
+    console.error('Error signing out:', error);
+    return {
+      success: false,
+      message: error.message || 'Failed to log out',
+      error,
     };
   }
 };
 
-// Get current session
-export const getCurrentSession = async () => {
-  const { data } = await supabase.auth.getSession();
-  return data.session;
-};
-
-// Get current user
-export const getCurrentUser = async () => {
-  const { data } = await supabase.auth.getUser();
-  return data.user;
-};
-
-// Get user profile
-export const getUserProfile = async (userId: string): Promise<UserProfile | null> => {
+export const getCurrentUser = async (): Promise<AuthUser | null> => {
   try {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
-    
-    if (error) {
-      console.error('Error fetching user profile:', error);
+    const { data, error } = await supabase.auth.getSession();
+
+    if (error || !data.session) {
       return null;
     }
-    
-    return data;
+
+    // Fetch additional user data from profiles
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', data.session.user.id)
+      .single();
+
+    if (profileError) {
+      console.warn('Profile not found:', profileError);
+    }
+
+    const user: AuthUser = {
+      id: data.session.user.id,
+      email: data.session.user.email || '',
+      role: profile?.role || 'shopper',
+      name: profile?.name || '',
+    };
+
+    return user;
   } catch (error) {
-    console.error('Error in getUserProfile:', error);
+    console.error('Error getting current user:', error);
     return null;
   }
 };
 
-// Update user profile
-export const updateUserProfile = async (userId: string, profileData: Partial<UserProfile>): Promise<boolean> => {
+export const updateUserProfile = async (userId: string, profileData: Partial<UserProfile>): Promise<AuthResponse> => {
   try {
     const { error } = await supabase
       .from('profiles')
       .update(profileData)
       .eq('id', userId);
-    
+
     if (error) {
-      console.error('Error updating user profile:', error);
-      return false;
+      throw error;
     }
-    
-    return true;
-  } catch (error) {
-    console.error('Error in updateUserProfile:', error);
-    return false;
+
+    return {
+      success: true,
+      message: 'Profile updated successfully',
+    };
+  } catch (error: any) {
+    console.error('Error updating profile:', error);
+    return {
+      success: false,
+      message: error.message || 'Failed to update profile',
+      error,
+    };
+  }
+};
+
+export const createBusinessAccount = async (
+  email: string, 
+  password: string, 
+  name: string, 
+  businessDetails: {
+    businessName: string,
+    businessCategory: string,
+    businessDescription: string,
+    location: string,
+    phone?: string
+  }
+): Promise<AuthResponse> => {
+  try {
+    // Sign up with Supabase Auth
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+    });
+
+    if (error) {
+      throw error;
+    }
+
+    if (data.user) {
+      // Update the profile with business details
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({
+          name,
+          role: 'business',
+          is_business_owner: true,
+          phone: businessDetails.phone,
+          shop_name: businessDetails.businessName,
+          shop_category: businessDetails.businessCategory,
+          shop_description: businessDetails.businessDescription,
+          shop_location: businessDetails.location
+        })
+        .eq('id', data.user.id);
+
+      if (profileError) {
+        console.error('Error updating business profile:', profileError);
+        throw profileError;
+      }
+
+      const user: AuthUser = {
+        id: data.user.id,
+        email: data.user.email || '',
+        role: 'business',
+        name,
+      };
+
+      return {
+        success: true,
+        message: 'Business account created successfully',
+        user,
+      };
+    } else {
+      return {
+        success: false,
+        message: 'Business account created but user data missing',
+      };
+    }
+  } catch (error: any) {
+    console.error('Error creating business account:', error);
+    return {
+      success: false,
+      message: error.message || 'Failed to create business account',
+      error,
+    };
+  }
+};
+
+export const resetPassword = async (email: string): Promise<AuthResponse> => {
+  try {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+
+    if (error) {
+      throw error;
+    }
+
+    return {
+      success: true,
+      message: 'Password reset email sent',
+    };
+  } catch (error: any) {
+    console.error('Error sending reset password email:', error);
+    return {
+      success: false,
+      message: error.message || 'Failed to send reset password email',
+      error,
+    };
+  }
+};
+
+export const updatePassword = async (newPassword: string): Promise<AuthResponse> => {
+  try {
+    const { error } = await supabase.auth.updateUser({
+      password: newPassword,
+    });
+
+    if (error) {
+      throw error;
+    }
+
+    return {
+      success: true,
+      message: 'Password updated successfully',
+    };
+  } catch (error: any) {
+    console.error('Error updating password:', error);
+    return {
+      success: false,
+      message: error.message || 'Failed to update password',
+      error,
+    };
   }
 };

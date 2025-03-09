@@ -17,6 +17,12 @@ export interface Product {
   updated_at?: string;
   long_description?: string;
   details?: ProductDetails;
+  // For UI compatibility
+  isHalalCertified?: boolean;
+  inStock?: number;
+  sellerId?: string;
+  sellerName?: string;
+  createdAt?: string;
 }
 
 export interface ProductDetails {
@@ -85,3 +91,18 @@ export interface BulkUploadItem {
   long_description?: string;
   details?: ProductDetails;
 }
+
+// Product categories for UI components
+export const productCategories = [
+  "Food",
+  "Beverages",
+  "Clothing",
+  "Accessories",
+  "Beauty",
+  "Health",
+  "Home",
+  "Electronics",
+  "Books",
+  "Toys",
+  "Other"
+];

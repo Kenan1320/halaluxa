@@ -1,45 +1,40 @@
 
-export type PaymentMethodType = 'bank' | 'paypal' | 'stripe' | 'applepay';
-
-export interface SellerAccount {
+export interface PaymentMethod {
   id: string;
-  userId: string;
-  shopId: string;
-  methodType: PaymentMethodType;
-  accountName?: string;
-  accountNumber?: string;
-  bankName?: string;
-  paypalEmail?: string;
-  stripeAccountId?: string;
-  applePayMerchantId?: string | null;
-  isActive: boolean;
-  isDefault?: boolean;
-  createdAt: string;
-  updatedAt: string;
+  userId?: string;
+  type: string;
+  cardNumber?: string;
+  cardExpiry?: string;
+  cardCvc?: string;
+  cardholderName?: string;
+  isDefault: boolean;
 }
 
-export interface PaymentCard {
+export type PaymentMethodData = "bank" | "paypal" | "stripe" | "applepay";
+
+export interface PaymentMethodFormData {
+  type: PaymentMethodData;
+  cardNumber?: string;
+  cardExpiry?: string;
+  cardCvc?: string;
+  cardholderName?: string;
+  bankAccountName?: string;
+  bankAccountNumber?: string;
+  bankName?: string;
+  paypalEmail?: string;
+}
+
+export interface PaymentIntent {
   id: string;
-  userId: string;
-  cardNumber: string;
-  cardHolder: string;
-  expiryMonth: number;
-  expiryYear: number;
-  cvc: string;
-  isDefault: boolean;
+  amount: number;
+  currency: string;
+  status: 'created' | 'processing' | 'succeeded' | 'failed';
+  clientSecret?: string;
 }
 
 export interface PaymentResult {
   success: boolean;
-  orderId?: string;
-  orderDate?: string;
-  error?: string;
-}
-
-export interface PaymentMethod {
-  id: string;
-  type: PaymentMethodType;
-  displayName: string;
-  isDefault?: boolean;
-  details?: Record<string, any>;
+  message: string;
+  transactionId?: string;
+  error?: any;
 }

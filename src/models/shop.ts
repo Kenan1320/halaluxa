@@ -128,6 +128,7 @@ export interface UserShopPreference {
   is_main_shop?: boolean;
   created_at?: string;
   updated_at?: string;
+  shop?: Shop;
 }
 
 // Extended profile interface
