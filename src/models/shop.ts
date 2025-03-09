@@ -126,6 +126,8 @@ export interface UserShopPreference {
   is_following?: boolean;
   is_favorite?: boolean;
   is_main_shop?: boolean;
+  created_at?: string;
+  updated_at?: string;
 }
 
 // Extended profile interface

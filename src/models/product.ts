@@ -1,111 +1,87 @@
+
+import { Json } from '@/integrations/supabase/types';
+
 export interface Product {
   id: string;
   name: string;
   description: string;
   price: number;
+  shop_id: string;
   category: string;
-  inStock: boolean;
-  isFeatured?: boolean;
-  isHalalCertified: boolean;
-  isPublished?: boolean;
-  createdAt: string;
-  sellerId: string;
-  sellerName?: string;
+  images?: string[];
   rating?: number;
-  reviews?: number;
-  images: string[];
-  variants?: ProductVariant[];
-  tags?: string[];
+  is_halal_certified?: boolean;
+  is_published?: boolean;
+  stock?: number;
+  created_at?: string;
+  updated_at?: string;
+  long_description?: string;
   details?: ProductDetails;
-  longDescription?: string;
-}
-
-export interface ProductVariant {
-  id: string;
-  name: string;
-  price?: number;
-  inStock: boolean;
-  attributes: {
-    [key: string]: string;
-  };
 }
 
 export interface ProductDetails {
   weight?: string;
-  servings?: string;
-  ingredients?: string;
+  dimensions?: string;
+  color?: string;
+  material?: string;
+  origin?: string;
+  ingredients?: string[];
+  allergens?: string[];
+  nutritionalInfo?: {
+    calories?: number;
+    protein?: number;
+    carbs?: number;
+    fat?: number;
+    [key: string]: any;
+  };
   [key: string]: any;
 }
 
-export interface ShopProduct extends Product {
-  // ShopProduct already inherits all the required properties from Product
+export interface CreateProductInput {
+  name: string;
+  description: string;
+  price: number;
+  shop_id: string;
+  category: string;
+  images?: string[];
+  is_halal_certified?: boolean;
+  is_published?: boolean;
+  stock?: number;
+  long_description?: string;
+  details?: ProductDetails;
 }
 
-export interface NewProduct {
+export interface UpdateProductInput {
+  name?: string;
+  description?: string;
+  price?: number;
+  shop_id?: string;
+  category?: string;
+  images?: string[];
+  is_halal_certified?: boolean;
+  is_published?: boolean;
+  stock?: number;
+  long_description?: string;
+  details?: ProductDetails;
+}
+
+export interface ProductFilterOptions {
+  category?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  rating?: number;
+  isHalalCertified?: boolean;
+}
+
+export interface BulkUploadItem {
   name: string;
   description: string;
   price: number;
   category: string;
-  inStock: boolean;
-  isFeatured?: boolean;
-  isHalalCertified: boolean;
-  sellerId: string;
-  sellerName?: string;
-  images: string[];
-  variants?: ProductVariant[];
-  tags?: string[];
+  stock?: number;
+  images?: string[];
+  is_published?: boolean;
+  is_halal_certified?: boolean;
+  long_description?: string;
   details?: ProductDetails;
 }
-
-// Define product categories for dropdown menus
-export const productCategories = [
-  "Food & Groceries",
-  "Clothing",
-  "Beauty & Personal Care",
-  "Health & Wellness",
-  "Home & Kitchen",
-  "Books & Media",
-  "Electronics",
-  "Toys & Games",
-  "Sports & Outdoors",
-  "Baby & Kids",
-  "Jewelry & Accessories"
-];
-
-// Mapper functions for database operations
-export const mapDbProductToModel = (data: any): Product => {
-  return {
-    id: data.id,
-    name: data.name,
-    description: data.description,
-    price: data.price,
-    inStock: data.stock > 0,
-    category: data.category,
-    images: data.images || [],
-    sellerId: data.seller_id,
-    sellerName: data.seller_name,
-    rating: data.rating,
-    isHalalCertified: data.is_halal_certified,
-    details: typeof data.details === 'string' ? JSON.parse(data.details) : data.details || {},
-    createdAt: data.created_at,
-    isPublished: data.is_published
-  };
-};
-
-export const mapModelToDbProduct = (product: Partial<Product>) => {
-  return {
-    id: product.id,
-    name: product.name,
-    description: product.description,
-    price: product.price,
-    stock: product.inStock ? 1 : 0, // Convert boolean to number for DB
-    category: product.category,
-    images: product.images,
-    seller_id: product.sellerId,
-    seller_name: product.sellerName,
-    rating: product.rating,
-    is_halal_certified: product.isHalalCertified,
-    details: product.details ? JSON.stringify(product.details) : '{}',
-    is_published: product.isPublished
-  };
-};

@@ -1,352 +1,329 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Container } from '@/components/ui/container';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from '@/components/ui/use-toast';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { Button } from '@/components/ui/button';
 import { Shop, UserShopPreference } from '@/models/shop';
-import { getShops } from '@/services/shopService';
-import { Store, Heart, Star, MapPin } from 'lucide-react';
+import { ShopCard } from '@/components/shop/ShopCard';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Loader2 } from 'lucide-react';
+
+interface MyShopPreference {
+  id?: string;
+  user_id: string;
+  shop_id: string;
+  is_following?: boolean;
+  is_favorite?: boolean;
+  is_main_shop?: boolean;
+  shop?: Shop;
+}
 
 const SelectShops = () => {
-  const [shops, setShops] = useState<Shop[]>([]);
-  const [followedShops, setFollowedShops] = useState<string[]>([]);
-  const [mainShop, setMainShop] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const { toast } = useToast();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [shops, setShops] = useState<Shop[]>([]);
+  const [selectedShops, setSelectedShops] = useState<string[]>([]);
+  const [mainShop, setMainShop] = useState<string | null>(null);
+  const [userShopPreferences, setUserShopPreferences] = useState<MyShopPreference[]>([]);
 
   useEffect(() => {
-    const loadShops = async () => {
+    if (!user) return;
+    
+    const fetchShops = async () => {
+      setLoading(true);
       try {
-        setIsLoading(true);
-        const allShops = await getShops();
-        setShops(allShops);
-        
-        if (user) {
-          // Get followed shops for current user
-          const { data: followData, error } = await supabase
-            .from('user_shop_preferences')
-            .select('*')
-            .eq('user_id', user.id);
+        // Fetch all available shops
+        const { data: shopsData, error: shopsError } = await supabase
+          .from('shops')
+          .select('*');
+
+        if (shopsError) {
+          throw shopsError;
+        }
+
+        setShops(shopsData || []);
+
+        // Fetch user's shop preferences
+        // We'll create a custom type with the SQL query to handle the user_shop_preferences table
+        const { data: prefsData, error: prefsError } = await supabase
+          .rpc('get_user_shop_preferences', { user_id_param: user.id });
+
+        if (prefsError) {
+          // If there's an error, try using direct join approach
+          // This is a fallback if the RPC doesn't exist yet
+          console.log("Using direct query approach instead of RPC");
+          
+          const { data: preferences, error: prefQueryError } = await supabase
+            .from('shops')
+            .select(`
+              id,
+              name,
+              description,
+              category,
+              logo_url,
+              user_shop_preferences!inner(
+                id,
+                user_id,
+                shop_id,
+                is_following,
+                is_favorite,
+                is_main_shop
+              )
+            `)
+            .eq('user_shop_preferences.user_id', user.id);
+
+          if (prefQueryError) {
+            console.error("Error fetching preferences:", prefQueryError);
+            // If both approaches fail, we'll just use an empty array
+            setUserShopPreferences([]);
+          } else {
+            const userPrefs = preferences?.map(shop => {
+              const pref = shop.user_shop_preferences[0];
+              return {
+                id: pref.id,
+                user_id: pref.user_id,
+                shop_id: shop.id,
+                is_following: pref.is_following,
+                is_favorite: pref.is_favorite,
+                is_main_shop: pref.is_main_shop,
+                shop: {
+                  id: shop.id,
+                  name: shop.name,
+                  description: shop.description,
+                  category: shop.category,
+                  logo_url: shop.logo_url
+                } as Shop
+              };
+            }) || [];
             
-          if (error) {
-            console.error('Error fetching shop preferences:', error);
-            return;
-          }
+            setUserShopPreferences(userPrefs);
             
-          if (followData && followData.length > 0) {
-            const followedIds = followData.map(item => item.shop_id);
-            setFollowedShops(followedIds);
+            // Set selected shops based on preferences
+            const selectedShopIds = userPrefs.map(pref => pref.shop_id);
+            setSelectedShops(selectedShopIds);
             
-            // Find main shop
-            const mainShopData = followData.find(item => item.is_main_shop);
-            if (mainShopData) {
-              setMainShop(mainShopData.shop_id);
+            // Set main shop
+            const mainShopPref = userPrefs.find(pref => pref.is_main_shop);
+            if (mainShopPref) {
+              setMainShop(mainShopPref.shop_id);
             }
+          }
+        } else {
+          // If the RPC exists and works
+          setUserShopPreferences(prefsData || []);
+          
+          // Set selected shops based on preferences
+          const selectedShopIds = (prefsData || []).map(pref => pref.shop_id);
+          setSelectedShops(selectedShopIds);
+          
+          // Set main shop
+          const mainShopPref = (prefsData || []).find(pref => pref.is_main_shop);
+          if (mainShopPref) {
+            setMainShop(mainShopPref.shop_id);
           }
         }
       } catch (error) {
-        console.error('Error loading shops:', error);
+        console.error('Error fetching shops:', error);
         toast({
           title: 'Error',
           description: 'Failed to load shops. Please try again.',
           variant: 'destructive',
         });
       } finally {
-        setIsLoading(false);
+        setLoading(false);
       }
     };
 
-    loadShops();
-  }, [user, toast]);
+    fetchShops();
+  }, [user]);
 
-  const handleFollowShop = async (shopId: string) => {
-    if (!user) {
-      navigate('/login');
-      return;
-    }
-
-    try {
-      const isFollowed = followedShops.includes(shopId);
-      
-      if (isFollowed) {
-        // Unfollow shop
-        const { error } = await supabase
-          .from('user_shop_preferences')
-          .delete()
-          .eq('user_id', user.id)
-          .eq('shop_id', shopId);
-          
-        if (error) {
-          console.error('Error unfollowing shop:', error);
-          toast({
-            title: 'Error',
-            description: 'Failed to unfollow shop. Please try again.',
-            variant: 'destructive',
-          });
-          return;
-        }
-          
-        setFollowedShops(prev => prev.filter(id => id !== shopId));
+  const toggleShopSelection = (shopId: string) => {
+    setSelectedShops(prevSelected => {
+      if (prevSelected.includes(shopId)) {
+        // Removing a shop
+        const newSelection = prevSelected.filter(id => id !== shopId);
         
-        // If this was the main shop, reset main shop
+        // If removing the main shop, set mainShop to null
         if (mainShop === shopId) {
           setMainShop(null);
-          
-          // Update user profile
-          const { error: profileError } = await supabase
-            .from('profiles')
-            .update({ main_shop_id: null })
-            .eq('id', user.id);
-            
-          if (profileError) {
-            console.error('Error updating profile:', profileError);
-          }
         }
+        
+        return newSelection;
       } else {
-        // If this is the first shop, make it the main shop
-        const isFirstShop = followedShops.length === 0;
-        
-        // Follow shop
-        const { error } = await supabase
+        // Adding a shop
+        return [...prevSelected, shopId];
+      }
+    });
+  };
+
+  const setAsMainShop = (shopId: string) => {
+    // Make sure the shop is selected first
+    if (!selectedShops.includes(shopId)) {
+      toggleShopSelection(shopId);
+    }
+    
+    setMainShop(shopId);
+  };
+
+  const savePreferences = async () => {
+    if (!user) return;
+    
+    setLoading(true);
+    
+    try {
+      // Update profile's main_shop_id
+      if (mainShop) {
+        await supabase
+          .from('profiles')
+          .update({ main_shop_id: mainShop })
+          .eq('id', user.id);
+      }
+
+      // Handle existing preferences
+      if (userShopPreferences.length > 0) {
+        // Delete all existing preferences (we'll add back the selected ones)
+        const { error: deleteError } = await supabase
           .from('user_shop_preferences')
-          .insert({
-            user_id: user.id, 
-            shop_id: shopId,
-            is_main_shop: isFirstShop
-          });
+          .delete()
+          .eq('user_id', user.id);
           
-        if (error) {
-          console.error('Error following shop:', error);
-          toast({
-            title: 'Error',
-            description: 'Failed to follow shop. Please try again.',
-            variant: 'destructive',
-          });
-          return;
-        }
-          
-        setFollowedShops(prev => [...prev, shopId]);
-        
-        // If this is the first shop, make it the main shop
-        if (isFirstShop) {
-          setMainShop(shopId);
-          
-          // Update user profile
-          const { error: profileError } = await supabase
-            .from('profiles')
-            .update({ main_shop_id: shopId })
-            .eq('id', user.id);
-            
-          if (profileError) {
-            console.error('Error updating profile:', profileError);
-          }
-        }
+        if (deleteError) throw deleteError;
       }
       
+      // Only proceed if there are selected shops
+      if (selectedShops.length > 0) {
+        // Create new preferences for each selected shop
+        const preferencesToInsert = selectedShops.map(shopId => ({
+          user_id: user.id,
+          shop_id: shopId,
+          is_main_shop: shopId === mainShop
+        }));
+        
+        // Insert the new preferences
+        const { error: insertError } = await supabase
+          .from('user_shop_preferences')
+          .insert(preferencesToInsert);
+          
+        if (insertError) throw insertError;
+      }
+
       toast({
-        title: isFollowed ? 'Shop unfollowed' : 'Shop followed',
-        description: isFollowed ? 'Shop removed from your followed shops' : 'Shop added to your followed shops',
+        title: 'Success',
+        description: 'Your shop preferences have been saved.',
       });
+      
+      // Navigate to the home page
+      navigate('/');
     } catch (error) {
-      console.error('Error following/unfollowing shop:', error);
+      console.error('Error saving preferences:', error);
       toast({
         title: 'Error',
-        description: 'Failed to update shop preference. Please try again.',
+        description: 'Failed to save preferences. Please try again.',
         variant: 'destructive',
       });
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleSetMainShop = async (shopId: string) => {
-    if (!user) {
-      navigate('/login');
-      return;
-    }
-
-    try {
-      // Update all shops to not be main
-      const { error: updateError } = await supabase
-        .from('user_shop_preferences')
-        .update({ is_main_shop: false })
-        .eq('user_id', user.id);
-        
-      if (updateError) {
-        console.error('Error updating shop preferences:', updateError);
-        toast({
-          title: 'Error',
-          description: 'Failed to update main shop. Please try again.',
-          variant: 'destructive',
-        });
-        return;
-      }
-        
-      // Set selected shop as main
-      const { error: setMainError } = await supabase
-        .from('user_shop_preferences')
-        .update({ is_main_shop: true })
-        .eq('user_id', user.id)
-        .eq('shop_id', shopId);
-        
-      if (setMainError) {
-        console.error('Error setting main shop:', setMainError);
-        toast({
-          title: 'Error',
-          description: 'Failed to set main shop. Please try again.',
-          variant: 'destructive',
-        });
-        return;
-      }
-        
-      // Update user profile
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({ main_shop_id: shopId })
-        .eq('id', user.id);
-        
-      if (profileError) {
-        console.error('Error updating profile:', profileError);
-        toast({
-          title: 'Error',
-          description: 'Failed to update profile. Please try again.',
-          variant: 'destructive',
-        });
-        return;
-      }
-        
-      setMainShop(shopId);
-      
-      toast({
-        title: 'Main shop updated',
-        description: 'Your main shop has been updated successfully',
-      });
-    } catch (error) {
-      console.error('Error setting main shop:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to update main shop. Please try again.',
-        variant: 'destructive',
-      });
+  const toggleMainShop = (shopId: string) => {
+    if (mainShop === shopId) {
+      setMainShop(null); // Unset as main shop
+    } else {
+      setAsMainShop(shopId); // Set as main shop
     }
   };
 
   return (
-    <div className="min-h-screen pt-20 pb-16">
-      <Container>
-        <div className="py-6">
-          <h1 className="text-3xl font-bold mb-2">Select Your Shops</h1>
-          <p className="text-muted-foreground mb-8">
-            Follow shops to see their products in your feed and select a main shop for quick access.
-          </p>
-
-          {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[1, 2, 3, 4, 5, 6].map((i) => (
-                <Card key={i} className="animate-pulse">
-                  <CardHeader className="h-40 bg-muted"></CardHeader>
-                  <CardContent className="pt-6">
-                    <div className="h-6 w-3/4 bg-muted mb-2 rounded"></div>
-                    <div className="h-4 bg-muted rounded mb-4"></div>
-                    <div className="h-4 w-1/2 bg-muted rounded"></div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {shops.map((shop) => (
-                <Card key={shop.id} className="overflow-hidden">
-                  <div className="h-40 bg-muted relative">
-                    {shop.cover_image ? (
-                      <img
-                        src={shop.cover_image}
-                        alt={shop.name}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-haluna-primary-light to-haluna-primary/40">
-                        <Store className="h-16 w-16 text-haluna-primary-dark/60" />
-                      </div>
-                    )}
-                    
-                    <button
-                      onClick={() => handleFollowShop(shop.id)}
-                      className={`absolute top-3 right-3 p-2 rounded-full ${
-                        followedShops.includes(shop.id)
-                          ? 'bg-rose-100 text-rose-500'
-                          : 'bg-white/80 text-gray-500 hover:text-rose-500'
-                      }`}
-                    >
-                      <Heart
-                        className={followedShops.includes(shop.id) ? 'fill-rose-500' : ''}
-                        size={20}
-                      />
-                    </button>
-                    
-                    {shop.is_verified && (
-                      <div className="absolute top-3 left-3 bg-white/80 px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1">
-                        <Star className="h-3 w-3 fill-yellow-500 text-yellow-500" />
-                        <span>Verified</span>
-                      </div>
-                    )}
-                  </div>
-                  
-                  <CardHeader className="pb-2">
-                    <div className="flex justify-between items-center">
-                      <CardTitle className="text-xl">{shop.name}</CardTitle>
-                      {shop.rating && (
-                        <div className="flex items-center gap-1 text-sm">
-                          <Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
-                          <span>{shop.rating.toFixed(1)}</span>
-                        </div>
-                      )}
-                    </div>
-                    <CardDescription>{shop.category}</CardDescription>
-                  </CardHeader>
-                  
-                  <CardContent className="pb-0">
-                    <div className="flex items-center gap-1 text-sm text-muted-foreground mb-3">
-                      <MapPin className="h-4 w-4" />
-                      <span>{shop.location}</span>
-                    </div>
-                    
-                    <p className="text-sm line-clamp-2 mb-4">{shop.description}</p>
-                    
-                    <Separator className="my-4" />
-                  </CardContent>
-                  
-                  <CardFooter className="flex justify-between pt-0">
-                    <Button
-                      variant="outline"
-                      onClick={() => navigate(`/shop/${shop.id}`)}
-                      className="w-[48%]"
-                    >
-                      View Shop
-                    </Button>
-                    
-                    {followedShops.includes(shop.id) && (
-                      <Button
-                        variant={mainShop === shop.id ? "default" : "secondary"}
-                        onClick={() => handleSetMainShop(shop.id)}
-                        className="w-[48%]"
-                        disabled={mainShop === shop.id}
-                      >
-                        {mainShop === shop.id ? "Main Shop" : "Set as Main"}
-                      </Button>
-                    )}
-                  </CardFooter>
-                </Card>
-              ))}
-            </div>
-          )}
+    <div className="container max-w-7xl mx-auto px-4 py-8">
+      <h1 className="text-3xl font-bold mb-6">Select Your Favorite Shops</h1>
+      
+      <p className="text-gray-600 mb-8">
+        Choose the shops you want to follow. You can set one as your main shop to see their products first.
+      </p>
+      
+      {loading ? (
+        <div className="flex justify-center items-center h-40">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
-      </Container>
+      ) : (
+        <>
+          <Tabs defaultValue="all" className="mb-8">
+            <TabsList>
+              <TabsTrigger value="all">All Shops</TabsTrigger>
+              <TabsTrigger value="selected">
+                Selected ({selectedShops.length})
+              </TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="all" className="mt-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {shops.map((shop) => (
+                  <ShopCard 
+                    key={shop.id}
+                    shop={shop}
+                    selected={selectedShops.includes(shop.id)}
+                    isMainShop={mainShop === shop.id}
+                    onSelect={() => toggleShopSelection(shop.id)}
+                    onSetMain={() => toggleMainShop(shop.id)}
+                    showControls={true}
+                  />
+                ))}
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="selected" className="mt-6">
+              {selectedShops.length === 0 ? (
+                <div className="text-center p-8 border border-dashed rounded-lg">
+                  <p>You haven't selected any shops yet.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {shops
+                    .filter(shop => selectedShops.includes(shop.id))
+                    .map(shop => (
+                      <ShopCard 
+                        key={shop.id}
+                        shop={shop}
+                        selected={true}
+                        isMainShop={mainShop === shop.id}
+                        onSelect={() => toggleShopSelection(shop.id)}
+                        onSetMain={() => toggleMainShop(shop.id)}
+                        showControls={true}
+                      />
+                    ))}
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
+          
+          <div className="flex justify-end mt-8">
+            <Button
+              variant="outline"
+              className="mr-4"
+              onClick={() => navigate('/')}
+            >
+              Skip
+            </Button>
+            <Button 
+              onClick={savePreferences}
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                'Save Preferences'
+              )}
+            </Button>
+          </div>
+        </>
+      )}
     </div>
   );
 };

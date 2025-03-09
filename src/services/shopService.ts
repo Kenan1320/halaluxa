@@ -1,8 +1,6 @@
-
 import { supabase } from '@/integrations/supabase/client';
-import { Shop, ShopFilter, CreateShopInput, UpdateShopInput, ShopFilterBy, ShopProduct, ShopPaymentMethod } from '@/models/shop';
-import { Product } from '@/models/product';
-import { PaymentMethodType } from '@/models/payment';
+import { Shop, ShopFilter, CreateShopInput, UpdateShopInput, ShopProduct, ShopPaymentMethod, UserShopPreference } from '@/models/shop';
+import { ProductDetails } from '@/models/product';
 
 // Re-export the Shop interface for backward compatibility
 export type { Shop, ShopProduct, ShopPaymentMethod };
@@ -269,7 +267,6 @@ export async function getShopProducts(shopId: string): Promise<ShopProduct[]> {
       stock: product.stock || 0,
       created_at: product.created_at,
       updated_at: product.updated_at,
-      // Add required properties for interface compatibility
       sellerId: product.shop_id,
       sellerName: '' // This will be populated by the calling function if needed
     }));
@@ -629,6 +626,69 @@ export const createProductForShop = async (shopId: string, product: Partial<Prod
     };
   } catch (error) {
     console.error('Error in createProductForShop:', error);
+    return null;
+  }
+};
+
+// Function to fixProductDetails
+const normalizeProductDetails = (product: any): ShopProduct => {
+  let details: ProductDetails | undefined;
+  
+  // Convert the JSON details to ProductDetails type
+  if (product.details) {
+    if (typeof product.details === 'string') {
+      try {
+        details = JSON.parse(product.details);
+      } catch (e) {
+        details = undefined;
+      }
+    } else {
+      details = product.details as ProductDetails;
+    }
+  }
+  
+  return {
+    ...product,
+    details
+  };
+};
+
+// Function to get shop product details
+export const getShopProductDetails = async (shopId: string, productId: string): Promise<ShopProduct | null> => {
+  try {
+    const { data: productData, error: productError } = await supabase
+      .from('products')
+      .select('*')
+      .eq('id', productId)
+      .eq('shop_id', shopId)
+      .single();
+      
+    if (productError) {
+      console.error('Error fetching product details:', productError);
+      return null;
+    }
+    
+    const { data: shopData, error: shopError } = await supabase
+      .from('shops')
+      .select('name, owner_id')
+      .eq('id', shopId)
+      .single();
+      
+    if (shopError) {
+      console.error('Error fetching shop info for product:', shopError);
+      return null;
+    }
+    
+    // Normalize the product details
+    const product = normalizeProductDetails(productData);
+    
+    return {
+      ...product,
+      sellerId: shopData.owner_id,
+      sellerName: shopData.name
+    };
+  } catch (error) {
+    console.error('Error in getShopProductDetails:', error);
     return null;
   }
 };
