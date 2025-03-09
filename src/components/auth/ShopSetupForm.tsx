@@ -24,7 +24,6 @@ export default function ShopSetupForm({ onComplete, onSkip }: ShopSetupFormProps
     description: '',
     category: '',
     location: '',
-    logo: ''
   });
   
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
@@ -53,14 +52,12 @@ export default function ShopSetupForm({ onComplete, onSkip }: ShopSetupFormProps
     reader.onload = (event) => {
       const result = event.target?.result as string;
       setLogoPreview(result);
-      setShopData(prev => ({ ...prev, logo: result }));
     };
     reader.readAsDataURL(file);
   };
   
   const removeLogo = () => {
     setLogoPreview(null);
-    setShopData(prev => ({ ...prev, logo: '' }));
     const fileInput = document.getElementById('shopLogo') as HTMLInputElement;
     if (fileInput) fileInput.value = '';
   };
@@ -102,7 +99,8 @@ export default function ShopSetupForm({ onComplete, onSkip }: ShopSetupFormProps
             shop_description: shopData.description,
             shop_category: shopData.category,
             shop_location: shopData.location,
-            shop_logo: logoPreview
+            shop_logo: logoPreview,
+            is_business_owner: true
           })
           .eq('id', user.id);
         

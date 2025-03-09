@@ -1,85 +1,123 @@
 
-import { Bell, Search, LogOut, Settings, User } from 'lucide-react';
+import { Bell, Menu, Search, Settings, User } from 'lucide-react';
 import { useState } from 'react';
-import { useAuth } from '@/context/AuthContext';
 import { Link } from 'react-router-dom';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Shop } from '@/models/shop';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { useAuth } from '@/context/AuthContext';
 
-const DashboardHeader = () => {
+interface DashboardHeaderProps {
+  shop: Shop;
+  toggleSidebar: () => void;
+}
+
+const DashboardHeader = ({ shop, toggleSidebar }: DashboardHeaderProps) => {
+  const { logout, user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
-  const { user, logout } = useAuth();
-
+  
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Implement search functionality
+    console.log('Searching for:', searchQuery);
+  };
+  
+  const handleLogout = async () => {
+    await logout();
+    window.location.href = '/';
+  };
+  
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(part => part.charAt(0))
+      .join('')
+      .toUpperCase()
+      .substring(0, 2);
+  };
+  
   return (
-    <header className="border-b bg-white p-4 flex items-center justify-between shadow-sm">
-      <div className="flex items-center gap-4 w-full max-w-md">
-        <div className="relative flex-1">
-          <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-            <Search className="h-4 w-4 text-haluna-text-light" />
-          </div>
-          <input
-            type="text"
-            className="pl-10 pr-4 py-2 w-full border rounded-lg focus:ring-1 focus:ring-haluna-primary focus:border-haluna-primary transition"
-            placeholder="Search products, orders..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+    <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
+      <div className="flex items-center justify-between h-16 px-4 md:px-6">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={toggleSidebar}
+            className="text-gray-500 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 lg:hidden"
+          >
+            <Menu className="h-6 w-6" />
+          </button>
+          
+          <Link to="/" className="flex items-center lg:hidden">
+            <img src="/logo.png" alt="Haluna" className="h-8" />
+          </Link>
         </div>
-      </div>
-      
-      <div className="flex items-center gap-4">
-        <Popover>
-          <PopoverTrigger asChild>
-            <button className="relative p-2 rounded-full hover:bg-haluna-primary-light transition-colors">
-              <Bell className="h-5 w-5 text-haluna-text" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-haluna-primary rounded-full"></span>
-            </button>
-          </PopoverTrigger>
-          <PopoverContent className="w-80 p-0">
-            <div className="p-3 border-b font-medium">Notifications</div>
-            <div className="max-h-80 overflow-y-auto">
-              <div className="p-4 text-center text-haluna-text-light">
-                No new notifications
-              </div>
-            </div>
-          </PopoverContent>
-        </Popover>
+
+        <div className="hidden md:block flex-1 max-w-md mx-4">
+          <form onSubmit={handleSearch} className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <input
+              type="search"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search..."
+              className="w-full pl-10 pr-4 py-2 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm"
+            />
+          </form>
+        </div>
         
-        <Popover>
-          <PopoverTrigger asChild>
-            <div className="flex items-center gap-3 cursor-pointer">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-haluna-primary to-emerald-600 flex items-center justify-center text-white shadow-sm">
-                {user?.name?.charAt(0) || 'U'}
-              </div>
-              <div className="hidden md:block">
-                <div className="text-sm font-medium">{user?.name || 'Business Owner'}</div>
-                <div className="text-xs text-haluna-text-light">Business Owner</div>
-              </div>
-            </div>
-          </PopoverTrigger>
-          <PopoverContent className="w-56 p-0" align="end">
-            <div className="p-3 border-b">
-              <p className="font-medium">{user?.name}</p>
-              <p className="text-xs text-haluna-text-light">{user?.email}</p>
-            </div>
-            <div className="p-2">
-              <Link to="/dashboard/settings" className="flex items-center gap-2 w-full text-left p-2 rounded-md hover:bg-haluna-primary-light">
-                <Settings className="h-4 w-4" />
-                <span>Settings</span>
-              </Link>
-              <Link to="/dashboard/profile" className="flex items-center gap-2 w-full text-left p-2 rounded-md hover:bg-haluna-primary-light">
-                <User className="h-4 w-4" />
+        <div className="flex items-center gap-3">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="relative"
+          >
+            <Bell className="h-5 w-5 text-gray-500" />
+            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+          </Button>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="rounded-full overflow-hidden">
+                {user?.avatar ? (
+                  <img 
+                    src={user.avatar} 
+                    alt={user.name || 'User'} 
+                    className="h-8 w-8 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="h-8 w-8 bg-green-100 rounded-full flex items-center justify-center">
+                    <span className="text-sm font-medium text-green-700">
+                      {user?.name ? getInitials(user.name) : 'U'}
+                    </span>
+                  </div>
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="cursor-pointer">
+                <User className="mr-2 h-4 w-4" />
                 <span>Profile</span>
-              </Link>
-              <button 
-                onClick={logout}
-                className="flex items-center gap-2 w-full text-left p-2 rounded-md hover:bg-red-50 text-red-500"
-              >
-                <LogOut className="h-4 w-4" />
-                <span>Sign Out</span>
-              </button>
-            </div>
-          </PopoverContent>
-        </Popover>
+              </DropdownMenuItem>
+              <DropdownMenuItem className="cursor-pointer">
+                <Settings className="mr-2 h-4 w-4" />
+                <span>Settings</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="cursor-pointer text-red-600" onClick={handleLogout}>
+                <span>Logout</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
     </header>
   );

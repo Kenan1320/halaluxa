@@ -31,6 +31,8 @@ export interface ShopProduct {
   is_halal_certified: boolean;
   rating: number;
   stock: number;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface ShopLocation {

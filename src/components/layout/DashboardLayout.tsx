@@ -1,14 +1,17 @@
 
 import { useState, useEffect } from 'react';
-import { Outlet, useNavigate } from 'react-router-dom';
+import { Outlet, useNavigate, useOutletContext } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/context/AuthContext';
 import { getCurrentUserShop } from '@/services/shopService';
 import { Shop } from '@/models/shop';
 import DashboardSidebar from './DashboardSidebar';
 import DashboardHeader from './DashboardHeader';
-import { Menu } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+
+interface DashboardContextType {
+  shop: Shop;
+}
 
 const DashboardLayout = () => {
   const { isLoggedIn, user } = useAuth();
@@ -96,7 +99,7 @@ const DashboardLayout = () => {
       
       {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0">
-        <DashboardHeader toggleSidebar={toggleSidebar} shop={shop} />
+        <DashboardHeader shop={shop} toggleSidebar={toggleSidebar} />
         
         <main className="flex-1 p-4 md:p-6 overflow-auto">
           <div className="max-w-7xl mx-auto">
@@ -107,5 +110,9 @@ const DashboardLayout = () => {
     </div>
   );
 };
+
+export function useShop() {
+  return useOutletContext<DashboardContextType>();
+}
 
 export default DashboardLayout;

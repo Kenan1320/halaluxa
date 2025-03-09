@@ -1,135 +1,105 @@
 
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 export default function GoogleAuthCallback() {
+  const [status, setStatus] = useState('Processing authentication...');
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [error, setError] = useState('');
-  const [isProcessing, setIsProcessing] = useState(true);
 
   useEffect(() => {
-    const handleAuthCallback = async () => {
+    const setupUser = async () => {
       try {
-        // Get the user info after OAuth redirect
+        // Get current user info
         const { data: { user }, error: userError } = await supabase.auth.getUser();
         
-        if (userError) throw userError;
+        if (userError || !user) {
+          throw new Error(userError?.message || 'Authentication failed');
+        }
         
-        if (!user) {
-          throw new Error('No user found after authentication');
-        }
-
-        // Check if user is already a business owner or create as one
-        const { data: profileData, error: profileError } = await supabase
+        // Check if user intended to sign up as a business
+        const signupUserType = localStorage.getItem('signupUserType');
+        const isBusiness = signupUserType === 'business';
+        
+        // Update profile with business status
+        const { error: updateError } = await supabase
           .from('profiles')
-          .select('is_business_owner')
-          .eq('id', user.id)
-          .single();
-
-        if (profileError) throw profileError;
-
-        if (!profileData.is_business_owner) {
-          // Update profile to make this a business account
-          const { error: updateError } = await supabase
-            .from('profiles')
-            .update({ is_business_owner: true })
-            .eq('id', user.id);
-
-          if (updateError) throw updateError;
+          .update({
+            is_business_owner: isBusiness,
+            role: isBusiness ? 'business' : 'shopper'
+          })
+          .eq('id', user.id);
+        
+        if (updateError) {
+          console.error('Error updating profile:', updateError);
         }
-
-        // Check if user has a shop
-        const { data: shopData, error: shopError } = await supabase
-          .from('shops')
-          .select('id')
-          .eq('owner_id', user.id)
-          .single();
-
-        if (shopError && shopError.code !== 'PGRST116') { // PGRST116 is "no rows" error
-          throw shopError;
-        }
-
-        if (shopData) {
-          // User has a shop, redirect to dashboard
+        
+        // Clear stored signup type
+        localStorage.removeItem('signupUserType');
+        
+        // Check if the user already has a shop
+        if (isBusiness) {
+          const { data: shop, error: shopError } = await supabase
+            .from('shops')
+            .select('id')
+            .eq('owner_id', user.id)
+            .maybeSingle();
+            
+          if (shopError) {
+            console.error('Error checking shop:', shopError);
+          }
+          
           toast({
-            title: "Login successful",
-            description: "Welcome back to your shop dashboard!",
+            title: 'Authentication successful',
+            description: shop ? 'Welcome back to your business account' : 'Please complete your shop setup',
           });
-          navigate('/dashboard');
+          
+          // Redirect based on whether they already have a shop
+          navigate(shop ? '/dashboard' : '/business/create-shop');
         } else {
-          // No shop yet, redirect to create shop page
           toast({
-            title: "Login successful",
-            description: "Please complete your shop profile to continue.",
+            title: 'Authentication successful',
+            description: 'You have successfully signed in',
           });
-          navigate('/business/create-shop');
+          
+          // Redirect to home page for shoppers
+          navigate('/');
         }
       } catch (error: any) {
-        console.error('Google auth callback error:', error);
-        setError(error.message || 'Authentication failed. Please try again.');
+        console.error('Error in Google callback:', error);
+        setStatus(`Authentication failed: ${error.message}`);
+        
         toast({
-          title: "Authentication Error",
-          description: error.message || 'Failed to complete authentication.',
-          variant: "destructive"
+          title: 'Authentication failed',
+          description: error.message || 'Failed to complete authentication',
+          variant: 'destructive'
         });
-        // Redirect to login after a short delay
+        
+        // Redirect to login page on error
         setTimeout(() => {
           navigate('/business/login');
-        }, 2000);
-      } finally {
-        setIsProcessing(false);
+        }, 3000);
       }
     };
-
-    handleAuthCallback();
+    
+    setupUser();
   }, [navigate, toast]);
-
+  
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-50 to-white px-4">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="w-full max-w-md p-8 bg-white rounded-xl shadow-lg text-center"
-      >
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="max-w-md w-full p-8 bg-white rounded-lg shadow-lg text-center">
         <img src="/logo.png" alt="Haluna" className="h-12 mx-auto mb-6" />
-        
-        {isProcessing ? (
-          <>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Completing Authentication</h2>
-            <div className="flex justify-center mb-4">
-              <div className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
-            </div>
-            <p className="text-gray-600">
-              Please wait while we complete the authentication process...
-            </p>
-          </>
-        ) : error ? (
-          <>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Authentication Error</h2>
-            <p className="text-red-600 mb-4">{error}</p>
-            <p className="text-gray-600">Redirecting you back to login...</p>
-          </>
-        ) : (
-          <>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Authentication Successful</h2>
-            <div className="flex justify-center mb-4">
-              <div className="bg-emerald-100 text-emerald-600 rounded-full p-2">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-            </div>
-            <p className="text-gray-600">
-              You're being redirected to your dashboard...
-            </p>
-          </>
-        )}
-      </motion.div>
+        <div className="animate-pulse mb-4">
+          <div className="h-4 w-32 mx-auto bg-emerald-200 rounded"></div>
+        </div>
+        <h2 className="text-xl font-semibold text-gray-800 mb-2">Authentication in Progress</h2>
+        <p className="text-gray-600 mb-6">{status}</p>
+        <div className="flex justify-center">
+          <div className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      </div>
     </div>
   );
 }

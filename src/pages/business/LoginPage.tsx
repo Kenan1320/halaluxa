@@ -85,6 +85,9 @@ export default function BusinessLoginPage() {
   const handleGoogleLogin = async () => {
     setIsLoading(true);
     try {
+      // Store the intent to log in as a business
+      localStorage.setItem('signupUserType', 'business');
+      
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {

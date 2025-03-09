@@ -4,18 +4,21 @@ import { CartItem } from '@/models/cart';
 import { Product } from '@/models/product';
 import { Json } from '@/integrations/supabase/types';
 
-// Update the interface to include the new fields added to the seller_accounts table
+// Update the interface to include the new fields added to the payment methods table
 export interface SellerAccount {
   id: string;
-  seller_id: string;
-  account_name: string;
-  account_number: string;
-  bank_name: string;
-  created_at: string;
-  account_type: string;
+  shop_id: string;
+  method_type: 'bank' | 'paypal' | 'stripe' | 'applepay';
+  account_name?: string;
+  account_number?: string;
+  bank_name?: string;
   paypal_email?: string;
   stripe_account_id?: string;
   applepay_merchant_id?: string;
+  is_default: boolean;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 interface PaymentResult {
@@ -119,9 +122,15 @@ export const getUserOrders = async (): Promise<OrderDetails[]> => {
 };
 
 // Create a seller account with payment details
-export const createSellerAccount = async (
-  accountData: Partial<SellerAccount>
-): Promise<SellerAccount | null> => {
+export const createSellerAccount = async (shopId: string, accountData: {
+  account_type: 'bank' | 'paypal' | 'stripe' | 'applepay';
+  account_name?: string;
+  account_number?: string;
+  bank_name?: string;
+  paypal_email?: string;
+  stripe_account_id?: string;
+  applepay_merchant_id?: string;
+}): Promise<SellerAccount | null> => {
   try {
     const { data: user } = await supabase.auth.getUser();
     
@@ -130,20 +139,22 @@ export const createSellerAccount = async (
     }
     
     // Ensure required fields are present
-    const completeAccountData = {
-      seller_id: user.user.id,
-      account_name: accountData.account_name || 'Default Account',
-      account_number: accountData.account_number || 'N/A',
-      bank_name: accountData.bank_name || 'N/A',
-      account_type: accountData.account_type || 'bank',
+    const methodData = {
+      shop_id: shopId,
+      method_type: accountData.account_type,
+      account_name: accountData.account_name,
+      account_number: accountData.account_number,
+      bank_name: accountData.bank_name,
       paypal_email: accountData.paypal_email,
       stripe_account_id: accountData.stripe_account_id,
-      applepay_merchant_id: accountData.applepay_merchant_id
+      applepay_merchant_id: accountData.applepay_merchant_id,
+      is_default: true,
+      is_active: true
     };
     
     const { data, error } = await supabase
-      .from('seller_accounts')
-      .insert(completeAccountData)
+      .from('shop_payment_methods')
+      .insert(methodData)
       .select()
       .single();
     
@@ -151,58 +162,47 @@ export const createSellerAccount = async (
       throw error;
     }
     
-    return data;
+    return data as unknown as SellerAccount;
   } catch (error) {
     console.error('Error creating seller account:', error);
     return null;
   }
 };
 
-// Get seller account for current user
-export const getSellerAccount = async (): Promise<SellerAccount | null> => {
+// Get seller account for current user's shop
+export const getSellerAccount = async (shopId: string): Promise<SellerAccount | null> => {
   try {
-    const { data: user } = await supabase.auth.getUser();
-    
-    if (!user.user) {
-      throw new Error('User not authenticated');
-    }
-    
     const { data, error } = await supabase
-      .from('seller_accounts')
+      .from('shop_payment_methods')
       .select('*')
-      .eq('seller_id', user.user.id)
+      .eq('shop_id', shopId)
+      .eq('is_default', true)
       .maybeSingle();
     
     if (error) {
       throw error;
     }
     
-    return data;
+    return data as unknown as SellerAccount;
   } catch (error) {
     console.error('Error fetching seller account:', error);
     return null;
   }
 };
 
-// Get all seller accounts for current user
-export const getSellerAccounts = async (): Promise<SellerAccount[]> => {
+// Get all seller accounts for a shop
+export const getSellerAccounts = async (shopId: string): Promise<SellerAccount[]> => {
   try {
-    const { data: user } = await supabase.auth.getUser();
-    
-    if (!user.user) {
-      throw new Error('User not authenticated');
-    }
-    
     const { data, error } = await supabase
-      .from('seller_accounts')
+      .from('shop_payment_methods')
       .select('*')
-      .eq('seller_id', user.user.id);
+      .eq('shop_id', shopId);
     
     if (error) {
       throw error;
     }
     
-    return data || [];
+    return data as unknown as SellerAccount[];
   } catch (error) {
     console.error('Error fetching seller accounts:', error);
     return [];
@@ -211,35 +211,50 @@ export const getSellerAccounts = async (): Promise<SellerAccount[]> => {
 
 // Save seller account - for backward compatibility
 export const saveSellerAccount = async (
-  accountData: Partial<SellerAccount>
+  shopId: string,
+  accountData: {
+    id?: string;
+    account_type: 'bank' | 'paypal' | 'stripe' | 'applepay';
+    account_name?: string;
+    account_number?: string;
+    bank_name?: string;
+    paypal_email?: string;
+    stripe_account_id?: string;
+    applepay_merchant_id?: string;
+  }
 ): Promise<SellerAccount | null> => {
   // If id exists, update, otherwise create
   if (accountData.id) {
-    return updateSellerAccount(accountData);
+    return updateSellerAccount(accountData.id, shopId, accountData);
   } else {
-    return createSellerAccount(accountData);
+    return createSellerAccount(shopId, accountData);
   }
 };
 
 // Update seller account
 export const updateSellerAccount = async (
-  accountData: Partial<SellerAccount>
+  accountId: string,
+  shopId: string,
+  accountData: {
+    account_type?: 'bank' | 'paypal' | 'stripe' | 'applepay';
+    account_name?: string;
+    account_number?: string;
+    bank_name?: string;
+    paypal_email?: string;
+    stripe_account_id?: string;
+    applepay_merchant_id?: string;
+    is_active?: boolean;
+    is_default?: boolean;
+  }
 ): Promise<SellerAccount | null> => {
   try {
-    const { data: user } = await supabase.auth.getUser();
-    
-    if (!user.user) {
-      throw new Error('User not authenticated');
-    }
-    
-    if (!accountData.id) {
-      throw new Error('Account ID is required for update');
-    }
-    
     const { data, error } = await supabase
-      .from('seller_accounts')
-      .update(accountData)
-      .eq('id', accountData.id)
+      .from('shop_payment_methods')
+      .update({
+        ...accountData,
+        shop_id: shopId
+      })
+      .eq('id', accountId)
       .select()
       .single();
     
@@ -247,7 +262,7 @@ export const updateSellerAccount = async (
       throw error;
     }
     
-    return data;
+    return data as unknown as SellerAccount;
   } catch (error) {
     console.error('Error updating seller account:', error);
     return null;
@@ -256,7 +271,7 @@ export const updateSellerAccount = async (
 
 // Format payment method based on account type
 export const formatPaymentMethod = (account: SellerAccount): string => {
-  switch (account.account_type) {
+  switch (account.method_type) {
     case 'bank':
       return `${account.bank_name} - ${account.account_number}`;
     case 'paypal':

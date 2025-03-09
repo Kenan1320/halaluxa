@@ -23,6 +23,50 @@ export async function getAllShops(): Promise<Shop[]> {
   }
 }
 
+// Alias for getAllShops for backward compatibility
+export const getShops = getAllShops;
+
+// Get a main shop (for compatibility)
+export async function getMainShop(): Promise<Shop | null> {
+  try {
+    const { data, error } = await supabase
+      .from('shops')
+      .select('*')
+      .order('created_at')
+      .limit(1)
+      .single();
+    
+    if (error) {
+      console.error('Error fetching main shop:', error);
+      return null;
+    }
+    
+    return data as Shop;
+  } catch (error) {
+    console.error('Error in getMainShop:', error);
+    return null;
+  }
+}
+
+// Subscribe to shops updates (for compatibility)
+export function subscribeToShops(callback: (shops: Shop[]) => void): () => void {
+  // Load initial data
+  getAllShops().then(shops => callback(shops));
+  
+  // Set up subscription
+  const subscription = supabase
+    .channel('shops_changes')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'shops' }, () => {
+      getAllShops().then(shops => callback(shops));
+    })
+    .subscribe();
+  
+  // Return unsubscribe function
+  return () => {
+    subscription.unsubscribe();
+  };
+}
+
 // Get a shop by ID
 export async function getShopById(id: string): Promise<Shop | null> {
   try {
@@ -72,11 +116,33 @@ export async function getCurrentUserShop(): Promise<Shop | null> {
 }
 
 // Create a new shop
-export async function createShop(shopData: Partial<Shop>): Promise<Shop | null> {
+export async function createShop(shopData: {
+  name: string;
+  description: string;
+  category: string;
+  location: string;
+  logo?: string;
+  rating?: number;
+  productCount?: number;
+  isVerified?: boolean;
+  ownerId: string;
+}): Promise<Shop | null> {
   try {
+    const formattedData = {
+      name: shopData.name,
+      description: shopData.description,
+      category: shopData.category,
+      location: shopData.location,
+      logo_url: shopData.logo,
+      owner_id: shopData.ownerId,
+      rating: shopData.rating || 0,
+      product_count: shopData.productCount || 0,
+      is_verified: shopData.isVerified || false
+    };
+
     const { data, error } = await supabase
       .from('shops')
-      .insert(shopData)
+      .insert(formattedData)
       .select()
       .single();
     
@@ -145,6 +211,33 @@ export async function uploadShopLogo(file: File, shopId: string): Promise<string
   }
 }
 
+// Upload product image (for compatibility)
+export async function uploadProductImage(file: File): Promise<string | null> {
+  try {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `product-${Date.now()}.${fileExt}`;
+    const filePath = `product-images/${fileName}`;
+    
+    const { error: uploadError } = await supabase.storage
+      .from('public')
+      .upload(filePath, file);
+    
+    if (uploadError) {
+      console.error('Error uploading product image:', uploadError);
+      return null;
+    }
+    
+    const { data: urlData } = supabase.storage
+      .from('public')
+      .getPublicUrl(filePath);
+    
+    return urlData.publicUrl;
+  } catch (error) {
+    console.error('Error in uploadProductImage:', error);
+    return null;
+  }
+}
+
 // Get products for a shop
 export async function getShopProducts(shopId: string): Promise<ShopProduct[]> {
   try {
@@ -169,7 +262,9 @@ export async function getShopProducts(shopId: string): Promise<ShopProduct[]> {
       is_published: product.is_published,
       is_halal_certified: product.is_halal_certified,
       rating: product.rating || 0,
-      stock: product.stock || 0
+      stock: product.stock || 0,
+      created_at: product.created_at,
+      updated_at: product.updated_at
     }));
   } catch (error) {
     console.error(`Error in getShopProducts for ${shopId}:`, error);
@@ -213,6 +308,26 @@ export async function toggleHalalCertifiedStatus(productId: string, isHalalCerti
     return true;
   } catch (error) {
     console.error('Error in toggleHalalCertifiedStatus:', error);
+    return false;
+  }
+}
+
+// Update product stock
+export async function updateProductStock(productId: string, stock: number): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from('products')
+      .update({ stock })
+      .eq('id', productId);
+    
+    if (error) {
+      console.error('Error updating product stock:', error);
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error in updateProductStock:', error);
     return false;
   }
 }
@@ -367,7 +482,7 @@ export function convertToShopProduct(product: Product, shopId: string): ShopProd
     is_published: false,
     is_halal_certified: product.isHalalCertified,
     rating: product.rating || 0,
-    stock: product.stock || 0
+    stock: product.inStock ? 10 : 0 // Default to 10 if in stock
   };
 }
 
@@ -385,7 +500,7 @@ export function convertToModelProduct(shopProduct: ShopProduct): Product {
     inStock: shopProduct.stock > 0,
     isHalalCertified: shopProduct.is_halal_certified,
     rating: shopProduct.rating,
-    createdAt: new Date().toISOString(), // Default value
-    stock: shopProduct.stock || 0
+    createdAt: shopProduct.created_at || new Date().toISOString(),
+    stock: shopProduct.stock
   };
 }
