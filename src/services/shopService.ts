@@ -1,7 +1,7 @@
-// Import the Shop model from the models folder
-import { Shop, ShopProduct, ShopPaymentMethod } from '@/models/shop';
 import { supabase } from '@/integrations/supabase/client';
+import { Shop, ShopFilter, CreateShopInput, UpdateShopInput, ShopFilterBy } from '@/models/shop';
 import { Product } from '@/models/product';
+import { PaymentMethodType } from '@/models/payment';
 
 // Re-export the Shop interface for backward compatibility
 export type { Shop, ShopProduct, ShopPaymentMethod };
@@ -359,20 +359,51 @@ export async function getShopPaymentMethods(shopId: string): Promise<ShopPayment
 }
 
 // Add payment method
-export async function addShopPaymentMethod(methodData: Omit<ShopPaymentMethod, 'id' | 'created_at' | 'updated_at'>): Promise<ShopPaymentMethod | null> {
+export async function addShopPaymentMethod(shopId: string, paymentMethod: {
+  methodType: PaymentMethodType;
+  accountName?: string;
+  accountNumber?: string;
+  bankName?: string;
+  paypalEmail?: string;
+  stripeAccountId?: string;
+  isActive?: boolean;
+}): Promise<ShopPaymentMethod | null> {
   try {
     const { data, error } = await supabase
       .from('shop_payment_methods')
-      .insert(methodData)
+      .insert({
+        shop_id: shopId,
+        method_type: paymentMethod.methodType,
+        account_name: paymentMethod.accountName,
+        account_number: paymentMethod.accountNumber,
+        bank_name: paymentMethod.bankName,
+        paypal_email: paymentMethod.paypalEmail,
+        stripe_account_id: paymentMethod.stripeAccountId,
+        is_active: paymentMethod.isActive ?? true,
+        is_default: false
+      })
       .select()
       .single();
-    
+
     if (error) {
-      console.error('Error adding payment method:', error);
+      console.error('Error adding shop payment method:', error);
       return null;
     }
-    
-    return data as ShopPaymentMethod;
+
+    return {
+      id: data.id,
+      shopId: data.shop_id,
+      methodType: data.method_type as PaymentMethodType,
+      accountName: data.account_name,
+      accountNumber: data.account_number,
+      bankName: data.bank_name,
+      paypalEmail: data.paypal_email,
+      stripeAccountId: data.stripe_account_id,
+      isActive: data.is_active,
+      isDefault: data.is_default,
+      createdAt: data.created_at,
+      updatedAt: data.updated_at
+    };
   } catch (error) {
     console.error('Error in addShopPaymentMethod:', error);
     return null;
@@ -513,4 +544,51 @@ export const convertToModelProduct = (shopProduct: ShopProduct): Product => {
     details: shopProduct.details || {},
     createdAt: shopProduct.created_at || new Date().toISOString()
   };
+};
+
+// Create a product for a shop
+export async function createProductForShop(shopId: string, product: Partial<Product>): Promise<Product | null> => {
+  try {
+    const { data, error } = await supabase
+      .from('products')
+      .insert({
+        name: product.name,
+        description: product.description,
+        price: product.price,
+        category: product.category,
+        images: product.images || [],
+        shop_id: shopId,
+        is_published: true,
+        is_halal_certified: product.isHalalCertified || false,
+        stock: product.inStock !== undefined ? (product.inStock ? 1 : 0) : 1,
+        long_description: product.longDescription || '',
+        details: product.details || {}
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error creating product for shop:', error);
+      return null;
+    }
+
+    return {
+      id: data.id,
+      name: data.name,
+      description: data.description,
+      price: data.price,
+      inStock: data.stock > 0,
+      category: data.category,
+      images: data.images || [],
+      sellerId: data.shop_id,
+      sellerName: '',
+      rating: data.rating,
+      isHalalCertified: data.is_halal_certified,
+      details: data.details,
+      createdAt: data.created_at
+    };
+  } catch (error) {
+    console.error('Error in createProductForShop:', error);
+    return null;
+  }
 };

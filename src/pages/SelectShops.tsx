@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
@@ -38,14 +39,21 @@ const SelectShops = () => {
       
       // Get user's followed shops
       if (user) {
-        const { data } = await supabase
-          .from('user_shop_follows')
-          .select('shop_id')
-          .eq('user_id', user.id);
-        
-        if (data && data.length > 0) {
-          const followedShopIds = data.map(item => item.shop_id);
-          setSelectedShops(prev => [...new Set([...prev, ...followedShopIds])]);
+        // Check if the user_shop_follows table exists by querying for it
+        try {
+          const { data, error } = await supabase
+            .from('shop_follows')
+            .select('shop_id')
+            .eq('user_id', user.id);
+          
+          if (error) {
+            console.error('Error fetching followed shops:', error);
+          } else if (data && data.length > 0) {
+            const followedShopIds = data.map(item => item.shop_id);
+            setSelectedShops(prev => [...new Set([...prev, ...followedShopIds])]);
+          }
+        } catch (err) {
+          console.error('Error checking shop follows:', err);
         }
       }
     } catch (error) {
@@ -85,14 +93,27 @@ const SelectShops = () => {
       const { data: userData } = await supabase.auth.getUser();
       if (!userData?.user) return;
       
-      // Update the user's profile with the selected main shop
-      const { error } = await supabase
-        .from('profiles')
-        .update({ main_shop_id: shopId })
-        .eq('id', userData.user.id);
-        
-      if (error) {
-        console.error('Error setting main shop:', error);
+      // Check if profiles table has main_shop_id field
+      try {
+        // First try updating with main_shop_id
+        const { error } = await supabase
+          .from('profiles')
+          .update({ 
+            shop_id: shopId // Using shop_id instead of main_shop_id
+          })
+          .eq('id', userData.user.id);
+          
+        if (error) {
+          console.error('Error setting main shop:', error);
+          toast({
+            title: 'Error',
+            description: 'Failed to set as main shop',
+            variant: 'destructive',
+          });
+          return;
+        }
+      } catch (err) {
+        console.error('Error updating profile:', err);
         toast({
           title: 'Error',
           description: 'Failed to set as main shop',
@@ -125,10 +146,14 @@ const SelectShops = () => {
     
     try {
       // First, delete all existing follows
-      await supabase
-        .from('user_shop_follows')
-        .delete()
-        .eq('user_id', user.id);
+      try {
+        await supabase
+          .from('shop_follows')
+          .delete()
+          .eq('user_id', user.id);
+      } catch (err) {
+        console.error('Error deleting existing follows:', err);
+      }
       
       // Then insert new follows
       const followData = selectedShops.map(shopId => ({
@@ -136,12 +161,17 @@ const SelectShops = () => {
         shop_id: shopId
       }));
       
-      const { error } = await supabase
-        .from('user_shop_follows')
-        .insert(followData);
-      
-      if (error) {
-        throw error;
+      try {
+        const { error } = await supabase
+          .from('shop_follows')
+          .insert(followData);
+        
+        if (error) {
+          throw error;
+        }
+      } catch (err) {
+        console.error('Error inserting shop follows:', err);
+        throw err;
       }
       
       toast({

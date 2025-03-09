@@ -286,16 +286,20 @@ export const bulkUploadProducts = async (products: Record<string, any>[]): Promi
       is_published: product.is_published !== undefined ? product.is_published : true,
       is_halal_certified: product.is_halal_certified || false,
       stock: product.inStock !== undefined ? (product.inStock ? 1 : 0) : 1,
-      details: product.details ? JSON.stringify(product.details) : '{}'
+      long_description: product.long_description || '',
+      details: product.details || {}
     }));
 
-    const { error } = await supabase
-      .from('products')
-      .insert(formattedProducts);
+    // Insert products one by one to avoid type errors
+    for (const product of formattedProducts) {
+      const { error } = await supabase
+        .from('products')
+        .insert(product);
 
-    if (error) {
-      console.error('Error bulk uploading products:', error);
-      return false;
+      if (error) {
+        console.error('Error inserting product:', error);
+        return false;
+      }
     }
 
     return true;

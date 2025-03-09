@@ -70,4 +70,45 @@ export interface UpdateShopInput {
   tags?: string[];
 }
 
+export interface ShopProduct {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  category: string;
+  shop_id: string;
+  images?: string[];
+  rating?: number;
+  isHalalCertified?: boolean;
+  inStock?: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface ShopPaymentMethod {
+  id: string;
+  shop_id: string;
+  method_type: "bank" | "paypal" | "stripe" | "applepay";
+  account_name?: string;
+  account_number?: string;
+  bank_name?: string;
+  paypal_email?: string;
+  stripe_account_id?: string;
+  is_active: boolean;
+  is_default?: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BusinessSignupFormData {
+  email: string;
+  password: string;
+  name: string;
+  businessName: string;
+  businessCategory: string;
+  businessDescription: string;
+  location: string;
+  phone?: string;
+}
+
 export type ShopFilterBy = 'all' | 'nearby' | 'featured' | 'popular' | 'new';

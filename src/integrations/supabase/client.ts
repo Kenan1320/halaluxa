@@ -18,5 +18,8 @@ export const supabase = createClient<Database>(
         eventsPerSecond: 10,
       },
     },
+    db: {
+      schema: 'public',
+    }
   }
 );
