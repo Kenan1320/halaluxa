@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from 'react';
+import { TopNavigationBarExample } from '@/components/examples/TopNavigationBarExample';
 import { Link } from 'react-router-dom';
 import { Container } from '@/components/ui/container';
 import Hero from '@/components/home/Hero';
@@ -19,6 +20,7 @@ export default function Index() {
   const [products, setProducts] = useState<any[]>([]);
   const [isLoadingProducts, setIsLoadingProducts] = useState(true);
   const { toast } = useToast();
+  const [showExample, setShowExample] = useState(false);
 
   useEffect(() => {
     const fetchAllData = async () => {
@@ -90,61 +92,85 @@ export default function Index() {
 
   return (
     <div className="min-h-screen">
-      <Hero />
-      <LocationBar />
-      
-      <section className="py-12 bg-white">
-        <Container>
-          <SearchBar />
-          <CategoryScroll />
-        </Container>
-      </section>
-      
-      <section className="py-12 bg-gradient-to-r from-emerald-50 to-teal-50">
-        <Container>
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold mb-2">Featured Products</h2>
-            <p className="text-haluna-text-light">Discover our collection of high-quality halal products</p>
-          </div>
-          
-          <ProductGrid 
-            products={products} 
-            isLoading={isLoadingProducts} 
-            emptyMessage="No featured products available at the moment."
-          />
-          
-          <div className="mt-8 text-center">
-            <Link
-              to="/browse"
-              className="inline-flex items-center justify-center rounded-md bg-haluna-primary px-6 py-2.5 text-center text-white hover:bg-haluna-primary-dark transition-all"
+      {showExample ? (
+        <>
+          <TopNavigationBarExample />
+          <div className="text-center p-4">
+            <button 
+              onClick={() => setShowExample(false)}
+              className="px-4 py-2 bg-haluna-primary text-white rounded-md hover:bg-haluna-primary-dark"
             >
-              Browse All Products
-            </Link>
+              Show Original UI
+            </button>
           </div>
-        </Container>
-      </section>
-      
-      <Features />
-      
-      <section className="py-12 bg-white">
-        <Container>
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold mb-2">Popular Shops</h2>
-            <p className="text-haluna-text-light">Shop from our trusted marketplace sellers</p>
-          </div>
-          
-          <NearbyShops />
-          
-          <div className="mt-8 text-center">
-            <Link
-              to="/shops"
-              className="inline-flex items-center justify-center rounded-md border border-haluna-primary px-6 py-2.5 text-center text-haluna-primary hover:bg-haluna-primary hover:text-white transition-all"
+        </>
+      ) : (
+        <>
+          <div className="text-center p-4 bg-haluna-primary-light">
+            <button 
+              onClick={() => setShowExample(true)}
+              className="px-4 py-2 bg-haluna-primary text-white rounded-md hover:bg-haluna-primary-dark"
             >
-              View All Shops
-            </Link>
+              Show Top Navigation Example
+            </button>
           </div>
-        </Container>
-      </section>
+          <Hero />
+          <LocationBar />
+          
+          <section className="py-12 bg-white">
+            <Container>
+              <SearchBar />
+              <CategoryScroll />
+            </Container>
+          </section>
+          
+          <section className="py-12 bg-gradient-to-r from-emerald-50 to-teal-50">
+            <Container>
+              <div className="mb-8">
+                <h2 className="text-2xl font-bold mb-2">Featured Products</h2>
+                <p className="text-haluna-text-light">Discover our collection of high-quality halal products</p>
+              </div>
+              
+              <ProductGrid 
+                products={products} 
+                isLoading={isLoadingProducts} 
+                emptyMessage="No featured products available at the moment."
+              />
+              
+              <div className="mt-8 text-center">
+                <Link
+                  to="/browse"
+                  className="inline-flex items-center justify-center rounded-md bg-haluna-primary px-6 py-2.5 text-center text-white hover:bg-haluna-primary-dark transition-all"
+                >
+                  Browse All Products
+                </Link>
+              </div>
+            </Container>
+          </section>
+          
+          <Features />
+          
+          <section className="py-12 bg-white">
+            <Container>
+              <div className="mb-8">
+                <h2 className="text-2xl font-bold mb-2">Popular Shops</h2>
+                <p className="text-haluna-text-light">Shop from our trusted marketplace sellers</p>
+              </div>
+              
+              <NearbyShops />
+              
+              <div className="mt-8 text-center">
+                <Link
+                  to="/shops"
+                  className="inline-flex items-center justify-center rounded-md border border-haluna-primary px-6 py-2.5 text-center text-haluna-primary hover:bg-haluna-primary hover:text-white transition-all"
+                >
+                  View All Shops
+                </Link>
+              </div>
+            </Container>
+          </section>
+        </>
+      )}
     </div>
   );
 }
