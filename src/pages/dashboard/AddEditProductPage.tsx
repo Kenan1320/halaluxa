@@ -1,376 +1,306 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import { useAuth } from '@/context/AuthContext';
-import { useToast } from '@/hooks/use-toast';
-import { 
-  Form, 
-  FormControl, 
-  FormDescription,
-  FormField, 
-  FormItem, 
-  FormLabel, 
-  FormMessage
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { 
-  Card, 
+import {
+  Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { productCategories, Product } from '@/models/product';
-import { addProduct, getProductById, updateProduct } from '@/services/productService';
-import { ArrowLeft, Save } from 'lucide-react';
-import ImageUploader from '@/components/ui/ImageUploader';
-
-// Define form schema
-const formSchema = z.object({
-  name: z.string().min(2, 'Product name must be at least 2 characters'),
-  description: z.string().min(10, 'Description must be at least 10 characters'),
-  price: z.coerce.number().positive('Price must be a positive number'),
-  category: z.string().min(1, 'Please select a category'),
-  inStock: z.boolean().default(true),
-  isHalalCertified: z.boolean().default(true),
-  images: z.array(z.string()).min(1, 'At least one image is required'),
-});
-
-type FormValues = z.infer<typeof formSchema>;
+import { Checkbox } from '@/components/ui/checkbox';
+import { ImageUploader } from '@/components/ui/ImageUploader';
+import { fetchProductById, updateProduct, addProduct } from '@/services/productService';
+import { Product } from '@/models/product';
 
 const AddEditProductPage = () => {
-  const { id } = useParams();
-  const { user } = useAuth();
+  const { productId } = useParams<{ productId: string }>();
   const navigate = useNavigate();
-  const { toast } = useToast();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [product, setProduct] = useState<Product | null>(null);
-  const isEditMode = !!id;
-  
-  // Initialize form
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
+  const [isNew, setIsNew] = useState(true);
+
+  const form = useForm({
     defaultValues: {
       name: '',
       description: '',
       price: 0,
       category: '',
-      inStock: true,
-      isHalalCertified: true,
-      images: [],
+      is_halal_certified: false,
+      is_published: true,
+      inStock: 1, // Changed from boolean to number
     },
   });
-  
-  // Load product data if in edit mode
+
   useEffect(() => {
-    const loadProduct = async () => {
-      if (id) {
-        const data = await getProductById(id);
-        if (data) {
-          setProduct(data);
-          
-          // Set form values
-          form.reset({
-            name: data.name,
-            description: data.description,
-            price: data.price,
-            category: data.category,
-            inStock: data.inStock,
-            isHalalCertified: data.isHalalCertified,
-            images: data.images,
-          });
-        } else {
-          toast({
-            title: "Error",
-            description: "Product not found",
-            variant: "destructive",
-          });
-          navigate("/dashboard/products");
+    if (productId && productId !== 'new') {
+      setIsNew(false);
+      loadProduct(productId);
+    }
+  }, [productId]);
+
+  const loadProduct = async (id: string) => {
+    try {
+      setLoading(true);
+      const product = await fetchProductById(id);
+      if (product) {
+        form.reset({
+          name: product.name,
+          description: product.description,
+          price: product.price,
+          category: product.category,
+          is_halal_certified: product.is_halal_certified || false,
+          is_published: product.is_published !== false,
+          inStock: product.inStock || 1,
+        });
+        if (product.images) {
+          setImageUrls(product.images);
         }
       }
-    };
-    
-    loadProduct();
-  }, [id, navigate, toast, form]);
-  
-  // Handle form submission
-  const onSubmit = async (values: FormValues) => {
-    if (!user) {
-      toast({
-        title: "Error",
-        description: "You must be logged in to manage products",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    setIsSubmitting(true);
-    
-    try {
-      // Prepare product data
-      const productData: Partial<Product> = {
-        ...values,
-        sellerId: user.id,
-        sellerName: user.name || 'Unknown Seller',
-      };
-      
-      // If editing, add the ID
-      if (isEditMode && product) {
-        productData.id = product.id;
-      }
-      
-      // Save the product
-      const result = isEditMode
-        ? await updateProduct(productData)
-        : await addProduct(productData);
-      
-      if (result) {
-        toast({
-          title: "Success",
-          description: `Product ${isEditMode ? 'updated' : 'created'} successfully`,
-        });
-        navigate("/dashboard/products");
-      } else {
-        throw new Error(`Failed to ${isEditMode ? 'update' : 'create'} product`);
-      }
     } catch (error) {
-      console.error('Error saving product:', error);
-      toast({
-        title: "Error",
-        description: `Failed to ${isEditMode ? 'update' : 'create'} product`,
-        variant: "destructive",
-      });
+      toast.error('Failed to load product');
+      console.error(error);
     } finally {
-      setIsSubmitting(false);
+      setLoading(false);
     }
   };
-  
+
+  const onSubmit = async (data: any) => {
+    if (!user) {
+      toast.error('You must be logged in to perform this action');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const productData: Partial<Product> = {
+        name: data.name,
+        description: data.description,
+        price: data.price,
+        category: data.category,
+        images: imageUrls.length > 0 ? imageUrls : undefined,
+        is_halal_certified: data.is_halal_certified,
+        is_published: data.is_published,
+        inStock: data.inStock,
+        sellerId: user.id,
+        sellerName: user.user_metadata?.full_name || user.email || 'Unknown Seller',
+      };
+
+      if (isNew) {
+        // It's a new product
+        await addProduct(productData, user.id);
+        toast.success('Product added successfully');
+      } else {
+        // It's an existing product
+        await updateProduct(productId!, productData);
+        toast.success('Product updated successfully');
+      }
+      navigate('/dashboard/products');
+    } catch (error) {
+      console.error('Error saving product:', error);
+      toast.error('Failed to save product');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleImagesChange = (urls: string[]) => {
+    setImageUrls(urls);
+  };
+
   return (
-    <div className="container max-w-4xl mx-auto px-4 py-8">
-      <div className="mb-6">
-        <Button 
-          variant="ghost" 
-          className="mb-2 -ml-3"
-          onClick={() => navigate('/dashboard/products')}
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Products
-        </Button>
-        <h1 className="text-2xl font-serif font-bold">
-          {isEditMode ? 'Edit Product' : 'Add New Product'}
-        </h1>
-        <p className="text-muted-foreground">
-          {isEditMode 
-            ? 'Update your product information' 
-            : 'Create a new product to sell in your shop'}
-        </p>
-      </div>
-      
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Basic Information</CardTitle>
-              <CardDescription>
-                Provide the essential details about your product
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
+    <div className="container py-10">
+      <Card className="max-w-3xl mx-auto">
+        <CardHeader>
+          <CardTitle>{isNew ? 'Add New Product' : 'Edit Product'}</CardTitle>
+          <CardDescription>
+            {isNew ? 'Create a new product to sell in your shop' : 'Update your product details'}
+          </CardDescription>
+        </CardHeader>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)}>
+            <CardContent className="space-y-6">
               <FormField
                 control={form.control}
                 name="name"
+                rules={{ required: 'Product name is required' }}
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Product Name</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g., Organic Dates" {...field} />
+                      <Input placeholder="Enter product name" {...field} />
                     </FormControl>
+                    <FormDescription>The name of your product as it will appear to customers.</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+              <FormField
+                control={form.control}
+                name="description"
+                rules={{ required: 'Description is required' }}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description</FormLabel>
+                    <FormControl>
+                      <Textarea placeholder="Describe your product" rows={4} {...field} />
+                    </FormControl>
+                    <FormDescription>Provide details about your product.</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField
                   control={form.control}
                   name="price"
+                  rules={{ 
+                    required: 'Price is required',
+                    min: { value: 0, message: 'Price cannot be negative' }
+                  }}
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Price ($)</FormLabel>
+                      <FormLabel>Price</FormLabel>
                       <FormControl>
-                        <Input 
-                          type="number" 
-                          step="0.01" 
-                          placeholder="19.99" 
-                          {...field}
-                        />
+                        <Input type="number" step="0.01" {...field} 
+                          onChange={e => field.onChange(parseFloat(e.target.value))} />
                       </FormControl>
+                      <FormDescription>The price in USD.</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
                   name="category"
+                  rules={{ required: 'Category is required' }}
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Category</FormLabel>
-                      <Select 
-                        onValueChange={field.onChange} 
-                        defaultValue={field.value}
-                        value={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a category" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {productCategories.map(category => (
-                            <SelectItem key={category} value={category}>
-                              {category}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <FormControl>
+                        <Input placeholder="e.g., Electronics, Clothing" {...field} />
+                      </FormControl>
+                      <FormDescription>Product category.</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
               </div>
-              
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Description</FormLabel>
-                    <FormControl>
-                      <Textarea 
-                        placeholder="Describe your product..." 
-                        className="min-h-[120px]" 
-                        {...field} 
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader>
-              <CardTitle>Product Images</CardTitle>
-              <CardDescription>
-                Upload high-quality images of your product
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <FormField
-                control={form.control}
-                name="images"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <ImageUploader
-                        initialImages={field.value}
-                        onImagesChange={field.onChange}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader>
-              <CardTitle>Additional Details</CardTitle>
-              <CardDescription>
-                Set availability and certification information
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
+
               <FormField
                 control={form.control}
                 name="inStock"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                    <div className="space-y-0.5">
-                      <FormLabel className="text-base">Available in Stock</FormLabel>
-                      <FormDescription>
-                        Mark this product as available for purchase
-                      </FormDescription>
-                    </div>
+                  <FormItem>
+                    <FormLabel>Items in Stock</FormLabel>
                     <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
+                      <Input 
+                        type="number" 
+                        min="0" 
+                        {...field} 
+                        onChange={e => field.onChange(parseInt(e.target.value))} 
                       />
                     </FormControl>
+                    <FormDescription>Number of items currently available.</FormDescription>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
-              
-              <FormField
-                control={form.control}
-                name="isHalalCertified"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                    <div className="space-y-0.5">
-                      <FormLabel className="text-base">Halal Certified</FormLabel>
-                      <FormDescription>
-                        This product is certified halal compliant
-                      </FormDescription>
-                    </div>
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField
+                  control={form.control}
+                  name="is_halal_certified"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                      <div className="space-y-0.5">
+                        <FormLabel className="text-base">Halal Certified</FormLabel>
+                        <FormDescription>
+                          Indicate if this product is halal certified.
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="is_published"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                      <div className="space-y-0.5">
+                        <FormLabel className="text-base">Published</FormLabel>
+                        <FormDescription>
+                          Make this product visible to customers.
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div>
+                <FormLabel>Product Images</FormLabel>
+                <ImageUploader
+                  bucket="product-images"
+                  existingUrls={imageUrls}
+                  onImagesChange={handleImagesChange}
+                  maxImages={5}
+                />
+                <FormDescription className="mt-2">
+                  Upload up to 5 images. The first image will be the main product image.
+                </FormDescription>
+              </div>
             </CardContent>
-          </Card>
-          
-          <div className="flex justify-end">
-            <Button
-              type="submit"
-              disabled={isSubmitting}
-              className="min-w-[120px]"
-            >
-              {isSubmitting ? (
-                <>
-                  <span className="mr-2">Saving...</span>
-                  <span className="animate-spin">⏳</span>
-                </>
-              ) : (
-                <>
-                  <Save className="h-4 w-4 mr-2" />
-                  {isEditMode ? 'Update Product' : 'Create Product'}
-                </>
-              )}
-            </Button>
-          </div>
-        </form>
-      </Form>
+            <CardFooter className="flex justify-between">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => navigate('/dashboard/products')}
+                disabled={loading}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={loading}>
+                {loading ? 'Saving...' : isNew ? 'Add Product' : 'Update Product'}
+              </Button>
+            </CardFooter>
+          </form>
+        </Form>
+      </Card>
     </div>
   );
 };

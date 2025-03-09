@@ -1,694 +1,301 @@
 import { supabase } from '@/integrations/supabase/client';
-import { Shop, ShopFilter, CreateShopInput, UpdateShopInput, ShopProduct, ShopPaymentMethod, UserShopPreference } from '@/models/shop';
-import { ProductDetails } from '@/models/product';
+import { Shop, ShopFilter, CreateShopInput, UpdateShopInput, ShopProduct, ShopPaymentMethod, ShopFilterBy } from '@/models/shop';
+import { Product } from '@/models/product';
+import { PaymentMethodData } from '@/models/payment';
 
-// Re-export the Shop interface for backward compatibility
-export type { Shop, ShopProduct, ShopPaymentMethod };
+export const fetchShops = async (filter?: ShopFilter): Promise<Shop[]> => {
+  let query = supabase
+    .from('shops')
+    .select('*');
 
-// Get all shops
-export async function getAllShops(): Promise<Shop[]> {
-  try {
-    const { data, error } = await supabase
-      .from('shops')
-      .select('*')
-      .order('name');
-    
-    if (error) {
-      console.error('Error fetching shops:', error);
-      return [];
-    }
-    
-    return data as Shop[];
-  } catch (error) {
-    console.error('Error in getAllShops:', error);
-    return [];
+  if (filter?.radius) {
+    // This is a placeholder for a more complex geospatial query
+    // that would filter shops based on a radius from the user's location.
+    // You would typically use PostGIS functions for this in a real-world scenario.
+    console.warn('Radius filtering is not yet implemented.');
   }
-}
 
-// Alias for getAllShops for backward compatibility
-export const getShops = getAllShops;
-
-// Get a main shop (for compatibility)
-export async function getMainShop(): Promise<Shop | null> {
-  try {
-    const { data, error } = await supabase
-      .from('shops')
-      .select('*')
-      .order('created_at')
-      .limit(1)
-      .single();
-    
-    if (error) {
-      console.error('Error fetching main shop:', error);
-      return null;
-    }
-    
-    return data as Shop;
-  } catch (error) {
-    console.error('Error in getMainShop:', error);
-    return null;
+  if (filter?.category) {
+    query = query.eq('category', filter.category);
   }
-}
 
-// Subscribe to shops updates (for compatibility)
-export function subscribeToShops(callback: (shops: Shop[]) => void): () => void {
-  // Load initial data
-  getAllShops().then(shops => callback(shops));
-  
-  // Set up subscription
-  const subscription = supabase
-    .channel('shops_changes')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'shops' }, () => {
-      getAllShops().then(shops => callback(shops));
-    })
-    .subscribe();
-  
-  // Return unsubscribe function
-  return () => {
-    subscription.unsubscribe();
-  };
-}
-
-// Get a shop by ID
-export async function getShopById(id: string): Promise<Shop | null> {
-  try {
-    const { data, error } = await supabase
-      .from('shops')
-      .select('*')
-      .eq('id', id)
-      .single();
-    
-    if (error) {
-      console.error(`Error fetching shop with id ${id}:`, error);
-      return null;
-    }
-    
-    return data as Shop;
-  } catch (error) {
-    console.error(`Error in getShopById for ${id}:`, error);
-    return null;
+  if (filter?.rating) {
+    query = query.gte('rating', filter.rating);
   }
-}
 
-// Get current user's shop
-export async function getCurrentUserShop(): Promise<Shop | null> {
-  try {
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) {
-      return null;
-    }
-    
-    const { data, error } = await supabase
-      .from('shops')
-      .select('*')
-      .eq('owner_id', user.id)
-      .single();
-    
-    if (error) {
-      console.error('Error fetching user shop:', error);
-      return null;
-    }
-    
-    return data as Shop;
-  } catch (error) {
-    console.error('Error in getCurrentUserShop:', error);
-    return null;
+  if (filter?.tags) {
+    // This is a placeholder for a more complex query that would filter
+    // shops based on whether they have any of the specified tags.
+    console.warn('Tag filtering is not yet implemented.');
   }
-}
 
-// Create a new shop
-export async function createShop(shopData: {
-  name: string;
-  description: string;
-  category: string;
-  location: string;
-  logo?: string;
-  rating?: number;
-  productCount?: number;
-  isVerified?: boolean;
-  ownerId: string;
-}): Promise<Shop | null> {
-  try {
-    const formattedData = {
-      name: shopData.name,
-      description: shopData.description,
-      category: shopData.category,
-      location: shopData.location,
-      logo_url: shopData.logo,
-      owner_id: shopData.ownerId,
-      rating: shopData.rating || 0,
-      product_count: shopData.productCount || 0,
-      is_verified: shopData.isVerified || false
-    };
-
-    const { data, error } = await supabase
-      .from('shops')
-      .insert(formattedData)
-      .select()
-      .single();
-    
-    if (error) {
-      console.error('Error creating shop:', error);
-      return null;
-    }
-    
-    return data as Shop;
-  } catch (error) {
-    console.error('Error in createShop:', error);
-    return null;
+  if (filter?.orderBy === 'distance') {
+    // This is a placeholder for a more complex geospatial ordering
+    // that would order shops based on their distance from the user's location.
+    // You would typically use PostGIS functions for this in a real-world scenario.
+    console.warn('Distance ordering is not yet implemented.');
+  } else if (filter?.orderBy === 'rating') {
+    query = query.order('rating', { ascending: false });
+  } else if (filter?.orderBy === 'newest') {
+    query = query.order('created_at', { ascending: false });
   }
-}
 
-// Update shop
-export async function updateShop(shopData: Partial<Shop>): Promise<Shop | null> {
-  try {
-    if (!shopData.id) {
-      throw new Error('Shop ID is required');
-    }
-    
-    const { data, error } = await supabase
-      .from('shops')
-      .update(shopData)
-      .eq('id', shopData.id)
-      .select()
-      .single();
-    
-    if (error) {
-      console.error('Error updating shop:', error);
-      return null;
-    }
-    
-    return data as Shop;
-  } catch (error) {
-    console.error('Error in updateShop:', error);
-    return null;
+  const { data, error } = await query;
+
+  if (error) {
+    console.error('Error fetching shops:', error);
+    throw error;
   }
-}
 
-// Upload shop logo
-export async function uploadShopLogo(file: File, shopId: string): Promise<string | null> {
-  try {
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${shopId}-${Date.now()}.${fileExt}`;
-    const filePath = `shop-logos/${fileName}`;
-    
-    const { error: uploadError } = await supabase.storage
-      .from('public')
-      .upload(filePath, file);
-    
-    if (uploadError) {
-      console.error('Error uploading logo:', uploadError);
-      return null;
-    }
-    
-    const { data: urlData } = supabase.storage
-      .from('public')
-      .getPublicUrl(filePath);
-    
-    return urlData.publicUrl;
-  } catch (error) {
-    console.error('Error in uploadShopLogo:', error);
-    return null;
+  return data || [];
+};
+
+export const fetchShopById = async (id: string): Promise<Shop | null> => {
+  const { data, error } = await supabase
+    .from('shops')
+    .select('*')
+    .eq('id', id)
+    .single();
+
+  if (error) {
+    console.error('Error fetching shop by ID:', error);
+    throw error;
   }
-}
 
-// Upload product image (for compatibility)
-export async function uploadProductImage(file: File): Promise<string | null> {
-  try {
-    const fileExt = file.name.split('.').pop();
-    const fileName = `product-${Date.now()}.${fileExt}`;
-    const filePath = `product-images/${fileName}`;
-    
-    const { error: uploadError } = await supabase.storage
-      .from('public')
-      .upload(filePath, file);
-    
-    if (uploadError) {
-      console.error('Error uploading product image:', uploadError);
-      return null;
-    }
-    
-    const { data: urlData } = supabase.storage
-      .from('public')
-      .getPublicUrl(filePath);
-    
-    return urlData.publicUrl;
-  } catch (error) {
-    console.error('Error in uploadProductImage:', error);
-    return null;
+  return data;
+};
+
+export const createShop = async (shop: CreateShopInput, owner_id: string): Promise<Shop> => {
+  const { data, error } = await supabase
+    .from('shops')
+    .insert([{ ...shop, owner_id }])
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error creating shop:', error);
+    throw error;
   }
-}
 
-// Get products for a shop
-export async function getShopProducts(shopId: string): Promise<ShopProduct[]> {
+  return data;
+};
+
+export const updateShop = async (id: string, shop: UpdateShopInput): Promise<Shop> => {
+  const { data, error } = await supabase
+    .from('shops')
+    .update(shop)
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error updating shop:', error);
+    throw error;
+  }
+
+  return data;
+};
+
+export const deleteShop = async (id: string): Promise<void> => {
+  const { error } = await supabase
+    .from('shops')
+    .delete()
+    .eq('id', id);
+
+  if (error) {
+    console.error('Error deleting shop:', error);
+    throw error;
+  }
+};
+
+export const getShopPaymentMethods = async (shopId: string): Promise<ShopPaymentMethod[]> => {
+  const { data, error } = await supabase
+    .from('shop_payment_methods')
+    .select('*')
+    .eq('shopId', shopId);
+
+  if (error) {
+    console.error('Error fetching shop payment methods:', error);
+    throw error;
+  }
+
+  return data || [];
+};
+
+export const addShopPaymentMethod = async (method: Partial<ShopPaymentMethod>): Promise<ShopPaymentMethod> => {
+  const { data, error } = await supabase
+    .from('shop_payment_methods')
+    .insert(method)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error adding payment method:', error);
+    throw error;
+  }
+
+  return data;
+};
+
+export const updateShopPaymentMethod = async (
+  methodId: string,
+  method: {
+    methodType?: PaymentMethodData;
+    accountName?: string;
+    accountNumber?: string;
+    bankName?: string;
+    paypalEmail?: string;
+    isActive?: boolean;
+    isDefault?: boolean;
+  }
+): Promise<ShopPaymentMethod> => {
+  const { data, error } = await supabase
+    .from('shop_payment_methods')
+    .update(method)
+    .eq('id', methodId)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error updating payment method:', error);
+    throw error;
+  }
+
+  return data;
+};
+
+export const deleteShopPaymentMethod = async (methodId: string): Promise<void> => {
+  const { error } = await supabase
+    .from('shop_payment_methods')
+    .delete()
+    .eq('id', methodId);
+
+  if (error) {
+    console.error('Error deleting payment method:', error);
+    throw error;
+  }
+};
+
+export const setDefaultPaymentMethod = async (
+  shopId: string,
+  methodId: string,
+  methodType: PaymentMethodData
+): Promise<void> => {
+  // First, unset any current default
+  const { error: updateError } = await supabase
+    .from('shop_payment_methods')
+    .update({ isDefault: false })
+    .eq('shopId', shopId)
+    .eq('methodType', methodType);
+
+  if (updateError) {
+    console.error('Error unsetting default payment methods:', updateError);
+    throw updateError;
+  }
+
+  // Then set the new default
+  const { error } = await supabase
+    .from('shop_payment_methods')
+    .update({ isDefault: true })
+    .eq('id', methodId);
+
+  if (error) {
+    console.error('Error setting default payment method:', error);
+    throw error;
+  }
+};
+
+export const fetchNearbyShops = async (radius: number): Promise<Shop[]> => {
+  // This is a placeholder for a more complex geospatial query
+  // that would filter shops based on a radius from the user's location.
+  // You would typically use PostGIS functions for this in a real-world scenario.
+  console.warn('Nearby shops filtering is not yet implemented.');
+
+  // For now, just return all shops
+  const { data, error } = await supabase
+    .from('shops')
+    .select('*');
+
+  if (error) {
+    console.error('Error fetching shops:', error);
+    throw error;
+  }
+
+  return data || [];
+};
+
+export const fetchShopsByCategory = async (category: string): Promise<Shop[]> => {
+  const { data, error } = await supabase
+    .from('shops')
+    .select('*')
+    .eq('category', category);
+
+  if (error) {
+    console.error('Error fetching shops by category:', error);
+    throw error;
+  }
+
+  return data || [];
+};
+
+export const getProductsByShop = async (shopId: string): Promise<Product[]> => {
   try {
     const { data, error } = await supabase
       .from('products')
       .select('*')
       .eq('shop_id', shopId);
-    
-    if (error) {
-      console.error(`Error fetching products for shop ${shopId}:`, error);
-      return [];
-    }
-    
-    return data.map(product => ({
-      id: product.id,
-      name: product.name,
-      price: product.price,
-      description: product.description,
-      category: product.category,
-      images: product.images || [],
-      shop_id: product.shop_id,
-      is_published: product.is_published,
-      is_halal_certified: product.is_halal_certified,
-      rating: product.rating || 0,
-      stock: product.stock || 0,
-      created_at: product.created_at,
-      updated_at: product.updated_at,
-      sellerId: product.shop_id,
-      sellerName: '' // This will be populated by the calling function if needed
-    }));
-  } catch (error) {
-    console.error(`Error in getShopProducts for ${shopId}:`, error);
-    return [];
-  }
-}
 
-// Publish or unpublish a product
-export async function toggleProductPublishStatus(productId: string, isPublished: boolean): Promise<boolean> {
-  try {
-    const { error } = await supabase
-      .from('products')
-      .update({ is_published: isPublished })
-      .eq('id', productId);
-    
-    if (error) {
-      console.error('Error toggling product publish status:', error);
-      return false;
-    }
-    
-    return true;
+    if (error) throw error;
+    return data || [];
   } catch (error) {
-    console.error('Error in toggleProductPublishStatus:', error);
-    return false;
+    console.error('Error fetching products by shop:', error);
+    throw error;
   }
-}
+};
 
-// Toggle halal certification status
-export async function toggleHalalCertifiedStatus(productId: string, isHalalCertified: boolean): Promise<boolean> {
-  try {
-    const { error } = await supabase
-      .from('products')
-      .update({ is_halal_certified: isHalalCertified })
-      .eq('id', productId);
-    
-    if (error) {
-      console.error('Error toggling halal certification status:', error);
-      return false;
-    }
-    
-    return true;
-  } catch (error) {
-    console.error('Error in toggleHalalCertifiedStatus:', error);
-    return false;
-  }
-}
-
-// Update product stock
-export async function updateProductStock(productId: string, stock: number): Promise<boolean> {
-  try {
-    const { error } = await supabase
-      .from('products')
-      .update({ stock })
-      .eq('id', productId);
-    
-    if (error) {
-      console.error('Error updating product stock:', error);
-      return false;
-    }
-    
-    return true;
-  } catch (error) {
-    console.error('Error in updateProductStock:', error);
-    return false;
-  }
-}
-
-// Get payment methods for a shop
-export async function getShopPaymentMethods(shopId: string): Promise<ShopPaymentMethod[]> {
+export const getShopProducts = async (shopId: string): Promise<ShopProduct[]> => {
   try {
     const { data, error } = await supabase
-      .from('shop_payment_methods')
+      .from('products')
       .select('*')
       .eq('shop_id', shopId);
-    
-    if (error) {
-      console.error(`Error fetching payment methods for shop ${shopId}:`, error);
-      return [];
-    }
-    
-    return data.map(method => ({
-      id: method.id,
-      shopId: method.shop_id,
-      methodType: method.method_type as PaymentMethodType,
-      accountName: method.account_name,
-      accountNumber: method.account_number,
-      bankName: method.bank_name,
-      paypalEmail: method.paypal_email,
-      stripeAccountId: method.stripe_account_id,
-      isActive: method.is_active,
-      isDefault: method.is_default || false,
-      createdAt: method.created_at,
-      updatedAt: method.updated_at
-    }));
+
+    if (error) throw error;
+    return data || [];
   } catch (error) {
-    console.error(`Error in getShopPaymentMethods for ${shopId}:`, error);
-    return [];
-  }
-}
-
-// Add payment method
-export async function addShopPaymentMethod(shopId: string, paymentMethod: {
-  methodType: PaymentMethodType;
-  accountName?: string;
-  accountNumber?: string;
-  bankName?: string;
-  paypalEmail?: string;
-  stripeAccountId?: string;
-  isActive?: boolean;
-}): Promise<ShopPaymentMethod | null> {
-  try {
-    const { data, error } = await supabase
-      .from('shop_payment_methods')
-      .insert({
-        shop_id: shopId,
-        method_type: paymentMethod.methodType,
-        account_name: paymentMethod.accountName,
-        account_number: paymentMethod.accountNumber,
-        bank_name: paymentMethod.bankName,
-        paypal_email: paymentMethod.paypalEmail,
-        stripe_account_id: paymentMethod.stripeAccountId,
-        is_active: paymentMethod.isActive ?? true,
-        is_default: false
-      })
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Error adding shop payment method:', error);
-      return null;
-    }
-
-    return {
-      id: data.id,
-      shopId: data.shop_id,
-      methodType: data.method_type as PaymentMethodType,
-      accountName: data.account_name,
-      accountNumber: data.account_number,
-      bankName: data.bank_name,
-      paypalEmail: data.paypal_email,
-      stripeAccountId: data.stripe_account_id,
-      isActive: data.is_active,
-      isDefault: data.is_default,
-      createdAt: data.created_at,
-      updatedAt: data.updated_at
-    };
-  } catch (error) {
-    console.error('Error in addShopPaymentMethod:', error);
-    return null;
-  }
-}
-
-// Update payment method
-export async function updateShopPaymentMethod(methodData: Partial<ShopPaymentMethod>): Promise<ShopPaymentMethod | null> {
-  try {
-    if (!methodData.id) {
-      throw new Error('Payment method ID is required');
-    }
-    
-    // Convert from camelCase to snake_case for database
-    const dbData: any = {};
-    if (methodData.methodType) dbData.method_type = methodData.methodType;
-    if (methodData.accountName) dbData.account_name = methodData.accountName;
-    if (methodData.accountNumber) dbData.account_number = methodData.accountNumber;
-    if (methodData.bankName) dbData.bank_name = methodData.bankName;
-    if (methodData.paypalEmail) dbData.paypal_email = methodData.paypalEmail;
-    if (methodData.stripeAccountId) dbData.stripe_account_id = methodData.stripeAccountId;
-    if (methodData.isActive !== undefined) dbData.is_active = methodData.isActive;
-    if (methodData.isDefault !== undefined) dbData.is_default = methodData.isDefault;
-    
-    const { data, error } = await supabase
-      .from('shop_payment_methods')
-      .update(dbData)
-      .eq('id', methodData.id)
-      .select()
-      .single();
-    
-    if (error) {
-      console.error('Error updating payment method:', error);
-      return null;
-    }
-    
-    return {
-      id: data.id,
-      shopId: data.shop_id,
-      methodType: data.method_type as PaymentMethodType,
-      accountName: data.account_name,
-      accountNumber: data.account_number,
-      bankName: data.bank_name,
-      paypalEmail: data.paypal_email,
-      stripeAccountId: data.stripe_account_id,
-      isActive: data.is_active,
-      isDefault: data.is_default,
-      createdAt: data.created_at,
-      updatedAt: data.updated_at
-    };
-  } catch (error) {
-    console.error('Error in updateShopPaymentMethod:', error);
-    return null;
-  }
-}
-
-// Get shop sales data
-export async function getShopSales(shopId: string): Promise<any[]> {
-  try {
-    const { data, error } = await supabase
-      .from('shop_sales')
-      .select(`
-        id,
-        amount,
-        status,
-        created_at,
-        orders:order_id (
-          id,
-          customer:user_id (
-            email,
-            name
-          ),
-          items,
-          total,
-          status
-        )
-      `)
-      .eq('shop_id', shopId)
-      .order('created_at', { ascending: false });
-    
-    if (error) {
-      console.error(`Error fetching sales for shop ${shopId}:`, error);
-      return [];
-    }
-    
-    return data;
-  } catch (error) {
-    console.error(`Error in getShopSales for ${shopId}:`, error);
-    return [];
-  }
-}
-
-// Setup database tables (called during app initialization)
-export async function setupDatabaseTables(): Promise<boolean> {
-  try {
-    // Check if required storage buckets exist
-    const { data: buckets, error: bucketsError } = await supabase
-      .storage
-      .listBuckets();
-    
-    if (bucketsError) {
-      console.error('Error checking storage buckets:', bucketsError);
-      return false;
-    }
-    
-    // Check if 'public' bucket exists, create if not
-    const publicBucketExists = buckets.some(bucket => bucket.name === 'public');
-    if (!publicBucketExists) {
-      const { error: createBucketError } = await supabase
-        .storage
-        .createBucket('public', {
-          public: true
-        });
-      
-      if (createBucketError) {
-        console.error('Error creating public bucket:', createBucketError);
-      }
-    }
-    
-    return true;
-  } catch (error) {
-    console.error('Error setting up database tables:', error);
-    return false;
-  }
-}
-
-// Helper function to convert a regular product to a shop product
-export function convertToShopProduct(product: Product, shopId: string): ShopProduct {
-  return {
-    id: product.id,
-    name: product.name,
-    price: product.price,
-    description: product.description,
-    category: product.category,
-    images: product.images,
-    shop_id: shopId,
-    is_published: false,
-    is_halal_certified: product.isHalalCertified,
-    rating: product.rating || 0,
-    stock: product.inStock ? 10 : 0, // Default to 10 if in stock
-    sellerId: shopId,
-    sellerName: "" // This would typically be filled in by the service calling this function
-  };
-}
-
-// Convert ShopProduct to Product model
-export const convertToModelProduct = (shopProduct: ShopProduct): Product => {
-  return {
-    id: shopProduct.id,
-    name: shopProduct.name,
-    price: shopProduct.price,
-    description: shopProduct.description,
-    category: shopProduct.category,
-    images: shopProduct.images || [],
-    sellerId: shopProduct.shop_id,
-    sellerName: shopProduct.sellerName || '',
-    rating: shopProduct.rating || 0,
-    isPublished: shopProduct.is_published,
-    isHalalCertified: shopProduct.is_halal_certified,
-    inStock: shopProduct.stock !== undefined ? Boolean(shopProduct.stock) : true,
-    longDescription: shopProduct.long_description || '',
-    details: shopProduct.details || {},
-    createdAt: shopProduct.created_at || new Date().toISOString()
-  };
-};
-
-// Create a product for a shop
-export const createProductForShop = async (shopId: string, product: Partial<Product>): Promise<Product | null> => {
-  try {
-    const { data, error } = await supabase
-      .from('products')
-      .insert({
-        name: product.name,
-        description: product.description,
-        price: product.price,
-        category: product.category,
-        images: product.images || [],
-        shop_id: shopId,
-        is_published: product.isPublished !== undefined ? product.isPublished : true,
-        is_halal_certified: product.isHalalCertified || false,
-        stock: product.inStock !== undefined ? (product.inStock ? 1 : 0) : 1,
-        long_description: product.longDescription || '',
-        details: product.details || {}
-      })
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Error creating product for shop:', error);
-      return null;
-    }
-
-    return {
-      id: data.id,
-      name: data.name,
-      description: data.description,
-      price: data.price,
-      inStock: data.stock > 0,
-      category: data.category,
-      images: data.images || [],
-      sellerId: data.shop_id,
-      sellerName: '',
-      rating: data.rating,
-      isHalalCertified: data.is_halal_certified,
-      isPublished: data.is_published,
-      details: data.details,
-      createdAt: data.created_at,
-      longDescription: data.long_description || ''
-    };
-  } catch (error) {
-    console.error('Error in createProductForShop:', error);
-    return null;
+    console.error('Error fetching shop products:', error);
+    throw error;
   }
 };
 
-// Function to fixProductDetails
-const normalizeProductDetails = (product: any): ShopProduct => {
-  let details: ProductDetails | undefined;
-  
-  // Convert the JSON details to ProductDetails type
-  if (product.details) {
-    if (typeof product.details === 'string') {
-      try {
-        details = JSON.parse(product.details);
-      } catch (e) {
-        details = undefined;
-      }
-    } else {
-      details = product.details as ProductDetails;
-    }
-  }
-  
-  return {
-    ...product,
-    details
-  };
-};
+export const fetchShopsByFilter = async (filterBy: ShopFilterBy): Promise<Shop[]> => {
+  let query = supabase.from('shops').select('*');
 
-// Function to get shop product details
-export const getShopProductDetails = async (shopId: string, productId: string): Promise<ShopProduct | null> => {
-  try {
-    const { data: productData, error: productError } = await supabase
-      .from('products')
-      .select('*')
-      .eq('id', productId)
-      .eq('shop_id', shopId)
-      .single();
-      
-    if (productError) {
-      console.error('Error fetching product details:', productError);
-      return null;
-    }
-    
-    const { data: shopData, error: shopError } = await supabase
-      .from('shops')
-      .select('name, owner_id')
-      .eq('id', shopId)
-      .single();
-      
-    if (shopError) {
-      console.error('Error fetching shop info for product:', shopError);
-      return null;
-    }
-    
-    // Normalize the product details
-    const product = normalizeProductDetails(productData);
-    
-    return {
-      ...product,
-      sellerId: shopData.owner_id,
-      sellerName: shopData.name
-    };
-  } catch (error) {
-    console.error('Error in getShopProductDetails:', error);
-    return null;
+  switch (filterBy) {
+    case 'nearby':
+      // Placeholder for geospatial query
+      console.warn('Nearby shops filtering is not yet implemented.');
+      break;
+    case 'featured':
+      query = query.order('rating', { ascending: false });
+      break;
+    case 'popular':
+      // Placeholder for popularity-based filtering
+      console.warn('Popular shops filtering is not yet implemented.');
+      break;
+    case 'new':
+      query = query.order('created_at', { ascending: false });
+      break;
+    default:
+      break;
   }
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error('Error fetching shops:', error);
+    throw error;
+  }
+
+  return data || [];
 };

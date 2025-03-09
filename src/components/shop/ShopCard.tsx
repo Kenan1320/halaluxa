@@ -1,137 +1,121 @@
 
-import { memo } from 'react';
-import { motion } from 'framer-motion';
-import { Store } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import React from 'react';
 import { Link } from 'react-router-dom';
+import { 
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardFooter, 
+  CardHeader, 
+  CardTitle 
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Shop } from '@/models/shop';
+import { StarIcon, MapPinIcon, CheckCircleIcon } from 'lucide-react';
 
-interface ShopCardProps {
-  shop: any;
-  index: number;
-  featured?: boolean;
-  minimal?: boolean;
+export interface ShopCardProps {
+  shop: Shop;
+  isSelected?: boolean;
+  isMainShop?: boolean;
+  onSelect?: () => void;
+  onSetMain?: () => void;
+  showControls?: boolean;
 }
 
-// Using memo to prevent unnecessary re-renders
-const ShopCard = memo(({ shop, index, featured = false, minimal = false }: ShopCardProps) => {
-  if (minimal) {
-    return (
-      <motion.div 
-        className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, delay: index * 0.1 }}
-      >
-        <div className="h-32 bg-white relative flex items-center justify-center">
-          {shop.logo ? (
-            <img 
-              src={shop.logo} 
-              alt={`${shop.name} logo`} 
-              className="max-h-20 max-w-[80%] object-contain"
-              loading="lazy"
-            />
-          ) : (
-            <div className="flex items-center justify-center bg-haluna-primary-light h-full w-full">
-              <Store className="h-12 w-12 text-haluna-primary" />
-            </div>
+export const ShopCard = ({ 
+  shop, 
+  isSelected = false, 
+  isMainShop = false, 
+  onSelect, 
+  onSetMain,
+  showControls = false
+}: ShopCardProps) => {
+  return (
+    <Card className="overflow-hidden h-full flex flex-col">
+      <div className="h-48 overflow-hidden relative">
+        <img 
+          src={shop.cover_image || '/placeholder.svg'} 
+          alt={shop.name} 
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute top-3 right-3 space-x-2">
+          {shop.is_verified && (
+            <Badge variant="secondary" className="flex items-center gap-1">
+              <CheckCircleIcon size={14} />
+              <span>Verified</span>
+            </Badge>
           )}
         </div>
-        
-        <div className="p-4 text-center">
-          <h3 className="text-lg font-medium mb-2">{shop.name}</h3>
-          
-          <Link to={`/shop/${shop.id}`}>
-            <Button 
-              className="w-full text-sm"
-              size="sm"
-            >
-              Visit Shop
-            </Button>
-          </Link>
-        </div>
-      </motion.div>
-    );
-  }
-  
-  return (
-    <motion.div 
-      className={`bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow ${featured ? 'lg:flex' : ''}`}
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, delay: index * 0.1 }}
-      whileHover={{ y: -5 }}
-    >
-      <div className={`${featured ? 'lg:w-2/5 h-48 lg:h-auto' : 'h-48'} bg-white relative`}>
-        {shop.coverImage ? (
-          <img 
-            src={shop.coverImage} 
-            alt={shop.name} 
-            className="w-full h-full object-cover"
-            loading="lazy"
-          />
-        ) : shop.logo ? (
-          <div className="w-full h-full flex items-center justify-center bg-haluna-primary-light p-4">
-            <img 
-              src={shop.logo} 
-              alt={`${shop.name} logo`} 
-              className="max-h-full max-w-full object-contain"
-              loading="lazy"
-            />
-          </div>
-        ) : (
-          <div className="w-full h-full flex items-center justify-center bg-haluna-primary-light">
-            <Store className="h-12 w-12 text-haluna-primary" />
-          </div>
-        )}
-        {shop.isVerified && (
-          <div className="absolute top-4 right-4 bg-white/80 px-2 py-1 rounded-full text-xs font-medium shadow-sm">
-            Verified
-          </div>
-        )}
       </div>
       
-      <div className={`p-6 ${featured ? 'lg:w-3/5' : ''}`}>
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="text-xl font-medium">{shop.name}</h3>
-          <div className="flex items-center text-yellow-500">
-            <span className="ml-1 text-sm">{shop.rating}</span>
-          </div>
+      <CardHeader className="relative pb-2">
+        <div className="absolute -top-8 left-4 w-16 h-16 rounded-full bg-white p-1 shadow-md">
+          <img 
+            src={shop.logo_url || '/placeholder.svg'} 
+            alt={`${shop.name} logo`} 
+            className="w-full h-full object-cover rounded-full"
+          />
         </div>
-        
-        <p className={`text-haluna-text-light mb-4 ${featured ? 'line-clamp-3' : 'line-clamp-2'}`}>
-          {shop.description}
-        </p>
-        
-        <div className="flex items-center justify-between mb-4">
-          <span className="text-sm bg-gray-100 px-3 py-1 rounded-full">
-            {shop.category}
-          </span>
-          
-          <div className="flex items-center text-sm text-haluna-text-light">
-            {shop.location}
-          </div>
-        </div>
-        
-        <div className="flex items-center justify-between text-sm text-haluna-text-light mb-4">
-          <span>{shop.productCount} Products</span>
-          
-          {shop.distance && (
-            <span className="font-medium text-haluna-primary">
-              {shop.distance.toFixed(1)} miles away
+        <div className="ml-20">
+          <CardTitle className="text-xl">{shop.name}</CardTitle>
+          <div className="flex items-center gap-1 text-sm text-muted-foreground">
+            <span className="flex items-center">
+              <StarIcon size={16} className="mr-1 text-yellow-500" />
+              {shop.rating || '0.0'}
             </span>
-          )}
+            <span>•</span>
+            <span>{shop.category}</span>
+          </div>
+        </div>
+      </CardHeader>
+      
+      <CardContent className="flex-grow">
+        <p className="text-sm text-muted-foreground line-clamp-2">{shop.description}</p>
+        
+        <div className="flex items-center mt-3 text-sm text-muted-foreground">
+          <MapPinIcon size={16} className="mr-1" />
+          <span className="line-clamp-1">{shop.address || shop.location}</span>
         </div>
         
-        <Link to={`/shop/${shop.id}`}>
-          <Button className="w-full flex items-center justify-center">
-            Visit Shop
-          </Button>
-        </Link>
-      </div>
-    </motion.div>
+        {shop.distance !== undefined && (
+          <div className="mt-1 text-sm text-muted-foreground">
+            <span>{shop.distance < 1 ? 
+              `${Math.round(shop.distance * 1000)} m away` : 
+              `${shop.distance.toFixed(1)} km away`}
+            </span>
+          </div>
+        )}
+      </CardContent>
+      
+      <CardFooter className="pt-2 flex flex-col gap-2">
+        {showControls ? (
+          <>
+            <Button 
+              className="w-full" 
+              variant={isSelected ? "default" : "outline"}
+              onClick={onSelect}
+            >
+              {isSelected ? "Selected" : "Select Shop"}
+            </Button>
+            
+            {isSelected && (
+              <Button 
+                className="w-full" 
+                variant={isMainShop ? "secondary" : "outline"}
+                onClick={onSetMain}
+                disabled={!isSelected}
+              >
+                {isMainShop ? "Main Shop" : "Set as Main Shop"}
+              </Button>
+            )}
+          </>
+        ) : (
+          <Link to={`/shop/${shop.id}`} className="w-full">
+            <Button className="w-full">View Shop</Button>
+          </Link>
+        )}
+      </CardFooter>
+    </Card>
   );
-});
-
-ShopCard.displayName = 'ShopCard';
-
-export default ShopCard;
+};

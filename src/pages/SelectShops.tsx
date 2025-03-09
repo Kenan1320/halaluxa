@@ -1,306 +1,304 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { toast } from '@/components/ui/use-toast';
+import { 
+  Button, 
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardFooter, 
+  CardHeader, 
+  CardTitle 
+} from '@/components/ui/card';
+import { toast } from 'sonner';
+import { ShopCard } from '@/components/shop/ShopCard';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
 import { Shop, UserShopPreference } from '@/models/shop';
-import ShopCard from '@/components/shop/ShopCard';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2 } from 'lucide-react';
+import { fetchShopsByCategory, fetchNearbyShops } from '@/services/shopService';
 
-interface ShopCardProps {
-  shop: Shop;
-  isSelected?: boolean;
-  isMainShop?: boolean;
-  onSelect?: () => void;
-  onSetMain?: () => void;
-  showControls?: boolean;
-}
+// Helper components to keep SelectShops.tsx more manageable
+const EmptyState = () => (
+  <div className="py-12 text-center">
+    <h3 className="text-lg font-medium mb-2">No shops available</h3>
+    <p className="text-gray-500 mb-4">Please try a different category or check back later.</p>
+  </div>
+);
+
+const ShopSelectionHeader = () => (
+  <div className="py-6 md:py-10 px-4 max-w-4xl mx-auto text-center">
+    <h1 className="text-3xl font-bold mb-4">Select Your Shops</h1>
+    <p className="text-gray-600 mb-6">
+      Choose the shops you want to follow. You can select one as your main shop for quicker access.
+    </p>
+  </div>
+);
+
+const CategorySelector = ({ 
+  categories, 
+  selectedCategory, 
+  onSelectCategory 
+}: { 
+  categories: string[], 
+  selectedCategory: string, 
+  onSelectCategory: (category: string) => void 
+}) => (
+  <div className="flex flex-wrap justify-center gap-2 mb-8">
+    <Button
+      variant={selectedCategory === 'all' ? 'default' : 'outline'}
+      onClick={() => onSelectCategory('all')}
+      className="rounded-full"
+    >
+      All
+    </Button>
+    {categories.map(category => (
+      <Button
+        key={category}
+        variant={selectedCategory === category ? 'default' : 'outline'}
+        onClick={() => onSelectCategory(category)}
+        className="rounded-full"
+      >
+        {category}
+      </Button>
+    ))}
+  </div>
+);
 
 const SelectShops = () => {
-  const { user } = useAuth();
+  const { user, profile, updateProfile } = useAuth();
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
   const [shops, setShops] = useState<Shop[]>([]);
-  const [selectedShops, setSelectedShops] = useState<string[]>([]);
-  const [mainShop, setMainShop] = useState<string | null>(null);
-  const [userShopPreferences, setUserShopPreferences] = useState<UserShopPreference[]>([]);
+  const [selectedShops, setSelectedShops] = useState<{[key: string]: boolean}>({});
+  const [mainShopId, setMainShopId] = useState<string | null>(null);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [loading, setLoading] = useState<boolean>(true);
+  const [userPreferences, setUserPreferences] = useState<UserShopPreference[]>([]);
 
-  useEffect(() => {
-    if (!user) return;
-    
-    const fetchShops = async () => {
-      setLoading(true);
-      try {
-        // Fetch all available shops
-        const { data: shopsData, error: shopsError } = await supabase
-          .from('shops')
-          .select('*');
-
-        if (shopsError) {
-          throw shopsError;
-        }
-
-        setShops(shopsData || []);
-
-        try {
-          // Try to fetch user shop preferences directly
-          const { data: prefsData, error: prefsError } = await supabase
-            .from('user_shop_preferences')
-            .select(`
-              id, 
-              user_id, 
-              shop_id, 
-              is_following, 
-              is_favorite, 
-              is_main_shop,
-              shops:shop_id (
-                id, 
-                name, 
-                description, 
-                category, 
-                logo_url
-              )
-            `)
-            .eq('user_id', user.id);
-            
-          if (prefsError) {
-            console.error("Error fetching preferences:", prefsError);
-            return;
-          }
-          
-          if (prefsData) {
-            const formattedPrefs = prefsData.map(pref => ({
-              id: pref.id,
-              user_id: pref.user_id,
-              shop_id: pref.shop_id,
-              is_following: pref.is_following,
-              is_favorite: pref.is_favorite,
-              is_main_shop: pref.is_main_shop,
-              shop: pref.shops
-            }));
-            
-            setUserShopPreferences(formattedPrefs);
-            
-            // Set selected shops based on preferences
-            const selectedShopIds = formattedPrefs.map(pref => pref.shop_id);
-            setSelectedShops(selectedShopIds);
-            
-            // Set main shop
-            const mainShopPref = formattedPrefs.find(pref => pref.is_main_shop);
-            if (mainShopPref) {
-              setMainShop(mainShopPref.shop_id);
-            }
-          }
-        } catch (error) {
-          console.error("Error in preferences fetch:", error);
-        }
-      } catch (error) {
-        console.error('Error fetching shops:', error);
-        toast({
-          title: 'Error',
-          description: 'Failed to load shops. Please try again.',
-          variant: 'destructive',
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchShops();
-  }, [user]);
-
-  const toggleShopSelection = (shopId: string) => {
-    setSelectedShops(prevSelected => {
-      if (prevSelected.includes(shopId)) {
-        // Removing a shop
-        const newSelection = prevSelected.filter(id => id !== shopId);
-        
-        // If removing the main shop, set mainShop to null
-        if (mainShop === shopId) {
-          setMainShop(null);
-        }
-        
-        return newSelection;
-      } else {
-        // Adding a shop
-        return [...prevSelected, shopId];
-      }
-    });
-  };
-
-  const setAsMainShop = (shopId: string) => {
-    // Make sure the shop is selected first
-    if (!selectedShops.includes(shopId)) {
-      toggleShopSelection(shopId);
-    }
-    
-    setMainShop(shopId);
-  };
-
-  const savePreferences = async () => {
-    if (!user) return;
-    
-    setLoading(true);
-    
+  // Fetch user preferences
+  const fetchUserPreferences = async () => {
     try {
-      // Update profile's main_shop_id
-      if (mainShop) {
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .update({ main_shop_id: mainShop })
-          .eq('id', user.id);
-          
-        if (profileError) {
-          console.error('Error updating profile:', profileError);
-        }
-      }
-
-      // Delete existing preferences
-      const { error: deleteError } = await supabase
-        .from('user_shop_preferences')
-        .delete()
-        .eq('user_id', user.id);
-        
-      if (deleteError) {
-        console.error('Error deleting preferences:', deleteError);
+      if (!user?.id) return;
+      
+      // Use RPC function to get user preferences with shop details
+      const { data, error } = await supabase
+        .rpc('get_user_shop_preferences', { user_id_param: user.id });
+      
+      if (error) {
+        console.error('Error fetching user preferences:', error);
+        return;
       }
       
-      // Only proceed if there are selected shops
-      if (selectedShops.length > 0) {
-        // Create preferences array for insertion
-        const preferencesToInsert = selectedShops.map(shopId => ({
-          user_id: user.id,
-          shop_id: shopId,
-          is_following: true,
-          is_favorite: true,
-          is_main_shop: shopId === mainShop
+      if (data) {
+        const mappedPreferences = data.map((pref: any) => ({
+          id: pref.id,
+          user_id: pref.user_id,
+          shop_id: pref.shop_id,
+          is_following: pref.is_following,
+          is_favorite: pref.is_favorite,
+          is_main_shop: pref.is_main_shop,
+          shop: pref.shop
         }));
         
-        // Insert new preferences
-        for (const pref of preferencesToInsert) {
-          const { error: insertError } = await supabase
-            .from('user_shop_preferences')
-            .insert(pref);
-            
-          if (insertError) {
-            console.error('Error inserting preference:', insertError);
+        setUserPreferences(mappedPreferences);
+        
+        // Set selected shops based on preferences
+        const newSelectedShops: {[key: string]: boolean} = {};
+        mappedPreferences.forEach((pref: UserShopPreference) => {
+          if (pref.is_following) {
+            newSelectedShops[pref.shop_id] = true;
           }
-        }
+          if (pref.is_main_shop) {
+            setMainShopId(pref.shop_id);
+          }
+        });
+        setSelectedShops(newSelectedShops);
       }
-
-      toast({
-        title: 'Success',
-        description: 'Your shop preferences have been saved.',
-      });
-      
-      // Navigate to the home page
-      navigate('/');
     } catch (error) {
-      console.error('Error saving preferences:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to save preferences. Please try again.',
-        variant: 'destructive',
-      });
+      console.error('Error in fetchUserPreferences:', error);
+      toast.error('Failed to load your shop preferences');
+    }
+  };
+
+  // Fetch shops by category or all shops if category is 'all'
+  const fetchShops = async () => {
+    setLoading(true);
+    try {
+      let fetchedShops;
+      if (selectedCategory === 'all') {
+        fetchedShops = await fetchNearbyShops(100); // Get all shops within 100 km
+      } else {
+        fetchedShops = await fetchShopsByCategory(selectedCategory);
+      }
+      
+      setShops(fetchedShops);
+    } catch (error) {
+      console.error('Error fetching shops:', error);
+      toast.error('Failed to load shops');
     } finally {
       setLoading(false);
     }
   };
 
-  const toggleMainShop = (shopId: string) => {
-    if (mainShop === shopId) {
-      setMainShop(null); // Unset as main shop
-    } else {
-      setAsMainShop(shopId); // Set as main shop
+  // Fetch all available categories
+  const fetchCategories = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('shops')
+        .select('category')
+        .order('category', { ascending: true });
+      
+      if (error) throw error;
+      
+      const uniqueCategories = Array.from(new Set(data.map(shop => shop.category)));
+      setCategories(uniqueCategories);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchCategories();
+    fetchUserPreferences();
+  }, [user?.id]);
+
+  useEffect(() => {
+    fetchShops();
+  }, [selectedCategory]);
+
+  const handleToggleShop = (shopId: string) => {
+    setSelectedShops(prev => ({
+      ...prev,
+      [shopId]: !prev[shopId]
+    }));
+  };
+
+  const handleSetMainShop = (shopId: string) => {
+    setMainShopId(shopId);
+  };
+
+  const handleSelectCategory = (category: string) => {
+    setSelectedCategory(category);
+  };
+
+  const handleSavePreferences = async () => {
+    try {
+      if (!user?.id) {
+        toast.error('You must be logged in to save preferences');
+        return;
+      }
+
+      setLoading(true);
+
+      // Update profile with main shop ID
+      if (profile && mainShopId) {
+        await updateProfile({
+          ...profile,
+          main_shop_id: mainShopId
+        });
+      }
+
+      // Get all selected shop IDs
+      const selectedShopIds = Object.entries(selectedShops)
+        .filter(([_, isSelected]) => isSelected)
+        .map(([shopId]) => shopId);
+
+      // First, handle preferences that should be inserted or updated
+      for (const shopId of selectedShopIds) {
+        const existingPref = userPreferences.find(p => p.shop_id === shopId);
+        
+        if (existingPref) {
+          // Update existing preference
+          const { error } = await supabase
+            .rpc('update_user_shop_preference', {
+              p_user_id: user.id,
+              p_shop_id: shopId,
+              p_is_following: true,
+              p_is_favorite: existingPref.is_favorite || false,
+              p_is_main_shop: mainShopId === shopId
+            });
+          
+          if (error) throw error;
+        } else {
+          // Insert new preference
+          const { error } = await supabase
+            .rpc('insert_user_shop_preference', {
+              p_user_id: user.id,
+              p_shop_id: shopId,
+              p_is_following: true,
+              p_is_favorite: false,
+              p_is_main_shop: mainShopId === shopId
+            });
+          
+          if (error) throw error;
+        }
+      }
+
+      // Handle preferences that should be removed or updated as not following
+      for (const pref of userPreferences) {
+        if (!selectedShopIds.includes(pref.shop_id)) {
+          // Update as not following
+          const { error } = await supabase
+            .rpc('update_user_shop_preference', {
+              p_user_id: user.id,
+              p_shop_id: pref.shop_id,
+              p_is_following: false,
+              p_is_favorite: pref.is_favorite || false,
+              p_is_main_shop: false
+            });
+          
+          if (error) throw error;
+        }
+      }
+
+      toast.success('Your shop preferences have been saved');
+      navigate('/');
+    } catch (error) {
+      console.error('Error saving preferences:', error);
+      toast.error('Failed to save your preferences');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="container max-w-7xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6">Select Your Favorite Shops</h1>
+    <div className="container mx-auto px-4 pb-16">
+      <ShopSelectionHeader />
       
-      <p className="text-gray-600 mb-8">
-        Choose the shops you want to follow. You can set one as your main shop to see their products first.
-      </p>
+      <CategorySelector 
+        categories={categories} 
+        selectedCategory={selectedCategory}
+        onSelectCategory={handleSelectCategory}
+      />
       
       {loading ? (
-        <div className="flex justify-center items-center h-40">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <div className="flex justify-center my-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
         </div>
+      ) : shops.length === 0 ? (
+        <EmptyState />
       ) : (
         <>
-          <Tabs defaultValue="all" className="mb-8">
-            <TabsList>
-              <TabsTrigger value="all">All Shops</TabsTrigger>
-              <TabsTrigger value="selected">
-                Selected ({selectedShops.length})
-              </TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="all" className="mt-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {shops.map((shop) => (
-                  <ShopCard 
-                    key={shop.id}
-                    shop={shop}
-                    isSelected={selectedShops.includes(shop.id)}
-                    isMainShop={mainShop === shop.id}
-                    onSelect={() => toggleShopSelection(shop.id)}
-                    onSetMain={() => toggleMainShop(shop.id)}
-                    showControls={true}
-                  />
-                ))}
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="selected" className="mt-6">
-              {selectedShops.length === 0 ? (
-                <div className="text-center p-8 border border-dashed rounded-lg">
-                  <p>You haven't selected any shops yet.</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {shops
-                    .filter(shop => selectedShops.includes(shop.id))
-                    .map(shop => (
-                      <ShopCard 
-                        key={shop.id}
-                        shop={shop}
-                        isSelected={true}
-                        isMainShop={mainShop === shop.id}
-                        onSelect={() => toggleShopSelection(shop.id)}
-                        onSetMain={() => toggleMainShop(shop.id)}
-                        showControls={true}
-                      />
-                    ))}
-                </div>
-              )}
-            </TabsContent>
-          </Tabs>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
+            {shops.map(shop => (
+              <ShopCard
+                key={shop.id}
+                shop={shop}
+                isSelected={!!selectedShops[shop.id]}
+                isMainShop={mainShopId === shop.id}
+                onSelect={() => handleToggleShop(shop.id)}
+                onSetMain={() => handleSetMainShop(shop.id)}
+                showControls={true}
+              />
+            ))}
+          </div>
           
-          <div className="flex justify-end mt-8">
-            <Button
-              variant="outline"
-              className="mr-4"
-              onClick={() => navigate('/')}
-            >
-              Skip
-            </Button>
+          <div className="flex justify-center mt-8">
             <Button 
-              onClick={savePreferences}
+              className="px-8 py-2"
+              onClick={handleSavePreferences}
               disabled={loading}
             >
-              {loading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                'Save Preferences'
-              )}
+              {loading ? 'Saving...' : 'Save Preferences'}
             </Button>
           </div>
         </>
