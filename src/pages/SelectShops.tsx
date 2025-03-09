@@ -8,7 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Shop } from '@/models/shop';
+import { Shop, UserShopPreference } from '@/models/shop';
 import { getShops } from '@/services/shopService';
 import { Store, Heart, Star, MapPin } from 'lucide-react';
 
@@ -30,12 +30,17 @@ const SelectShops = () => {
         
         if (user) {
           // Get followed shops for current user
-          const { data: followData } = await supabase
+          const { data: followData, error } = await supabase
             .from('user_shop_preferences')
-            .select('shop_id, is_main_shop')
+            .select('*')
             .eq('user_id', user.id);
             
-          if (followData) {
+          if (error) {
+            console.error('Error fetching shop preferences:', error);
+            return;
+          }
+            
+          if (followData && followData.length > 0) {
             const followedIds = followData.map(item => item.shop_id);
             setFollowedShops(followedIds);
             
@@ -72,11 +77,21 @@ const SelectShops = () => {
       
       if (isFollowed) {
         // Unfollow shop
-        await supabase
+        const { error } = await supabase
           .from('user_shop_preferences')
           .delete()
           .eq('user_id', user.id)
           .eq('shop_id', shopId);
+          
+        if (error) {
+          console.error('Error unfollowing shop:', error);
+          toast({
+            title: 'Error',
+            description: 'Failed to unfollow shop. Please try again.',
+            variant: 'destructive',
+          });
+          return;
+        }
           
         setFollowedShops(prev => prev.filter(id => id !== shopId));
         
@@ -85,38 +100,53 @@ const SelectShops = () => {
           setMainShop(null);
           
           // Update user profile
-          await supabase
+          const { error: profileError } = await supabase
             .from('profiles')
-            .update({ 
-              main_shop_id: null 
-            })
+            .update({ main_shop_id: null })
             .eq('id', user.id);
+            
+          if (profileError) {
+            console.error('Error updating profile:', profileError);
+          }
         }
       } else {
+        // If this is the first shop, make it the main shop
+        const isFirstShop = followedShops.length === 0;
+        
         // Follow shop
-        await supabase
+        const { error } = await supabase
           .from('user_shop_preferences')
-          .insert([
-            { 
-              user_id: user.id, 
-              shop_id: shopId,
-              is_main_shop: !mainShop ? true : false 
-            }
-          ]);
+          .insert({
+            user_id: user.id, 
+            shop_id: shopId,
+            is_main_shop: isFirstShop
+          });
+          
+        if (error) {
+          console.error('Error following shop:', error);
+          toast({
+            title: 'Error',
+            description: 'Failed to follow shop. Please try again.',
+            variant: 'destructive',
+          });
+          return;
+        }
           
         setFollowedShops(prev => [...prev, shopId]);
         
-        // If no main shop set, make this the main shop
-        if (!mainShop) {
+        // If this is the first shop, make it the main shop
+        if (isFirstShop) {
           setMainShop(shopId);
           
           // Update user profile
-          await supabase
+          const { error: profileError } = await supabase
             .from('profiles')
-            .update({ 
-              main_shop_id: shopId 
-            })
+            .update({ main_shop_id: shopId })
             .eq('id', user.id);
+            
+          if (profileError) {
+            console.error('Error updating profile:', profileError);
+          }
         }
       }
       
@@ -142,25 +172,53 @@ const SelectShops = () => {
 
     try {
       // Update all shops to not be main
-      await supabase
+      const { error: updateError } = await supabase
         .from('user_shop_preferences')
         .update({ is_main_shop: false })
         .eq('user_id', user.id);
         
+      if (updateError) {
+        console.error('Error updating shop preferences:', updateError);
+        toast({
+          title: 'Error',
+          description: 'Failed to update main shop. Please try again.',
+          variant: 'destructive',
+        });
+        return;
+      }
+        
       // Set selected shop as main
-      await supabase
+      const { error: setMainError } = await supabase
         .from('user_shop_preferences')
         .update({ is_main_shop: true })
         .eq('user_id', user.id)
         .eq('shop_id', shopId);
         
+      if (setMainError) {
+        console.error('Error setting main shop:', setMainError);
+        toast({
+          title: 'Error',
+          description: 'Failed to set main shop. Please try again.',
+          variant: 'destructive',
+        });
+        return;
+      }
+        
       // Update user profile
-      await supabase
+      const { error: profileError } = await supabase
         .from('profiles')
-        .update({ 
-          main_shop_id: shopId 
-        })
+        .update({ main_shop_id: shopId })
         .eq('id', user.id);
+        
+      if (profileError) {
+        console.error('Error updating profile:', profileError);
+        toast({
+          title: 'Error',
+          description: 'Failed to update profile. Please try again.',
+          variant: 'destructive',
+        });
+        return;
+      }
         
       setMainShop(shopId);
       

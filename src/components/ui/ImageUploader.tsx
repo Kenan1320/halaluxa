@@ -2,19 +2,21 @@
 import React, { useState, useEffect } from 'react';
 import { Upload, X, Image, Loader2, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { uploadProductImage } from '@/services/shopService';
+import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 interface ImageUploaderProps {
   initialImages?: string[];
   onImagesChange: (images: string[]) => void;
   maxImages?: number;
+  bucketName?: string;
 }
 
 const ImageUploader: React.FC<ImageUploaderProps> = ({
   initialImages = [],
   onImagesChange,
   maxImages = 5,
+  bucketName = 'product-images',
 }) => {
   const [images, setImages] = useState<string[]>(initialImages);
   const [isUploading, setIsUploading] = useState(false);
@@ -64,16 +66,39 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
       try {
         setUploadProgress(Math.floor(i / files.length * 50)); // First half of progress
         
-        // Fixed: removed the second argument (progress callback) since the function only expects one argument
-        const imageUrl = await uploadProductImage(file);
+        // Upload file to Supabase Storage
+        const fileName = `${Date.now()}-${Math.floor(Math.random() * 1000)}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '')}`;
         
-        if (imageUrl) {
-          newImages.push(imageUrl);
+        const { data, error } = await supabase.storage
+          .from(bucketName)
+          .upload(`public/${fileName}`, file, {
+            cacheControl: '3600',
+            upsert: false
+          });
+        
+        if (error) {
+          console.error('Error uploading file:', error);
+          failedFiles.push(file);
+          toast({
+            title: "Upload failed",
+            description: `Failed to upload ${file.name}: ${error.message}`,
+            variant: "destructive"
+          });
+          continue;
+        }
+        
+        // Get public URL for the uploaded file
+        const { data: publicUrlData } = supabase.storage
+          .from(bucketName)
+          .getPublicUrl(data.path);
+        
+        if (publicUrlData.publicUrl) {
+          newImages.push(publicUrlData.publicUrl);
         } else {
           failedFiles.push(file);
           toast({
             title: "Upload failed",
-            description: `Failed to upload ${file.name}`,
+            description: `Failed to get public URL for ${file.name}`,
             variant: "destructive"
           });
         }
@@ -99,10 +124,33 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
   };
 
   const handleRemoveImage = (index: number) => {
+    const imageToRemove = images[index];
     const newImages = [...images];
     newImages.splice(index, 1);
     setImages(newImages);
     onImagesChange(newImages);
+    
+    // Extract the file path from the URL to delete it from storage
+    try {
+      const url = new URL(imageToRemove);
+      const pathWithBucket = url.pathname;
+      // Remove the bucket name and leading slash from the path
+      const pathParts = pathWithBucket.split('/');
+      // Join all parts after the bucket name
+      const filePath = pathParts.slice(2).join('/');
+      
+      if (filePath) {
+        // Delete from Supabase in the background, don't block UI
+        supabase.storage
+          .from(bucketName)
+          .remove([filePath])
+          .then(({ error }) => {
+            if (error) console.error('Error deleting file:', error);
+          });
+      }
+    } catch (error) {
+      console.error('Error parsing image URL for deletion:', error);
+    }
   };
   
   const retryFailedUploads = async () => {

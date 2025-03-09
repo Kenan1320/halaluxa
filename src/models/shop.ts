@@ -118,16 +118,17 @@ export interface BusinessSignupFormData {
 
 export type ShopFilterBy = 'all' | 'nearby' | 'featured' | 'popular' | 'new';
 
-// Add UserShopPreference interface for the SelectShops page
+// User shop preference interface for the SelectShops page
 export interface UserShopPreference {
   id?: string;
   user_id: string;
   shop_id: string;
   is_following?: boolean;
   is_favorite?: boolean;
+  is_main_shop?: boolean;
 }
 
-// Extended profile interface for main_shop_id
+// Extended profile interface
 export interface UserProfile {
   id?: string;
   user_id?: string;

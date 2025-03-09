@@ -1,17 +1,24 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Product, ProductDetails } from '@/models/product';
 
+/**
+ * Safely parse JSON data
+ */
 const safeJsonParse = (data: any): ProductDetails => {
   if (typeof data === 'string') {
     try {
-      return JSON.parse(data);
+      return JSON.parse(data) as ProductDetails;
     } catch (e) {
-      return {};
+      return {} as ProductDetails;
     }
   }
-  return data || {};
+  return data || {} as ProductDetails;
 };
 
+/**
+ * Map database product object to frontend model
+ */
 const mapDbProductToModel = (data: any): Product => {
   return {
     id: data.id,
@@ -22,14 +29,18 @@ const mapDbProductToModel = (data: any): Product => {
     category: data.category,
     images: data.images || [],
     sellerId: data.shop_id || data.business_owner_id,
-    sellerName: data.business_owner_name,
+    sellerName: data.business_owner_name || data.seller_name || 'Unknown Seller',
     rating: data.rating,
     isHalalCertified: data.is_halal_certified,
     details: safeJsonParse(data.details),
     createdAt: data.created_at,
+    isPublished: data.is_published
   };
 };
 
+/**
+ * Get all products
+ */
 export async function getProducts(): Promise<Product[]> {
   try {
     const { data, error } = await supabase
@@ -51,6 +62,9 @@ export async function getProducts(): Promise<Product[]> {
 
 export const getAllProducts = getProducts;
 
+/**
+ * Get product by ID
+ */
 export async function getProductById(id: string): Promise<Product | undefined> {
   try {
     const { data, error } = await supabase
@@ -71,6 +85,9 @@ export async function getProductById(id: string): Promise<Product | undefined> {
   }
 }
 
+/**
+ * Prepare product data for database operations
+ */
 const prepareProductForDb = (product: Partial<Product>) => {
   const dbProduct: Record<string, any> = {
     name: product.name,
@@ -82,7 +99,8 @@ const prepareProductForDb = (product: Partial<Product>) => {
     shop_id: product.sellerId,
     rating: product.rating,
     is_halal_certified: product.isHalalCertified,
-    details: product.details ? JSON.stringify(product.details) : '{}'
+    details: product.details ? JSON.stringify(product.details) : '{}',
+    is_published: product.isPublished !== undefined ? product.isPublished : true
   };
   
   if (product.id) {
@@ -92,13 +110,16 @@ const prepareProductForDb = (product: Partial<Product>) => {
   return dbProduct;
 };
 
+/**
+ * Add a new product
+ */
 export async function addProduct(product: Partial<Product>): Promise<Product | undefined> {
   try {
     const dbProduct = prepareProductForDb(product);
     
     const { data, error } = await supabase
       .from('products')
-      .insert([dbProduct])
+      .insert(dbProduct)
       .select()
       .single();
     
@@ -114,6 +135,9 @@ export async function addProduct(product: Partial<Product>): Promise<Product | u
   }
 }
 
+/**
+ * Update an existing product
+ */
 export async function updateProduct(product: Partial<Product>): Promise<Product | undefined> {
   try {
     if (!product.id) {
@@ -142,6 +166,9 @@ export async function updateProduct(product: Partial<Product>): Promise<Product 
   }
 }
 
+/**
+ * Delete a product
+ */
 export async function deleteProduct(id: string): Promise<boolean> {
   try {
     const { error } = await supabase
@@ -161,18 +188,18 @@ export async function deleteProduct(id: string): Promise<boolean> {
   }
 }
 
-export const uploadProductImage = async (imageDataUrl: string): Promise<string | null> => {
+/**
+ * Upload a product image
+ */
+export const uploadProductImage = async (file: File): Promise<string | null> => {
   try {
-    const filename = `product-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-    
-    const res = await fetch(imageDataUrl);
-    const blob = await res.blob();
+    const fileName = `${Date.now()}-${Math.floor(Math.random() * 1000)}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '')}`;
     
     const { data, error } = await supabase.storage
       .from('product-images')
-      .upload(`public/${filename}`, blob, {
-        contentType: blob.type,
-        cacheControl: '3600'
+      .upload(`public/${fileName}`, file, {
+        cacheControl: '3600',
+        upsert: false
       });
     
     if (error) {
@@ -191,18 +218,26 @@ export const uploadProductImage = async (imageDataUrl: string): Promise<string |
   }
 };
 
+/**
+ * Create a new product with image uploads
+ */
 export const createProduct = async (productData: Partial<Product>): Promise<Product | null> => {
   try {
     if (productData.images && productData.images.length > 0) {
-      const processedImages = await Promise.all(
+      // Filter out already uploaded images (those that are already URLs)
+      const newImages = await Promise.all(
         productData.images.map(async (image) => {
-          if (image.startsWith('data:')) {
-            return await uploadProductImage(image);
+          if (typeof image === 'string' && image.startsWith('data:')) {
+            // Convert data URL to File
+            const res = await fetch(image);
+            const blob = await res.blob();
+            const file = new File([blob], `image-${Date.now()}.jpg`, { type: 'image/jpeg' });
+            return await uploadProductImage(file);
           }
           return image;
         })
       );
-      productData.images = processedImages.filter(img => img) as string[];
+      productData.images = newImages.filter(Boolean) as string[];
     }
 
     const { data, error } = await supabase
@@ -214,7 +249,7 @@ export const createProduct = async (productData: Partial<Product>): Promise<Prod
         category: productData.category,
         images: productData.images || [],
         shop_id: productData.sellerId,
-        is_published: true,
+        is_published: productData.isPublished !== undefined ? productData.isPublished : true,
         is_halal_certified: productData.isHalalCertified || false,
         stock: productData.inStock !== undefined ? (productData.inStock ? 1 : 0) : 1,
         details: productData.details ? JSON.stringify(productData.details) : '{}'
@@ -234,41 +269,38 @@ export const createProduct = async (productData: Partial<Product>): Promise<Prod
   }
 };
 
+/**
+ * Update a product by ID
+ */
 export const updateProductById = async (id: string, productData: Partial<Product>): Promise<Product | null> => {
   try {
-    const updateData: any = {
-      ...productData,
-    };
+    const updateData: any = {};
     
-    delete updateData.id;
-    delete updateData.sellerId;
-    delete updateData.sellerName;
-    delete updateData.createdAt;
-    
-    if (productData.isHalalCertified !== undefined) {
-      updateData.is_halal_certified = productData.isHalalCertified;
-      delete updateData.isHalalCertified;
-    }
-    
-    if (productData.inStock !== undefined) {
-      updateData.stock = productData.inStock ? 1 : 0;
-      delete updateData.inStock;
-    }
-    
-    if (productData.description !== undefined) {
-      updateData.description = productData.description;
-    }
+    // Only include fields that need to be updated
+    if (productData.name !== undefined) updateData.name = productData.name;
+    if (productData.description !== undefined) updateData.description = productData.description;
+    if (productData.price !== undefined) updateData.price = productData.price;
+    if (productData.category !== undefined) updateData.category = productData.category;
+    if (productData.isHalalCertified !== undefined) updateData.is_halal_certified = productData.isHalalCertified;
+    if (productData.isPublished !== undefined) updateData.is_published = productData.isPublished;
+    if (productData.inStock !== undefined) updateData.stock = productData.inStock ? 1 : 0;
+    if (productData.details !== undefined) updateData.details = JSON.stringify(productData.details);
 
     if (productData.images && productData.images.length > 0) {
+      // Process images that need to be uploaded (data URLs)
       const processedImages = await Promise.all(
         productData.images.map(async (image) => {
-          if (image.startsWith('data:')) {
-            return await uploadProductImage(image);
+          if (typeof image === 'string' && image.startsWith('data:')) {
+            // Convert data URL to File
+            const res = await fetch(image);
+            const blob = await res.blob();
+            const file = new File([blob], `image-${Date.now()}.jpg`, { type: 'image/jpeg' });
+            return await uploadProductImage(file);
           }
           return image;
         })
       );
-      updateData.images = processedImages.filter(img => img) as string[];
+      updateData.images = processedImages.filter(Boolean);
     }
 
     const { data, error } = await supabase
@@ -290,8 +322,12 @@ export const updateProductById = async (id: string, productData: Partial<Product
   }
 };
 
-export const bulkUploadProducts = async (products: Record<string, any>[]): Promise<boolean> => {
+/**
+ * Bulk upload products
+ */
+export const bulkUploadProducts = async (products: Array<Record<string, any>>): Promise<boolean> => {
   try {
+    // Process each product individually to ensure proper formatting
     for (const product of products) {
       const formattedProduct = {
         name: product.name,
@@ -304,7 +340,7 @@ export const bulkUploadProducts = async (products: Record<string, any>[]): Promi
         is_halal_certified: product.is_halal_certified || false,
         stock: product.inStock ? 1 : 0,
         long_description: product.long_description || '',
-        details: product.details || {}
+        details: typeof product.details === 'object' ? JSON.stringify(product.details) : '{}'
       };
 
       const { error } = await supabase
@@ -324,6 +360,9 @@ export const bulkUploadProducts = async (products: Record<string, any>[]): Promi
   }
 };
 
+/**
+ * Get featured products
+ */
 export const getFeaturedProducts = async (): Promise<Product[]> => {
   try {
     const { data, error } = await supabase
@@ -345,6 +384,9 @@ export const getFeaturedProducts = async (): Promise<Product[]> => {
   }
 };
 
+/**
+ * Get products by category
+ */
 export const getProductsByCategory = async (category: string): Promise<Product[]> => {
   try {
     const { data, error } = await supabase
@@ -365,6 +407,9 @@ export const getProductsByCategory = async (category: string): Promise<Product[]
   }
 };
 
+/**
+ * Get products by seller
+ */
 export const getProductsBySeller = async (sellerId: string): Promise<Product[]> => {
   try {
     const { data, error } = await supabase
@@ -385,6 +430,9 @@ export const getProductsBySeller = async (sellerId: string): Promise<Product[]> 
   }
 };
 
+/**
+ * Get mock products for development/testing
+ */
 export function getMockProducts(): Product[] {
   return [
     {
@@ -426,6 +474,6 @@ export function getMockProducts(): Product[] {
       createdAt: new Date().toISOString()
     }
   ];
-};
+}
 
 export type { Product };
