@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -171,41 +170,23 @@ const AppRoutes = () => {
   );
 };
 
-// Helper function to run database setup
-const runDatabaseSetup = async (): Promise<boolean> => {
-  try {
-    const success = await setupDatabaseTables();
-    return success;
-  } catch (error) {
-    console.error("Error setting up database:", error);
-    return false;
-  }
-};
-
 function App() {
-  const [isDatabaseReady, setIsDatabaseReady] = useState(false);
-  const [isInitializing, setIsInitializing] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    // Run database setup when the app initializes
+    // Run database setup in the background without blocking UI
     const initApp = async () => {
       try {
-        const success = await runDatabaseSetup();
-        setIsDatabaseReady(success);
+        await setupDatabaseTables();
       } catch (error) {
         console.error('Database initialization error:', error);
-        // Continue with app even if DB setup fails
-        setIsDatabaseReady(true);
-      } finally {
-        setIsInitializing(false);
       }
     };
     
     initApp();
   }, []);
 
-  // Don't render anything until initialization is complete
-  if (isInitializing) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen bg-white">
         <div className="text-center">

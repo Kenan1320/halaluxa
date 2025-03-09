@@ -10,13 +10,23 @@ export const processPayment = async (cart: any, paymentMethodDetails: any, shipp
     const orderId = uuidv4();
     const orderDate = new Date().toISOString();
     
+    // Get current user
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      return {
+        success: false,
+        error: 'User not authenticated'
+      };
+    }
+    
     // In a real app, we would process the payment with a payment provider
     // For demo purposes, we'll simulate a successful payment
     
     // Create an order in the database
     const { error } = await supabase.from('orders').insert({
       id: orderId,
-      user_id: (await supabase.auth.getUser()).data.user?.id,
+      user_id: user.id,
       date: orderDate,
       total: cart.totalPrice,
       items: cart.items,
@@ -48,11 +58,11 @@ export const processPayment = async (cart: any, paymentMethodDetails: any, shipp
 
 // Format payment method for display
 export function formatPaymentMethod(account: SellerAccount): string {
-  switch(account.method_type) {
+  switch(account.methodType) {
     case 'bank':
-      return `${account.bank_name}: ${account.account_name} (${account.account_number?.slice(-4)})`;
+      return `${account.bankName}: ${account.accountName} (${account.accountNumber?.slice(-4)})`;
     case 'paypal':
-      return `PayPal: ${account.paypal_email}`;
+      return `PayPal: ${account.paypalEmail}`;
     case 'stripe':
       return `Stripe Account`;
     case 'applepay':
@@ -84,18 +94,19 @@ export async function getSellerAccounts(options: { shopId?: string } = {}): Prom
     // Convert to our application model
     return data.map((item) => ({
       id: item.id,
-      user_id: user.id,
-      shop_id: item.shop_id,
-      method_type: item.method_type as "bank" | "paypal" | "stripe" | "applepay",
-      account_name: item.account_name,
-      account_number: item.account_number,
-      bank_name: item.bank_name,
-      paypal_email: item.paypal_email,
-      stripe_account_id: item.stripe_account_id,
-      applepay_merchant_id: null,
-      is_active: item.is_active,
-      created_at: item.created_at,
-      updated_at: item.updated_at
+      userId: user.id,
+      shopId: item.shop_id,
+      methodType: item.method_type as "bank" | "paypal" | "stripe" | "applepay",
+      accountName: item.account_name,
+      accountNumber: item.account_number,
+      bankName: item.bank_name,
+      paypalEmail: item.paypal_email,
+      stripeAccountId: item.stripe_account_id,
+      applePayMerchantId: null,
+      isActive: item.is_active,
+      isDefault: item.is_default || false,
+      createdAt: item.created_at,
+      updatedAt: item.updated_at
     }));
   } catch (error) {
     console.error('Error in getSellerAccounts:', error);
@@ -120,18 +131,19 @@ export async function getSellerAccount(accountId: string): Promise<SellerAccount
 
     return {
       id: data.id,
-      user_id: user.id,
-      shop_id: data.shop_id,
-      method_type: data.method_type as "bank" | "paypal" | "stripe" | "applepay",
-      account_name: data.account_name,
-      account_number: data.account_number,
-      bank_name: data.bank_name,
-      paypal_email: data.paypal_email,
-      stripe_account_id: data.stripe_account_id,
-      applepay_merchant_id: null,
-      is_active: data.is_active,
-      created_at: data.created_at,
-      updated_at: data.updated_at
+      userId: user.id,
+      shopId: data.shop_id,
+      methodType: data.method_type as "bank" | "paypal" | "stripe" | "applepay",
+      accountName: data.account_name,
+      accountNumber: data.account_number,
+      bankName: data.bank_name,
+      paypalEmail: data.paypal_email,
+      stripeAccountId: data.stripe_account_id,
+      applePayMerchantId: null,
+      isActive: data.is_active,
+      isDefault: !!data.is_default,
+      createdAt: data.created_at,
+      updatedAt: data.updated_at
     };
   } catch (error) {
     console.error(`Error in getSellerAccount for ${accountId}:`, error);
@@ -162,14 +174,14 @@ export async function createSellerAccount(accountData: Partial<SellerAccount>, o
     // Prepare data for insertion
     const insertData = {
       shop_id: shopId,
-      method_type: accountData.method_type,
-      account_name: accountData.account_name,
-      account_number: accountData.account_number,
-      bank_name: accountData.bank_name,
-      paypal_email: accountData.paypal_email,
-      stripe_account_id: accountData.stripe_account_id,
+      method_type: accountData.methodType,
+      account_name: accountData.accountName,
+      account_number: accountData.accountNumber,
+      bank_name: accountData.bankName,
+      paypal_email: accountData.paypalEmail,
+      stripe_account_id: accountData.stripeAccountId,
       is_active: true,
-      is_default: false
+      is_default: accountData.isDefault || false
     };
 
     const { data, error } = await supabase.from('shop_payment_methods').insert(insertData).select().single();
@@ -180,18 +192,19 @@ export async function createSellerAccount(accountData: Partial<SellerAccount>, o
 
     return {
       id: data.id,
-      user_id: user.id,
-      shop_id: data.shop_id,
-      method_type: data.method_type as "bank" | "paypal" | "stripe" | "applepay",
-      account_name: data.account_name,
-      account_number: data.account_number,
-      bank_name: data.bank_name,
-      paypal_email: data.paypal_email,
-      stripe_account_id: data.stripe_account_id,
-      applepay_merchant_id: null,
-      is_active: data.is_active,
-      created_at: data.created_at,
-      updated_at: data.updated_at
+      userId: user.id,
+      shopId: data.shop_id,
+      methodType: data.method_type as "bank" | "paypal" | "stripe" | "applepay",
+      accountName: data.account_name,
+      accountNumber: data.account_number,
+      bankName: data.bank_name,
+      paypalEmail: data.paypal_email,
+      stripeAccountId: data.stripe_account_id,
+      applePayMerchantId: null,
+      isActive: data.is_active,
+      isDefault: !!data.is_default,
+      createdAt: data.created_at,
+      updatedAt: data.updated_at
     };
   } catch (error) {
     console.error('Error in createSellerAccount:', error);
@@ -209,13 +222,14 @@ export async function updateSellerAccount(accountId: string, accountData: Partia
 
     // Prepare update data
     const updateData: Record<string, any> = {};
-    if (accountData.method_type) updateData.method_type = accountData.method_type;
-    if (accountData.account_name) updateData.account_name = accountData.account_name;
-    if (accountData.account_number) updateData.account_number = accountData.account_number;
-    if (accountData.bank_name) updateData.bank_name = accountData.bank_name;
-    if (accountData.paypal_email) updateData.paypal_email = accountData.paypal_email;
-    if (accountData.stripe_account_id) updateData.stripe_account_id = accountData.stripe_account_id;
-    if (accountData.is_active !== undefined) updateData.is_active = accountData.is_active;
+    if (accountData.methodType) updateData.method_type = accountData.methodType;
+    if (accountData.accountName) updateData.account_name = accountData.accountName;
+    if (accountData.accountNumber) updateData.account_number = accountData.accountNumber;
+    if (accountData.bankName) updateData.bank_name = accountData.bankName;
+    if (accountData.paypalEmail) updateData.paypal_email = accountData.paypalEmail;
+    if (accountData.stripeAccountId) updateData.stripe_account_id = accountData.stripeAccountId;
+    if (accountData.isActive !== undefined) updateData.is_active = accountData.isActive;
+    if (accountData.isDefault !== undefined) updateData.is_default = accountData.isDefault;
 
     const { data, error } = await supabase.from('shop_payment_methods').update(updateData).eq('id', accountId).select().single();
     if (error) {
@@ -225,18 +239,19 @@ export async function updateSellerAccount(accountId: string, accountData: Partia
 
     return {
       id: data.id,
-      user_id: user.id,
-      shop_id: data.shop_id,
-      method_type: data.method_type as "bank" | "paypal" | "stripe" | "applepay",
-      account_name: data.account_name,
-      account_number: data.account_number,
-      bank_name: data.bank_name,
-      paypal_email: data.paypal_email,
-      stripe_account_id: data.stripe_account_id,
-      applepay_merchant_id: null,
-      is_active: data.is_active,
-      created_at: data.created_at,
-      updated_at: data.updated_at
+      userId: user.id,
+      shopId: data.shop_id,
+      methodType: data.method_type as "bank" | "paypal" | "stripe" | "applepay",
+      accountName: data.account_name,
+      accountNumber: data.account_number,
+      bankName: data.bank_name,
+      paypalEmail: data.paypal_email,
+      stripeAccountId: data.stripe_account_id,
+      applePayMerchantId: null,
+      isActive: data.is_active,
+      isDefault: !!data.is_default,
+      createdAt: data.created_at,
+      updatedAt: data.updated_at
     };
   } catch (error) {
     console.error(`Error in updateSellerAccount for ${accountId}:`, error);

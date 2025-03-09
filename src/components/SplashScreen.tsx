@@ -6,13 +6,9 @@ export interface SplashScreenProps {
 }
 
 const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
-  // Call onComplete with a minimal delay for better user experience
+  // Call onComplete immediately
   useEffect(() => {
-    const timer = setTimeout(() => {
-      onComplete();
-    }, 800);
-    
-    return () => clearTimeout(timer);
+    onComplete();
   }, [onComplete]);
   
   return (

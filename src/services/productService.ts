@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Product, ProductDetails } from '@/models/product';
 
@@ -115,7 +114,6 @@ export async function addProduct(product: Partial<Product>): Promise<Product | u
   }
 }
 
-// Kept only one version of updateProduct and renamed the second one to updateProductById
 export async function updateProduct(product: Partial<Product>): Promise<Product | undefined> {
   try {
     if (!product.id) {
@@ -163,14 +161,32 @@ export async function deleteProduct(id: string): Promise<boolean> {
   }
 }
 
-// Helper function for handling image uploads
-export const uploadProductImage = async (imageData: string): Promise<string | null> => {
+export const uploadProductImage = async (imageDataUrl: string): Promise<string | null> => {
   try {
-    // In a real implementation, this would upload to storage
-    // For now we'll just return the image data as is
-    return imageData;
+    const filename = `product-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    
+    const res = await fetch(imageDataUrl);
+    const blob = await res.blob();
+    
+    const { data, error } = await supabase.storage
+      .from('product-images')
+      .upload(`public/${filename}`, blob, {
+        contentType: blob.type,
+        cacheControl: '3600'
+      });
+    
+    if (error) {
+      console.error('Error uploading image:', error);
+      return null;
+    }
+    
+    const { data: publicUrlData } = supabase.storage
+      .from('product-images')
+      .getPublicUrl(data.path);
+    
+    return publicUrlData.publicUrl;
   } catch (error) {
-    console.error('Error uploading product image:', error);
+    console.error('Error in uploadProductImage:', error);
     return null;
   }
 };
@@ -198,7 +214,7 @@ export const createProduct = async (productData: Partial<Product>): Promise<Prod
         category: productData.category,
         images: productData.images || [],
         shop_id: productData.sellerId,
-        is_published: true, // Default value since isPublished is not in Product interface
+        is_published: true,
         is_halal_certified: productData.isHalalCertified || false,
         stock: productData.inStock !== undefined ? (productData.inStock ? 1 : 0) : 1,
         details: productData.details ? JSON.stringify(productData.details) : '{}'
@@ -285,19 +301,20 @@ export const bulkUploadProducts = async (products: Record<string, any>[]): Promi
       shop_id: product.shop_id,
       is_published: product.is_published !== undefined ? product.is_published : true,
       is_halal_certified: product.is_halal_certified || false,
-      stock: product.inStock !== undefined ? (product.inStock ? 1 : 0) : 1,
+      stock: product.inStock ? 1 : 0,
       long_description: product.long_description || '',
       details: product.details || {}
     }));
 
-    // Insert products one by one to avoid type errors
-    for (const product of formattedProducts) {
+    const batchSize = 20;
+    for (let i = 0; i < formattedProducts.length; i += batchSize) {
+      const batch = formattedProducts.slice(i, i + batchSize);
       const { error } = await supabase
         .from('products')
-        .insert(product);
+        .insert(batch);
 
       if (error) {
-        console.error('Error inserting product:', error);
+        console.error(`Error bulk uploading products batch ${i}:`, error);
         return false;
       }
     }
