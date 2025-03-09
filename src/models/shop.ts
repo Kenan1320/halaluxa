@@ -79,25 +79,30 @@ export interface ShopProduct {
   shop_id: string;
   images?: string[];
   rating?: number;
-  isHalalCertified?: boolean;
-  inStock?: boolean;
+  is_halal_certified?: boolean;
+  is_published?: boolean;
+  stock?: number;
   created_at?: string;
   updated_at?: string;
+  long_description?: string;
+  details?: any;
+  sellerId: string;
+  sellerName: string;
 }
 
 export interface ShopPaymentMethod {
   id: string;
-  shop_id: string;
-  method_type: "bank" | "paypal" | "stripe" | "applepay";
-  account_name?: string;
-  account_number?: string;
-  bank_name?: string;
-  paypal_email?: string;
-  stripe_account_id?: string;
-  is_active: boolean;
-  is_default?: boolean;
-  created_at: string;
-  updated_at: string;
+  shopId: string;
+  methodType: "bank" | "paypal" | "stripe" | "applepay";
+  accountName?: string;
+  accountNumber?: string;
+  bankName?: string;
+  paypalEmail?: string;
+  stripeAccountId?: string;
+  isActive: boolean;
+  isDefault?: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface BusinessSignupFormData {
@@ -112,3 +117,33 @@ export interface BusinessSignupFormData {
 }
 
 export type ShopFilterBy = 'all' | 'nearby' | 'featured' | 'popular' | 'new';
+
+// Add UserShopPreference interface for the SelectShops page
+export interface UserShopPreference {
+  id?: string;
+  user_id: string;
+  shop_id: string;
+  is_following?: boolean;
+  is_favorite?: boolean;
+}
+
+// Extended profile interface for main_shop_id
+export interface UserProfile {
+  id?: string;
+  user_id?: string;
+  name?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+  role?: string;
+  is_business_owner?: boolean;
+  shop_name?: string;
+  shop_description?: string; 
+  shop_category?: string;
+  shop_location?: string;
+  shop_logo?: string;
+  main_shop_id?: string;
+}

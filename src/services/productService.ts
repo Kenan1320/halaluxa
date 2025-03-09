@@ -292,29 +292,27 @@ export const updateProductById = async (id: string, productData: Partial<Product
 
 export const bulkUploadProducts = async (products: Record<string, any>[]): Promise<boolean> => {
   try {
-    const formattedProducts = products.map(product => ({
-      name: product.name,
-      description: product.description,
-      price: parseFloat(product.price),
-      category: product.category,
-      images: product.images || [],
-      shop_id: product.shop_id,
-      is_published: product.is_published !== undefined ? product.is_published : true,
-      is_halal_certified: product.is_halal_certified || false,
-      stock: product.inStock ? 1 : 0,
-      long_description: product.long_description || '',
-      details: product.details || {}
-    }));
+    for (const product of products) {
+      const formattedProduct = {
+        name: product.name,
+        description: product.description,
+        price: parseFloat(product.price),
+        category: product.category,
+        images: product.images || [],
+        shop_id: product.shop_id,
+        is_published: product.is_published !== undefined ? product.is_published : true,
+        is_halal_certified: product.is_halal_certified || false,
+        stock: product.inStock ? 1 : 0,
+        long_description: product.long_description || '',
+        details: product.details || {}
+      };
 
-    const batchSize = 20;
-    for (let i = 0; i < formattedProducts.length; i += batchSize) {
-      const batch = formattedProducts.slice(i, i + batchSize);
       const { error } = await supabase
         .from('products')
-        .insert(batch);
+        .insert(formattedProduct);
 
       if (error) {
-        console.error(`Error bulk uploading products batch ${i}:`, error);
+        console.error(`Error uploading product ${product.name}:`, error);
         return false;
       }
     }

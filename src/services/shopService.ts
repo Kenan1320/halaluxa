@@ -1,5 +1,6 @@
+
 import { supabase } from '@/integrations/supabase/client';
-import { Shop, ShopFilter, CreateShopInput, UpdateShopInput, ShopFilterBy } from '@/models/shop';
+import { Shop, ShopFilter, CreateShopInput, UpdateShopInput, ShopFilterBy, ShopProduct, ShopPaymentMethod } from '@/models/shop';
 import { Product } from '@/models/product';
 import { PaymentMethodType } from '@/models/payment';
 
@@ -351,7 +352,20 @@ export async function getShopPaymentMethods(shopId: string): Promise<ShopPayment
       return [];
     }
     
-    return data as ShopPaymentMethod[];
+    return data.map(method => ({
+      id: method.id,
+      shopId: method.shop_id,
+      methodType: method.method_type as PaymentMethodType,
+      accountName: method.account_name,
+      accountNumber: method.account_number,
+      bankName: method.bank_name,
+      paypalEmail: method.paypal_email,
+      stripeAccountId: method.stripe_account_id,
+      isActive: method.is_active,
+      isDefault: method.is_default || false,
+      createdAt: method.created_at,
+      updatedAt: method.updated_at
+    }));
   } catch (error) {
     console.error(`Error in getShopPaymentMethods for ${shopId}:`, error);
     return [];
@@ -417,9 +431,20 @@ export async function updateShopPaymentMethod(methodData: Partial<ShopPaymentMet
       throw new Error('Payment method ID is required');
     }
     
+    // Convert from camelCase to snake_case for database
+    const dbData: any = {};
+    if (methodData.methodType) dbData.method_type = methodData.methodType;
+    if (methodData.accountName) dbData.account_name = methodData.accountName;
+    if (methodData.accountNumber) dbData.account_number = methodData.accountNumber;
+    if (methodData.bankName) dbData.bank_name = methodData.bankName;
+    if (methodData.paypalEmail) dbData.paypal_email = methodData.paypalEmail;
+    if (methodData.stripeAccountId) dbData.stripe_account_id = methodData.stripeAccountId;
+    if (methodData.isActive !== undefined) dbData.is_active = methodData.isActive;
+    if (methodData.isDefault !== undefined) dbData.is_default = methodData.isDefault;
+    
     const { data, error } = await supabase
       .from('shop_payment_methods')
-      .update(methodData)
+      .update(dbData)
       .eq('id', methodData.id)
       .select()
       .single();
@@ -429,7 +454,20 @@ export async function updateShopPaymentMethod(methodData: Partial<ShopPaymentMet
       return null;
     }
     
-    return data as ShopPaymentMethod;
+    return {
+      id: data.id,
+      shopId: data.shop_id,
+      methodType: data.method_type as PaymentMethodType,
+      accountName: data.account_name,
+      accountNumber: data.account_number,
+      bankName: data.bank_name,
+      paypalEmail: data.paypal_email,
+      stripeAccountId: data.stripe_account_id,
+      isActive: data.is_active,
+      isDefault: data.is_default,
+      createdAt: data.created_at,
+      updatedAt: data.updated_at
+    };
   } catch (error) {
     console.error('Error in updateShopPaymentMethod:', error);
     return null;
@@ -584,8 +622,10 @@ export const createProductForShop = async (shopId: string, product: Partial<Prod
       sellerName: '',
       rating: data.rating,
       isHalalCertified: data.is_halal_certified,
+      isPublished: data.is_published,
       details: data.details,
-      createdAt: data.created_at
+      createdAt: data.created_at,
+      longDescription: data.long_description || ''
     };
   } catch (error) {
     console.error('Error in createProductForShop:', error);
