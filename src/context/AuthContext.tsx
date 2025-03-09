@@ -117,29 +117,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       console.log('Loaded profile:', profile);
       
-      // If the user is a business, also get business profile
-      let businessProfile = null;
-      if (profile.role === 'business') {
-        const { data: businessData, error: businessError } = await supabase
-          .from('business_profiles')
-          .select('*')
-          .eq('id', userId)
-          .single();
-        
-        if (businessError) {
-          console.error('Business profile load error:', businessError);
-        } else {
-          businessProfile = businessData;
-          console.log('Loaded business profile:', businessProfile);
-        }
-      }
-      
       // Safely ensure role is either 'shopper' or 'business'
       const safeRole = profile.role === 'business' 
         ? 'business' as const
         : 'shopper' as const;
       
-      // Combine profile and business profile data
+      // Create base user data
       const userData: User = {
         id: userId,
         email: profile.email,
@@ -153,14 +136,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         zip: profile.zip
       };
       
-      // Add business fields if applicable
-      if (businessProfile) {
-        userData.shopName = businessProfile.shop_name;
-        userData.shopDescription = businessProfile.shop_description;
-        userData.shopCategory = businessProfile.shop_category;
-        userData.shopLocation = businessProfile.shop_location;
-        userData.shopLogo = businessProfile.shop_logo;
-        userData.businessVerified = businessProfile.business_verified;
+      // If the user is a business, also get business profile
+      if (safeRole === 'business') {
+        const { data: businessData, error: businessError } = await supabase
+          .from('business_profiles')
+          .select('*')
+          .eq('id', userId)
+          .single();
+        
+        if (businessError) {
+          console.error('Business profile load error:', businessError);
+        } else if (businessData) {
+          // Add business fields if available
+          userData.shopName = businessData.shop_name;
+          userData.shopDescription = businessData.shop_description;
+          userData.shopCategory = businessData.shop_category;
+          userData.shopLocation = businessData.shop_location;
+          userData.shopLogo = businessData.shop_logo;
+          userData.businessVerified = businessData.business_verified;
+          
+          console.log('Loaded business profile:', businessData);
+        }
       }
       
       console.log('Final user data:', userData);

@@ -20,16 +20,16 @@ const AuthMiddleware = ({ children }: AuthMiddlewareProps) => {
     // Show splash screen for at least 1.2 seconds
     const timer = setTimeout(() => {
       setShowSplash(false);
-    }, 1200);
+    }, 1500);
 
     return () => clearTimeout(timer);
   }, []);
 
   // Determine if business user needs onboarding
   useEffect(() => {
-    if (!isInitializing && isLoggedIn && user?.role === 'business' && !user?.shopName) {
+    if (!isInitializing && isLoggedIn && user?.role === 'business') {
       // If they don't have a shop name set, they need onboarding
-      setNeedsOnboarding(true);
+      setNeedsOnboarding(!user.shopName);
     } else {
       setNeedsOnboarding(false);
     }
