@@ -1,48 +1,51 @@
 
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Link } from 'react-router-dom';
+import { Loader2 } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2 } from 'lucide-react';
-import { toast } from '@/components/ui/use-toast';
-import { useAuth } from '@/context/AuthContext';
 import { createBusinessAccount } from '@/services/authService';
 import { BusinessSignupFormData } from '@/models/shop';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { toast } from '@/components/ui/use-toast';
+import { productCategories } from '@/models/product';
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form } from '@/components/ui/form';
 
-const formSchema = z.object({
-  email: z.string().email({ message: 'Please enter a valid email address' }),
-  password: z.string().min(8, { message: 'Password must be at least 8 characters' }),
+// Modify the schema to include confirmPassword
+const signupSchema = z.object({
+  name: z.string().min(2, 'Name is required'),
+  email: z.string().email('Please enter a valid email'),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
   confirmPassword: z.string(),
-  name: z.string().min(1, { message: 'Please enter your name' }),
-  businessName: z.string().min(1, { message: 'Please enter your business name' }),
-  businessCategory: z.string().min(1, { message: 'Please select a business category' }),
-  businessDescription: z.string().min(1, { message: 'Please provide a brief description of your business' }),
-  location: z.string().min(1, { message: 'Please enter your business location' }),
+  businessName: z.string().min(2, 'Business name is required'),
+  businessCategory: z.string().min(1, 'Please select a category'),
+  businessDescription: z.string().min(10, 'Please provide a brief description'),
+  location: z.string().min(2, 'Location is required'),
   phone: z.string().optional(),
-}).refine(data => data.password === data.confirmPassword, {
+}).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
-  path: ['confirmPassword'],
+  path: ["confirmPassword"],
 });
 
-const SignupPage: React.FC = () => {
-  const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
-  const { user } = useAuth();
+// Define the form data type to match the schema
+type FormData = z.infer<typeof signupSchema>;
 
-  const { register, handleSubmit, formState: { errors } } = useForm<BusinessSignupFormData>({
-    resolver: zodResolver(formSchema),
+const SignupPage = () => {
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
+
+  const form = useForm<FormData>({
+    resolver: zodResolver(signupSchema),
     defaultValues: {
+      name: '',
       email: '',
       password: '',
-      name: '',
+      confirmPassword: '',
       businessName: '',
       businessCategory: '',
       businessDescription: '',
@@ -51,213 +54,235 @@ const SignupPage: React.FC = () => {
     }
   });
 
-  const onSubmit = async (data: BusinessSignupFormData) => {
-    setLoading(true);
+  const onSubmit = async (data: FormData) => {
+    setIsLoading(true);
+    
     try {
-      const result = await createBusinessAccount(
-        data.email,
-        data.password,
-        data.name,
+      // Extract the business details from the form data
+      const { email, password, name, businessName, businessCategory, businessDescription, location, phone } = data;
+      
+      // Call the service to create the business account
+      const response = await createBusinessAccount(
+        email, 
+        password, 
+        name, 
         {
-          businessName: data.businessName,
-          businessCategory: data.businessCategory,
-          businessDescription: data.businessDescription,
-          location: data.location,
-          phone: data.phone
+          businessName,
+          businessCategory,
+          businessDescription,
+          location,
+          phone
         }
       );
-
-      if (result.success) {
+      
+      if (response.success) {
         toast({
-          title: "Account created!",
+          title: "Success",
           description: "Your business account has been created successfully.",
         });
-        navigate('/dashboard');
+        navigate('/business/login');
       } else {
         toast({
           title: "Error",
-          description: result.message,
+          description: response.message || "Failed to create business account",
           variant: "destructive",
         });
       }
     } catch (error) {
-      console.error("Signup error:", error);
+      console.error('Error creating business account:', error);
       toast({
         title: "Error",
         description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
-  if (user) {
-    navigate('/dashboard');
-    return null;
-  }
-
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-12">
-      <Card className="w-full max-w-lg">
-        <CardHeader>
-          <CardTitle className="text-2xl font-serif">Create Your Business Account</CardTitle>
-          <CardDescription>
-            Join our halal marketplace and start selling your products to customers around the world.
-          </CardDescription>
-        </CardHeader>
-
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="your.email@example.com"
-                {...register('email')}
-                className={errors.email ? "border-red-500" : ""}
-              />
-              {errors.email && (
-                <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>
+    <div className="container max-w-md mx-auto px-4 py-8">
+      <div className="space-y-6">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold">Create Business Account</h1>
+          <p className="text-gray-600 mt-2">
+            Sign up to start selling on our platform
+          </p>
+        </div>
+        
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Your Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="John Doe" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
               )}
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  {...register('password')}
-                  className={errors.password ? "border-red-500" : ""}
-                />
-                {errors.password && (
-                  <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm Password</Label>
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  {...register('confirmPassword')}
-                  className={errors.confirmPassword ? "border-red-500" : ""}
-                />
-                {errors.confirmPassword && (
-                  <p className="text-red-500 text-xs mt-1">{errors.confirmPassword.message}</p>
-                )}
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="name">Your Name</Label>
-              <Input
-                id="name"
-                {...register('name')}
-                className={errors.name ? "border-red-500" : ""}
-              />
-              {errors.name && (
-                <p className="text-red-500 text-xs mt-1">{errors.name.message}</p>
+            />
+            
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email</FormLabel>
+                  <FormControl>
+                    <Input type="email" placeholder="your@email.com" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
               )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="businessName">Business Name</Label>
-              <Input
-                id="businessName"
-                {...register('businessName')}
-                className={errors.businessName ? "border-red-500" : ""}
-              />
-              {errors.businessName && (
-                <p className="text-red-500 text-xs mt-1">{errors.businessName.message}</p>
+            />
+            
+            <FormField
+              control={form.control}
+              name="phone"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Phone (Optional)</FormLabel>
+                  <FormControl>
+                    <Input placeholder="+1 (555) 123-4567" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
               )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="businessCategory">Business Category</Label>
-              <Select onValueChange={(value) => register('businessCategory').onChange({ target: { value } })}>
-                <SelectTrigger className={errors.businessCategory ? "border-red-500" : ""}>
-                  <SelectValue placeholder="Select a category" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Food & Beverages">Food & Beverages</SelectItem>
-                  <SelectItem value="Clothing & Fashion">Clothing & Fashion</SelectItem>
-                  <SelectItem value="Health & Beauty">Health & Beauty</SelectItem>
-                  <SelectItem value="Home & Living">Home & Living</SelectItem>
-                  <SelectItem value="Electronics">Electronics</SelectItem>
-                  <SelectItem value="Other">Other</SelectItem>
-                </SelectContent>
-              </Select>
-              {errors.businessCategory && (
-                <p className="text-red-500 text-xs mt-1">{errors.businessCategory.message}</p>
+            />
+            
+            <FormField
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Password</FormLabel>
+                  <FormControl>
+                    <Input type="password" placeholder="******" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
               )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="businessDescription">Business Description</Label>
-              <Textarea
-                id="businessDescription"
-                {...register('businessDescription')}
-                className={errors.businessDescription ? "border-red-500" : ""}
-                placeholder="Tell us about your business..."
-                rows={3}
-              />
-              {errors.businessDescription && (
-                <p className="text-red-500 text-xs mt-1">{errors.businessDescription.message}</p>
+            />
+            
+            <FormField
+              control={form.control}
+              name="confirmPassword"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Confirm Password</FormLabel>
+                  <FormControl>
+                    <Input type="password" placeholder="******" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
               )}
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="location">Business Location</Label>
-                <Input
-                  id="location"
-                  {...register('location')}
-                  className={errors.location ? "border-red-500" : ""}
-                  placeholder="City, Country"
-                />
-                {errors.location && (
-                  <p className="text-red-500 text-xs mt-1">{errors.location.message}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="phone">Phone Number (Optional)</Label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  {...register('phone')}
-                />
-              </div>
-            </div>
-          </CardContent>
-
-          <CardFooter className="flex flex-col space-y-4">
+            />
+            
+            <FormField
+              control={form.control}
+              name="businessName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Business Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Your Business Name" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="businessCategory"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Business Category</FormLabel>
+                  <Select 
+                    onValueChange={field.onChange} 
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a category" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectGroup>
+                        {productCategories.map((category) => (
+                          <SelectItem key={category} value={category}>
+                            {category}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="businessDescription"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Business Description</FormLabel>
+                  <FormControl>
+                    <Input 
+                      placeholder="Brief description of your business" 
+                      {...field} 
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="location"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Location</FormLabel>
+                  <FormControl>
+                    <Input placeholder="City, Country" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
             <Button 
               type="submit" 
               className="w-full" 
-              disabled={loading}
+              disabled={isLoading}
             >
-              {loading ? (
+              {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Creating Account...
+                  Creating account...
                 </>
               ) : (
-                'Create Business Account'
+                "Create Business Account"
               )}
             </Button>
-            <p className="text-sm text-center text-gray-500">
-              Already have an account?{" "}
-              <Link to="/business/login" className="text-primary hover:underline">
-                Login
-              </Link>
-            </p>
-          </CardFooter>
-        </form>
-      </Card>
+          </form>
+        </Form>
+        
+        <div className="text-center text-sm">
+          <p>
+            Already have an account?{" "}
+            <Link to="/business/login" className="text-blue-600 hover:underline">
+              Log in
+            </Link>
+          </p>
+        </div>
+      </div>
     </div>
   );
 };

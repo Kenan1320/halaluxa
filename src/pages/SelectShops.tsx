@@ -10,8 +10,13 @@ import ShopCard from '@/components/shop/ShopCard';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2 } from 'lucide-react';
 
-interface MyShopPreference extends UserShopPreference {
-  shop?: Shop;
+interface ShopCardProps {
+  shop: Shop;
+  isSelected?: boolean;
+  isMainShop?: boolean;
+  onSelect?: () => void;
+  onSetMain?: () => void;
+  showControls?: boolean;
 }
 
 const SelectShops = () => {
@@ -21,7 +26,7 @@ const SelectShops = () => {
   const [shops, setShops] = useState<Shop[]>([]);
   const [selectedShops, setSelectedShops] = useState<string[]>([]);
   const [mainShop, setMainShop] = useState<string | null>(null);
-  const [userShopPreferences, setUserShopPreferences] = useState<MyShopPreference[]>([]);
+  const [userShopPreferences, setUserShopPreferences] = useState<UserShopPreference[]>([]);
 
   useEffect(() => {
     if (!user) return;
@@ -41,34 +46,8 @@ const SelectShops = () => {
         setShops(shopsData || []);
 
         try {
-          // Try to use the custom RPC function
+          // Try to fetch user shop preferences directly
           const { data: prefsData, error: prefsError } = await supabase
-            .rpc('get_user_shop_preferences', { user_id_param: user.id });
-            
-          if (prefsError) {
-            throw prefsError;
-          }
-          
-          if (prefsData) {
-            setUserShopPreferences(prefsData);
-            
-            // Set selected shops based on preferences
-            const selectedShopIds = prefsData.map(pref => pref.shop_id);
-            setSelectedShops(selectedShopIds);
-            
-            // Set main shop
-            const mainShopPref = prefsData.find(pref => pref.is_main_shop);
-            if (mainShopPref) {
-              setMainShop(mainShopPref.shop_id);
-            }
-          }
-        } catch (rpcError) {
-          console.error("Error using RPC:", rpcError);
-          
-          // Fallback: use direct join approach
-          console.log("Using direct join approach");
-          
-          const { data: prefsWithShops, error: joinError } = await supabase
             .from('user_shop_preferences')
             .select(`
               id, 
@@ -87,10 +66,13 @@ const SelectShops = () => {
             `)
             .eq('user_id', user.id);
             
-          if (joinError) {
-            console.error("Error with join approach:", joinError);
-          } else if (prefsWithShops) {
-            const formattedPrefs = prefsWithShops.map(pref => ({
+          if (prefsError) {
+            console.error("Error fetching preferences:", prefsError);
+            return;
+          }
+          
+          if (prefsData) {
+            const formattedPrefs = prefsData.map(pref => ({
               id: pref.id,
               user_id: pref.user_id,
               shop_id: pref.shop_id,
@@ -112,6 +94,8 @@ const SelectShops = () => {
               setMainShop(mainShopPref.shop_id);
             }
           }
+        } catch (error) {
+          console.error("Error in preferences fetch:", error);
         }
       } catch (error) {
         console.error('Error fetching shops:', error);
@@ -174,36 +158,36 @@ const SelectShops = () => {
         }
       }
 
-      // Handle existing preferences
-      if (userShopPreferences.length > 0) {
-        // Delete all existing preferences (we'll add back the selected ones)
-        const { error: deleteError } = await supabase
-          .from('user_shop_preferences')
-          .delete()
-          .eq('user_id', user.id);
-          
-        if (deleteError) {
-          console.error('Error deleting preferences:', deleteError);
-        }
+      // Delete existing preferences
+      const { error: deleteError } = await supabase
+        .from('user_shop_preferences')
+        .delete()
+        .eq('user_id', user.id);
+        
+      if (deleteError) {
+        console.error('Error deleting preferences:', deleteError);
       }
       
       // Only proceed if there are selected shops
       if (selectedShops.length > 0) {
-        // Create new preferences for each selected shop
+        // Create preferences array for insertion
         const preferencesToInsert = selectedShops.map(shopId => ({
           user_id: user.id,
           shop_id: shopId,
+          is_following: true,
+          is_favorite: true,
           is_main_shop: shopId === mainShop
         }));
         
-        // Insert the new preferences
-        const { error: insertError } = await supabase
-          .from('user_shop_preferences')
-          .insert(preferencesToInsert);
-          
-        if (insertError) {
-          console.error('Error inserting preferences:', insertError);
-          throw insertError;
+        // Insert new preferences
+        for (const pref of preferencesToInsert) {
+          const { error: insertError } = await supabase
+            .from('user_shop_preferences')
+            .insert(pref);
+            
+          if (insertError) {
+            console.error('Error inserting preference:', insertError);
+          }
         }
       }
 
@@ -262,7 +246,7 @@ const SelectShops = () => {
                   <ShopCard 
                     key={shop.id}
                     shop={shop}
-                    selected={selectedShops.includes(shop.id)}
+                    isSelected={selectedShops.includes(shop.id)}
                     isMainShop={mainShop === shop.id}
                     onSelect={() => toggleShopSelection(shop.id)}
                     onSetMain={() => toggleMainShop(shop.id)}
@@ -285,7 +269,7 @@ const SelectShops = () => {
                       <ShopCard 
                         key={shop.id}
                         shop={shop}
-                        selected={true}
+                        isSelected={true}
                         isMainShop={mainShop === shop.id}
                         onSelect={() => toggleShopSelection(shop.id)}
                         onSetMain={() => toggleMainShop(shop.id)}

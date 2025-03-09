@@ -11,6 +11,8 @@ export interface PaymentMethod {
 }
 
 export type PaymentMethodData = "bank" | "paypal" | "stripe" | "applepay";
+// Add this alias for backward compatibility
+export type PaymentMethodType = PaymentMethodData;
 
 export interface PaymentMethodFormData {
   type: PaymentMethodData;
@@ -37,4 +39,16 @@ export interface PaymentResult {
   message: string;
   transactionId?: string;
   error?: any;
+  orderId?: string;
+  orderDate?: string;
 }
+
+export interface SellerAccount {
+  id: string;
+  userId: string;
+  shopId?: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+

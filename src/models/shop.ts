@@ -1,4 +1,3 @@
-
 export interface Shop {
   id: string;
   name: string;
@@ -108,6 +107,7 @@ export interface ShopPaymentMethod {
 export interface BusinessSignupFormData {
   email: string;
   password: string;
+  confirmPassword?: string;
   name: string;
   businessName: string;
   businessCategory: string;
@@ -128,7 +128,7 @@ export interface UserShopPreference {
   is_main_shop?: boolean;
   created_at?: string;
   updated_at?: string;
-  shop?: Shop;
+  shop?: Shop | any;
 }
 
 // Extended profile interface
