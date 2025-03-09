@@ -64,8 +64,6 @@ export default function Index() {
 
   // Subscribe to shop updates (this is a replacement for the real-time subscription)
   useEffect(() => {
-    let unsubscribeFunction: (() => void) | null = null;
-    
     const setupSubscription = async () => {
       try {
         const unsubscribe = await getAllShops().then(updatedShops => {
@@ -73,18 +71,21 @@ export default function Index() {
           return () => {}; // Return a no-op cleanup function
         });
         
-        unsubscribeFunction = unsubscribe;
+        return unsubscribe;
       } catch (error) {
         console.error('Error setting up shop subscription:', error);
+        return () => {};
       }
     };
     
-    setupSubscription();
+    const unsubscribeFunction = setupSubscription();
     
     return () => {
-      if (unsubscribeFunction) {
-        unsubscribeFunction();
-      }
+      unsubscribeFunction.then(unsub => {
+        if (typeof unsub === 'function') {
+          unsub();
+        }
+      });
     };
   }, []);
 
@@ -133,11 +134,7 @@ export default function Index() {
             <p className="text-haluna-text-light">Shop from our trusted marketplace sellers</p>
           </div>
           
-          <NearbyShops 
-            shops={popularShops} 
-            isLoading={isLoadingShops} 
-            emptyMessage="No shops available in your area yet." 
-          />
+          <NearbyShops />
           
           <div className="mt-8 text-center">
             <Link

@@ -1,4 +1,3 @@
-
 // Import the Shop model from the models folder
 import { Shop, ShopProduct, ShopPaymentMethod } from '@/models/shop';
 import { supabase } from '@/integrations/supabase/client';
@@ -496,20 +495,20 @@ export function convertToShopProduct(product: Product, shopId: string): ShopProd
 }
 
 // Convert ShopProduct to Product model
-export function convertToModelProduct(shopProduct: ShopProduct): Product {
+export function convertToModelProduct(shopProduct: any): Product {
   return {
     id: shopProduct.id,
     name: shopProduct.name,
     description: shopProduct.description,
     price: shopProduct.price,
     category: shopProduct.category,
-    images: shopProduct.images,
-    sellerId: shopProduct.shop_id,
-    sellerName: shopProduct.sellerName || "", 
     inStock: shopProduct.stock > 0,
-    isHalalCertified: shopProduct.is_halal_certified,
-    rating: shopProduct.rating,
-    createdAt: shopProduct.created_at || new Date().toISOString(),
-    stock: shopProduct.stock
+    images: shopProduct.images || [],
+    sellerId: shopProduct.shop_id,
+    sellerName: shopProduct.shop_name,
+    rating: shopProduct.rating || 0,
+    isHalalCertified: shopProduct.is_halal_certified || false,
+    details: typeof shopProduct.details === 'string' ? JSON.parse(shopProduct.details) : shopProduct.details || {},
+    createdAt: shopProduct.created_at
   };
 }

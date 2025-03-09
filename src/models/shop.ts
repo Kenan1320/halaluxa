@@ -33,9 +33,12 @@ export interface ShopProduct {
   stock: number;
   created_at?: string;
   updated_at?: string;
-  // Add these properties to match Product interface requirements
+  // Properties to match Product interface requirements
   sellerId: string;
   sellerName?: string;
+  inStock?: boolean;
+  isHalalCertified?: boolean;
+  createdAt?: string;
 }
 
 export interface ShopLocation {

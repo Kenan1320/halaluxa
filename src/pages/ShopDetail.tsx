@@ -170,7 +170,8 @@ export default function ShopDetail() {
               
               <TabsContent value="products" className="pt-6">
                 <ShopProductList 
-                  products={products} 
+                  shopId={shop.id}
+                  products={products as any} 
                   isLoading={isLoading}
                   emptyMessage="This shop has no products yet."
                 />

@@ -63,7 +63,7 @@ export async function getSellerAccounts(options: { shopId?: string }): Promise<S
       id: item.id,
       user_id: user.id,
       shop_id: item.shop_id,
-      method_type: item.method_type,
+      method_type: item.method_type as 'bank' | 'paypal' | 'stripe' | 'applepay',
       account_name: item.account_name,
       account_number: item.account_number,
       bank_name: item.bank_name,
@@ -105,7 +105,7 @@ export async function getSellerAccount(accountId: string): Promise<SellerAccount
       id: data.id,
       user_id: user.id,
       shop_id: data.shop_id,
-      method_type: data.method_type,
+      method_type: data.method_type as 'bank' | 'paypal' | 'stripe' | 'applepay',
       account_name: data.account_name,
       account_number: data.account_number,
       bank_name: data.bank_name,
@@ -181,7 +181,7 @@ export async function createSellerAccount(
       id: data.id,
       user_id: user.id,
       shop_id: data.shop_id,
-      method_type: data.method_type,
+      method_type: data.method_type as 'bank' | 'paypal' | 'stripe' | 'applepay',
       account_name: data.account_name,
       account_number: data.account_number,
       bank_name: data.bank_name,
@@ -237,7 +237,7 @@ export async function updateSellerAccount(
       id: data.id,
       user_id: user.id,
       shop_id: data.shop_id,
-      method_type: data.method_type,
+      method_type: data.method_type as 'bank' | 'paypal' | 'stripe' | 'applepay',
       account_name: data.account_name,
       account_number: data.account_number,
       bank_name: data.bank_name,
@@ -303,5 +303,30 @@ export async function setDefaultSellerAccount(accountId: string, shopId: string)
   } catch (error) {
     console.error(`Error in setDefaultSellerAccount for ${accountId}:`, error);
     return false;
+  }
+}
+
+// Process a payment
+export async function processPayment(
+  orderId: string,
+  paymentDetails: any,
+  options: { successUrl?: string; cancelUrl?: string }
+): Promise<{ success: boolean; redirectUrl?: string; error?: string }> {
+  try {
+    // Placeholder for payment processing logic
+    console.log(`Processing payment for order ${orderId}`);
+    
+    // Return success with a redirect URL
+    return {
+      success: true,
+      redirectUrl: options.successUrl || `/order-confirmation?id=${orderId}`
+    };
+  } catch (error: any) {
+    console.error('Payment processing error:', error);
+    return {
+      success: false,
+      error: error.message || 'Payment processing failed',
+      redirectUrl: options.cancelUrl || '/checkout?error=payment_failed'
+    };
   }
 }

@@ -30,7 +30,6 @@ const mapDbProductToModel = (data: any): Product => {
     isHalalCertified: data.is_halal_certified,
     details: safeJsonParse(data.details),
     createdAt: data.created_at,
-    stock: data.stock || 0
   };
 };
 
@@ -85,7 +84,7 @@ const prepareProductForDb = (product: Partial<Product>) => {
     name: product.name,
     description: product.description,
     price: product.price,
-    stock: product.stock !== undefined ? product.stock : (product.inStock ? 1 : 0),
+    stock: product.inStock !== undefined ? (product.inStock ? 1 : 0) : 0,
     category: product.category,
     images: product.images,
     shop_id: product.sellerId,
@@ -109,7 +108,7 @@ export async function addProduct(product: Partial<Product>): Promise<Product | u
     
     const { data, error } = await supabase
       .from('products')
-      .insert(dbProduct)
+      .insert([dbProduct])
       .select()
       .single();
     
@@ -258,8 +257,7 @@ export function getMockProducts(): Product[] {
         servings: "4 patties",
         ingredients: "100% grass-fed beef, salt, black pepper"
       },
-      createdAt: new Date().toISOString(),
-      stock: 10
+      createdAt: new Date().toISOString()
     },
     {
       id: "2",
@@ -278,8 +276,7 @@ export function getMockProducts(): Product[] {
         origin: "Jordan",
         ingredients: "100% organic Medjool dates"
       },
-      createdAt: new Date().toISOString(),
-      stock: 25
+      createdAt: new Date().toISOString()
     }
   ];
 }
