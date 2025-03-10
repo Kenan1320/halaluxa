@@ -8,6 +8,7 @@ import { ShoppingCart, Eye, Heart, ChevronRight } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
+import { useTheme } from '@/context/ThemeContext';
 
 const ProductGrid = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -15,6 +16,7 @@ const ProductGrid = () => {
   const [expandedProduct, setExpandedProduct] = useState<string | null>(null);
   const { cart, addToCart } = useCart();
   const { toast } = useToast();
+  const { theme } = useTheme();
   
   useEffect(() => {
     const loadProducts = async () => {
@@ -36,9 +38,9 @@ const ProductGrid = () => {
       <div className="grid grid-cols-3 gap-4 my-3">
         {[1, 2, 3, 4, 5, 6].map((i) => (
           <div key={i} className="animate-pulse">
-            <div className="h-32 bg-gray-200 rounded-lg mb-2"></div>
-            <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-            <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+            <div className="h-32 bg-muted rounded-lg mb-2 dark:bg-muted/50"></div>
+            <div className="h-4 bg-muted rounded w-3/4 mb-2 dark:bg-muted/50"></div>
+            <div className="h-3 bg-muted rounded w-1/2 dark:bg-muted/50"></div>
           </div>
         ))}
       </div>
@@ -76,7 +78,7 @@ const ProductGrid = () => {
         >
           {expandedProduct === product.id ? (
             // Expanded product view
-            <div className="bg-white shadow-sm overflow-hidden rounded-lg">
+            <div className="bg-card shadow-sm overflow-hidden rounded-lg dark:shadow-md dark:shadow-primary/5">
               <div className="h-48 relative">
                 {product.images && product.images[0] ? (
                   <img 
@@ -85,8 +87,8 @@ const ProductGrid = () => {
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-                    <span className="text-gray-400">No image</span>
+                  <div className="w-full h-full bg-muted flex items-center justify-center dark:bg-muted/50">
+                    <span className="text-muted-foreground">No image</span>
                   </div>
                 )}
                 
@@ -105,17 +107,16 @@ const ProductGrid = () => {
               
               <div className="p-4">
                 <h3 className="font-medium mb-1">{product.name}</h3>
-                <p className="text-sm text-gray-600 mb-3 line-clamp-2">{product.description}</p>
+                <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{product.description}</p>
                 
                 <div className="flex items-center justify-between">
                   <div>
-                    <span className="text-[#2A866A] font-bold">${product.price.toFixed(2)}</span>
+                    <span className="text-primary font-bold">${product.price.toFixed(2)}</span>
                   </div>
                   
                   <Button
                     variant="default"
                     size="sm"
-                    className="bg-[#FF7A45] hover:bg-[#e86a3a]"
                     onClick={(e) => handleAddToCart(product, e)}
                   >
                     <ShoppingCart className="h-4 w-4 mr-1" />
@@ -126,7 +127,7 @@ const ProductGrid = () => {
                 <Button 
                   variant="outline"
                   size="sm"
-                  className="w-full mt-3 border-[#2A866A] text-[#2A866A] hover:bg-[#2A866A] hover:text-white"
+                  className="w-full mt-3"
                 >
                   <Link to={`/product/${product.id}`} className="w-full h-full flex items-center justify-center">
                     <Eye className="h-4 w-4 mr-1" />
@@ -137,7 +138,7 @@ const ProductGrid = () => {
             </div>
           ) : (
             // Collapsed product view - clean, minimalist design with just image, name and price
-            <div className="group overflow-hidden rounded-lg bg-white">
+            <div className="group overflow-hidden rounded-lg bg-card shadow-sm dark:shadow-md dark:shadow-primary/5">
               <div className="relative h-32 sm:h-36 overflow-hidden">
                 {product.images && product.images[0] ? (
                   <img 
@@ -146,26 +147,26 @@ const ProductGrid = () => {
                     className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                   />
                 ) : (
-                  <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-                    <span className="text-gray-400">No image</span>
+                  <div className="w-full h-full bg-muted flex items-center justify-center dark:bg-muted/50">
+                    <span className="text-muted-foreground">No image</span>
                   </div>
                 )}
                 
                 {/* Cart button overlay */}
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
                   <button
-                    className="bg-white rounded-full p-2 shadow-md transform translate-y-4 group-hover:translate-y-0 transition-transform"
+                    className="bg-card rounded-full p-2 shadow-md transform translate-y-4 group-hover:translate-y-0 transition-transform dark:shadow-primary/10"
                     onClick={(e) => handleAddToCart(product, e)}
                   >
-                    <ShoppingCart className="h-4 w-4 text-[#2A866A]" />
+                    <ShoppingCart className="h-4 w-4 text-primary" />
                   </button>
                 </div>
               </div>
               
               <div className="pt-2 px-1">
-                <h3 className="font-medium text-sm text-gray-800 line-clamp-1">{product.name}</h3>
+                <h3 className="font-medium text-sm line-clamp-1">{product.name}</h3>
                 <div className="flex items-center justify-between mt-1">
-                  <span className="text-[#2A866A] font-semibold text-sm">${product.price.toFixed(2)}</span>
+                  <span className="text-primary font-semibold text-sm">${product.price.toFixed(2)}</span>
                 </div>
               </div>
             </div>

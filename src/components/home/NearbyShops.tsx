@@ -6,11 +6,13 @@ import { useLocation } from '@/context/LocationContext';
 import ShopCard from '@/components/shop/ShopCard';
 import ShopProductList from '@/components/shop/ShopProductList';
 import { Link } from 'react-router-dom';
+import { useTheme } from '@/context/ThemeContext';
 
 const NearbyShops = () => {
   const [shops, setShops] = useState<Shop[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { isLocationEnabled, location, getNearbyShops } = useLocation();
+  const { theme } = useTheme();
   const containerRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
@@ -43,7 +45,7 @@ const NearbyShops = () => {
           {[1, 2, 3, 4].map((i) => (
             <div 
               key={i} 
-              className="flex-shrink-0 w-64 h-56 bg-gray-100 rounded-lg animate-pulse"
+              className="flex-shrink-0 w-64 h-56 bg-muted rounded-lg animate-pulse dark:bg-muted/50"
             />
           ))}
         </div>
@@ -63,8 +65,11 @@ const NearbyShops = () => {
           <div className="flex items-center justify-between mb-4">
             <Link to={`/shop/${shop.id}`} className="group flex items-center gap-3">
               <motion.div 
-                className="w-10 h-10 rounded-full overflow-hidden bg-white shadow-sm flex items-center justify-center"
-                whileHover={{ scale: 1.1 }}
+                className="w-10 h-10 rounded-full overflow-hidden bg-card shadow-sm flex items-center justify-center dark:shadow-md dark:shadow-primary/5"
+                whileHover={{ 
+                  scale: 1.1,
+                  boxShadow: theme === 'dark' ? '0 0 10px rgba(209, 232, 226, 0.2)' : '0 4px 12px rgba(0,0,0,0.1)'
+                }}
                 whileTap={{ scale: 0.95 }}
                 transition={{ type: "spring", stiffness: 400, damping: 10 }}
               >
@@ -75,8 +80,8 @@ const NearbyShops = () => {
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <div className="w-full h-full bg-haluna-primary-light flex items-center justify-center">
-                    <span className="text-xs font-medium text-haluna-primary">
+                  <div className="w-full h-full bg-primary/10 flex items-center justify-center dark:bg-primary/20">
+                    <span className="text-xs font-medium text-primary">
                       {shop.name.substring(0, 2).toUpperCase()}
                     </span>
                   </div>
@@ -84,11 +89,11 @@ const NearbyShops = () => {
               </motion.div>
               <motion.h3 
                 className="text-base font-medium relative"
-                whileHover={{ color: "#2A866A" }}
+                whileHover={{ color: "hsl(var(--primary))" }}
               >
                 {shop.name}
                 <motion.span
-                  className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#2A866A]"
+                  className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary"
                   initial={{ width: 0 }}
                   whileHover={{ width: "100%" }}
                   transition={{ duration: 0.3 }}
@@ -97,7 +102,7 @@ const NearbyShops = () => {
             </Link>
             <Link 
               to={`/shop/${shop.id}`} 
-              className="text-xs font-medium text-[#29866B] hover:underline transition-colors duration-300"
+              className="text-xs font-medium text-primary hover:underline transition-colors duration-300"
             >
               View all
             </Link>

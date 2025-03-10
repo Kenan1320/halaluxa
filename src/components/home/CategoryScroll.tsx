@@ -3,25 +3,27 @@ import { useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ShoppingCart, ShoppingBag, Home, BookOpen, Utensils, HeartPulse, Gift, Shirt, Laptop, Baby, Drumstick, Palette } from 'lucide-react';
+import { useTheme } from '@/context/ThemeContext';
 
 const categories = [
-  { id: 1, name: 'Groceries', icon: ShoppingCart, color: '#2A866A' },
-  { id: 2, name: 'Food', icon: Utensils, color: '#2A866A' },
-  { id: 3, name: 'Modest Clothing', icon: Shirt, color: '#2A866A' },
-  { id: 4, name: 'Home', icon: Home, color: '#2A866A' },
-  { id: 5, name: 'Electronics', icon: Laptop, color: '#2A866A' },
-  { id: 6, name: 'Books', icon: BookOpen, color: '#2A866A' },
-  { id: 7, name: 'Health', icon: HeartPulse, color: '#2A866A' },
-  { id: 8, name: 'Toys', icon: Baby, color: '#2A866A' },
-  { id: 9, name: 'Gifts', icon: Gift, color: '#2A866A' },
-  { id: 10, name: 'Art', icon: Palette, color: '#2A866A' },
-  { id: 11, name: 'Baby', icon: Baby, color: '#2A866A' },
-  { id: 12, name: 'Halal Meat', icon: Drumstick, color: '#2A866A' }
+  { id: 1, name: 'Groceries', icon: ShoppingCart },
+  { id: 2, name: 'Food', icon: Utensils },
+  { id: 3, name: 'Modest Clothing', icon: Shirt },
+  { id: 4, name: 'Home', icon: Home },
+  { id: 5, name: 'Electronics', icon: Laptop },
+  { id: 6, name: 'Books', icon: BookOpen },
+  { id: 7, name: 'Health', icon: HeartPulse },
+  { id: 8, name: 'Toys', icon: Baby },
+  { id: 9, name: 'Gifts', icon: Gift },
+  { id: 10, name: 'Art', icon: Palette },
+  { id: 11, name: 'Baby', icon: Baby },
+  { id: 12, name: 'Halal Meat', icon: Drumstick }
 ];
 
 const CategoryScroll = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const { theme } = useTheme();
   
   useEffect(() => {
     const scrollContainer = scrollRef.current;
@@ -82,14 +84,17 @@ const CategoryScroll = () => {
         {categories.map((category) => (
           <motion.button
             key={category.id}
-            className="flex-shrink-0 flex flex-col items-center justify-center bg-white rounded-lg shadow-sm p-1 border border-gray-100"
+            className="flex-shrink-0 flex flex-col items-center justify-center bg-card rounded-lg shadow-sm p-1 border border-border dark:shadow-md dark:shadow-primary/5"
             style={{ minWidth: '62px', height: '62px' }}
-            whileHover={{ scale: 1.05, backgroundColor: '#F8F8F8' }}
+            whileHover={{ 
+              scale: 1.05, 
+              boxShadow: theme === 'dark' ? '0 0 10px rgba(209, 232, 226, 0.2)' : '0 10px 15px rgba(0,0,0,0.1)' 
+            }}
             whileTap={{ scale: 0.95 }}
             onClick={() => handleCategoryClick(category.name)}
           >
-            <category.icon className="h-5 w-5 text-[#2A866A] mb-1" />
-            <span className="text-gray-800 text-xs font-medium text-center line-clamp-1">{category.name}</span>
+            <category.icon className="h-5 w-5 text-primary mb-1" />
+            <span className="text-foreground text-xs font-medium text-center line-clamp-1">{category.name}</span>
           </motion.button>
         ))}
       </div>
