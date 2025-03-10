@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { getShopById, getShopProducts } from '@/services/shopService';
@@ -129,19 +128,7 @@ export default function ShopDetail() {
       {/* Product Listing */}
       <h2 className="text-xl font-serif font-bold mb-6">Products from {shop?.name}</h2>
       
-      {products.length > 0 ? (
-        <ShopProductList shopId={shopId || ''} products={products} />
-      ) : (
-        <div className="bg-white dark:bg-darkMode-card rounded-lg shadow-sm dark:shadow-md p-8 text-center transition-colors duration-300">
-          <div className="h-16 w-16 bg-haluna-primary-light dark:bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Package className="h-8 w-8 text-haluna-primary dark:text-primary" />
-          </div>
-          <h3 className="text-lg font-medium mb-2">No products available</h3>
-          <p className="text-haluna-text-light dark:text-gray-400 mb-6">
-            This shop hasn't added any products yet. Please check back later.
-          </p>
-        </div>
-      )}
+      <ShopProductList shopId={shopId || ''} products={products} />
     </div>
   );
 }

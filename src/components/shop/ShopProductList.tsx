@@ -8,14 +8,22 @@ import EmptyProductCard from './EmptyProductCard';
 
 interface ShopProductListProps {
   shopId: string;
+  products?: Product[]; // Make products optional
 }
 
-const ShopProductList = ({ shopId }: ShopProductListProps) => {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+const ShopProductList = ({ shopId, products: initialProducts }: ShopProductListProps) => {
+  const [products, setProducts] = useState<Product[]>(initialProducts || []);
+  const [isLoading, setIsLoading] = useState(!initialProducts);
   const navigate = useNavigate();
 
   useEffect(() => {
+    // If products were passed as props, use them instead of fetching
+    if (initialProducts) {
+      setProducts(initialProducts);
+      setIsLoading(false);
+      return;
+    }
+
     const fetchProducts = async () => {
       try {
         setIsLoading(true);
@@ -29,7 +37,7 @@ const ShopProductList = ({ shopId }: ShopProductListProps) => {
     };
 
     fetchProducts();
-  }, [shopId]);
+  }, [shopId, initialProducts]);
 
   const handleProductClick = (productId: string) => {
     navigate(`/product/${productId}`);

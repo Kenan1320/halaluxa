@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -289,7 +288,7 @@ const AddEditProductPage = () => {
                     <FormControl>
                       <ImageUploader
                         initialImages={field.value}
-                        onImagesChange={field.onChange}
+                        onImagesUploaded={field.onChange}
                       />
                     </FormControl>
                     <FormDescription>

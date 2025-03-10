@@ -3,16 +3,34 @@ import React, { useState, useRef, ChangeEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { X, Upload, Image as ImageIcon } from 'lucide-react';
-import { uploadProductImage } from '@/services/shopService';
+
+// Mock function for image upload (to be implemented with actual upload service)
+const uploadProductImage = async (file: File, onProgress?: (event: any) => void): Promise<string> => {
+  // Simulate upload progress
+  return new Promise((resolve) => {
+    let progress = 0;
+    const interval = setInterval(() => {
+      progress += 10;
+      if (onProgress) onProgress({ lengthComputable: true, loaded: progress, total: 100 });
+      if (progress >= 100) {
+        clearInterval(interval);
+        // Return a fake URL - in production this would be the actual uploaded image URL
+        resolve(URL.createObjectURL(file));
+      }
+    }, 100);
+  });
+};
 
 interface ImageUploaderProps {
   onImagesUploaded: (urls: string[]) => void;
+  onImagesChange?: (urls: string[]) => void; // Added for compatibility
   maxImages?: number;
   initialImages?: string[];
 }
 
 const ImageUploader: React.FC<ImageUploaderProps> = ({
   onImagesUploaded,
+  onImagesChange,
   maxImages = 5,
   initialImages = [],
 }) => {
@@ -69,6 +87,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
     const updatedImages = [...images, ...uploadedUrls];
     setImages(updatedImages);
     onImagesUploaded(updatedImages);
+    if (onImagesChange) onImagesChange(updatedImages); // Support both prop names
     
     // Reset the file input
     if (fileInputRef.current) {
@@ -86,6 +105,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
     const updatedImages = images.filter((_, i) => i !== index);
     setImages(updatedImages);
     onImagesUploaded(updatedImages);
+    if (onImagesChange) onImagesChange(updatedImages); // Support both prop names
   };
 
   return (
