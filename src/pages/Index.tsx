@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/context/AuthContext';
@@ -31,7 +31,7 @@ const Index = () => {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="flex justify-center mb-4"
           >
-            <img src="/public/lovable-uploads/89740c6a-e07a-4ee4-a5a6-6eb842382e3c.png" alt="Halvi Logo" className="w-48 h-48 object-contain" />
+            <img src="/logo-dots.svg" alt="Halvi Logo" className="w-48 h-48 object-contain" />
           </motion.div>
           
           {/* The Halal Village tagline */}
@@ -56,7 +56,7 @@ const Index = () => {
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ duration: 0.5, delay: 1.2 }}
               >
-                lal Village
+                al Village
               </motion.span>
             </motion.div>
           </div>
@@ -78,16 +78,16 @@ const Index = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 1.6 }}
           >
-            <Button asChild size="lg" className="bg-[#2A866A] hover:bg-[#206B53]">
-              <Link to="/shop">
+            <Button size="lg" className="bg-[#2A866A] hover:bg-[#206B53]">
+              <Link to="/shop" className="flex items-center">
                 <ShoppingBag className="mr-2 h-5 w-5" />
                 Shop Now
               </Link>
             </Button>
             
             {!isLoggedIn && (
-              <Button asChild variant="outline" size="lg" className="border-[#2A866A] text-[#2A866A]">
-                <Link to="/signup">
+              <Button variant="outline" size="lg" className="border-[#2A866A] text-[#2A866A]">
+                <Link to="/signup" className="flex items-center">
                   <Store className="mr-2 h-5 w-5" />
                   Become a Seller
                 </Link>
@@ -196,8 +196,8 @@ const Index = () => {
             <p className="max-w-2xl mx-auto mb-8">
               Are you a halal business owner? Join our platform and connect with customers looking for your products and services.
             </p>
-            <Button asChild size="lg" variant="outline" className="bg-transparent border-white text-white hover:bg-white hover:text-[#2A866A]">
-              <Link to="/signup">
+            <Button variant="outline" size="lg" className="bg-transparent border-white text-white hover:bg-white hover:text-[#2A866A]">
+              <Link to="/signup" className="flex items-center">
                 <Store className="mr-2 h-5 w-5" />
                 Become a Seller
               </Link>

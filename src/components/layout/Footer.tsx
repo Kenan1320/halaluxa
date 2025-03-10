@@ -10,7 +10,7 @@ const Footer = () => {
           {/* Brand Column */}
           <div className="space-y-4">
             <Link to="/" className="flex items-center">
-              <h2 className="text-haluna-primary text-3xl font-serif">Haluna</h2>
+              <h2 className="text-haluna-primary text-3xl font-serif">Halvi</h2>
               <span className="ml-1 h-3 w-3 rounded-full bg-haluna-accent inline-block mt-1"></span>
             </Link>
             <p className="text-haluna-text-light">
@@ -105,7 +105,7 @@ const Footer = () => {
               </li>
               <li className="flex items-center">
                 <Mail size={20} className="mr-3 text-haluna-primary flex-shrink-0" />
-                <span className="text-haluna-text-light">hello@haluna.com</span>
+                <span className="text-haluna-text-light">hello@halvi.com</span>
               </li>
             </ul>
             
@@ -126,7 +126,7 @@ const Footer = () => {
         </div>
         
         <div className="border-t border-haluna-border mt-12 pt-6 text-center text-haluna-text-light">
-          <p>&copy; {new Date().getFullYear()} Haluna. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} Halvi. All rights reserved.</p>
         </div>
       </div>
     </footer>
