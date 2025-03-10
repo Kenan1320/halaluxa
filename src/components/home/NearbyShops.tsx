@@ -18,11 +18,15 @@ const NearbyShops = () => {
   // Use React Query to fetch shops
   const { data: fetchedShops, isLoading, error } = useQuery({
     queryKey: ['shops'],
-    queryFn: fetchAllShops,
-    onSuccess: (data) => {
-      setShops(data);
-    }
+    queryFn: fetchAllShops
   });
+  
+  // Update local state when data is fetched
+  useEffect(() => {
+    if (fetchedShops) {
+      setShops(fetchedShops);
+    }
+  }, [fetchedShops]);
   
   // Infinite auto-scrolling for shop logos
   useEffect(() => {
