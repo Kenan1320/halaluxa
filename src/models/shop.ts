@@ -1,4 +1,3 @@
-
 // Shop related models
 
 export interface Shop {
@@ -10,7 +9,7 @@ export interface Shop {
   productCount: number;
   isVerified: boolean;
   category: string;
-  logo: string | null;
+  logoUrl: string | null;
   coverImage: string | null;
   ownerId: string;
   latitude?: number | null;
@@ -41,11 +40,12 @@ export function mapDatabaseShopToModel(shopData: any): Shop {
     productCount: shopData.product_count || 0,
     isVerified: shopData.is_verified || false,
     category: shopData.category || '',
-    logo: shopData.logo_url || null,
+    logoUrl: shopData.logo_url || null,
     coverImage: shopData.cover_image || null,
     ownerId: shopData.owner_id,
     latitude: shopData.latitude || null,
-    longitude: shopData.longitude || null
+    longitude: shopData.longitude || null,
+    distance: shopData.distance || null
   };
 }
 
@@ -56,7 +56,7 @@ export function mapModelToDatabase(shop: Partial<Shop>): any {
     description: shop.description,
     location: shop.location,
     category: shop.category,
-    logo_url: shop.logo,
+    logo_url: shop.logoUrl,
     cover_image: shop.coverImage,
     is_verified: shop.isVerified,
     latitude: shop.latitude,

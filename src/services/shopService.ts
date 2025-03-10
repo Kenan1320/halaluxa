@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Shop, ShopProduct, mapDatabaseShopToModel, mapModelToDatabase } from '@/models/shop';
 import { Product } from '@/models/product';
@@ -473,3 +472,18 @@ export const uploadProductImage = async (file: File): Promise<string | null> => 
 
 // Function to get shops (alias for getAllShops)
 export const getShops = getAllShops;
+
+export {
+  getShopById,
+  getAllShops as getShops,
+  getShopsByUser,
+  createShop,
+  updateShop,
+  deleteShop,
+  getShopProducts,
+  getNearbyShops,
+  getPopularShops,
+  getMainShop,
+  convertToModelProduct,
+  uploadProductImage
+};
