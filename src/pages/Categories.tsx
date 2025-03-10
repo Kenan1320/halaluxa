@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ShoppingCart, ShoppingBag, Home, BookOpen, Utensils, HeartPulse, Gift, Shirt, Laptop, Baby, Drumstick, Palette, Camera, Briefcase, Car, Coffee, Cog, Dumbbell, Gamepad, Plant, MapPin } from 'lucide-react';
+import { ShoppingCart, ShoppingBag, Home, BookOpen, Utensils, HeartPulse, Gift, Shirt, Laptop, Baby, Drumstick, Palette, Camera, Briefcase, Car, Coffee, Cog, Dumbbell, Gamepad, Plane, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const categoriesData = [
@@ -24,7 +24,7 @@ const categoriesData = [
   { id: 16, name: 'Technology', icon: Cog, description: 'Tech gadgets and software solutions' },
   { id: 17, name: 'Fitness', icon: Dumbbell, description: 'Fitness equipment and sportswear' },
   { id: 18, name: 'Gaming', icon: Gamepad, description: 'Video games and gaming accessories' },
-  { id: 19, name: 'Garden', icon: Plant, description: 'Plants, gardening tools, and outdoor products' },
+  { id: 19, name: 'Travel', icon: Plane, description: 'Travel services and accessories' },
   { id: 20, name: 'Pick Up Halal Food Nearby', icon: MapPin, description: 'Locate halal food options in your vicinity' }
 ];
 

@@ -78,7 +78,7 @@ const ShopProductList = ({ shopId }: ShopProductListProps) => {
         ))
       ) : (
         // Display empty product cards when no products are available
-        [...Array(5)].map((_, index) => (
+        [...Array(6)].map((_, index) => (
           <EmptyProductCard key={index} index={index} />
         ))
       )}

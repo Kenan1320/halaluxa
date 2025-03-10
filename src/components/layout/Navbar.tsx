@@ -56,20 +56,6 @@ const Navbar = () => {
     loadMainShop();
   }, [location.pathname]);
   
-  const handleMainShopClick = () => {
-    if (!mainShop) {
-      toast({
-        title: "No main shop selected",
-        description: "Please go to Select Your Shops to choose your main shop.",
-        variant: "destructive"
-      });
-      navigate('/select-shops');
-      return;
-    }
-    
-    navigate(`/shop/${mainShop.id}`);
-  };
-  
   const isActive = (path: string) => {
     return location.pathname === path;
   };
@@ -99,13 +85,28 @@ const Navbar = () => {
         
         {/* Logo - with animation */}
         <div className="flex items-center ml-3 mr-auto">
-          <Link to="/" className="flex items-center gap-1">
-            <img 
-              src="/logo-digital-mall.svg" 
-              alt="Halvi Digital Mall" 
-              className="w-8 h-8"
-            />
-            <span className="text-lg font-giaza font-bold text-[#2A866A] dark:text-[#4ECBA5]">Halvi</span>
+          <Link to="/" className="flex items-center gap-1.5">
+            <div className="relative">
+              <motion.div
+                className="absolute inset-0 rounded-full opacity-30 dark:opacity-20"
+                animate={{ 
+                  scale: [1, 1.15, 1],
+                  opacity: [0.2, 0.3, 0.2]
+                }}
+                transition={{ 
+                  duration: 3,
+                  repeat: Infinity,
+                  repeatType: "mirror"
+                }}
+                style={{ background: 'radial-gradient(circle, #2A866A 0%, transparent 70%)' }}
+              />
+              <img 
+                src="/logo-digital-mall.svg" 
+                alt="Halvi Digital Mall" 
+                className="w-9 h-9 relative z-10"
+              />
+            </div>
+            <span className="text-xl font-giaza font-bold text-[#2A866A] dark:text-[#4ECBA5] tracking-wide">Halvi</span>
           </Link>
         </div>
         

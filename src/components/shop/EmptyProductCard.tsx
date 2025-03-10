@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Clock, Star, Package2 } from 'lucide-react';
+import { Clock, Star, Package2, Sparkles, ShoppingBag } from 'lucide-react';
 
 interface EmptyProductCardProps {
   index?: number;
@@ -27,6 +27,18 @@ const EmptyProductCard = ({ index = 0 }: EmptyProductCardProps) => {
       darkColor: 'dark:from-[#517fa4]/20 dark:to-[#0d1b2a]/30',
       icon: Star,
       label: 'New Arrival Soon'
+    },
+    {
+      color: 'from-[#FFE8D9]/40 to-[#FFCCB3]/20',
+      darkColor: 'dark:from-[#6A8CAA]/20 dark:to-[#0d1b2a]/30',
+      icon: Sparkles,
+      label: 'Product Preview'
+    },
+    {
+      color: 'from-[#E5E0FF]/40 to-[#D1CAFF]/20',
+      darkColor: 'dark:from-[#3D5A80]/20 dark:to-[#0d1b2a]/30',
+      icon: ShoppingBag,
+      label: 'Shop Collection'
     }
   ];
   
@@ -45,9 +57,24 @@ const EmptyProductCard = ({ index = 0 }: EmptyProductCardProps) => {
       </div>
       
       <div className="relative z-10 flex flex-col items-center justify-center space-y-4">
-        <div className="w-16 h-16 rounded-full bg-white/70 dark:bg-white/10 flex items-center justify-center shadow-sm">
+        <motion.div 
+          className="w-16 h-16 rounded-full bg-white/70 dark:bg-white/10 flex items-center justify-center shadow-sm"
+          animate={{ 
+            scale: [1, 1.05, 1],
+            boxShadow: [
+              "0 0 0 rgba(74, 222, 128, 0)",
+              "0 0 10px rgba(74, 222, 128, 0.3)",
+              "0 0 0 rgba(74, 222, 128, 0)"
+            ]
+          }}
+          transition={{ 
+            duration: 2.5, 
+            repeat: Infinity, 
+            repeatType: "mirror" 
+          }}
+        >
           <Icon className="w-8 h-8 text-primary/70" />
-        </div>
+        </motion.div>
         
         <div className="text-center">
           <h3 className="text-lg font-medium text-foreground">{design.label}</h3>

@@ -41,7 +41,6 @@ const Index = () => {
       {/* Nearby Shops (right under categories) */}
       <section className="py-6 bg-background dark:bg-[#0d1b2a]">
         <div className="container mx-auto px-4">
-          <h2 className="text-xl md:text-2xl font-bold mb-6">Nearby Shops</h2>
           <NearbyShops />
         </div>
       </section>

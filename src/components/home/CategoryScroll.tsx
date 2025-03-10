@@ -2,7 +2,7 @@
 import { useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ShoppingCart, ShoppingBag, Home, BookOpen, Utensils, HeartPulse, Gift, Shirt, Laptop, Baby, Drumstick, Palette } from 'lucide-react';
+import { ShoppingCart, ShoppingBag, Home, BookOpen, Utensils, HeartPulse, Gift, Shirt, Laptop, Baby, Drumstick, Palette, Camera, Briefcase, Car, Coffee } from 'lucide-react';
 import { useTheme } from '@/context/ThemeContext';
 
 const categories = [
@@ -13,11 +13,14 @@ const categories = [
   { id: 5, name: 'Electronics', icon: Laptop },
   { id: 6, name: 'Books', icon: BookOpen },
   { id: 7, name: 'Health', icon: HeartPulse },
-  { id: 8, name: 'Toys', icon: Baby },
+  { id: 8, name: 'Baby', icon: Baby },
   { id: 9, name: 'Gifts', icon: Gift },
   { id: 10, name: 'Art', icon: Palette },
-  { id: 11, name: 'Baby', icon: Baby },
-  { id: 12, name: 'Halal Meat', icon: Drumstick }
+  { id: 11, name: 'Halal Meat', icon: Drumstick },
+  { id: 12, name: 'Photography', icon: Camera },
+  { id: 13, name: 'Business', icon: Briefcase },
+  { id: 14, name: 'Automotive', icon: Car },
+  { id: 15, name: 'Cafe', icon: Coffee }
 ];
 
 const CategoryScroll = () => {
@@ -79,16 +82,16 @@ const CategoryScroll = () => {
     <div className="relative w-full my-1">
       <div
         ref={scrollRef}
-        className="flex overflow-x-auto scrollbar-hide py-1 space-x-3"
+        className="flex overflow-x-auto scrollbar-hide py-2 space-x-4"
       >
         {categories.map((category) => (
           <motion.button
             key={category.id}
-            className="flex-shrink-0 flex flex-col items-center justify-center bg-card rounded-lg shadow-sm p-1 border border-border dark:shadow-md dark:shadow-primary/5"
-            style={{ minWidth: '62px', height: '62px' }}
+            className="flex-shrink-0 flex flex-col items-center justify-center bg-card rounded-lg shadow-sm p-1.5 border border-border dark:border-primary/10 dark:bg-dark-card dark:shadow-md dark:shadow-primary/5"
+            style={{ minWidth: '64px', height: '64px' }}
             whileHover={{ 
               scale: 1.05, 
-              boxShadow: theme === 'dark' ? '0 0 10px rgba(209, 232, 226, 0.2)' : '0 10px 15px rgba(0,0,0,0.1)' 
+              boxShadow: theme === 'dark' ? '0 0 12px rgba(209, 232, 226, 0.2)' : '0 10px 15px rgba(0,0,0,0.1)' 
             }}
             whileTap={{ scale: 0.95 }}
             onClick={() => handleCategoryClick(category.name)}
@@ -97,6 +100,20 @@ const CategoryScroll = () => {
             <span className="text-foreground text-xs font-medium text-center line-clamp-1">{category.name}</span>
           </motion.button>
         ))}
+        
+        <motion.button
+          className="flex-shrink-0 flex flex-col items-center justify-center bg-primary/10 dark:bg-primary/20 rounded-lg shadow-sm p-1.5 border border-border dark:border-primary/10"
+          style={{ minWidth: '64px', height: '64px' }}
+          whileHover={{ 
+            scale: 1.05, 
+            boxShadow: theme === 'dark' ? '0 0 12px rgba(209, 232, 226, 0.2)' : '0 10px 15px rgba(0,0,0,0.1)' 
+          }}
+          whileTap={{ scale: 0.95 }}
+          onClick={() => navigate('/categories')}
+        >
+          <ShoppingBag className="h-5 w-5 text-primary mb-1" />
+          <span className="text-foreground text-xs font-medium text-center line-clamp-1">View All</span>
+        </motion.button>
       </div>
     </div>
   );
