@@ -1,21 +1,24 @@
 
 // This is now a wrapper around paymentService.ts to maintain backward compatibility
 import { 
+  PaymentMethod,
   SellerAccount, 
-  createSellerAccount, 
-  getSellerAccount, 
-  getSellerAccounts, 
-  saveSellerAccount, 
-  updateSellerAccount,
-  formatPaymentMethod
+  formatPaymentMethod 
+} from '@/models/payment';
+
+import {
+  createSellerAccount,
+  getSellerAccount,
+  getSellerAccounts,
+  updateSellerAccount
 } from './paymentService';
 
 export { 
-  SellerAccount, 
-  createSellerAccount, 
-  getSellerAccount, 
-  getSellerAccounts, 
-  saveSellerAccount, 
+  PaymentMethod,
+  SellerAccount,
+  createSellerAccount,
+  getSellerAccount,
+  getSellerAccounts,
   updateSellerAccount,
   formatPaymentMethod
 };

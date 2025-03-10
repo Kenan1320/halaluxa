@@ -1,54 +1,78 @@
 
 export interface PaymentMethod {
   id: string;
-  userId: string;
   shopId: string;
-  type: 'card' | 'bank_account';
+  type: 'card' | 'bank' | 'paypal' | 'stripe' | 'applepay';
   provider: string;
-  last4: string;
-  expiryMonth?: number;
-  expiryYear?: number;
+  accountName?: string;
+  accountNumber?: string;
+  bankName?: string;
+  paypalEmail?: string;
+  stripeAccountId?: string;
+  isActive: boolean;
   isDefault: boolean;
   createdAt: string;
   updatedAt: string;
 }
 
-export interface PaymentIntent {
+export interface SellerAccount {
   id: string;
-  userId: string;
-  orderId: string;
-  amount: number;
-  currency: string;
-  status: 'pending' | 'succeeded' | 'failed';
-  paymentMethodId: string;
-  createdAt: string;
+  shop_id: string;
+  method_type: string;
+  account_name?: string;
+  account_number?: string;
+  bank_name?: string;
+  paypal_email?: string;
+  stripe_account_id?: string;
+  is_active: boolean;
+  is_default: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
-export function mapDbPaymentMethodToModel(data: any): PaymentMethod {
+export function mapDbPaymentMethodToModel(data: SellerAccount): PaymentMethod {
   return {
     id: data.id,
-    userId: data.user_id,
     shopId: data.shop_id,
-    type: data.type,
-    provider: data.provider,
-    last4: data.last4,
-    expiryMonth: data.expiry_month,
-    expiryYear: data.expiry_year,
+    type: data.method_type as PaymentMethod['type'],
+    provider: data.method_type,
+    accountName: data.account_name,
+    accountNumber: data.account_number,
+    bankName: data.bank_name,
+    paypalEmail: data.paypal_email,
+    stripeAccountId: data.stripe_account_id,
+    isActive: data.is_active,
     isDefault: data.is_default,
     createdAt: data.created_at,
     updatedAt: data.updated_at
   };
 }
 
-export function mapPaymentMethodToDb(method: Partial<PaymentMethod>): any {
+export function mapModelToDb(method: Partial<PaymentMethod>): Partial<SellerAccount> {
   return {
-    user_id: method.userId,
     shop_id: method.shopId,
-    type: method.type,
-    provider: method.provider,
-    last4: method.last4,
-    expiry_month: method.expiryMonth,
-    expiry_year: method.expiryYear,
+    method_type: method.type,
+    account_name: method.accountName,
+    account_number: method.accountNumber,
+    bank_name: method.bankName,
+    paypal_email: method.paypalEmail,
+    stripe_account_id: method.stripeAccountId,
+    is_active: true,
     is_default: method.isDefault
   };
+}
+
+export function formatPaymentMethod(account: SellerAccount): string {
+  switch (account.method_type) {
+    case 'bank':
+      return `${account.bank_name} - ${account.account_number?.slice(-4)}`;
+    case 'paypal':
+      return `PayPal - ${account.paypal_email}`;
+    case 'stripe':
+      return `Stripe - ${account.stripe_account_id}`;
+    case 'applepay':
+      return 'Apple Pay';
+    default:
+      return 'Unknown payment method';
+  }
 }
