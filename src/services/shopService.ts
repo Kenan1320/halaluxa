@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { Shop, ShopProduct } from '@/models/shop';
+import { Shop, ShopProduct, mapDatabaseShopToModel, mapModelToDatabase } from '@/models/shop';
+import { Product } from '@/models/product';
 
 // Function to create a new shop
 export const createShop = async (shopData: Partial<Shop>): Promise<Shop | null> => {
@@ -13,20 +14,15 @@ export const createShop = async (shopData: Partial<Shop>): Promise<Shop | null> 
       throw new Error('User not authenticated');
     }
     
+    // Map the model data to database fields
+    const dbShopData = mapModelToDatabase(shopData);
+    
     // Insert the shop data
     const { data, error } = await supabase
       .from('shops')
       .insert({
-        name: shopData.name,
-        description: shopData.description,
-        owner_id: userId,
-        location: shopData.location,
-        latitude: shopData.latitude,
-        longitude: shopData.longitude,
-        category: shopData.category,
-        logo: shopData.logo,
-        cover_image: shopData.coverImage,
-        verified: shopData.isVerified || false
+        ...dbShopData,
+        owner_id: userId
       })
       .select()
       .single();
@@ -50,27 +46,10 @@ export const createShop = async (shopData: Partial<Shop>): Promise<Shop | null> 
     
     if (updateError) {
       console.error('Error updating business profile:', updateError);
-      // Don't throw here, the shop was created successfully
     }
     
-    // Map the response to the Shop interface
-    const shop: Shop = {
-      id: data.id,
-      name: data.name,
-      description: data.description || '',
-      location: data.location || '',
-      rating: 0, // Default rating for new shop
-      productCount: 0, // No products initially
-      isVerified: data.verified || false,
-      category: data.category || '',
-      logo: data.logo || null,
-      coverImage: data.cover_image || null,
-      ownerId: data.owner_id,
-      latitude: data.latitude || null,
-      longitude: data.longitude || null
-    };
-    
-    return shop;
+    // Map the database response to the Shop interface
+    return mapDatabaseShopToModel(data);
   } catch (error) {
     console.error('Failed to create shop:', error);
     return null;
@@ -101,23 +80,13 @@ export const getShopById = async (shopId: string): Promise<Shop | null> => {
       .eq('shop_id', shopId);
     
     // Map the response to the Shop interface
-    const shop: Shop = {
-      id: data.id,
-      name: data.name,
-      description: data.description || '',
-      location: data.location || '',
-      rating: 0, // Default rating, would be calculated from reviews
-      productCount: productCount || 0,
-      isVerified: data.verified || false,
-      category: data.category || '',
-      logo: data.logo || null,
-      coverImage: data.cover_image || null,
-      ownerId: data.owner_id,
-      latitude: data.latitude || null,
-      longitude: data.longitude || null
-    };
+    const shopModel = mapDatabaseShopToModel(data);
     
-    return shop;
+    if (productCount !== null) {
+      shopModel.productCount = productCount;
+    }
+    
+    return shopModel;
   } catch (error) {
     console.error('Failed to get shop by ID:', error);
     return null;
@@ -136,23 +105,7 @@ export const getAllShops = async (): Promise<Shop[]> => {
     }
     
     // Map the response to Shop interface
-    const shops: Shop[] = data.map(shop => ({
-      id: shop.id,
-      name: shop.name,
-      description: shop.description || '',
-      location: shop.location || '',
-      rating: 0, // Would be calculated from reviews
-      productCount: 0, // Would be queried or calculated
-      isVerified: shop.verified || false,
-      category: shop.category || '',
-      logo: shop.logo || null,
-      coverImage: shop.cover_image || null,
-      ownerId: shop.owner_id,
-      latitude: shop.latitude || null,
-      longitude: shop.longitude || null
-    }));
-    
-    return shops;
+    return data.map(shop => mapDatabaseShopToModel(shop));
   } catch (error) {
     console.error('Failed to get all shops:', error);
     return [];
@@ -183,23 +136,7 @@ export const getShopsByUser = async (userId?: string): Promise<Shop[]> => {
     }
     
     // Map the response to Shop interface
-    const shops: Shop[] = data.map(shop => ({
-      id: shop.id,
-      name: shop.name,
-      description: shop.description || '',
-      location: shop.location || '',
-      rating: 0, // Would be calculated from reviews
-      productCount: 0, // Would be queried or calculated
-      isVerified: shop.verified || false,
-      category: shop.category || '',
-      logo: shop.logo || null,
-      coverImage: shop.cover_image || null,
-      ownerId: shop.owner_id,
-      latitude: shop.latitude || null,
-      longitude: shop.longitude || null
-    }));
-    
-    return shops;
+    return data.map(shop => mapDatabaseShopToModel(shop));
   } catch (error) {
     console.error('Failed to get shops by user:', error);
     return [];
@@ -229,18 +166,8 @@ export const updateShop = async (shopId: string, updates: Partial<Shop>): Promis
       throw new Error('Shop not found or not owned by current user');
     }
     
-    // Prepare the update data
-    const updateData = {
-      name: updates.name,
-      description: updates.description,
-      location: updates.location,
-      category: updates.category,
-      logo: updates.logo,
-      cover_image: updates.coverImage,
-      latitude: updates.latitude,
-      longitude: updates.longitude,
-      verified: updates.isVerified
-    };
+    // Map model fields to database fields
+    const updateData = mapModelToDatabase(updates);
     
     // Filter out undefined values
     Object.keys(updateData).forEach(key => {
@@ -277,28 +204,11 @@ export const updateShop = async (shopId: string, updates: Partial<Shop>): Promis
       
       if (updateError) {
         console.error('Error updating business profile:', updateError);
-        // Don't throw here, the shop was updated successfully
       }
     }
     
     // Map the response to the Shop interface
-    const shop: Shop = {
-      id: data.id,
-      name: data.name,
-      description: data.description || '',
-      location: data.location || '',
-      rating: 0, // Would be calculated from reviews
-      productCount: 0, // Would be queried or calculated
-      isVerified: data.verified || false,
-      category: data.category || '',
-      logo: data.logo || null,
-      coverImage: data.cover_image || null,
-      ownerId: data.owner_id,
-      latitude: data.latitude || null,
-      longitude: data.longitude || null
-    };
-    
-    return shop;
+    return mapDatabaseShopToModel(data);
   } catch (error) {
     console.error('Failed to update shop:', error);
     return null;
@@ -352,7 +262,6 @@ export const deleteShop = async (shopId: string): Promise<boolean> => {
     
     if (updateError) {
       console.error('Error updating business profile:', updateError);
-      // Don't throw here, the shop was deleted successfully
     }
     
     return true;
@@ -433,25 +342,13 @@ export const getNearbyShops = async (
           shop.longitude
         );
         
-        return {
-          id: shop.id,
-          name: shop.name,
-          description: shop.description || '',
-          location: shop.location || '',
-          rating: 0, // Would be calculated from reviews
-          productCount: 0, // Would be queried or calculated
-          isVerified: shop.verified || false,
-          category: shop.category || '',
-          logo: shop.logo || null,
-          coverImage: shop.cover_image || null,
-          ownerId: shop.owner_id,
-          latitude: shop.latitude,
-          longitude: shop.longitude,
-          distance: distance
-        };
+        const shopModel = mapDatabaseShopToModel(shop);
+        shopModel.distance = distance;
+        
+        return shopModel;
       })
-      .filter(shop => shop !== null && shop.distance !== undefined && shop.distance <= radiusKm)
-      .sort((a, b) => (a!.distance || 0) - (b!.distance || 0)) as Shop[];
+      .filter((shop): shop is Shop => shop !== null && shop.distance !== undefined && shop.distance <= radiusKm)
+      .sort((a, b) => (a.distance || 0) - (b.distance || 0));
     
     return nearbyShops;
   } catch (error) {
@@ -489,6 +386,7 @@ export const getPopularShops = async (limit: number = 5): Promise<Shop[]> => {
     const { data, error } = await supabase
       .from('shops')
       .select('*')
+      .order('product_count', { ascending: false })
       .limit(limit);
     
     if (error) {
@@ -496,25 +394,82 @@ export const getPopularShops = async (limit: number = 5): Promise<Shop[]> => {
     }
     
     // Map the response to Shop interface
-    const shops: Shop[] = data.map(shop => ({
-      id: shop.id,
-      name: shop.name,
-      description: shop.description || '',
-      location: shop.location || '',
-      rating: 0, // Would be calculated from reviews
-      productCount: 0, // Would be queried or calculated
-      isVerified: shop.verified || false,
-      category: shop.category || '',
-      logo: shop.logo || null,
-      coverImage: shop.cover_image || null,
-      ownerId: shop.owner_id,
-      latitude: shop.latitude || null,
-      longitude: shop.longitude || null
-    }));
-    
-    return shops;
+    return data.map(shop => mapDatabaseShopToModel(shop));
   } catch (error) {
     console.error('Failed to get popular shops:', error);
     return [];
   }
 };
+
+// Function to get the main shop from localStorage
+export const getMainShop = async (): Promise<Shop | null> => {
+  const mainShopId = localStorage.getItem('mainShopId');
+  if (!mainShopId) {
+    return null;
+  }
+  
+  return await getShopById(mainShopId);
+};
+
+// Helper to convert ShopProduct to Product model
+export const convertToModelProduct = (shopProduct: ShopProduct): Product => {
+  return {
+    id: shopProduct.id,
+    name: shopProduct.name,
+    description: shopProduct.description,
+    price: shopProduct.price,
+    category: shopProduct.category,
+    images: shopProduct.images,
+    rating: shopProduct.rating || 0,
+    isPublished: true,
+    isHalalCertified: true,
+    stock: 0,
+    shopId: '',
+    details: {}
+  };
+};
+
+// Function to simulate subscription to shop updates
+export const subscribeToShops = (callback: (shops: Shop[]) => void) => {
+  // Initially load shops
+  getAllShops().then(shops => {
+    callback(shops);
+  });
+  
+  // Set up channel for real-time updates (simulated)
+  const channel = {
+    unsubscribe: () => {
+      // Would normally clean up real-time subscription
+    }
+  };
+  
+  return channel;
+};
+
+// Image upload helper function
+export const uploadProductImage = async (file: File): Promise<string | null> => {
+  try {
+    const fileExt = file.name.split('.').pop();
+    const filePath = `product-images/${Math.random().toString(36).substring(2)}.${fileExt}`;
+    
+    const { error: uploadError, data } = await supabase.storage
+      .from('public')
+      .upload(filePath, file);
+      
+    if (uploadError) {
+      throw uploadError;
+    }
+    
+    const { data: urlData } = supabase.storage
+      .from('public')
+      .getPublicUrl(filePath);
+      
+    return urlData.publicUrl;
+  } catch (error) {
+    console.error('Error uploading image:', error);
+    return null;
+  }
+};
+
+// Function to get shops (alias for getAllShops)
+export const getShops = getAllShops;

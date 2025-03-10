@@ -1,8 +1,4 @@
 
-import { useState, useEffect } from "react";
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
@@ -12,7 +8,9 @@ import { LocationProvider } from "@/context/LocationContext";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import AuthMiddleware from "@/components/auth/AuthMiddleware";
 import Navbar from "@/components/layout/Navbar";
-import { initializeDatabase } from "@/scripts/databaseSetup";
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 // Pages
 import Index from "./pages/Index";
@@ -150,55 +148,7 @@ const AppRoutes = () => {
   );
 };
 
-// Helper function to run database setup
-const runDatabaseSetup = async (): Promise<boolean> => {
-  try {
-    console.log('Running database setup...');
-    const success = await initializeDatabase();
-    console.log('Database setup complete, success:', success);
-    return success;
-  } catch (error) {
-    console.error("Error setting up database:", error);
-    return false;
-  }
-};
-
 function App() {
-  const [isDatabaseReady, setIsDatabaseReady] = useState(false);
-  const [isInitializing, setIsInitializing] = useState(true);
-
-  useEffect(() => {
-    // Run database setup when the app initializes
-    const initApp = async () => {
-      try {
-        console.log('Initializing application...');
-        const success = await runDatabaseSetup();
-        setIsDatabaseReady(success);
-        console.log('Database ready:', success);
-      } catch (error) {
-        console.error('Database initialization error:', error);
-        // Continue with app even if DB setup fails
-        setIsDatabaseReady(true);
-      } finally {
-        setIsInitializing(false);
-      }
-    };
-    
-    initApp();
-  }, []);
-
-  // Don't render anything until initialization is complete
-  if (isInitializing) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-white">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-[#2A866A] border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading application...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
