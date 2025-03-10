@@ -1,69 +1,96 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
 
-// Define the notification types
-export type NotificationType = 
-  // Shopper notifications
-  | 'order_update'
-  | 'product_recommendation'
-  | 'abandoned_cart'
-  | 'new_product'
-  // Business notifications
-  | 'new_order'
-  | 'low_stock'
-  | 'customer_message'
-  | 'sales_summary'
-  | 'new_review';
-
+// Types for notification preferences
 export interface NotificationPreferences {
-  // Shopper preferences
+  user_id: string;
+  // Customer preferences
   orders: boolean;
   marketing: boolean;
   product_updates: boolean;
   reviews: boolean;
   messages: boolean;
-  
-  // Business preferences
+  // Business owner preferences
   new_orders?: boolean;
   low_stock?: boolean;
   customer_reviews?: boolean;
   sales_reports?: boolean;
-  
-  user_id: string;
 }
 
-// Get app default notification settings
-export const getAppNotificationSettings = async (): Promise<any> => {
+// Types for notifications
+export interface Notification {
+  id: string;
+  user_id: string;
+  title: string;
+  message: string;
+  type: string;
+  read: boolean;
+  created_at: string;
+}
+
+// Check if browser supports notifications
+export const checkNotificationSupport = (): boolean => {
+  return 'Notification' in window;
+};
+
+// Request notification permission
+export const requestNotificationPermission = async (): Promise<boolean> => {
+  if (!checkNotificationSupport()) return false;
+  
   try {
-    // This would normally fetch from a settings table
-    // For now, return default values
+    const permission = await Notification.requestPermission();
+    return permission === 'granted';
+  } catch (error) {
+    console.error('Error requesting notification permission:', error);
+    return false;
+  }
+};
+
+// Get notification preferences for a user
+export const getNotificationPreferences = async (userId: string): Promise<NotificationPreferences | null> => {
+  try {
+    // This is a mock implementation until the actual DB table is set up
+    console.log('Fetching notification preferences for user:', userId);
+    
+    // Return mock data
     return {
-      notifications_enabled: true,
-      default_settings: {
-        orders: true,
-        marketing: true,
-        product_updates: true,
-        reviews: true,
-        messages: true,
-        new_orders: true,
-        low_stock: true,
-        customer_reviews: true,
-        sales_reports: true
-      }
+      user_id: userId,
+      orders: true,
+      marketing: false,
+      product_updates: true,
+      reviews: true,
+      messages: true,
+      new_orders: true,
+      low_stock: true,
+      customer_reviews: true,
+      sales_reports: true
     };
   } catch (error) {
-    console.error('Error fetching notification settings:', error);
+    console.error('Error fetching notification preferences:', error);
     return null;
   }
 };
 
-// Save push subscription for a user
-export const saveUserPushSubscription = async (userId: string, subscription: PushSubscriptionJSON): Promise<boolean> => {
+// Update notification preferences
+export const updateNotificationPreferences = async (
+  userId: string, 
+  preferences: Partial<NotificationPreferences>
+): Promise<boolean> => {
   try {
-    // In a real implementation, you would store this in the database
-    console.log('Saving subscription for user:', userId, subscription);
-    localStorage.setItem(`push_sub_${userId}`, JSON.stringify(subscription));
+    // This is a mock implementation until the actual DB table is set up
+    console.log('Updating notification preferences for user:', userId, preferences);
+    return true;
+  } catch (error) {
+    console.error('Error updating notification preferences:', error);
+    return false;
+  }
+};
+
+// Save web push subscription
+export const saveSubscription = async (userId: string, subscription: PushSubscription): Promise<boolean> => {
+  try {
+    // This is a mock implementation until the actual DB table is set up
+    console.log('Saving push subscription for user:', userId, subscription);
     return true;
   } catch (error) {
     console.error('Error saving push subscription:', error);
@@ -71,100 +98,75 @@ export const saveUserPushSubscription = async (userId: string, subscription: Pus
   }
 };
 
-// Save or update user notification preferences
-export const saveNotificationPreferences = async (preferences: NotificationPreferences): Promise<boolean> => {
+// Get user notifications
+export const getUserNotifications = async (userId: string): Promise<Notification[]> => {
   try {
-    // In a real implementation, you would store this in the database
-    console.log('Saving notification preferences:', preferences);
-    localStorage.setItem(`notification_prefs_${preferences.user_id}`, JSON.stringify(preferences));
+    // This is a mock implementation until the actual DB table is set up
+    console.log('Fetching notifications for user:', userId);
+    
+    // Return mock data
+    return [
+      {
+        id: '1',
+        user_id: userId,
+        title: 'Order Shipped',
+        message: 'Your order #12345 has been shipped',
+        type: 'order',
+        read: false,
+        created_at: new Date().toISOString()
+      },
+      {
+        id: '2',
+        user_id: userId,
+        title: 'New Product',
+        message: 'Check out our new arrivals',
+        type: 'marketing',
+        read: true,
+        created_at: new Date(Date.now() - 86400000).toISOString() // 1 day ago
+      }
+    ];
+  } catch (error) {
+    console.error('Error fetching user notifications:', error);
+    return [];
+  }
+};
+
+// Mark notification as read
+export const markNotificationAsRead = async (notificationId: string): Promise<boolean> => {
+  try {
+    // This is a mock implementation until the actual DB table is set up
+    console.log('Marking notification as read:', notificationId);
     return true;
   } catch (error) {
-    console.error('Error saving notification preferences:', error);
+    console.error('Error marking notification as read:', error);
     return false;
   }
 };
 
-// Get user notification preferences
-export const getUserNotificationPreferences = async (userId: string): Promise<NotificationPreferences | null> => {
+// Send a notification
+export const sendNotification = async (
+  userId: string,
+  title: string,
+  message: string,
+  type: string,
+  data?: any
+): Promise<boolean> => {
   try {
-    // In a real implementation, you would fetch from the database
-    const savedPrefs = localStorage.getItem(`notification_prefs_${userId}`);
-    if (savedPrefs) {
-      return JSON.parse(savedPrefs) as NotificationPreferences;
-    }
-    
-    // Return default preferences if none are saved
-    return {
-      orders: true,
-      marketing: false,
-      product_updates: true,
-      reviews: true,
-      messages: true,
-      user_id: userId
-    };
+    // This is a mock implementation until the actual DB table is set up
+    console.log('Sending notification to user:', userId, { title, message, type, data });
+    return true;
   } catch (error) {
-    console.error('Error getting notification preferences:', error);
-    return null;
+    console.error('Error sending notification:', error);
+    return false;
   }
 };
 
-// Send a notification to a user (in a real app, this would connect to a push service)
-export const sendNotification = async (userId: string, title: string, body: string, data: any = {}): Promise<boolean> => {
-  // This is a mock implementation that just shows a toast
-  toast(title, {
-    description: body,
-    duration: 5000
-  });
-  
-  console.log('Notification sent to user:', userId, { title, body, data });
-  return true;
-};
-
-// For business owners - send an order notification
-export const sendOrderNotification = async (businessId: string, orderId: string, orderAmount: number): Promise<boolean> => {
-  return sendNotification(
-    businessId,
-    'New Order Received!',
-    `You have received a new order #${orderId} for $${orderAmount.toFixed(2)}`,
-    { orderId, type: 'new_order' }
-  );
-};
-
-// For shoppers - send order status update
-export const sendOrderStatusUpdate = async (userId: string, orderId: string, status: string): Promise<boolean> => {
+// Send a test notification
+export const sendTestNotification = async (userId: string): Promise<boolean> => {
   return sendNotification(
     userId,
-    'Order Status Updated',
-    `Your order #${orderId} is now ${status}`,
-    { orderId, status, type: 'order_update' }
+    'Test Notification',
+    'This is a test notification from Halvi',
+    'test'
   );
-};
-
-// For business owners - send low stock alert
-export const sendLowStockAlert = async (businessId: string, productId: string, productName: string, currentStock: number): Promise<boolean> => {
-  return sendNotification(
-    businessId,
-    'Low Stock Alert',
-    `${productName} is running low (${currentStock} remaining)`,
-    { productId, currentStock, type: 'low_stock' }
-  );
-};
-
-// For shoppers - send product recommendation
-export const sendProductRecommendation = async (userId: string, productId: string, productName: string): Promise<boolean> => {
-  return sendNotification(
-    userId,
-    'Recommended for You',
-    `We think you'll like ${productName}`,
-    { productId, type: 'product_recommendation' }
-  );
-};
-
-export type PushSubscriptionJSON = {
-  endpoint: string;
-  expirationTime: number | null;
-  keys: {
-    p256dh: string;
-    auth: string;
-  };
 };

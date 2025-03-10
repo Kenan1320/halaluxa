@@ -6,12 +6,14 @@ import { Shop } from '@/models/shop';
 import { Product } from '@/models/product';
 import ShopProductList from '@/components/shop/ShopProductList';
 import { MapPin, Check, Star, Package } from 'lucide-react';
+import { useTheme } from '@/context/ThemeContext';
 
 export default function ShopDetail() {
   const { shopId } = useParams<{ shopId: string }>();
   const [shop, setShop] = useState<Shop | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { theme } = useTheme();
 
   useEffect(() => {
     const loadShopDetails = async () => {
@@ -36,10 +38,10 @@ export default function ShopDetail() {
     return (
       <div className="container mx-auto py-8 px-4">
         <div className="animate-pulse">
-          <div className="h-48 bg-gray-200 rounded-lg mb-4"></div>
-          <div className="h-12 bg-gray-200 rounded-lg mb-4 w-1/3"></div>
-          <div className="h-8 bg-gray-200 rounded-lg mb-4"></div>
-          <div className="h-64 bg-gray-200 rounded-lg"></div>
+          <div className="h-48 bg-gray-200 dark:bg-gray-700 rounded-lg mb-4"></div>
+          <div className="h-12 bg-gray-200 dark:bg-gray-700 rounded-lg mb-4 w-1/3"></div>
+          <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded-lg mb-4"></div>
+          <div className="h-64 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
         </div>
       </div>
     );
@@ -58,19 +60,21 @@ export default function ShopDetail() {
 
   return (
     <div className="container mx-auto py-6 px-4">
-      <div className="bg-white rounded-lg shadow-sm overflow-hidden mb-8">
+      <div className="bg-white dark:bg-darkMode-card rounded-lg shadow-sm dark:shadow-md overflow-hidden mb-8 transition-colors duration-300">
         {/* Shop Header with Cover Image */}
         <div 
           className="h-48 bg-cover bg-center flex items-end" 
           style={{ 
             backgroundImage: shop?.cover_image 
               ? `url(${shop.cover_image})` 
-              : 'linear-gradient(135deg, #2A866A, #1e5c4a)'
+              : theme === 'dark' 
+                ? 'linear-gradient(135deg, #1b263b, #0d1b2a)'
+                : 'linear-gradient(135deg, #2A866A, #1e5c4a)'
           }}
         >
           <div className="w-full bg-black bg-opacity-30 p-4 flex items-center text-white">
             <div className="flex-shrink-0 mr-4">
-              <div className="w-20 h-20 rounded-lg bg-white p-1 shadow-lg">
+              <div className="w-20 h-20 rounded-lg bg-white dark:bg-gray-800 p-1 shadow-lg">
                 <img 
                   src={shop?.logo_url || '/placeholder.svg'} 
                   alt={shop?.name} 
@@ -105,17 +109,17 @@ export default function ShopDetail() {
         {/* Shop Info */}
         <div className="p-4">
           <div className="flex items-start mb-4">
-            <MapPin className="h-5 w-5 text-gray-500 mr-2 mt-0.5 flex-shrink-0" />
-            <p className="text-gray-700">{shop?.location}</p>
+            <MapPin className="h-5 w-5 text-gray-500 dark:text-gray-400 mr-2 mt-0.5 flex-shrink-0" />
+            <p className="text-gray-700 dark:text-gray-300">{shop?.location}</p>
           </div>
           
           <div className="mb-4">
             <h2 className="text-lg font-medium mb-2">About {shop?.name}</h2>
-            <p className="text-gray-700">{shop?.description}</p>
+            <p className="text-gray-700 dark:text-gray-300">{shop?.description}</p>
           </div>
           
           <div className="flex flex-wrap">
-            <span className="px-3 py-1 bg-haluna-primary-light text-haluna-primary rounded-full text-sm mr-2 mb-2">
+            <span className="px-3 py-1 bg-haluna-primary-light dark:bg-opacity-20 text-haluna-primary dark:text-primary rounded-full text-sm mr-2 mb-2">
               {shop?.category}
             </span>
           </div>
@@ -128,12 +132,12 @@ export default function ShopDetail() {
       {products.length > 0 ? (
         <ShopProductList shopId={shopId || ''} products={products} />
       ) : (
-        <div className="bg-white rounded-lg shadow-sm p-8 text-center">
-          <div className="h-16 w-16 bg-haluna-primary-light rounded-full flex items-center justify-center mx-auto mb-4">
-            <Package className="h-8 w-8 text-haluna-primary" />
+        <div className="bg-white dark:bg-darkMode-card rounded-lg shadow-sm dark:shadow-md p-8 text-center transition-colors duration-300">
+          <div className="h-16 w-16 bg-haluna-primary-light dark:bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Package className="h-8 w-8 text-haluna-primary dark:text-primary" />
           </div>
           <h3 className="text-lg font-medium mb-2">No products available</h3>
-          <p className="text-haluna-text-light mb-6">
+          <p className="text-haluna-text-light dark:text-gray-400 mb-6">
             This shop hasn't added any products yet. Please check back later.
           </p>
         </div>

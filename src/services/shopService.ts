@@ -108,7 +108,7 @@ export const deleteShop = async (id: string): Promise<boolean> => {
   return true;
 };
 
-// Add the missing function for getting shop products
+// Add the function for getting shop products
 export const getShopProducts = async (shopId: string) => {
   const { data, error } = await supabase
     .from('products')
@@ -123,7 +123,7 @@ export const getShopProducts = async (shopId: string) => {
   return data.map(convertToModelProduct);
 };
 
-// Add the missing function for uploading product images
+// Function for uploading product images
 export const uploadProductImage = async (file: File, productId: string): Promise<string | null> => {
   const fileExt = file.name.split('.').pop();
   const fileName = `${productId}-${Math.random()}.${fileExt}`;

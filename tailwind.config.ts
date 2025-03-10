@@ -75,6 +75,13 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				// Dark theme specific colors
+				darkMode: {
+					bg: 'hsl(222, 47%, 11%)', // #0d1b2a
+					text: 'hsl(180, 14%, 85%)', // #d1e8e2
+					card: 'hsl(217, 33%, 17%)', // #1b263b
+					accent: 'hsl(180, 54%, 60%)'
 				}
 			},
 			borderRadius: {
@@ -130,6 +137,16 @@ export default {
 				float: {
 					'0%, 100%': { transform: 'translateY(0)' },
 					'50%': { transform: 'translateY(-10px)' }
+				},
+				glow: {
+					'0%, 100%': { 
+						'box-shadow': '0 0 5px rgba(209, 232, 226, 0.2)',
+						'filter': 'brightness(1)'
+					},
+					'50%': { 
+						'box-shadow': '0 0 15px rgba(209, 232, 226, 0.4)',
+						'filter': 'brightness(1.1)'
+					}
 				}
 			},
 			animation: {
@@ -144,11 +161,17 @@ export default {
 				'slide-in-bottom': 'slide-in-bottom 0.6s ease-out',
 				'float': 'float 6s ease-in-out infinite',
 				'float-slow': 'float 8s ease-in-out infinite',
+				'glow': 'glow 3s ease-in-out infinite',
 			},
 			fontFamily: {
 				sans: ['Montserrat', 'sans-serif'],
 				serif: ['Playfair Display', 'serif']
-			}
+			},
+			boxShadow: {
+				'glow-sm': '0 0 5px rgba(209, 232, 226, 0.2)',
+				'glow-md': '0 0 10px rgba(209, 232, 226, 0.3)',
+				'glow-lg': '0 0 15px rgba(209, 232, 226, 0.4)',
+			},
 		}
 	},
 	plugins: [require("tailwindcss-animate")],
