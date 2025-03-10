@@ -33,6 +33,7 @@ import NotFound from "./pages/NotFound";
 import LoginPage from "./pages/auth/LoginPage";
 import SignUpPage from "./pages/auth/SignUpPage";
 import SelectShops from "./pages/SelectShops";
+import Categories from "./pages/Categories"; // New categories page
 
 // Dashboard imports
 import DashboardLayout from "./components/layout/DashboardLayout";
@@ -91,6 +92,7 @@ const AppRoutes = () => {
             <Route path="/shop/:shopId" element={<ShopDetail />} />
             <Route path="/product/:productId" element={<ProductDetail />} />
             <Route path="/select-shops" element={<SelectShops />} />
+            <Route path="/categories" element={<Categories />} />
             
             {/* Protected shopper routes - explicitly disallow business users */}
             <Route 

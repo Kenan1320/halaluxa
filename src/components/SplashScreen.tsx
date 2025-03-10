@@ -33,21 +33,21 @@ const SplashScreen = ({ onFinish }: { onFinish: () => void }) => {
     <AnimatePresence>
       {visible && (
         <motion.div 
-          className="fixed inset-0 flex flex-col items-center justify-center bg-[#E4F5F0] z-50"
+          className="fixed inset-0 flex flex-col items-center justify-center bg-[#E4F5F0] dark:bg-[#0d1b2a] z-50"
           initial={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.3 }}
         >
           <div className="flex flex-col items-center">
-            {/* Logo with building icon and Halvi text */}
+            {/* Logo with digital mall icon and Halvi text */}
             <motion.div 
               className="flex flex-col items-center mb-6"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, ease: "easeOut" }}
             >
-              <img src="/logo-dots.svg" alt="Halvi Building Icon" className="w-12 h-12 mb-2" />
-              <h1 className="text-5xl font-serif font-bold text-[#2A866A]">Halvi</h1>
+              <img src="/logo-digital-mall.svg" alt="Halvi Digital Mall" className="w-16 h-16 mb-3" />
+              <h1 className="text-5xl font-giaza font-bold text-[#2A866A] dark:text-[#4ECBA5]">Halvi</h1>
             </motion.div>
             
             {/* Tagline with word-by-word animation */}
@@ -55,7 +55,7 @@ const SplashScreen = ({ onFinish }: { onFinish: () => void }) => {
               {showTagline && (
                 <>
                   <motion.span 
-                    className="text-lg text-[#2A866A] opacity-0"
+                    className="text-lg text-[#2A866A] dark:text-[#4ECBA5] opacity-0"
                     initial={{ opacity: 0 }}
                     animate={showWord1 ? { opacity: 1 } : {}}
                     transition={{ duration: 0.5 }}
@@ -63,7 +63,7 @@ const SplashScreen = ({ onFinish }: { onFinish: () => void }) => {
                     The
                   </motion.span>
                   <motion.span 
-                    className="text-lg text-[#2A866A] opacity-0"
+                    className="text-lg text-[#2A866A] dark:text-[#4ECBA5] opacity-0"
                     initial={{ opacity: 0 }}
                     animate={showWord2 ? { opacity: 1 } : {}}
                     transition={{ duration: 0.5 }}
@@ -71,12 +71,12 @@ const SplashScreen = ({ onFinish }: { onFinish: () => void }) => {
                     Halal
                   </motion.span>
                   <motion.span 
-                    className="text-lg text-[#2A866A] opacity-0"
+                    className="text-lg text-[#2A866A] dark:text-[#4ECBA5] opacity-0"
                     initial={{ opacity: 0 }}
                     animate={showWord3 ? { opacity: 1 } : {}}
                     transition={{ duration: 0.5 }}
                   >
-                    Village
+                    Mall
                   </motion.span>
                 </>
               )}

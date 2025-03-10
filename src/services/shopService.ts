@@ -1,158 +1,147 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import type { Shop } from '@/models/shop';
-import { convertToModelShop, convertToDbShop } from '@/models/shop';
+import { Product } from '@/models/product';
+import { Shop as ShopModel } from '@/models/shop';
 
-// Export the Shop type
-export type { Shop };
+export interface Shop extends ShopModel {}
 
+/**
+ * Get all shops with optional limit and category filter
+ */
 export const getShops = async (limit?: number, category?: string): Promise<Shop[]> => {
-  let query = supabase.from('shops').select('*');
-  
-  if (category) {
-    query = query.eq('category', category);
+  try {
+    let query = supabase.from('shops').select('*');
+    
+    if (category) {
+      query = query.eq('category', category);
+    }
+    
+    if (limit) {
+      query = query.limit(limit);
+    }
+    
+    const { data, error } = await query;
+    
+    if (error) {
+      console.error('Error fetching shops:', error);
+      return [];
+    }
+    
+    return data as Shop[] || [];
+  } catch (error) {
+    console.error('Error in getShops:', error);
+    return [];
   }
-  
-  if (limit) {
-    query = query.limit(limit);
-  }
-  
-  const { data, error } = await query;
-  
-  if (error) {
-    throw error;
-  }
-  
-  return data.map(convertToModelShop);
 };
 
-// Alias for getShops for compatibility
+/**
+ * Alias for getShops for backward compatibility
+ */
 export const getAllShops = getShops;
 
+/**
+ * Get a shop by ID
+ */
 export const getShopById = async (id: string): Promise<Shop | null> => {
-  const { data, error } = await supabase
-    .from('shops')
-    .select('*')
-    .eq('id', id)
-    .single();
-  
-  if (error) {
-    console.error("Error fetching shop by ID:", error);
-    return null;
-  }
-  
-  return convertToModelShop(data);
-};
-
-export const getMainShop = async (): Promise<Shop | null> => {
   try {
-    const shopId = localStorage.getItem('mainShopId');
-    if (!shopId) {
+    const { data, error } = await supabase
+      .from('shops')
+      .select('*')
+      .eq('id', id)
+      .single();
+    
+    if (error) {
+      console.error('Error fetching shop:', error);
       return null;
     }
     
-    const shop = await getShopById(shopId);
-    return shop;
+    return data as Shop;
   } catch (error) {
-    console.error("Error loading main shop from localStorage:", error);
+    console.error('Error in getShopById:', error);
     return null;
   }
 };
 
-export const setMainShop = async (shopId: string): Promise<void> => {
-  localStorage.setItem('mainShopId', shopId);
-};
-
-export const createShop = async (shop: Shop): Promise<Shop | null> => {
-  const { data, error } = await supabase
-    .from('shops')
-    .insert([convertToDbShop(shop)])
-    .select('*')
-    .single();
-  
-  if (error) {
-    console.error("Error creating shop:", error);
+/**
+ * Get the main shop for a user
+ */
+export const getMainShop = async (): Promise<Shop | null> => {
+  try {
+    // For demo purposes, just get the first shop
+    const { data: shop } = await supabase
+      .from('shops')
+      .select('*')
+      .limit(1)
+      .single();
+    
+    return shop as Shop;
+  } catch (error) {
+    console.error('Error getting main shop:', error);
     return null;
   }
-  
-  return convertToModelShop(data);
 };
 
-export const updateShop = async (id: string, updates: Partial<Shop>): Promise<Shop | null> => {
-  const { data, error } = await supabase
-    .from('shops')
-    .update(updates)
-    .eq('id', id)
-    .select('*')
-    .single();
-  
-  if (error) {
-    console.error("Error updating shop:", error);
-    return null;
-  }
-  
-  return convertToModelShop(data);
-};
-
-export const deleteShop = async (id: string): Promise<boolean> => {
-  const { error } = await supabase
-    .from('shops')
-    .delete()
-    .eq('id', id);
-  
-  if (error) {
-    console.error("Error deleting shop:", error);
-    return false;
-  }
-  
-  return true;
-};
-
-// Add the function for getting shop products
-export const getShopProducts = async (shopId: string) => {
-  const { data, error } = await supabase
-    .from('products')
-    .select('*')
-    .eq('shop_id', shopId);
-  
-  if (error) {
-    console.error("Error fetching shop products:", error);
+/**
+ * Get products for a shop
+ */
+export const getShopProducts = async (shopId: string): Promise<Product[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .eq('seller_id', shopId);
+    
+    if (error) {
+      console.error('Error fetching shop products:', error);
+      return [];
+    }
+    
+    return data as Product[] || [];
+  } catch (error) {
+    console.error('Error in getShopProducts:', error);
     return [];
   }
-  
-  return data.map(convertToModelProduct);
 };
 
-// Function for uploading product images
-export const uploadProductImage = async (file: File, productId: string): Promise<string | null> => {
-  const fileExt = file.name.split('.').pop();
-  const fileName = `${productId}-${Math.random()}.${fileExt}`;
-  const filePath = `product-images/${fileName}`;
-
-  const { error: uploadError } = await supabase.storage
-    .from('product-images')
-    .upload(filePath, file);
-
-  if (uploadError) {
-    console.error('Error uploading image:', uploadError);
-    return null;
+/**
+ * Upload a product image
+ */
+export const uploadProductImage = async (
+  file: File, 
+  onProgress: (progress: number) => void
+): Promise<string> => {
+  try {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+    const filePath = `product-images/${fileName}`;
+    
+    const { data, error } = await supabase.storage
+      .from('products')
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: false
+      });
+    
+    if (error) {
+      throw error;
+    }
+    
+    const { data: urlData } = supabase.storage
+      .from('products')
+      .getPublicUrl(data.path);
+    
+    return urlData.publicUrl;
+  } catch (error) {
+    console.error('Error uploading image:', error);
+    throw error;
   }
-
-  const { data } = supabase.storage.from('product-images').getPublicUrl(filePath);
-  return data.publicUrl;
 };
 
-export const convertToModelProduct = (productData: any) => {
-  return {
-    id: productData.id,
-    name: productData.name,
-    description: productData.description,
-    price: productData.price,
-    category: productData.category,
-    inStock: productData.in_stock,
-    isHalalCertified: productData.is_halal_certified,
-    sellerId: productData.seller_id,
-    images: productData.images || [],
-    createdAt: productData.created_at
-  };
+export default {
+  getShops,
+  getAllShops,
+  getShopById,
+  getMainShop,
+  getShopProducts,
+  uploadProductImage
 };

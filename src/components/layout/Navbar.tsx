@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, Search, ShoppingCart, User, MapPin, Store, Moon, Sun } from 'lucide-react';
+import { Menu, X, Search, ShoppingCart, User, MapPin, Moon, Sun } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/context/AuthContext';
@@ -99,29 +99,13 @@ const Navbar = () => {
         
         {/* Logo - with animation */}
         <div className="flex items-center ml-3 mr-auto">
-          <Link to="/" className="flex items-center">
-            <span className="text-lg font-serif font-bold text-[#2A866A] dark:text-[#4ECBA5]">Halvi</span>
-            
-            {/* Main animated element */}
-            <motion.div 
-              className="relative ml-1"
-              initial={{ opacity: 0, scale: 0 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-            >
-              {/* Main orange ball */}
-              <motion.div 
-                className="w-4 h-4 bg-[#E4875E] rounded-full"
-                animate={{
-                  scale: [1, 1.1, 1],
-                }}
-                transition={{
-                  duration: 6,
-                  repeat: Infinity,
-                  repeatType: "reverse"
-                }}
-              />
-            </motion.div>
+          <Link to="/" className="flex items-center gap-1">
+            <img 
+              src="/logo-digital-mall.svg" 
+              alt="Halvi Digital Mall" 
+              className="w-8 h-8"
+            />
+            <span className="text-lg font-giaza font-bold text-[#2A866A] dark:text-[#4ECBA5]">Halvi</span>
           </Link>
         </div>
         
@@ -151,64 +135,6 @@ const Navbar = () => {
           >
             <MapPin className="h-6 w-6" />
           </motion.button>
-          
-          {/* Main Shop Button */}
-          <motion.button 
-            onClick={handleMainShopClick}
-            className="relative p-2 rounded-full text-[#2A866A] dark:text-[#4ECBA5] hover:bg-[#d5efe8] dark:hover:bg-gray-800 transition-colors"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            {mainShop ? (
-              <>
-                {mainShop.logo_url ? (
-                  <div className="w-6 h-6 rounded-full overflow-hidden">
-                    <img src={mainShop.logo_url} alt={mainShop.name} className="w-full h-full object-cover" />
-                  </div>
-                ) : (
-                  <Store className="h-6 w-6" />
-                )}
-                <motion.div 
-                  className="absolute -bottom-1 -right-1 w-2 h-2 bg-[#E4875E] rounded-full"
-                  animate={{
-                    scale: [1, 1.5, 1],
-                  }}
-                  transition={{
-                    duration: 2,
-                    repeat: Infinity,
-                  }}
-                />
-              </>
-            ) : (
-              <div className="relative">
-                <Store className="h-6 w-6" />
-                <motion.div 
-                  className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"
-                  animate={{
-                    scale: [1, 1.5, 1],
-                    opacity: [0.7, 1, 0.7]
-                  }}
-                  transition={{
-                    duration: 1.5,
-                    repeat: Infinity,
-                  }}
-                />
-              </div>
-            )}
-          </motion.button>
-          
-          {/* Select Shops Button */}
-          <motion.div
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <Link 
-              to="/select-shops" 
-              className="p-2 rounded-full text-[#2A866A] dark:text-[#4ECBA5] hover:bg-[#d5efe8] dark:hover:bg-gray-800 transition-colors block"
-            >
-              <Store className="h-6 w-6" />
-            </Link>
-          </motion.div>
           
           {/* Cart Button */}
           <motion.div
@@ -286,7 +212,15 @@ const Navbar = () => {
             >
               <span>Browse</span>
             </Link>
-            {/* Select Shops link */}
+            <Link
+              to="/categories"
+              className={`flex items-center gap-3 p-3 rounded-lg transition ${
+                isActive('/categories') ? 'bg-[#E4F5F0] dark:bg-[#2A866A]/20 text-[#2A866A] dark:text-[#4ECBA5]' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+              }`}
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <span>Categories</span>
+            </Link>
             <Link
               to="/select-shops"
               className={`flex items-center gap-3 p-3 rounded-lg transition ${
@@ -294,7 +228,7 @@ const Navbar = () => {
               }`}
               onClick={() => setMobileMenuOpen(false)}
             >
-              <span>Select Your Shops</span>
+              <span>Select Your Shop</span>
             </Link>
             {user?.role === 'business' && (
               <Link

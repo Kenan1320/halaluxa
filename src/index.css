@@ -1,5 +1,6 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap');
+@import url('https://fonts.cdnfonts.com/css/giaza');
 
 @tailwind base;
 @tailwind components;
@@ -146,6 +147,10 @@
     -webkit-backdrop-filter: blur(8px);
     border-top: 1px solid rgba(209, 232, 226, 0.1);
   }
+  
+  .font-giaza {
+    font-family: 'Giaza', serif;
+  }
 }
 
 @layer components {
@@ -177,6 +182,11 @@
   .dark .icon-teal {
     @apply text-primary;
   }
+  
+  .product-card-empty {
+    @apply relative flex flex-col items-center justify-center p-6 rounded-lg bg-gradient-to-br from-secondary/40 to-secondary/10 border border-border shadow-sm overflow-hidden;
+    @apply dark:from-secondary/20 dark:to-background/10 dark:border-primary/10 dark:shadow-primary/5;
+  }
 }
 
 /* Animations */
@@ -195,3 +205,4 @@
 .animate-delay-500 {
   animation-delay: 0.5s;
 }
+

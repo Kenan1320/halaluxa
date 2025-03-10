@@ -62,51 +62,43 @@ const NearbyShops = () => {
       {shops.map((shop, index) => (
         <div key={shop.id} className="mb-8">
           {/* Shop header with name and logo - now animated and clickable */}
-          <div className="flex items-center justify-between mb-4">
-            <Link to={`/shop/${shop.id}`} className="group flex items-center gap-3">
-              <motion.div 
-                className="w-10 h-10 rounded-full overflow-hidden bg-card shadow-sm flex items-center justify-center dark:shadow-md dark:shadow-primary/5"
-                whileHover={{ 
-                  scale: 1.1,
-                  boxShadow: theme === 'dark' ? '0 0 10px rgba(209, 232, 226, 0.2)' : '0 4px 12px rgba(0,0,0,0.1)'
-                }}
-                whileTap={{ scale: 0.95 }}
-                transition={{ type: "spring", stiffness: 400, damping: 10 }}
-              >
-                {shop.logo_url ? (
-                  <img 
-                    src={shop.logo_url} 
-                    alt={`${shop.name} logo`}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-primary/10 flex items-center justify-center dark:bg-primary/20">
-                    <span className="text-xs font-medium text-primary">
-                      {shop.name.substring(0, 2).toUpperCase()}
-                    </span>
-                  </div>
-                )}
-              </motion.div>
-              <motion.h3 
-                className="text-base font-medium relative"
-                whileHover={{ color: "hsl(var(--primary))" }}
-              >
-                {shop.name}
-                <motion.span
-                  className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary"
-                  initial={{ width: 0 }}
-                  whileHover={{ width: "100%" }}
-                  transition={{ duration: 0.3 }}
-                />
-              </motion.h3>
-            </Link>
-            <Link 
-              to={`/shop/${shop.id}`} 
-              className="text-xs font-medium text-primary hover:underline transition-colors duration-300"
+          <Link to={`/shop/${shop.id}`} className="group flex items-center gap-3 mb-4">
+            <motion.div 
+              className="w-10 h-10 rounded-full overflow-hidden bg-card shadow-sm flex items-center justify-center dark:shadow-md dark:shadow-primary/5"
+              whileHover={{ 
+                scale: 1.1,
+                boxShadow: theme === 'dark' ? '0 0 10px rgba(209, 232, 226, 0.2)' : '0 4px 12px rgba(0,0,0,0.1)'
+              }}
+              whileTap={{ scale: 0.95 }}
+              transition={{ type: "spring", stiffness: 400, damping: 10 }}
             >
-              View all
-            </Link>
-          </div>
+              {shop.logo_url ? (
+                <img 
+                  src={shop.logo_url} 
+                  alt={`${shop.name} logo`}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-primary/10 flex items-center justify-center dark:bg-primary/20">
+                  <span className="text-xs font-medium text-primary">
+                    {shop.name.substring(0, 2).toUpperCase()}
+                  </span>
+                </div>
+              )}
+            </motion.div>
+            <motion.h3 
+              className="text-base font-medium relative"
+              whileHover={{ color: "hsl(var(--primary))" }}
+            >
+              {shop.name}
+              <motion.span
+                className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary"
+                initial={{ width: 0 }}
+                whileHover={{ width: "100%" }}
+                transition={{ duration: 0.3 }}
+              />
+            </motion.h3>
+          </Link>
           
           {/* Shop products in horizontal scroll */}
           <ShopProductList shopId={shop.id} />
