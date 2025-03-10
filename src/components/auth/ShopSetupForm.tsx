@@ -1,9 +1,7 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { createShop } from '@/services/shopService';
 import { Store, MapPin, Tag, FileText, Upload, X } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -16,7 +14,6 @@ interface ShopSetupFormProps {
 export default function ShopSetupForm({ onComplete, onSkip }: ShopSetupFormProps) {
   const { user, updateUser } = useAuth();
   const { toast } = useToast();
-  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   
   const [shopData, setShopData] = useState({
@@ -80,68 +77,63 @@ export default function ShopSetupForm({ onComplete, onSkip }: ShopSetupFormProps
     setIsLoading(true);
     
     try {
-      console.log('Creating shop with data:', shopData);
+      // First update the business_profiles table
+      const { error: updateError } = await supabase
+        .from('business_profiles')
+        .update({
+          shop_name: shopData.name,
+          shop_description: shopData.description,
+          shop_category: shopData.category,
+          shop_location: shopData.location,
+          shop_logo: logoPreview
+        })
+        .eq('id', user.id);
       
-      // Create the shop
-      const shop = await createShop({
-        name: shopData.name,
-        description: shopData.description,
-        logo: logoPreview || undefined,
-        category: shopData.category,
-        location: shopData.location,
-        rating: 0,
-        productCount: 0,
-        isVerified: false,
-        ownerId: user.id
+      if (updateError) {
+        throw updateError;
+      }
+      
+      // Create the shop in the shops table
+      const { data: shop, error: shopError } = await supabase
+        .from('shops')
+        .insert({
+          name: shopData.name,
+          description: shopData.description,
+          logo_url: logoPreview,
+          category: shopData.category,
+          location: shopData.location,
+          is_verified: false,
+          product_count: 0,
+          rating: 0,
+          owner_id: user.id
+        })
+        .select()
+        .single();
+      
+      if (shopError) {
+        throw shopError;
+      }
+      
+      // Also update the user context
+      await updateUser({
+        shopName: shopData.name,
+        shopDescription: shopData.description,
+        shopCategory: shopData.category,
+        shopLocation: shopData.location,
+        shopLogo: logoPreview
       });
       
-      if (shop) {
-        console.log('Shop created successfully:', shop);
-        
-        // Update business profile with shop details using business_profiles table
-        const { error: updateError } = await supabase
-          .from('business_profiles')
-          .update({
-            shop_name: shopData.name,
-            shop_description: shopData.description,
-            shop_category: shopData.category,
-            shop_location: shopData.location,
-            shop_logo: logoPreview
-          })
-          .eq('id', user.id);
-        
-        if (updateError) {
-          console.error('Error updating business profile:', updateError);
-        }
-          
-        // Also update the user context
-        await updateUser({
-          shopName: shopData.name,
-          shopDescription: shopData.description,
-          shopCategory: shopData.category,
-          shopLocation: shopData.location,
-          shopLogo: logoPreview
-        });
-        
-        toast({
-          title: "Success",
-          description: "Your shop has been created successfully"
-        });
-        
-        onComplete();
-      } else {
-        console.error('Failed to create shop');
-        toast({
-          title: "Error",
-          description: "Failed to create shop. Please try again.",
-          variant: "destructive"
-        });
-      }
-    } catch (error) {
+      toast({
+        title: "Success",
+        description: "Your shop has been created successfully"
+      });
+      
+      onComplete();
+    } catch (error: any) {
       console.error('Error creating shop:', error);
       toast({
         title: "Error",
-        description: "An unexpected error occurred. Please try again.",
+        description: error.message || "An unexpected error occurred. Please try again.",
         variant: "destructive"
       });
     } finally {

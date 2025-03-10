@@ -10,8 +10,8 @@ export interface Shop {
   productCount: number;
   isVerified: boolean;
   category: string;
-  logo?: string | null;
-  coverImage?: string | null;
+  logo: string | null;
+  coverImage: string | null;
   ownerId: string;
   latitude?: number | null;
   longitude?: number | null;

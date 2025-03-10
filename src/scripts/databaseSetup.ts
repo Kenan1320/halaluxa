@@ -7,13 +7,14 @@ export const initializeDatabase = async (): Promise<boolean> => {
     console.log('Starting database initialization...');
 
     // Check if tables already exist to avoid duplicating setup
-    const requiredTables = ['profiles', 'shops', 'products', 'orders', 'business_profiles', 'shop_payment_methods'];
+    const requiredTables = ['profiles', 'business_profiles', 'shops', 'products', 'orders', 'shop_payment_methods'];
     
     let existingTables: string[] = [];
     
     try {
+      // Check each table existence by making a count query
       for (const table of requiredTables) {
-        const { count, error } = await supabase
+        const { data, error } = await supabase
           .from(table)
           .select('*', { count: 'exact', head: true });
           
@@ -35,11 +36,11 @@ export const initializeDatabase = async (): Promise<boolean> => {
 
     // Create profiles table if it doesn't exist
     if (!existingTables.includes('profiles')) {
-      const { error: profilesError } = await supabase.rpc('create_profiles_table');
+      const { error } = await supabase.rpc('create_profiles_table');
       
-      if (profilesError) {
-        console.error('Error creating profiles table:', profilesError);
-        // Try direct SQL since RPC might fail
+      if (error) {
+        console.error('Error creating profiles table:', error);
+        // Try direct SQL instead of RPC
         await executeSQL(`
           CREATE TABLE IF NOT EXISTS profiles (
             id UUID PRIMARY KEY REFERENCES auth.users ON DELETE CASCADE,
@@ -55,14 +56,14 @@ export const initializeDatabase = async (): Promise<boolean> => {
             created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
             updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
           );
-          -- RLS policies
+          
+          -- Enable RLS
           ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
           
-          -- Allow users to view their own profile
+          -- Create policies
           CREATE POLICY "Users can view own profile" ON profiles
             FOR SELECT USING (auth.uid() = id);
             
-          -- Allow users to update their own profile
           CREATE POLICY "Users can update own profile" ON profiles
             FOR UPDATE USING (auth.uid() = id);
         `);
@@ -71,10 +72,10 @@ export const initializeDatabase = async (): Promise<boolean> => {
 
     // Create business_profiles table if it doesn't exist
     if (!existingTables.includes('business_profiles')) {
-      const { error: businessProfilesError } = await supabase.rpc('create_business_profiles_table');
+      const { error } = await supabase.rpc('create_business_profiles_table');
       
-      if (businessProfilesError) {
-        console.error('Error creating business_profiles table:', businessProfilesError);
+      if (error) {
+        console.error('Error creating business_profiles table:', error);
         // Try direct SQL
         await executeSQL(`
           CREATE TABLE IF NOT EXISTS business_profiles (
@@ -85,18 +86,18 @@ export const initializeDatabase = async (): Promise<boolean> => {
             shop_category TEXT,
             shop_location TEXT,
             business_verified BOOLEAN DEFAULT FALSE,
-            business_documents JSONB,
+            business_documents JSONB DEFAULT '{}'::jsonb,
             created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
             updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
           );
-          -- RLS policies
+          
+          -- Enable RLS
           ALTER TABLE business_profiles ENABLE ROW LEVEL SECURITY;
           
-          -- Allow users to view their own business profile
+          -- Create policies
           CREATE POLICY "Users can view own business profile" ON business_profiles
             FOR SELECT USING (auth.uid() = id);
             
-          -- Allow users to update their own business profile
           CREATE POLICY "Users can update own business profile" ON business_profiles
             FOR UPDATE USING (auth.uid() = id);
         `);
@@ -105,43 +106,43 @@ export const initializeDatabase = async (): Promise<boolean> => {
 
     // Create shops table if it doesn't exist
     if (!existingTables.includes('shops')) {
-      const { error: shopsError } = await supabase.rpc('create_shops_table');
+      const { error } = await supabase.rpc('create_shops_table');
       
-      if (shopsError) {
-        console.error('Error creating shops table:', shopsError);
+      if (error) {
+        console.error('Error creating shops table:', error);
         // Try direct SQL
         await executeSQL(`
           CREATE TABLE IF NOT EXISTS shops (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             name TEXT NOT NULL,
             description TEXT,
-            logo TEXT,
+            logo_url TEXT,
             cover_image TEXT,
-            owner_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+            owner_id UUID NOT NULL,
             location TEXT,
             latitude DECIMAL,
             longitude DECIMAL,
             category TEXT,
-            verified BOOLEAN DEFAULT FALSE,
+            is_verified BOOLEAN DEFAULT FALSE,
+            product_count INTEGER DEFAULT 0,
+            rating NUMERIC DEFAULT 0,
             created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
             updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
           );
-          -- RLS policies
+          
+          -- Enable RLS
           ALTER TABLE shops ENABLE ROW LEVEL SECURITY;
           
-          -- Everyone can view shops
+          -- Create policies
           CREATE POLICY "Anyone can view shops" ON shops
             FOR SELECT USING (TRUE);
             
-          -- Only owners can update their own shops
           CREATE POLICY "Owners can update their own shops" ON shops
             FOR UPDATE USING (auth.uid() = owner_id);
             
-          -- Only owners can delete their own shops
           CREATE POLICY "Owners can delete their own shops" ON shops
             FOR DELETE USING (auth.uid() = owner_id);
             
-          -- Only authenticated users can create shops
           CREATE POLICY "Authenticated users can create shops" ON shops
             FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
         `);
@@ -150,10 +151,10 @@ export const initializeDatabase = async (): Promise<boolean> => {
 
     // Create products table if it doesn't exist
     if (!existingTables.includes('products')) {
-      const { error: productsError } = await supabase.rpc('create_products_table');
+      const { error } = await supabase.rpc('create_products_table');
       
-      if (productsError) {
-        console.error('Error creating products table:', productsError);
+      if (error) {
+        console.error('Error creating products table:', error);
         // Try direct SQL
         await executeSQL(`
           CREATE TABLE IF NOT EXISTS products (
@@ -162,25 +163,25 @@ export const initializeDatabase = async (): Promise<boolean> => {
             description TEXT,
             long_description TEXT,
             price DECIMAL NOT NULL,
-            discount_price DECIMAL,
-            category TEXT,
-            shop_id UUID REFERENCES shops(id) ON DELETE CASCADE,
+            category TEXT NOT NULL,
+            shop_id UUID NOT NULL,
             images TEXT[],
-            details JSONB,
+            details JSONB DEFAULT '{}'::jsonb,
             is_published BOOLEAN DEFAULT FALSE,
             is_halal_certified BOOLEAN DEFAULT TRUE,
-            stock_quantity INTEGER DEFAULT 0,
+            stock INTEGER DEFAULT 0,
+            rating NUMERIC DEFAULT 0,
             created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
             updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
           );
-          -- RLS policies
+          
+          -- Enable RLS
           ALTER TABLE products ENABLE ROW LEVEL SECURITY;
           
-          -- Everyone can view products
+          -- Create policies
           CREATE POLICY "Anyone can view products" ON products
             FOR SELECT USING (TRUE);
             
-          -- Shop owners can update their own products
           CREATE POLICY "Shop owners can update their own products" ON products
             FOR UPDATE USING (
               EXISTS (
@@ -190,7 +191,6 @@ export const initializeDatabase = async (): Promise<boolean> => {
               )
             );
             
-          -- Shop owners can delete their own products
           CREATE POLICY "Shop owners can delete their own products" ON products
             FOR DELETE USING (
               EXISTS (
@@ -200,7 +200,6 @@ export const initializeDatabase = async (): Promise<boolean> => {
               )
             );
             
-          -- Shop owners can create products for their shops
           CREATE POLICY "Shop owners can create products" ON products
             FOR INSERT WITH CHECK (
               EXISTS (
@@ -215,46 +214,66 @@ export const initializeDatabase = async (): Promise<boolean> => {
 
     // Create shop_payment_methods table if it doesn't exist
     if (!existingTables.includes('shop_payment_methods')) {
-      const { error: paymentMethodsError } = await supabase.rpc('create_shop_payment_methods_table');
+      const { error } = await supabase.rpc('create_shop_payment_methods_table');
       
-      if (paymentMethodsError) {
-        console.error('Error creating shop_payment_methods table:', paymentMethodsError);
+      if (error) {
+        console.error('Error creating shop_payment_methods table:', error);
         // Try direct SQL
         await executeSQL(`
           CREATE TABLE IF NOT EXISTS shop_payment_methods (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            shop_id UUID REFERENCES shops(id) ON DELETE CASCADE,
-            user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+            shop_id UUID NOT NULL,
             method_type TEXT NOT NULL,
             account_name TEXT,
             account_number TEXT,
             bank_name TEXT,
             paypal_email TEXT,
             stripe_account_id TEXT,
-            applepay_merchant_id TEXT,
             is_default BOOLEAN DEFAULT FALSE,
             is_active BOOLEAN DEFAULT TRUE,
             created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
             updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
           );
-          -- RLS policies
+          
+          -- Enable RLS
           ALTER TABLE shop_payment_methods ENABLE ROW LEVEL SECURITY;
           
-          -- Shop owners can view their payment methods
+          -- Create policies
           CREATE POLICY "Shop owners can view their payment methods" ON shop_payment_methods
-            FOR SELECT USING (user_id = auth.uid());
+            FOR SELECT USING (
+              EXISTS (
+                SELECT 1 FROM shops
+                WHERE shops.id = shop_payment_methods.shop_id
+                AND shops.owner_id = auth.uid()
+              )
+            );
             
-          -- Shop owners can update their payment methods
           CREATE POLICY "Shop owners can update their payment methods" ON shop_payment_methods
-            FOR UPDATE USING (user_id = auth.uid());
+            FOR UPDATE USING (
+              EXISTS (
+                SELECT 1 FROM shops
+                WHERE shops.id = shop_payment_methods.shop_id
+                AND shops.owner_id = auth.uid()
+              )
+            );
             
-          -- Shop owners can delete their payment methods
           CREATE POLICY "Shop owners can delete their payment methods" ON shop_payment_methods
-            FOR DELETE USING (user_id = auth.uid());
+            FOR DELETE USING (
+              EXISTS (
+                SELECT 1 FROM shops
+                WHERE shops.id = shop_payment_methods.shop_id
+                AND shops.owner_id = auth.uid()
+              )
+            );
             
-          -- Shop owners can create payment methods
           CREATE POLICY "Shop owners can create payment methods" ON shop_payment_methods
-            FOR INSERT WITH CHECK (user_id = auth.uid());
+            FOR INSERT WITH CHECK (
+              EXISTS (
+                SELECT 1 FROM shops
+                WHERE shops.id = shop_payment_methods.shop_id
+                AND shops.owner_id = auth.uid()
+              )
+            );
         `);
       }
     }
@@ -270,11 +289,9 @@ export const initializeDatabase = async (): Promise<boolean> => {
 // Helper function to execute SQL directly
 const executeSQL = async (sql: string): Promise<void> => {
   try {
-    const { error } = await supabase.rpc('exec_sql', { sql });
-    if (error) {
-      console.error('Error executing SQL:', error);
-    }
+    await supabase.rpc('exec_sql', { sql });
   } catch (error) {
-    console.error('Error with RPC execution:', error);
+    console.error('Error executing SQL:', error);
+    // If RPC fails, try using raw SQL if possible
   }
 };

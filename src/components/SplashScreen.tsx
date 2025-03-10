@@ -12,12 +12,12 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
   useEffect(() => {
     const timer = setTimeout(() => {
       onComplete();
-    }, 2000);
+    }, 1500);
     
-    // Show error after 10 seconds if still loading
+    // Show error after 8 seconds if still loading
     const errorTimer = setTimeout(() => {
       setShowError(true);
-    }, 10000);
+    }, 8000);
     
     return () => {
       clearTimeout(timer);

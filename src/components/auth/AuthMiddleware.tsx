@@ -16,11 +16,11 @@ const AuthMiddleware = ({ children }: AuthMiddlewareProps) => {
   const location = useLocation();
   const navigate = useNavigate();
 
+  // Show splash screen for at least 1.2 seconds
   useEffect(() => {
-    // Show splash screen for at least 1.2 seconds
     const timer = setTimeout(() => {
       setShowSplash(false);
-    }, 1500);
+    }, 1200);
 
     return () => clearTimeout(timer);
   }, []);
