@@ -3,8 +3,22 @@ import { Shop, ShopProduct, mapDatabaseShopToModel, mapModelToDatabase } from '@
 import { supabase } from '@/integrations/supabase/client';
 import { Product } from '@/models/product';
 
-// Re-export the Shop type and related types
+// Re-export the Shop type
 export type { Shop, ShopProduct };
+
+// Export all necessary functions
+export { 
+  getAllShops as getShops,
+  getShopById,
+  createShop,
+  updateShop,
+  deleteShop,
+  getMainShop,
+  getNearbyShops,
+  uploadProductImage,
+  getShopProducts,
+  convertToModelProduct
+};
 
 // Function to create a new shop
 export const createShop = async (shopData: Partial<Shop>): Promise<Shop | null> => {
