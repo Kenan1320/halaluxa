@@ -5,6 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import SearchBar from '@/components/home/SearchBar';
 import CategoryScroll from '@/components/home/CategoryScroll';
 import NearbyShops from '@/components/home/NearbyShops';
+import Footer from '@/components/layout/Footer';
 
 const Index = () => {
   const { isLoggedIn, user } = useAuth();

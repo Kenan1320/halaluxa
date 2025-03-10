@@ -3,7 +3,6 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ShoppingCart, ShoppingBag, Home, BookOpen, Utensils, HeartPulse, Gift, Shirt, Laptop, Baby, Drumstick, Palette, Camera, Briefcase, Car, Coffee, Cog, Dumbbell, Plane, MapPin } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 
 const categoriesData = [
   { id: 1, name: 'Groceries', icon: ShoppingCart, description: 'Halal-verified groceries and everyday essentials' },
