@@ -235,7 +235,7 @@ const Browse = () => {
                 </CardContent>
                 
                 <CardFooter className="p-4 pt-0">
-                  <Button asChild className="w-full">
+                  <Button className="w-full">
                     <Link to={`/shop/${shop.id}`}>
                       Visit Shop
                     </Link>

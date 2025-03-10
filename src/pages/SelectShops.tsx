@@ -18,7 +18,7 @@ const SelectShops = () => {
   
   const { data: allShops, isLoading, error } = useQuery({
     queryKey: ['shops'],
-    queryFn: getShops
+    queryFn: () => getShops()
   });
   
   // Filter shops based on the current user's ID
@@ -89,7 +89,7 @@ const SelectShops = () => {
             <Store className="h-12 w-12 text-[#2A866A] dark:text-[#4ECBA5] mx-auto mb-4" />
             <h2 className="text-xl font-medium mb-2">No shops found</h2>
             <p className="text-gray-600 dark:text-gray-400 mb-6">You haven't created any shops yet. Create your first shop to get started.</p>
-            <Button asChild>
+            <Button>
               <Link to="/dashboard/settings">
                 <Plus className="h-4 w-4 mr-2" /> Create Shop
               </Link>
@@ -193,7 +193,6 @@ const SelectShops = () => {
                     </Button>
                     <Button 
                       variant="outline" 
-                      asChild
                       className="flex-1"
                     >
                       <Link to={`/shop/${shop.id}`}>

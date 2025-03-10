@@ -1,176 +1,170 @@
 
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
-// Check if the browser supports notifications
-export const checkNotificationSupport = (): boolean => {
-  return 'Notification' in window && 'serviceWorker' in navigator && 'PushManager' in window;
-};
+// Define the notification types
+export type NotificationType = 
+  // Shopper notifications
+  | 'order_update'
+  | 'product_recommendation'
+  | 'abandoned_cart'
+  | 'new_product'
+  // Business notifications
+  | 'new_order'
+  | 'low_stock'
+  | 'customer_message'
+  | 'sales_summary'
+  | 'new_review';
 
-// Request permission for push notifications
-export const requestNotificationPermission = async (): Promise<NotificationPermission> => {
-  if (!checkNotificationSupport()) {
-    throw new Error('Push notifications not supported on this browser');
-  }
+export interface NotificationPreferences {
+  // Shopper preferences
+  orders: boolean;
+  marketing: boolean;
+  product_updates: boolean;
+  reviews: boolean;
+  messages: boolean;
   
-  return Notification.requestPermission();
-};
+  // Business preferences
+  new_orders?: boolean;
+  low_stock?: boolean;
+  customer_reviews?: boolean;
+  sales_reports?: boolean;
+  
+  user_id: string;
+}
 
-// Register push subscription with the backend
-export const registerPushSubscription = async (userId: string): Promise<boolean> => {
+// Get app default notification settings
+export const getAppNotificationSettings = async (): Promise<any> => {
   try {
-    if (!checkNotificationSupport()) {
-      console.warn('Push notifications not supported on this browser');
-      return false;
-    }
-
-    // Get the service worker registration
-    const registration = await navigator.serviceWorker.ready;
-    
-    // Get the push subscription
-    let subscription = await registration.pushManager.getSubscription();
-    
-    // If no subscription exists, create a new one
-    if (!subscription) {
-      // Get the public VAPID key from the backend
-      const { data: vapidData, error: vapidError } = await supabase
-        .from('app_settings')
-        .select('value')
-        .eq('key', 'vapid_public_key')
-        .single();
-      
-      if (vapidError || !vapidData) {
-        console.error('Failed to get VAPID key:', vapidError);
-        return false;
+    // This would normally fetch from a settings table
+    // For now, return default values
+    return {
+      notifications_enabled: true,
+      default_settings: {
+        orders: true,
+        marketing: true,
+        product_updates: true,
+        reviews: true,
+        messages: true,
+        new_orders: true,
+        low_stock: true,
+        customer_reviews: true,
+        sales_reports: true
       }
-      
-      // Convert the VAPID key to the format expected by the browser
-      const vapidPublicKey = vapidData.value;
-      const convertedVapidKey = urlBase64ToUint8Array(vapidPublicKey);
-      
-      // Create a new subscription
-      subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: convertedVapidKey
-      });
-    }
-    
-    // Save the subscription in the database linked to the user
-    const { error } = await supabase
-      .from('user_push_subscriptions')
-      .upsert({
-        user_id: userId,
-        subscription: JSON.stringify(subscription),
-        created_at: new Date().toISOString()
-      });
-    
-    if (error) {
-      console.error('Failed to save subscription:', error);
-      return false;
-    }
-    
+    };
+  } catch (error) {
+    console.error('Error fetching notification settings:', error);
+    return null;
+  }
+};
+
+// Save push subscription for a user
+export const saveUserPushSubscription = async (userId: string, subscription: PushSubscriptionJSON): Promise<boolean> => {
+  try {
+    // In a real implementation, you would store this in the database
+    console.log('Saving subscription for user:', userId, subscription);
+    localStorage.setItem(`push_sub_${userId}`, JSON.stringify(subscription));
     return true;
   } catch (error) {
-    console.error('Error registering push subscription:', error);
+    console.error('Error saving push subscription:', error);
     return false;
   }
 };
 
-// Update notification preferences
-export const updateNotificationPreferences = async (userId: string, preferences: NotificationPreferences): Promise<boolean> => {
+// Save or update user notification preferences
+export const saveNotificationPreferences = async (preferences: NotificationPreferences): Promise<boolean> => {
   try {
-    const { error } = await supabase
-      .from('user_notification_preferences')
-      .upsert({
-        user_id: userId,
-        ...preferences,
-        updated_at: new Date().toISOString()
-      });
-    
-    if (error) {
-      console.error('Failed to update notification preferences:', error);
-      return false;
-    }
-    
+    // In a real implementation, you would store this in the database
+    console.log('Saving notification preferences:', preferences);
+    localStorage.setItem(`notification_prefs_${preferences.user_id}`, JSON.stringify(preferences));
     return true;
   } catch (error) {
-    console.error('Error updating notification preferences:', error);
+    console.error('Error saving notification preferences:', error);
     return false;
   }
 };
 
-// Get notification preferences
-export const getNotificationPreferences = async (userId: string): Promise<NotificationPreferences | null> => {
+// Get user notification preferences
+export const getUserNotificationPreferences = async (userId: string): Promise<NotificationPreferences | null> => {
   try {
-    const { data, error } = await supabase
-      .from('user_notification_preferences')
-      .select('*')
-      .eq('user_id', userId)
-      .single();
-    
-    if (error || !data) {
-      console.error('Failed to get notification preferences:', error);
-      return null;
+    // In a real implementation, you would fetch from the database
+    const savedPrefs = localStorage.getItem(`notification_prefs_${userId}`);
+    if (savedPrefs) {
+      return JSON.parse(savedPrefs) as NotificationPreferences;
     }
     
-    return data as NotificationPreferences;
+    // Return default preferences if none are saved
+    return {
+      orders: true,
+      marketing: false,
+      product_updates: true,
+      reviews: true,
+      messages: true,
+      user_id: userId
+    };
   } catch (error) {
     console.error('Error getting notification preferences:', error);
     return null;
   }
 };
 
-// Helper function to convert a base64 string to a Uint8Array
-// This is needed for the applicationServerKey
-const urlBase64ToUint8Array = (base64String: string): Uint8Array => {
-  const padding = '='.repeat((4 - base64String.length % 4) % 4);
-  const base64 = (base64String + padding)
-    .replace(/-/g, '+')
-    .replace(/_/g, '/');
+// Send a notification to a user (in a real app, this would connect to a push service)
+export const sendNotification = async (userId: string, title: string, body: string, data: any = {}): Promise<boolean> => {
+  // This is a mock implementation that just shows a toast
+  toast(title, {
+    description: body,
+    duration: 5000
+  });
   
-  const rawData = window.atob(base64);
-  const outputArray = new Uint8Array(rawData.length);
-  
-  for (let i = 0; i < rawData.length; ++i) {
-    outputArray[i] = rawData.charCodeAt(i);
-  }
-  
-  return outputArray;
+  console.log('Notification sent to user:', userId, { title, body, data });
+  return true;
 };
 
-// Notification preferences interface
-export interface NotificationPreferences {
-  orders: boolean;
-  marketing: boolean;
-  product_updates: boolean;
-  reviews: boolean;
-  messages: boolean;
-  // For business accounts
-  new_orders?: boolean;
-  low_stock?: boolean;
-  customer_reviews?: boolean;
-  sales_reports?: boolean;
-}
+// For business owners - send an order notification
+export const sendOrderNotification = async (businessId: string, orderId: string, orderAmount: number): Promise<boolean> => {
+  return sendNotification(
+    businessId,
+    'New Order Received!',
+    `You have received a new order #${orderId} for $${orderAmount.toFixed(2)}`,
+    { orderId, type: 'new_order' }
+  );
+};
 
-// Send a test notification
-export const sendTestNotification = (): void => {
-  if (!('Notification' in window)) {
-    alert('This browser does not support notifications');
-    return;
-  }
+// For shoppers - send order status update
+export const sendOrderStatusUpdate = async (userId: string, orderId: string, status: string): Promise<boolean> => {
+  return sendNotification(
+    userId,
+    'Order Status Updated',
+    `Your order #${orderId} is now ${status}`,
+    { orderId, status, type: 'order_update' }
+  );
+};
 
-  if (Notification.permission === 'granted') {
-    new Notification('Halvi Notification Test', {
-      body: 'This is a test notification from Halvi',
-      icon: '/pwa-icons/icon-192x192.png'
-    });
-  } else if (Notification.permission !== 'denied') {
-    Notification.requestPermission().then(permission => {
-      if (permission === 'granted') {
-        new Notification('Halvi Notification Test', {
-          body: 'This is a test notification from Halvi',
-          icon: '/pwa-icons/icon-192x192.png'
-        });
-      }
-    });
-  }
+// For business owners - send low stock alert
+export const sendLowStockAlert = async (businessId: string, productId: string, productName: string, currentStock: number): Promise<boolean> => {
+  return sendNotification(
+    businessId,
+    'Low Stock Alert',
+    `${productName} is running low (${currentStock} remaining)`,
+    { productId, currentStock, type: 'low_stock' }
+  );
+};
+
+// For shoppers - send product recommendation
+export const sendProductRecommendation = async (userId: string, productId: string, productName: string): Promise<boolean> => {
+  return sendNotification(
+    userId,
+    'Recommended for You',
+    `We think you'll like ${productName}`,
+    { productId, type: 'product_recommendation' }
+  );
+};
+
+export type PushSubscriptionJSON = {
+  endpoint: string;
+  expirationTime: number | null;
+  keys: {
+    p256dh: string;
+    auth: string;
+  };
 };
