@@ -16,7 +16,7 @@ import { Shop } from '@/services/shopService';
 
 const Index = () => {
   const { user } = useAuth();
-  const { currentLocation, nearbyShops } = useLocation();
+  const { userLocation, shops } = useLocation();
   const [selectedShops, setSelectedShops] = useState<Shop[]>([]);
 
   // Load user's selected shops
@@ -24,15 +24,15 @@ const Index = () => {
     const loadSelectedShops = async () => {
       // In a real app, this would fetch the user's preferred shops from the database
       // For now, just use the nearby shops for demonstration
-      if (nearbyShops && nearbyShops.length > 0) {
-        setSelectedShops(nearbyShops.slice(0, 3));
+      if (shops && shops.length > 0) {
+        setSelectedShops(shops.slice(0, 3));
       }
     };
 
     if (user) {
       loadSelectedShops();
     }
-  }, [user, nearbyShops]);
+  }, [user, shops]);
 
   return (
     <div className="min-h-screen bg-white">
@@ -82,7 +82,7 @@ const Index = () => {
       </section>
 
       {/* Nearby Shops */}
-      {currentLocation && (
+      {userLocation && (
         <section className="py-12 bg-gray-50">
           <div className="container mx-auto px-4">
             <h2 className="text-2xl font-semibold mb-8">Shops Near You</h2>
