@@ -1,11 +1,10 @@
-
 export interface Shop {
   id: string;
   name: string;
   description: string;
   category: string;
   location?: string;
-  logo_url?: string; // Keep using logo_url for DB consistency
+  logo_url?: string;
   owner_id: string;
   rating?: number;
   review_count?: number;
@@ -45,3 +44,51 @@ export const shopCategories: ShopCategory[] = [
   'Books & Gifts',
   'Other'
 ];
+
+export const convertToModelShop = (data: any): Shop => {
+  return {
+    id: data.id,
+    name: data.name,
+    description: data.description,
+    category: data.category,
+    location: data.location,
+    logo_url: data.logo_url,
+    owner_id: data.owner_id,
+    rating: data.rating,
+    review_count: data.review_count,
+    product_count: data.product_count,
+    featured: data.featured,
+    distance: data.distance,
+    latitude: data.latitude,
+    longitude: data.longitude,
+    address: data.address,
+    is_verified: data.is_verified,
+    cover_image: data.cover_image,
+    created_at: data.created_at,
+    updated_at: data.updated_at
+  };
+};
+
+export const convertToDbShop = (shop: Shop): any => {
+  return {
+    id: shop.id,
+    name: shop.name,
+    description: shop.description,
+    category: shop.category,
+    location: shop.location,
+    logo_url: shop.logo_url,
+    owner_id: shop.owner_id,
+    rating: shop.rating,
+    review_count: shop.review_count,
+    product_count: shop.product_count,
+    featured: shop.featured,
+    distance: shop.distance,
+    latitude: shop.latitude,
+    longitude: shop.longitude,
+    address: shop.address,
+    is_verified: shop.is_verified,
+    cover_image: shop.cover_image,
+    created_at: shop.created_at,
+    updated_at: shop.updated_at
+  };
+};
