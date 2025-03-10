@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, Search, ShoppingCart, User, MapPin, Store, AlertCircle } from 'lucide-react';
+import { Menu, X, Search, ShoppingCart, User, MapPin, Store, Moon, Sun } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/context/AuthContext';
@@ -11,6 +11,7 @@ import { motion } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
 import { getShopById, getMainShop } from '@/services/shopService';
 import type { Shop } from '@/models/shop';
+import { useTheme } from '@/context/ThemeContext';
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -24,6 +25,7 @@ const Navbar = () => {
   const { cart } = useCart();
   const { isLocationEnabled, requestLocation, location: userLocation } = useLocationContext();
   const { toast } = useToast();
+  const { theme, setTheme } = useTheme();
   
   // Close mobile menu when route changes
   useEffect(() => {
@@ -72,16 +74,20 @@ const Navbar = () => {
     return location.pathname === path;
   };
 
+  const toggleTheme = () => {
+    setTheme(theme === 'dark' ? 'light' : 'dark');
+  };
+
   return (
     <header 
-      className="fixed top-0 w-full z-50 transition-all duration-300 bg-[#E4F5F0]"
+      className="fixed top-0 w-full z-50 transition-all duration-300 bg-[#E4F5F0] dark:bg-gray-900"
       style={{ height: '70px' }}
     >
       <div className="container mx-auto px-4 h-full flex justify-between items-center">
         {/* Menu Button */}
         <button
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="p-2 text-[#2A866A]"
+          className="p-2 text-[#2A866A] dark:text-[#4ECBA5]"
           aria-label="Toggle menu"
         >
           {mobileMenuOpen ? (
@@ -94,13 +100,15 @@ const Navbar = () => {
         {/* Logo - with animation */}
         <div className="flex items-center ml-3 mr-auto">
           <Link to="/" className="flex items-center">
-            <div className="flex flex-col items-center">
-              <img src="/logo-dots.svg" alt="Halvi Building Icon" className="w-5 h-5 mb-1" />
-              <span className="text-lg font-serif font-bold text-[#2A866A]">Halvi</span>
-            </div>
+            <span className="text-lg font-serif font-bold text-[#2A866A] dark:text-[#4ECBA5]">Halvi</span>
             
             {/* Main animated element */}
-            <div className="relative ml-1 hidden sm:block">
+            <motion.div 
+              className="relative ml-1"
+              initial={{ opacity: 0, scale: 0 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+            >
               {/* Main orange ball */}
               <motion.div 
                 className="w-4 h-4 bg-[#E4875E] rounded-full"
@@ -113,16 +121,31 @@ const Navbar = () => {
                   repeatType: "reverse"
                 }}
               />
-            </div>
+            </motion.div>
           </Link>
         </div>
         
         {/* Right side buttons */}
         <div className="flex items-center gap-4">
+          {/* Dark Mode Toggle */}
+          <motion.button 
+            onClick={toggleTheme}
+            className="p-2 rounded-full text-[#2A866A] dark:text-[#4ECBA5] hover:bg-[#d5efe8] dark:hover:bg-gray-800 transition-colors"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+          >
+            {theme === 'dark' ? (
+              <Sun className="h-6 w-6" />
+            ) : (
+              <Moon className="h-6 w-6" />
+            )}
+          </motion.button>
+          
           {/* Location Button */}
           <motion.button 
             onClick={requestLocation}
-            className="p-2 rounded-full text-[#2A866A] hover:bg-[#d5efe8] transition-colors"
+            className="p-2 rounded-full text-[#2A866A] dark:text-[#4ECBA5] hover:bg-[#d5efe8] dark:hover:bg-gray-800 transition-colors"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
@@ -132,7 +155,7 @@ const Navbar = () => {
           {/* Main Shop Button */}
           <motion.button 
             onClick={handleMainShopClick}
-            className="relative p-2 rounded-full text-[#2A866A] hover:bg-[#d5efe8] transition-colors"
+            className="relative p-2 rounded-full text-[#2A866A] dark:text-[#4ECBA5] hover:bg-[#d5efe8] dark:hover:bg-gray-800 transition-colors"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
@@ -181,7 +204,7 @@ const Navbar = () => {
           >
             <Link 
               to="/select-shops" 
-              className="p-2 rounded-full text-[#2A866A] hover:bg-[#d5efe8] transition-colors block"
+              className="p-2 rounded-full text-[#2A866A] dark:text-[#4ECBA5] hover:bg-[#d5efe8] dark:hover:bg-gray-800 transition-colors block"
             >
               <Store className="h-6 w-6" />
             </Link>
@@ -194,11 +217,11 @@ const Navbar = () => {
           >
             <Link 
               to="/cart" 
-              className="relative p-2 rounded-lg bg-[#FF7A45] text-white block"
+              className="relative p-2 rounded-lg bg-[#FF7A45] dark:bg-[#FF7A45] text-white block"
             >
               <ShoppingCart className="h-6 w-6" />
               {cart.items.length > 0 && (
-                <span className="absolute -top-2 -right-2 bg-[#2A866A] text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                <span className="absolute -top-2 -right-2 bg-[#2A866A] dark:bg-[#4ECBA5] text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
                   {cart.items.length}
                 </span>
               )}
@@ -212,7 +235,7 @@ const Navbar = () => {
           >
             <Link
               to={isLoggedIn ? (user?.role === 'business' ? '/dashboard' : '/profile') : '/login'}
-              className="p-2 rounded-full bg-[#2A866A] text-white block"
+              className="p-2 rounded-full bg-[#2A866A] dark:bg-[#4ECBA5] text-white block"
             >
               <User className="h-6 w-6" />
             </Link>
@@ -222,15 +245,15 @@ const Navbar = () => {
       
       {/* Mobile menu */}
       {mobileMenuOpen && (
-        <div className="container mx-auto px-4 py-4 bg-white border-t border-gray-100">
+        <div className="container mx-auto px-4 py-4 bg-white dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700">
           <div className="md:hidden mb-4">
             <div className="relative w-full">
               <input
                 type="text"
                 placeholder="Search your shop and products"
-                className="w-full py-2 px-4 pl-10 bg-[#F5F5F5] border border-[#E0E0E0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2A866A]/30"
+                className="w-full py-2 px-4 pl-10 bg-[#F5F5F5] dark:bg-gray-700 border border-[#E0E0E0] dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2A866A]/30 dark:focus:ring-[#4ECBA5]/30 dark:text-white"
               />
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-gray-300" />
             </div>
           </div>
           
@@ -239,7 +262,7 @@ const Navbar = () => {
             <Link
               to="/"
               className={`flex items-center gap-3 p-3 rounded-lg transition ${
-                isActive('/') ? 'bg-[#E4F5F0] text-[#2A866A]' : 'text-gray-700 hover:bg-gray-100'
+                isActive('/') ? 'bg-[#E4F5F0] dark:bg-[#2A866A]/20 text-[#2A866A] dark:text-[#4ECBA5]' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
               }`}
               onClick={() => setMobileMenuOpen(false)}
             >
@@ -248,7 +271,7 @@ const Navbar = () => {
             <Link
               to="/shops"
               className={`flex items-center gap-3 p-3 rounded-lg transition ${
-                isActive('/shops') ? 'bg-[#E4F5F0] text-[#2A866A]' : 'text-gray-700 hover:bg-gray-100'
+                isActive('/shops') ? 'bg-[#E4F5F0] dark:bg-[#2A866A]/20 text-[#2A866A] dark:text-[#4ECBA5]' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
               }`}
               onClick={() => setMobileMenuOpen(false)}
             >
@@ -257,7 +280,7 @@ const Navbar = () => {
             <Link
               to="/browse"
               className={`flex items-center gap-3 p-3 rounded-lg transition ${
-                isActive('/browse') ? 'bg-[#E4F5F0] text-[#2A866A]' : 'text-gray-700 hover:bg-gray-100'
+                isActive('/browse') ? 'bg-[#E4F5F0] dark:bg-[#2A866A]/20 text-[#2A866A] dark:text-[#4ECBA5]' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
               }`}
               onClick={() => setMobileMenuOpen(false)}
             >
@@ -267,7 +290,7 @@ const Navbar = () => {
             <Link
               to="/select-shops"
               className={`flex items-center gap-3 p-3 rounded-lg transition ${
-                isActive('/select-shops') ? 'bg-[#E4F5F0] text-[#2A866A]' : 'text-gray-700 hover:bg-gray-100'
+                isActive('/select-shops') ? 'bg-[#E4F5F0] dark:bg-[#2A866A]/20 text-[#2A866A] dark:text-[#4ECBA5]' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
               }`}
               onClick={() => setMobileMenuOpen(false)}
             >
@@ -277,7 +300,7 @@ const Navbar = () => {
               <Link
                 to="/dashboard"
                 className={`flex items-center gap-3 p-3 rounded-lg transition ${
-                  isActive('/dashboard') ? 'bg-[#E4F5F0] text-[#2A866A]' : 'text-gray-700 hover:bg-gray-100'
+                  isActive('/dashboard') ? 'bg-[#E4F5F0] dark:bg-[#2A866A]/20 text-[#2A866A] dark:text-[#4ECBA5]' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
                 }`}
                 onClick={() => setMobileMenuOpen(false)}
               >
@@ -287,7 +310,7 @@ const Navbar = () => {
             <Link
               to={isLoggedIn ? '/profile' : '/login'}
               className={`flex items-center gap-3 p-3 rounded-lg transition ${
-                isActive('/profile') || isActive('/login') ? 'bg-[#E4F5F0] text-[#2A866A]' : 'text-gray-700 hover:bg-gray-100'
+                isActive('/profile') || isActive('/login') ? 'bg-[#E4F5F0] dark:bg-[#2A866A]/20 text-[#2A866A] dark:text-[#4ECBA5]' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
               }`}
               onClick={() => setMobileMenuOpen(false)}
             >
