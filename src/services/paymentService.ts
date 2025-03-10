@@ -78,3 +78,31 @@ export async function updateSellerAccount(method: Partial<PaymentMethod>): Promi
     return null;
   }
 }
+
+// Add the missing processPayment function
+export async function processPayment(cart: any, paymentMethodDetails: any, shippingDetails: any) {
+  // This is a simplified version - in production, this would connect to a payment processor
+  try {
+    // Simulate successful payment
+    const orderId = `ORD-${Math.floor(Math.random() * 1000000)}`;
+    const orderDate = new Date().toISOString();
+    
+    // In a real implementation, you would:
+    // 1. Connect to a payment processor (Stripe, PayPal, etc.)
+    // 2. Create a payment intent/transaction
+    // 3. Store the order in the database
+    // 4. Return the order details
+    
+    return {
+      success: true,
+      orderId,
+      orderDate,
+      message: 'Payment processed successfully'
+    };
+  } catch (error) {
+    console.error('Payment processing error:', error);
+    throw new Error('Payment failed to process');
+  }
+}
+
+export { formatPaymentMethod, PaymentMethod, SellerAccount };

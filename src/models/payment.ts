@@ -57,7 +57,7 @@ export function mapModelToDb(method: Partial<PaymentMethod>): Partial<SellerAcco
     bank_name: method.bankName,
     paypal_email: method.paypalEmail,
     stripe_account_id: method.stripeAccountId,
-    is_active: true,
+    is_active: method.isActive,
     is_default: method.isDefault
   };
 }

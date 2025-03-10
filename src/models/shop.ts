@@ -1,3 +1,4 @@
+
 // Shop related models
 
 export interface Shop {
