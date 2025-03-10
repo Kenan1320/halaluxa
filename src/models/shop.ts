@@ -5,15 +5,20 @@ export interface Shop {
   description: string;
   category: string;
   location?: string;
-  logo?: string;
-  ownerId: string;
+  logo_url?: string;
+  owner_id: string;
   rating?: number;
-  reviewCount?: number;
-  productCount?: number;
+  review_count?: number;
+  product_count?: number;
   featured?: boolean;
   distance?: number;
-  createdAt?: string;
-  updatedAt?: string;
+  latitude?: number;
+  longitude?: number;
+  address?: string;
+  is_verified?: boolean;
+  cover_image?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export type ShopCategory = 

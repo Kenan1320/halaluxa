@@ -90,7 +90,7 @@ const Navbar = () => {
           )}
         </button>
         
-        {/* Logo - with advanced animation */}
+        {/* Logo - with animation */}
         <div className="flex items-center ml-3 mr-auto">
           <Link to="/" className="flex items-center">
             <div className="flex flex-col items-center">
@@ -137,9 +137,9 @@ const Navbar = () => {
           >
             {mainShop ? (
               <>
-                {mainShop.logo ? (
+                {mainShop.logo_url ? (
                   <div className="w-6 h-6 rounded-full overflow-hidden">
-                    <img src={mainShop.logo} alt={mainShop.name} className="w-full h-full object-cover" />
+                    <img src={mainShop.logo_url} alt={mainShop.name} className="w-full h-full object-cover" />
                   </div>
                 ) : (
                   <Store className="h-6 w-6" />

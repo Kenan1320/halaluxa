@@ -4,6 +4,29 @@ import { Shop, ShopCategory, shopCategories } from '@/models/shop';
 import { Product } from '@/models/product';
 import { getRandomId } from '@/lib/utils';
 
+// Helper function to map database shop to frontend model
+function mapDbShopToModel(dbShop: any): Shop {
+  return {
+    id: dbShop.id,
+    name: dbShop.name,
+    description: dbShop.description,
+    category: dbShop.category,
+    location: dbShop.location,
+    logo_url: dbShop.logo_url,
+    owner_id: dbShop.owner_id,
+    rating: dbShop.rating,
+    review_count: dbShop.review_count,
+    product_count: dbShop.product_count,
+    latitude: dbShop.latitude,
+    longitude: dbShop.longitude,
+    address: dbShop.address,
+    is_verified: dbShop.is_verified,
+    cover_image: dbShop.cover_image,
+    created_at: dbShop.created_at,
+    updated_at: dbShop.updated_at
+  };
+}
+
 // Shop Functions
 export async function getShops(limit = 20): Promise<Shop[]> {
   try {
@@ -17,7 +40,7 @@ export async function getShops(limit = 20): Promise<Shop[]> {
       return [];
     }
     
-    return data || [];
+    return (data || []).map(mapDbShopToModel);
   } catch (error) {
     console.error('Error in getShops:', error);
     return [];
@@ -29,7 +52,7 @@ export async function getFeaturedShops(limit = 5): Promise<Shop[]> {
     const { data, error } = await supabase
       .from('shops')
       .select('*')
-      .eq('featured', true)
+      .eq('is_verified', true)
       .limit(limit);
     
     if (error) {
@@ -37,7 +60,7 @@ export async function getFeaturedShops(limit = 5): Promise<Shop[]> {
       return [];
     }
     
-    return data || [];
+    return (data || []).map(mapDbShopToModel);
   } catch (error) {
     console.error('Error in getFeaturedShops:', error);
     return [];
@@ -57,7 +80,7 @@ export async function getShopById(id: string): Promise<Shop | null> {
       return null;
     }
     
-    return data;
+    return mapDbShopToModel(data);
   } catch (error) {
     console.error('Error in getShopById:', error);
     return null;
@@ -77,7 +100,7 @@ export async function getShopsByCategory(category: string, limit = 20): Promise<
       return [];
     }
     
-    return data || [];
+    return (data || []).map(mapDbShopToModel);
   } catch (error) {
     console.error('Error in getShopsByCategory:', error);
     return [];
@@ -97,7 +120,7 @@ export async function searchShops(query: string, limit = 20): Promise<Shop[]> {
       return [];
     }
     
-    return data || [];
+    return (data || []).map(mapDbShopToModel);
   } catch (error) {
     console.error('Error in searchShops:', error);
     return [];
@@ -127,19 +150,38 @@ export async function getNearbyShops(latitude?: number, longitude?: number, dist
   }
 }
 
+// Helper to map database product to frontend model
+function mapDbProductToModel(dbProduct: any): Product {
+  return {
+    id: dbProduct.id,
+    name: dbProduct.name,
+    description: dbProduct.description,
+    price: dbProduct.price,
+    category: dbProduct.category,
+    inStock: dbProduct.stock > 0,
+    isHalalCertified: dbProduct.is_halal_certified,
+    images: dbProduct.images || [],
+    sellerId: dbProduct.shop_id,
+    sellerName: dbProduct.shop_name,
+    rating: dbProduct.rating,
+    reviewCount: dbProduct.review_count,
+    createdAt: dbProduct.created_at,
+  };
+}
+
 export async function getShopProducts(shopId: string): Promise<Product[]> {
   try {
     const { data, error } = await supabase
       .from('products')
       .select('*')
-      .eq('sellerId', shopId);
+      .eq('shop_id', shopId);
     
     if (error) {
       console.error('Error fetching shop products:', error);
       return [];
     }
     
-    return data || [];
+    return (data || []).map(mapDbProductToModel);
   } catch (error) {
     console.error('Error in getShopProducts:', error);
     return [];
@@ -162,7 +204,6 @@ export function getDemoProduct(): Product {
     rating: 4.5,
     reviewCount: 23,
     createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
   };
 }
 
@@ -173,14 +214,13 @@ export function getDemoShop(): Shop {
     description: 'Organic and halal certified groceries for the community.',
     category: 'Grocery',
     location: '123 Main St, New York, NY',
-    logo: 'https://placehold.co/200x200/png?text=GEG',
-    ownerId: 'demo-owner-id',
+    logo_url: 'https://placehold.co/200x200/png?text=GEG',
+    owner_id: 'demo-owner-id',
     rating: 4.7,
-    reviewCount: 142,
-    productCount: 57,
-    featured: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+    review_count: 142,
+    product_count: 57,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
   };
 }
 
