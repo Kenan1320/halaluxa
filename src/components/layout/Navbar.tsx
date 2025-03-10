@@ -93,13 +93,16 @@ const Navbar = () => {
         {/* Logo - with advanced animation */}
         <div className="flex items-center ml-3 mr-auto">
           <Link to="/" className="flex items-center">
-            <span className="text-lg font-serif font-bold text-[#2A866A]">Haluna</span>
+            <div className="flex flex-col items-center">
+              <img src="/logo-dots.svg" alt="Halvi Building Icon" className="w-5 h-5 mb-1" />
+              <span className="text-lg font-serif font-bold text-[#2A866A]">Halvi</span>
+            </div>
             
-            {/* Advanced animated logo design */}
-            <div className="relative ml-1">
+            {/* Main animated element */}
+            <div className="relative ml-1 hidden sm:block">
               {/* Main orange ball */}
               <motion.div 
-                className="w-5 h-5 bg-[#E4875E] rounded-full"
+                className="w-4 h-4 bg-[#E4875E] rounded-full"
                 animate={{
                   scale: [1, 1.1, 1],
                 }}
@@ -107,20 +110,6 @@ const Navbar = () => {
                   duration: 6,
                   repeat: Infinity,
                   repeatType: "reverse"
-                }}
-              />
-              
-              {/* Orbiting green ball */}
-              <motion.div
-                className="w-2 h-2 bg-[#2A866B] rounded-full absolute"
-                animate={{
-                  x: [2, 1.5, 0, -1.5, -2, -1.5, 0, 1.5, 2],
-                  y: [0, 1.5, 2, 1.5, 0, -1.5, -2, -1.5, 0],
-                }}
-                transition={{
-                  duration: 8,
-                  repeat: Infinity,
-                  ease: "linear"
                 }}
               />
             </div>

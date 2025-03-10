@@ -44,7 +44,7 @@ const AuthMiddleware = ({ children }: AuthMiddlewareProps) => {
       
       // Redirect business users trying to access shopper-only routes
       const shopperOnlyRoutes = ['/cart', '/checkout', '/order-confirmation', '/orders'];
-      if (user.role === 'business' && shopperOnlyRoutes.includes(location.pathname)) {
+      if (user.role === 'business' && shopperOnlyRoutes.some(route => location.pathname.startsWith(route))) {
         navigate('/dashboard');
       }
       

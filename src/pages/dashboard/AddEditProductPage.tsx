@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -45,7 +46,7 @@ const formSchema = z.object({
   category: z.string().min(1, 'Please select a category'),
   inStock: z.boolean().default(true),
   isHalalCertified: z.boolean().default(true),
-  images: z.array(z.string()).min(1, 'At least one image is required'),
+  images: z.array(z.string()).default([]),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -89,7 +90,7 @@ const AddEditProductPage = () => {
             category: data.category,
             inStock: data.inStock,
             isHalalCertified: data.isHalalCertified,
-            images: data.images,
+            images: data.images || [],
           });
         } else {
           toast({
@@ -276,7 +277,7 @@ const AddEditProductPage = () => {
             <CardHeader>
               <CardTitle>Product Images</CardTitle>
               <CardDescription>
-                Upload high-quality images of your product
+                Upload high-quality images of your product (optional)
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -291,6 +292,9 @@ const AddEditProductPage = () => {
                         onImagesChange={field.onChange}
                       />
                     </FormControl>
+                    <FormDescription>
+                      You can add images now or later. Products can be created without images.
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}

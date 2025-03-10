@@ -64,7 +64,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
       try {
         setUploadProgress(Math.floor(i / files.length * 50)); // First half of progress
         
-        const imageUrl = await uploadProductImage(file, (progress) => {
+        const imageUrl = await uploadProductImage(file, progress => {
           // This progress is for this individual file, scale it to overall progress
           const individualProgress = progress / 100;
           const overallProgress = 50 + (i / files.length * 50) + (individualProgress * 50 / files.length);
@@ -185,12 +185,10 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
         )}
       </div>
       
-      {images.length === 0 && (
-        <div className="text-sm text-haluna-text-light flex items-center">
-          <Image className="h-4 w-4 mr-2" />
-          Upload product images (max {maxImages})
-        </div>
-      )}
+      <div className="text-sm text-haluna-text-light flex items-center">
+        <Image className="h-4 w-4 mr-2" />
+        Upload product images (optional, max {maxImages})
+      </div>
     </div>
   );
 };
