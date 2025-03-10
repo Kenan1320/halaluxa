@@ -1,303 +1,416 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { CartItem } from '@/models/cart';
 import { Product } from '@/models/product';
-import { Json } from '@/integrations/supabase/types';
 
-// Update the interface to match the new shop_payment_methods table
-export interface SellerAccount {
+// Define payment-related types
+export interface PaymentMethod {
   id: string;
-  shop_id: string;
-  user_id: string;
-  method_type: 'bank' | 'paypal' | 'stripe' | 'applepay' | 'other';
-  account_name?: string;
-  account_number?: string;
-  bank_name?: string;
-  paypal_email?: string;
-  stripe_account_id?: string;
-  applepay_merchant_id?: string;
-  is_default: boolean;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
+  userId: string;
+  type: 'card' | 'bank_account';
+  provider: string;
+  last4: string;
+  expiryMonth?: number;
+  expiryYear?: number;
+  isDefault: boolean;
+  createdAt: string;
 }
 
-interface PaymentResult {
-  success: boolean;
+export interface OrderItem {
+  productId: string;
+  productName: string;
+  quantity: number;
+  price: number;
+  totalPrice: number;
+}
+
+export interface Order {
+  id: string;
+  userId: string;
+  shopId: string;
+  shopName: string;
+  items: OrderItem[];
+  totalAmount: number;
+  status: 'pending' | 'processing' | 'completed' | 'cancelled';
+  paymentStatus: 'pending' | 'paid' | 'failed' | 'refunded';
+  pickupType?: 'in_store' | 'curbside';
+  vehicleColor?: string;
+  pickupStatus?: 'pending' | 'arriving' | 'arrived' | 'completed' | 'cancelled';
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PaymentIntent {
+  id: string;
+  userId: string;
   orderId: string;
-  orderDate: string;
+  amount: number;
+  currency: string;
+  status: 'pending' | 'succeeded' | 'failed' | 'cancelled';
+  paymentMethodId?: string;
+  createdAt: string;
 }
 
-export interface OrderDetails {
-  orderId: string;
-  orderDate: string;
-  total: number;
-}
+// Helper to map database order to our model
+const mapDbOrderToModel = (data: any): Order => {
+  return {
+    id: data.id,
+    userId: data.user_id,
+    shopId: data.shop_id,
+    shopName: data.shop_name,
+    items: data.items || [],
+    totalAmount: data.total_amount,
+    status: data.status,
+    paymentStatus: data.payment_status,
+    pickupType: data.pickup_type,
+    vehicleColor: data.vehicle_color,
+    pickupStatus: data.pickup_status,
+    createdAt: data.created_at,
+    updatedAt: data.updated_at
+  };
+};
 
-// Process payment for a customer order
-export const processPayment = async (
-  cart: { items: CartItem[]; totalPrice: number },
-  paymentMethodDetails: any,
-  shippingDetails: any
-): Promise<PaymentResult> => {
-  // Simulate payment processing delay
-  await new Promise(resolve => setTimeout(resolve, 1000));
+// Helper to convert our model to database fields
+const prepareOrderForDb = (order: Partial<Order>) => {
+  const dbOrder: Record<string, any> = {
+    user_id: order.userId,
+    shop_id: order.shopId,
+    shop_name: order.shopName,
+    items: order.items,
+    total_amount: order.totalAmount,
+    status: order.status,
+    payment_status: order.paymentStatus,
+    pickup_type: order.pickupType,
+    vehicle_color: order.vehicleColor,
+    pickup_status: order.pickupStatus,
+  };
   
-  // Create an order in the database
+  if (order.id) {
+    dbOrder.id = order.id;
+  }
+  
+  return dbOrder;
+};
+
+// Create a new order
+export async function createOrder(order: Partial<Order>): Promise<Order | null> {
   try {
-    // Get current user
-    const { data: userData } = await supabase.auth.getUser();
-    const userId = userData.user?.id;
+    const dbOrder = prepareOrderForDb(order);
     
-    if (!userId) {
-      throw new Error('User not authenticated');
-    }
-    
-    // Serialize cart items for storage as JSON
-    const serializedItems = cart.items.map(item => ({
-      productId: item.product.id,
-      quantity: item.quantity,
-      price: item.product.price,
-      name: item.product.name,
-      image: item.product.images[0]
-    }));
-    
-    // Store order in database
     const { data, error } = await supabase
       .from('orders')
+      .insert(dbOrder)
+      .select()
+      .single();
+    
+    if (error) {
+      console.error('Error creating order:', error);
+      return null;
+    }
+    
+    // Notify the business owner about the new order
+    if (data && data.shop_id) {
+      try {
+        await supabase
+          .from('business_notifications')
+          .insert({
+            business_id: data.shop_id,
+            order_id: data.id,
+            type: 'new_order',
+            title: 'New Order Received',
+            message: `You have received a new order for $${data.total_amount.toFixed(2)}`,
+            metadata: { orderId: data.id }
+          });
+      } catch (notificationError) {
+        console.error('Error creating notification:', notificationError);
+        // Don't fail the whole transaction if just the notification fails
+      }
+    }
+    
+    return mapDbOrderToModel(data);
+  } catch (err) {
+    console.error('Error in createOrder:', err);
+    return null;
+  }
+}
+
+// Update an order
+export async function updateOrder(id: string, updates: Partial<Order>): Promise<Order | null> {
+  try {
+    const dbUpdates: Record<string, any> = {};
+    
+    if (updates.status !== undefined) dbUpdates.status = updates.status;
+    if (updates.paymentStatus !== undefined) dbUpdates.payment_status = updates.paymentStatus;
+    if (updates.pickupType !== undefined) dbUpdates.pickup_type = updates.pickupType;
+    if (updates.vehicleColor !== undefined) dbUpdates.vehicle_color = updates.vehicleColor;
+    if (updates.pickupStatus !== undefined) dbUpdates.pickup_status = updates.pickupStatus;
+    
+    const { data, error } = await supabase
+      .from('orders')
+      .update(dbUpdates)
+      .eq('id', id)
+      .select()
+      .single();
+    
+    if (error) {
+      console.error('Error updating order:', error);
+      return null;
+    }
+    
+    return mapDbOrderToModel(data);
+  } catch (err) {
+    console.error('Error in updateOrder:', err);
+    return null;
+  }
+}
+
+// Get an order by ID
+export async function getOrderById(id: string): Promise<Order | null> {
+  try {
+    const { data, error } = await supabase
+      .from('orders')
+      .select('*')
+      .eq('id', id)
+      .single();
+    
+    if (error || !data) {
+      console.error('Error fetching order:', error);
+      return null;
+    }
+    
+    return mapDbOrderToModel(data);
+  } catch (err) {
+    console.error('Error in getOrderById:', err);
+    return null;
+  }
+}
+
+// Get all orders for a user
+export async function getOrdersByUser(userId: string): Promise<Order[]> {
+  try {
+    const { data, error } = await supabase
+      .from('orders')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+    
+    if (error) {
+      console.error('Error fetching user orders:', error);
+      return [];
+    }
+    
+    return data.map(mapDbOrderToModel);
+  } catch (err) {
+    console.error('Error in getOrdersByUser:', err);
+    return [];
+  }
+}
+
+// Get all orders for a shop
+export async function getOrdersByShop(shopId: string): Promise<Order[]> {
+  try {
+    const { data, error } = await supabase
+      .from('orders')
+      .select('*')
+      .eq('shop_id', shopId)
+      .order('created_at', { ascending: false });
+    
+    if (error) {
+      console.error('Error fetching shop orders:', error);
+      return [];
+    }
+    
+    return data.map(mapDbOrderToModel);
+  } catch (err) {
+    console.error('Error in getOrdersByShop:', err);
+    return [];
+  }
+}
+
+// Create a payment intent
+export async function createPaymentIntent(
+  userId: string,
+  orderId: string,
+  amount: number
+): Promise<PaymentIntent | null> {
+  try {
+    const { data, error } = await supabase
+      .from('payment_intents')
       .insert({
-        items: serializedItems as unknown as Json,
-        total: cart.totalPrice,
         user_id: userId,
-        shipping_details: shippingDetails as unknown as Json,
-        status: 'Processing'
+        order_id: orderId,
+        amount,
+        currency: 'usd',
+        status: 'pending'
       })
       .select()
       .single();
     
     if (error) {
-      console.error("Error creating order:", error);
-      throw error;
+      console.error('Error creating payment intent:', error);
+      return null;
     }
     
-    // Return success with the order ID
     return {
-      success: true,
-      orderId: data.id,
-      orderDate: data.created_at
+      id: data.id,
+      userId: data.user_id,
+      orderId: data.order_id,
+      amount: data.amount,
+      currency: data.currency,
+      status: data.status,
+      paymentMethodId: data.payment_method_id,
+      createdAt: data.created_at
     };
-  } catch (error) {
-    console.error('Payment processing error:', error);
-    throw new Error('Payment processing failed');
+  } catch (err) {
+    console.error('Error in createPaymentIntent:', err);
+    return null;
   }
-};
+}
 
-// Get all orders for the current user
-export const getUserOrders = async (): Promise<OrderDetails[]> => {
+// Update payment status
+export async function updatePaymentStatus(
+  orderId: string,
+  status: 'pending' | 'paid' | 'failed' | 'refunded'
+): Promise<boolean> {
   try {
-    const { data: user } = await supabase.auth.getUser();
+    const { error } = await supabase
+      .from('orders')
+      .update({ payment_status: status })
+      .eq('id', orderId);
     
-    if (!user.user) {
-      throw new Error('User not authenticated');
+    if (error) {
+      console.error('Error updating payment status:', error);
+      return false;
     }
     
+    return true;
+  } catch (err) {
+    console.error('Error in updatePaymentStatus:', err);
+    return false;
+  }
+}
+
+// Get notifications for a business
+export async function getBusinessNotifications(businessId: string): Promise<any[]> {
+  try {
     const { data, error } = await supabase
-      .from('orders')
+      .from('business_notifications')
       .select('*')
-      .eq('user_id', user.user.id)
+      .eq('business_id', businessId)
       .order('created_at', { ascending: false });
     
     if (error) {
-      throw error;
+      console.error('Error fetching business notifications:', error);
+      return [];
     }
     
-    return data.map(order => ({
-      orderId: order.id,
-      orderDate: order.created_at,
-      total: order.total
-    }));
-  } catch (error) {
-    console.error('Error fetching user orders:', error);
+    return data;
+  } catch (err) {
+    console.error('Error in getBusinessNotifications:', err);
     return [];
   }
-};
+}
 
-// Create a payment method for a seller
-export const createSellerAccount = async (
-  accountData: Partial<SellerAccount>
-): Promise<SellerAccount | null> => {
+// Mark notification as read
+export async function markNotificationAsRead(notificationId: string): Promise<boolean> {
   try {
-    const { data: user } = await supabase.auth.getUser();
-    
-    if (!user.user) {
-      throw new Error('User not authenticated');
-    }
-    
-    // First we need to get the user's shop id
-    const { data: shopData } = await supabase
-      .from('shops')
-      .select('id')
-      .eq('owner_id', user.user.id)
-      .single();
-    
-    if (!shopData?.id) {
-      throw new Error('Shop not found for current user');
-    }
-    
-    // Prepare the payment method data
-    const shopPaymentMethod = {
-      user_id: user.user.id,
-      shop_id: shopData.id,
-      method_type: accountData.method_type || 'bank', 
-      account_name: accountData.account_name,
-      account_number: accountData.account_number,
-      bank_name: accountData.bank_name,
-      paypal_email: accountData.paypal_email,
-      stripe_account_id: accountData.stripe_account_id,
-      applepay_merchant_id: accountData.applepay_merchant_id,
-      is_default: accountData.is_default || false,
-      is_active: true
-    };
-    
-    const { data, error } = await supabase
-      .from('shop_payment_methods')
-      .insert(shopPaymentMethod)
-      .select()
-      .single();
+    const { error } = await supabase
+      .from('business_notifications')
+      .update({ read: true })
+      .eq('id', notificationId);
     
     if (error) {
-      throw error;
+      console.error('Error marking notification as read:', error);
+      return false;
     }
     
-    return data as SellerAccount;
-  } catch (error) {
-    console.error('Error creating payment method:', error);
-    return null;
+    return true;
+  } catch (err) {
+    console.error('Error in markNotificationAsRead:', err);
+    return false;
   }
-};
+}
 
-// Get payment methods for current user's shop
-export const getSellerAccount = async (): Promise<SellerAccount | null> => {
+// Update pickup status
+export async function updatePickupStatus(
+  orderId: string,
+  status: 'pending' | 'arriving' | 'arrived' | 'completed' | 'cancelled',
+  vehicleColor?: string
+): Promise<boolean> {
   try {
-    const { data: user } = await supabase.auth.getUser();
+    const updates: Record<string, any> = { pickup_status: status };
     
-    if (!user.user) {
-      throw new Error('User not authenticated');
+    if (vehicleColor) {
+      updates.vehicle_color = vehicleColor;
     }
     
-    const { data, error } = await supabase
-      .from('shop_payment_methods')
-      .select('*')
-      .eq('user_id', user.user.id)
-      .is('is_default', true)
-      .maybeSingle();
+    const { error } = await supabase
+      .from('orders')
+      .update(updates)
+      .eq('id', orderId);
     
     if (error) {
-      throw error;
+      console.error('Error updating pickup status:', error);
+      return false;
     }
     
-    return data as SellerAccount;
-  } catch (error) {
-    console.error('Error fetching payment method:', error);
-    return null;
+    // Notify business owner of arriving customer
+    if (status === 'arriving') {
+      try {
+        const { data: orderData } = await supabase
+          .from('orders')
+          .select('shop_id')
+          .eq('id', orderId)
+          .single();
+        
+        if (orderData && orderData.shop_id) {
+          await supabase
+            .from('business_notifications')
+            .insert({
+              business_id: orderData.shop_id,
+              order_id: orderId,
+              type: 'customer_arriving',
+              title: 'Customer Arriving Soon',
+              message: `A customer will arrive for pickup in 2 minutes${vehicleColor ? ` in a ${vehicleColor} car` : ''}`,
+              metadata: { orderId, vehicleColor }
+            });
+        }
+      } catch (notificationError) {
+        console.error('Error creating arrival notification:', notificationError);
+        // Don't fail the whole transaction if just the notification fails
+      }
+    }
+    
+    return true;
+  } catch (err) {
+    console.error('Error in updatePickupStatus:', err);
+    return false;
   }
-};
+}
 
-// Get all payment methods for current user's shop
-export const getSellerAccounts = async (): Promise<SellerAccount[]> => {
-  try {
-    const { data: user } = await supabase.auth.getUser();
-    
-    if (!user.user) {
-      throw new Error('User not authenticated');
+// Mock function for testing
+export function getMockOrders(): Order[] {
+  return [
+    {
+      id: "order1",
+      userId: "user1",
+      shopId: "shop1",
+      shopName: "Halal Delights",
+      items: [
+        {
+          productId: "prod1",
+          productName: "Halal Beef Burger Patties",
+          quantity: 2,
+          price: 12.99,
+          totalPrice: 25.98
+        }
+      ],
+      totalAmount: 25.98,
+      status: "pending",
+      paymentStatus: "pending",
+      pickupType: "in_store",
+      pickupStatus: "pending",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
     }
-    
-    const { data, error } = await supabase
-      .from('shop_payment_methods')
-      .select('*')
-      .eq('user_id', user.user.id)
-      .eq('is_active', true);
-    
-    if (error) {
-      throw error;
-    }
-    
-    return data as SellerAccount[];
-  } catch (error) {
-    console.error('Error fetching payment methods:', error);
-    return [];
-  }
-};
-
-// Save seller account - for backward compatibility
-export const saveSellerAccount = async (
-  accountData: Partial<SellerAccount>
-): Promise<SellerAccount | null> => {
-  // If id exists, update, otherwise create
-  if (accountData.id) {
-    return updateSellerAccount(accountData);
-  } else {
-    return createSellerAccount(accountData);
-  }
-};
-
-// Update seller account
-export const updateSellerAccount = async (
-  accountData: Partial<SellerAccount>
-): Promise<SellerAccount | null> => {
-  try {
-    const { data: user } = await supabase.auth.getUser();
-    
-    if (!user.user) {
-      throw new Error('User not authenticated');
-    }
-    
-    if (!accountData.id) {
-      throw new Error('Account ID is required for update');
-    }
-    
-    // First ensure this payment method belongs to the user
-    const { data: existingMethod } = await supabase
-      .from('shop_payment_methods')
-      .select('id')
-      .eq('id', accountData.id)
-      .eq('user_id', user.user.id)
-      .single();
-      
-    if (!existingMethod) {
-      throw new Error('Payment method not found or not authorized');
-    }
-    
-    const { data, error } = await supabase
-      .from('shop_payment_methods')
-      .update(accountData)
-      .eq('id', accountData.id)
-      .select()
-      .single();
-    
-    if (error) {
-      throw error;
-    }
-    
-    return data as SellerAccount;
-  } catch (error) {
-    console.error('Error updating payment method:', error);
-    return null;
-  }
-};
-
-// Format payment method based on account type
-export const formatPaymentMethod = (account: SellerAccount): string => {
-  switch (account.method_type) {
-    case 'bank':
-      return `${account.bank_name} - ${account.account_number}`;
-    case 'paypal':
-      return `PayPal - ${account.paypal_email}`;
-    case 'stripe':
-      return `Stripe Account - ${account.stripe_account_id}`;
-    case 'applepay':
-      return 'Apple Pay';
-    default:
-      return `${account.bank_name} - ${account.account_number}`;
-  }
-};
+  ];
+}

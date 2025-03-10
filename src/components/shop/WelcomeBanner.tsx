@@ -1,45 +1,57 @@
 
-import React, { useState } from 'react';
-import { useAuth } from '@/context/AuthContext';
+import React from 'react';
+import { motion } from 'framer-motion';
 import { X } from 'lucide-react';
 
-const WelcomeBanner: React.FC = () => {
-  const [dismissed, setDismissed] = useState(false);
-  const { user } = useAuth();
-  
-  // Get time of day for greeting
-  const getTimeBasedGreeting = () => {
+interface WelcomeBannerProps {
+  userName: string;
+  role: 'shopper' | 'business' | string;
+}
+
+const WelcomeBanner: React.FC<WelcomeBannerProps> = ({ userName, role }) => {
+  const [visible, setVisible] = React.useState(true);
+
+  if (!visible) return null;
+
+  // Get greeting based on time of day
+  const getGreeting = () => {
     const hour = new Date().getHours();
-    if (hour < 12) return "Good morning";
-    if (hour < 18) return "Good afternoon";
-    return "Good evening";
+    
+    if (hour < 12) return 'Good morning';
+    if (hour < 18) return 'Good afternoon';
+    return 'Good evening';
   };
-  
-  if (!user || dismissed) {
-    return null;
-  }
-  
-  const displayName = user.name || 'Shopper';
-  
+
   return (
-    <div className="bg-gradient-to-r from-haluna-primary-light/30 to-purple-100 rounded-lg shadow-sm p-4 mb-6 transition-all">
-      <div className="flex justify-between items-center">
+    <motion.div
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      className="bg-gradient-to-r from-haluna-primary to-purple-600 text-white py-3 px-4 shadow-md"
+    >
+      <div className="container mx-auto flex justify-between items-center">
         <div>
-          <h2 className="text-xl font-serif">
-            {getTimeBasedGreeting()}, <span className="font-semibold">{displayName}</span>!
-          </h2>
-          <p className="text-haluna-text-light mt-1">
-            Welcome back to Haluna. Discover new arrivals and shop from your favorite stores.
-          </p>
+          <span className="font-medium">{getGreeting()}, {userName}!</span>
+          {role === 'shopper' && (
+            <span className="ml-2 hidden sm:inline">
+              Welcome back to Haluna. Find halal products from Muslim-owned businesses.
+            </span>
+          )}
+          {role === 'business' && (
+            <span className="ml-2 hidden sm:inline">
+              Welcome to your business dashboard. Manage your products and orders.
+            </span>
+          )}
         </div>
         <button
-          onClick={() => setDismissed(true)}
-          className="text-gray-500 hover:text-gray-700 transition-colors"
+          onClick={() => setVisible(false)}
+          className="p-1 hover:bg-white/10 rounded-full transition-colors"
+          aria-label="Close"
         >
-          <X size={20} />
+          <X size={16} />
         </button>
       </div>
-    </div>
+    </motion.div>
   );
 };
 

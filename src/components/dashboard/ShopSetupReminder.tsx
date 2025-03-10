@@ -1,106 +1,53 @@
 
-import React, { useState } from 'react';
-import { Store, X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Store, ArrowRight } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface ShopSetupReminderProps {
-  userName: string;
+  onDismiss?: () => void;
 }
 
-const ShopSetupReminder: React.FC<ShopSetupReminderProps> = ({ userName }) => {
-  const [dismissed, setDismissed] = useState(false);
-  const [showDialog, setShowDialog] = useState(false);
+const ShopSetupReminder: React.FC<ShopSetupReminderProps> = ({ onDismiss }) => {
   const navigate = useNavigate();
-
-  if (dismissed) {
-    return null;
-  }
-
+  
+  const handleSetupShop = () => {
+    navigate('/dashboard/settings');
+  };
+  
   return (
-    <>
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg shadow-sm mb-6 p-5">
-        <div className="flex items-start">
-          <div className="flex-shrink-0 bg-blue-100 rounded-full p-3 mr-4">
-            <Store className="h-6 w-6 text-blue-600" />
-          </div>
-          
-          <div className="flex-grow">
-            <div className="flex justify-between items-start">
-              <h3 className="font-medium text-lg">Welcome to Haluna, {userName}!</h3>
-              <button 
-                onClick={() => setDismissed(true)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <X size={18} />
-              </button>
-            </div>
-            
-            <p className="mt-1 text-gray-600">
-              Your business account is ready! Would you like to set up your shop details now?
-            </p>
-            
-            <div className="mt-4 flex space-x-3">
-              <Button 
-                onClick={() => navigate('/dashboard/settings')}
-              >
-                Create My Shop
-              </Button>
-              <Button 
-                variant="outline" 
-                onClick={() => setShowDialog(true)}
-              >
-                Learn More
-              </Button>
-            </div>
-          </div>
+    <Card className="shadow-lg border-haluna-primary/20 bg-gradient-to-br from-white to-haluna-primary/5">
+      <CardHeader className="pb-2">
+        <div className="w-12 h-12 rounded-full bg-haluna-primary/10 flex items-center justify-center mb-4">
+          <Store className="h-6 w-6 text-haluna-primary" />
         </div>
-      </div>
-      
-      <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Setting up your shop</DialogTitle>
-            <DialogDescription>
-              Creating your shop profile is the first step to selling on Haluna.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="py-4">
-            <h4 className="font-medium mb-2">Here's what you need:</h4>
-            <ul className="list-disc list-inside space-y-1 text-sm text-gray-600">
-              <li>Shop name and description</li>
-              <li>Shop category</li>
-              <li>Shop location</li>
-              <li>Logo and cover image (optional)</li>
-            </ul>
-            
-            <p className="mt-4 text-sm text-gray-600">
-              You can update these details anytime from your dashboard settings.
-            </p>
-          </div>
-          
-          <DialogFooter>
-            <Button
-              onClick={() => {
-                setShowDialog(false);
-                navigate('/dashboard/settings');
-              }}
-            >
-              Set Up My Shop
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </>
+        <CardTitle className="text-xl">Complete Your Shop Setup</CardTitle>
+        <CardDescription>
+          You haven't set up your shop details yet. Complete your profile to start selling.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="text-sm text-muted-foreground space-y-2">
+        <p>A complete shop profile helps customers find and trust your business.</p>
+        <p>Add details like:</p>
+        <ul className="list-disc list-inside space-y-1 ml-2">
+          <li>Shop name and description</li>
+          <li>Logo and banner images</li>
+          <li>Location and contact information</li>
+          <li>Business hours</li>
+        </ul>
+      </CardContent>
+      <CardFooter className="flex justify-between pt-2">
+        {onDismiss && (
+          <Button variant="ghost" onClick={onDismiss}>
+            Remind me later
+          </Button>
+        )}
+        <Button className="bg-haluna-primary hover:bg-haluna-primary/90" onClick={handleSetupShop}>
+          Set Up Shop <ArrowRight className="ml-2 h-4 w-4" />
+        </Button>
+      </CardFooter>
+    </Card>
   );
 };
 

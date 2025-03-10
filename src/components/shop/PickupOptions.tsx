@@ -1,95 +1,128 @@
 
-import React from 'react';
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Store, Car } from 'lucide-react';
+import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Car, Store } from 'lucide-react';
+import { updatePickupStatus } from '@/services/paymentService';
+import { useToast } from '@/hooks/use-toast';
 
 interface PickupOptionsProps {
-  pickupType: 'in_store' | 'curbside';
-  vehicleColor: string;
-  onPickupTypeChange: (type: 'in_store' | 'curbside') => void;
-  onVehicleColorChange: (color: string) => void;
+  orderId: string;
+  onComplete: () => void;
 }
 
-const PickupOptions: React.FC<PickupOptionsProps> = ({
-  pickupType,
-  vehicleColor,
-  onPickupTypeChange,
-  onVehicleColorChange
-}) => {
+const PickupOptions: React.FC<PickupOptionsProps> = ({ orderId, onComplete }) => {
+  const [pickupType, setPickupType] = useState<'in_store' | 'curbside'>('in_store');
+  const [vehicleColor, setVehicleColor] = useState('');
+  const [notifying, setNotifying] = useState(false);
+  const { toast } = useToast();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    try {
+      setNotifying(true);
+      
+      // Update the order with pickup preferences
+      const success = await updatePickupStatus(
+        orderId,
+        'arriving',
+        pickupType === 'curbside' ? vehicleColor : undefined
+      );
+      
+      if (success) {
+        toast({
+          title: "Notification Sent",
+          description: pickupType === 'in_store' 
+            ? "The store has been notified that you'll arrive in 2 minutes" 
+            : `The store has been notified that you'll arrive in 2 minutes in a ${vehicleColor} car`,
+        });
+        onComplete();
+      } else {
+        throw new Error("Failed to notify store");
+      }
+    } catch (error) {
+      console.error('Error updating pickup status:', error);
+      toast({
+        title: "Error",
+        description: "Failed to send notification to store",
+        variant: "destructive",
+      });
+    } finally {
+      setNotifying(false);
+    }
+  };
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h3 className="text-sm font-medium mb-3">Pickup Method</h3>
+    <div className="bg-white rounded-lg p-6 shadow-sm border">
+      <h3 className="text-lg font-semibold mb-4">Pickup Options</h3>
+      
+      <form onSubmit={handleSubmit}>
         <RadioGroup 
           value={pickupType} 
-          onValueChange={(value) => onPickupTypeChange(value as 'in_store' | 'curbside')}
-          className="grid grid-cols-1 md:grid-cols-2 gap-4"
+          onValueChange={(value) => setPickupType(value as 'in_store' | 'curbside')}
+          className="space-y-4 mb-6"
         >
-          <div className={`border rounded-lg p-4 ${pickupType === 'in_store' ? 'border-haluna-primary bg-haluna-primary/5' : ''}`}>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="in_store" id="in_store" />
-              <Label htmlFor="in_store" className="flex items-center cursor-pointer">
-                <Store className="h-4 w-4 mr-2" />
-                <span>In-Store Pickup</span>
+          <div className="flex items-start space-x-2 border rounded-md p-3 hover:bg-gray-50 transition-colors">
+            <RadioGroupItem value="in_store" id="in_store" className="mt-1" />
+            <div className="flex-1">
+              <Label htmlFor="in_store" className="flex items-center text-base font-medium">
+                <Store className="mr-2 h-5 w-5 text-haluna-primary" />
+                In-Store Pickup
               </Label>
-            </div>
-            {pickupType === 'in_store' && (
-              <p className="text-sm text-muted-foreground mt-2 ml-6">
-                Come into the store to collect your order from our staff.
+              <p className="text-sm text-muted-foreground mt-1">
+                Come inside the store to pick up your order at the counter
               </p>
-            )}
+            </div>
           </div>
           
-          <div className={`border rounded-lg p-4 ${pickupType === 'curbside' ? 'border-haluna-primary bg-haluna-primary/5' : ''}`}>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="curbside" id="curbside" />
-              <Label htmlFor="curbside" className="flex items-center cursor-pointer">
-                <Car className="h-4 w-4 mr-2" />
-                <span>Curbside Pickup</span>
+          <div className="flex items-start space-x-2 border rounded-md p-3 hover:bg-gray-50 transition-colors">
+            <RadioGroupItem value="curbside" id="curbside" className="mt-1" />
+            <div className="flex-1">
+              <Label htmlFor="curbside" className="flex items-center text-base font-medium">
+                <Car className="mr-2 h-5 w-5 text-haluna-primary" />
+                Curbside Pickup
               </Label>
-            </div>
-            {pickupType === 'curbside' && (
-              <p className="text-sm text-muted-foreground mt-2 ml-6">
-                Park outside and we'll bring your order to your vehicle.
+              <p className="text-sm text-muted-foreground mt-1">
+                Wait in your car and the store will bring your order out to you
               </p>
-            )}
+              
+              {pickupType === 'curbside' && (
+                <div className="mt-3">
+                  <Label htmlFor="vehicle-color" className="text-sm font-medium">
+                    Vehicle Color
+                  </Label>
+                  <Input
+                    id="vehicle-color"
+                    placeholder="e.g. Red Toyota"
+                    className="mt-1"
+                    value={vehicleColor}
+                    onChange={(e) => setVehicleColor(e.target.value)}
+                    required
+                  />
+                </div>
+              )}
+            </div>
           </div>
         </RadioGroup>
-      </div>
-      
-      {pickupType === 'curbside' && (
-        <div>
-          <Label htmlFor="vehicleColor" className="text-sm font-medium mb-2 block">
-            Vehicle Description (color, make, model)
-          </Label>
-          <Input
-            id="vehicleColor"
-            placeholder="e.g., Red Toyota Camry"
-            value={vehicleColor}
-            onChange={(e) => onVehicleColorChange(e.target.value)}
-            className="w-full"
-          />
-          <p className="text-xs text-muted-foreground mt-1">
-            This helps us identify your vehicle when you arrive
-          </p>
-        </div>
-      )}
-      
-      <div className="border-t pt-4 mt-6">
-        <div className="flex items-center space-x-2">
-          <Checkbox id="arrival_notify" />
-          <Label htmlFor="arrival_notify" className="text-sm">
-            I'll notify when I'm on my way (2 minutes away)
-          </Label>
-        </div>
-        <p className="text-xs text-muted-foreground mt-1 ml-6">
-          We'll prepare your order and have it ready for a seamless pickup
-        </p>
-      </div>
+        
+        <Button 
+          type="submit" 
+          className="w-full"
+          disabled={notifying || (pickupType === 'curbside' && !vehicleColor)}
+        >
+          {notifying ? (
+            <>
+              <div className="animate-spin mr-2 h-4 w-4 border-2 border-current border-t-transparent rounded-full"></div>
+              Notifying Store...
+            </>
+          ) : (
+            "I'm 2 Minutes Away"
+          )}
+        </Button>
+      </form>
     </div>
   );
 };

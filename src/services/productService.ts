@@ -1,6 +1,27 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { Product, ProductDetails } from '@/models/product';
+
+// Define the ProductDetails interface
+export interface ProductDetails {
+  [key: string]: string | number | boolean | null | undefined;
+}
+
+// Define the Product interface
+export interface Product {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  inStock: boolean;
+  category: string;
+  images: string[];
+  sellerId: string;
+  sellerName: string;
+  rating: number;
+  isHalalCertified: boolean;
+  details: ProductDetails;
+  createdAt: string;
+}
 
 // Helper function to safely handle JSON conversion
 const safeJsonParse = (data: any): ProductDetails => {
@@ -79,7 +100,7 @@ export async function getProductById(id: string): Promise<Product | undefined> {
 
 // Helper function to prepare product data for database
 const prepareProductForDb = (product: Partial<Product>) => {
-  const dbProduct: any = {
+  const dbProduct: Record<string, any> = {
     name: product.name,
     description: product.description,
     price: product.price,
@@ -280,6 +301,3 @@ export function getMockProducts(): Product[] {
     }
   ];
 }
-
-// Export the Product type to make it available to other modules
-export type { Product };

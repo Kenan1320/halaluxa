@@ -83,7 +83,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     initializeAuth();
     
     // Listen for auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' && session?.user) {
         await loadUserData(session.user.id);
       } else if (event === 'SIGNED_OUT') {
@@ -94,15 +94,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     
     // Clean up subscription on unmount
     return () => {
-      subscription.unsubscribe();
+      authListener?.subscription.unsubscribe();
     };
   }, []);
 
   // Helper function to load user data from DB
   const loadUserData = async (userId: string) => {
     try {
-      console.log('Loading user data for:', userId);
-      
       // Get user profile from database
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
@@ -114,8 +112,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         console.error('Profile load error:', profileError);
         throw profileError;
       }
-      
-      console.log('Loaded profile:', profile);
       
       // Safely ensure role is either 'shopper' or 'business'
       const safeRole = profile.role === 'business' 
@@ -145,7 +141,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           .single();
         
         if (businessError) {
-          console.error('Business profile load error:', businessError);
+          if (businessError.code !== 'PGRST116') { // Not found error is expected for new businesses
+            console.error('Business profile load error:', businessError);
+          }
         } else if (businessData) {
           // Add business fields if available
           userData.shopName = businessData.shop_name;
@@ -154,12 +152,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           userData.shopLocation = businessData.shop_location;
           userData.shopLogo = businessData.shop_logo;
           userData.businessVerified = businessData.business_verified;
-          
-          console.log('Loaded business profile:', businessData);
         }
       }
-      
-      console.log('Final user data:', userData);
       
       setUser(userData);
       setIsLoggedIn(true);
@@ -173,8 +167,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Login function
   const login = async (email: string, password: string): Promise<string | null> => {
     try {
-      console.log('Attempting login for:', email);
-      
       // Sign in with Supabase
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -185,8 +177,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         console.error('Login error:', error);
         throw error;
       }
-      
-      console.log('Login successful:', data);
       
       // Load user data
       await loadUserData(data.user.id);
@@ -207,8 +197,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     role: 'shopper' | 'business'
   ): Promise<boolean> => {
     try {
-      console.log('Registering new user:', { email, name, role });
-      
       // Sign up with Supabase
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -225,8 +213,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         console.error('Registration error:', error);
         throw error;
       }
-      
-      console.log('Registration response:', data);
       
       // If registration is successful but email confirmation is required
       if (data?.user && !data?.session) {
@@ -269,11 +255,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (!user) return false;
     
     try {
-      console.log('Updating user with:', updates);
-      
       // Separate updates for profile and business_profile tables
-      const profileUpdates: any = {};
-      const businessUpdates: any = {};
+      const profileUpdates: Record<string, any> = {};
+      const businessUpdates: Record<string, any> = {};
       
       // Map user fields to profile fields
       if (updates.name !== undefined) profileUpdates.name = updates.name;
@@ -306,14 +290,37 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       // Update business profile if there are business updates and user is a business
       if (Object.keys(businessUpdates).length > 0 && user.role === 'business') {
-        const { error: businessError } = await supabase
+        // First check if business profile exists
+        const { data: existingProfile } = await supabase
           .from('business_profiles')
-          .update(businessUpdates)
-          .eq('id', user.id);
+          .select('id')
+          .eq('id', user.id)
+          .single();
         
-        if (businessError) {
-          console.error('Business profile update error:', businessError);
-          throw businessError;
+        if (existingProfile) {
+          // Update existing profile
+          const { error: businessError } = await supabase
+            .from('business_profiles')
+            .update(businessUpdates)
+            .eq('id', user.id);
+          
+          if (businessError) {
+            console.error('Business profile update error:', businessError);
+            throw businessError;
+          }
+        } else {
+          // Create new profile
+          const { error: businessError } = await supabase
+            .from('business_profiles')
+            .insert({
+              id: user.id,
+              ...businessUpdates
+            });
+          
+          if (businessError) {
+            console.error('Business profile creation error:', businessError);
+            throw businessError;
+          }
         }
       }
       
