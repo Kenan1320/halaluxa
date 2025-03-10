@@ -34,7 +34,7 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
     // Save to localStorage
     localStorage.setItem('theme', theme);
     
-    // Update document with data-theme attribute
+    // Update document with dark class for tailwind
     if (theme === 'dark') {
       document.documentElement.classList.add('dark');
     } else {
