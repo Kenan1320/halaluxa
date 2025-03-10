@@ -1,216 +1,85 @@
 
-import React, { useState, useEffect } from 'react';
-import { Menu, MoreVertical, Search, Settings, LogOut, User, Bell } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Bell, Search, LogOut, Settings, User } from 'lucide-react';
+import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { useNavigate } from 'react-router-dom';
-import { getBusinessNotifications, markNotificationAsRead } from '@/services/paymentService';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Badge } from '@/components/ui/badge';
-import { useToast } from '@/hooks/use-toast';
+import { Link } from 'react-router-dom';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
-interface DashboardHeaderProps {}
-
-const NotificationCenter: React.FC = () => {
-  const [notifications, setNotifications] = useState<any[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const { user } = useAuth();
-  const { toast } = useToast();
-  
-  const loadNotifications = async () => {
-    if (!user) return;
-    
-    try {
-      const notificationData = await getBusinessNotifications(user.id);
-      setNotifications(notificationData);
-      setUnreadCount(notificationData.filter(n => !n.read).length);
-    } catch (error) {
-      console.error('Error loading notifications:', error);
-    }
-  };
-  
-  useEffect(() => {
-    loadNotifications();
-    
-    // Set up interval to refresh notifications
-    const intervalId = setInterval(loadNotifications, 30000); // Every 30 seconds
-    
-    return () => clearInterval(intervalId);
-  }, [user]);
-  
-  const handleNotificationClick = async (notification: any) => {
-    // Mark notification as read
-    try {
-      await markNotificationAsRead(notification.id);
-      
-      // Update local state
-      setNotifications(prevNotifications => 
-        prevNotifications.map(n => 
-          n.id === notification.id ? { ...n, read: true } : n
-        )
-      );
-      setUnreadCount(prevCount => Math.max(0, prevCount - 1));
-      
-      // Navigate or perform action based on notification type
-      if (notification.type === 'new_order') {
-        toast({
-          title: "Order Details",
-          description: `Viewing details for order ${notification.metadata?.orderId}`,
-        });
-        
-        // In a real app, this would navigate to the order details page
-        // navigate(`/dashboard/orders/${notification.metadata?.orderId}`);
-      } else if (notification.type === 'customer_arriving') {
-        toast({
-          title: "Customer Arriving",
-          description: `A customer will arrive soon ${notification.metadata?.vehicleColor ? `in a ${notification.metadata.vehicleColor} car` : ''}`,
-        });
-      }
-    } catch (error) {
-      console.error('Error marking notification as read:', error);
-    }
-  };
-  
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative">
-          <Bell className="h-5 w-5" />
-          {unreadCount > 0 && (
-            <span className="absolute top-0 right-0 h-4 w-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
-              {unreadCount > 9 ? '9+' : unreadCount}
-            </span>
-          )}
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-80">
-        <DropdownMenuLabel>Notifications</DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        
-        {notifications.length === 0 ? (
-          <div className="py-4 text-center text-muted-foreground">
-            No notifications
-          </div>
-        ) : (
-          notifications.slice(0, 5).map((notification) => (
-            <DropdownMenuItem 
-              key={notification.id}
-              className={`flex flex-col items-start py-3 ${!notification.read ? 'bg-blue-50' : ''}`}
-              onClick={() => handleNotificationClick(notification)}
-            >
-              <div className="flex justify-between w-full">
-                <span className="font-medium">{notification.title}</span>
-                {!notification.read && <Badge variant="secondary" className="ml-2">New</Badge>}
-              </div>
-              <span className="text-sm text-muted-foreground mt-1">{notification.message}</span>
-              <span className="text-xs text-muted-foreground mt-1">
-                {new Date(notification.created_at).toLocaleString()}
-              </span>
-            </DropdownMenuItem>
-          ))
-        )}
-        
-        {notifications.length > 5 && (
-          <>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-center text-primary">
-              View all notifications
-            </DropdownMenuItem>
-          </>
-        )}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-};
-
-const DashboardHeader: React.FC<DashboardHeaderProps> = () => {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+const DashboardHeader = () => {
+  const [searchQuery, setSearchQuery] = useState('');
   const { user, logout } = useAuth();
-  const navigate = useNavigate();
-  const { toast } = useToast();
-  
-  const handleLogout = async () => {
-    try {
-      await logout();
-      navigate('/login');
-      toast({
-        title: "Logged out",
-        description: "You have been successfully logged out",
-      });
-    } catch (error) {
-      console.error('Logout error:', error);
-      toast({
-        title: "Error",
-        description: "There was a problem logging out",
-        variant: "destructive",
-      });
-    }
-  };
-  
-  const toggleSidebar = () => {
-    setSidebarOpen(!sidebarOpen);
-    localStorage.setItem('dashboardViewMode', sidebarOpen ? 'mobile' : 'desktop');
-    window.dispatchEvent(new Event('storage'));
-  };
-  
+
   return (
-    <header className="bg-white h-16 flex items-center justify-between px-4 border-b sticky top-0 z-20">
-      <div className="flex items-center space-x-4">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={toggleSidebar}
-          className="lg:hidden"
-        >
-          <Menu className="h-5 w-5" />
-        </Button>
-        
-        <div className="hidden md:flex relative w-full max-w-md">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+    <header className="border-b bg-white p-4 flex items-center justify-between shadow-sm">
+      <div className="flex items-center gap-4 w-full max-w-md">
+        <div className="relative flex-1">
+          <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+            <Search className="h-4 w-4 text-haluna-text-light" />
+          </div>
           <input
             type="text"
-            placeholder="Search..."
-            className="w-full rounded-full bg-gray-100 pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-haluna-primary/50"
+            className="pl-10 pr-4 py-2 w-full border rounded-lg focus:ring-1 focus:ring-haluna-primary focus:border-haluna-primary transition"
+            placeholder="Search products, orders..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
       </div>
       
-      <div className="flex items-center space-x-2">
-        <NotificationCenter />
+      <div className="flex items-center gap-4">
+        <Popover>
+          <PopoverTrigger asChild>
+            <button className="relative p-2 rounded-full hover:bg-haluna-primary-light transition-colors">
+              <Bell className="h-5 w-5 text-haluna-text" />
+              <span className="absolute top-1 right-1 w-2 h-2 bg-haluna-primary rounded-full"></span>
+            </button>
+          </PopoverTrigger>
+          <PopoverContent className="w-80 p-0">
+            <div className="p-3 border-b font-medium">Notifications</div>
+            <div className="max-h-80 overflow-y-auto">
+              <div className="p-4 text-center text-haluna-text-light">
+                No new notifications
+              </div>
+            </div>
+          </PopoverContent>
+        </Popover>
         
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="rounded-full flex items-center justify-center">
-              <div className="w-8 h-8 rounded-full bg-haluna-primary text-white flex items-center justify-center text-sm font-medium">
-                {user?.name?.charAt(0).toUpperCase() || 'U'}
+        <Popover>
+          <PopoverTrigger asChild>
+            <div className="flex items-center gap-3 cursor-pointer">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-haluna-primary to-emerald-600 flex items-center justify-center text-white shadow-sm">
+                {user?.name?.charAt(0) || 'U'}
               </div>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuLabel>
-              <div>
-                <p className="font-medium">{user?.name || 'User'}</p>
-                <p className="text-xs text-muted-foreground">{user?.email}</p>
+              <div className="hidden md:block">
+                <div className="text-sm font-medium">{user?.name || 'Business Owner'}</div>
+                <div className="text-xs text-haluna-text-light">Business Owner</div>
               </div>
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => navigate('/dashboard/settings')}>
-              <Settings size={16} className="mr-2" />
-              Settings
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={handleLogout}>
-              <LogOut size={16} className="mr-2" />
-              Logout
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+            </div>
+          </PopoverTrigger>
+          <PopoverContent className="w-56 p-0" align="end">
+            <div className="p-3 border-b">
+              <p className="font-medium">{user?.name}</p>
+              <p className="text-xs text-haluna-text-light">{user?.email}</p>
+            </div>
+            <div className="p-2">
+              <Link to="/dashboard/settings" className="flex items-center gap-2 w-full text-left p-2 rounded-md hover:bg-haluna-primary-light">
+                <Settings className="h-4 w-4" />
+                <span>Settings</span>
+              </Link>
+              <Link to="/dashboard/profile" className="flex items-center gap-2 w-full text-left p-2 rounded-md hover:bg-haluna-primary-light">
+                <User className="h-4 w-4" />
+                <span>Profile</span>
+              </Link>
+              <button 
+                onClick={logout}
+                className="flex items-center gap-2 w-full text-left p-2 rounded-md hover:bg-red-50 text-red-500"
+              >
+                <LogOut className="h-4 w-4" />
+                <span>Sign Out</span>
+              </button>
+            </div>
+          </PopoverContent>
+        </Popover>
       </div>
     </header>
   );

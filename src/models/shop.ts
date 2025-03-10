@@ -1,5 +1,6 @@
 
 // Shop related models
+
 export interface Shop {
   id: string;
   name: string;

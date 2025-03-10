@@ -9,50 +9,6 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      business_notifications: {
-        Row: {
-          business_id: string
-          created_at: string | null
-          id: string
-          message: string
-          metadata: Json | null
-          order_id: string
-          read: boolean | null
-          title: string
-          type: string
-        }
-        Insert: {
-          business_id: string
-          created_at?: string | null
-          id?: string
-          message: string
-          metadata?: Json | null
-          order_id: string
-          read?: boolean | null
-          title: string
-          type: string
-        }
-        Update: {
-          business_id?: string
-          created_at?: string | null
-          id?: string
-          message?: string
-          metadata?: Json | null
-          order_id?: string
-          read?: boolean | null
-          title?: string
-          type?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "business_notifications_order_id_fkey"
-            columns: ["order_id"]
-            isOneToOne: false
-            referencedRelation: "orders"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       business_profiles: {
         Row: {
           business_documents: Json | null
@@ -102,46 +58,34 @@ export type Database = {
       }
       orders: {
         Row: {
-          arrival_notification_sent: boolean | null
           created_at: string | null
           date: string | null
           id: string
           items: Json
-          pickup_status: string | null
-          pickup_type: string | null
           shipping_details: Json | null
           status: string | null
           total: number
           user_id: string | null
-          vehicle_color: string | null
         }
         Insert: {
-          arrival_notification_sent?: boolean | null
           created_at?: string | null
           date?: string | null
           id?: string
           items: Json
-          pickup_status?: string | null
-          pickup_type?: string | null
           shipping_details?: Json | null
           status?: string | null
           total: number
           user_id?: string | null
-          vehicle_color?: string | null
         }
         Update: {
-          arrival_notification_sent?: boolean | null
           created_at?: string | null
           date?: string | null
           id?: string
           items?: Json
-          pickup_status?: string | null
-          pickup_type?: string | null
           shipping_details?: Json | null
           status?: string | null
           total?: number
           user_id?: string | null
-          vehicle_color?: string | null
         }
         Relationships: []
       }

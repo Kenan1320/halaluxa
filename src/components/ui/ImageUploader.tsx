@@ -22,6 +22,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
   const [failedUploads, setFailedUploads] = useState<File[]>([]);
   const { toast } = useToast();
 
+  // Sync with initialImages if they change
   useEffect(() => {
     setImages(initialImages);
   }, [initialImages]);
@@ -49,6 +50,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       
+      // Check file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
         toast({
           title: "File too large",
@@ -60,9 +62,14 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
       }
       
       try {
-        setUploadProgress(Math.floor(i / files.length * 50));
+        setUploadProgress(Math.floor(i / files.length * 50)); // First half of progress
         
-        const imageUrl = await uploadProductImage(file);
+        const imageUrl = await uploadProductImage(file, (progress) => {
+          // This progress is for this individual file, scale it to overall progress
+          const individualProgress = progress / 100;
+          const overallProgress = 50 + (i / files.length * 50) + (individualProgress * 50 / files.length);
+          setUploadProgress(Math.floor(overallProgress));
+        });
         
         if (imageUrl) {
           newImages.push(imageUrl);
@@ -91,6 +98,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
     setUploadProgress(100);
     setFailedUploads(failedFiles);
     
+    // Reset the input
     event.target.value = '';
   };
 
@@ -104,9 +112,11 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
   const retryFailedUploads = async () => {
     if (failedUploads.length === 0) return;
     
+    // Create a FileList-like object
     const dataTransfer = new DataTransfer();
     failedUploads.forEach(file => dataTransfer.items.add(file));
     
+    // Create a synthetic event
     const event = {
       target: {
         files: dataTransfer.files,
@@ -114,6 +124,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
       }
     } as React.ChangeEvent<HTMLInputElement>;
     
+    // Clear failed uploads and retry
     setFailedUploads([]);
     await handleUpload(event);
   };
