@@ -1,12 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, Search, ShoppingCart, User, MapPin, Moon, Sun } from 'lucide-react';
+import { Menu, X, Search, ShoppingCart, User, Moon, Sun, Store } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
-import { useLocation as useLocationContext } from '@/context/LocationContext';
 import { motion } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
 import { getShopById, getMainShop } from '@/services/shopService';
@@ -23,7 +22,6 @@ const Navbar = () => {
   const navigate = useNavigate();
   const { isLoggedIn, user } = useAuth();
   const { cart } = useCart();
-  const { isLocationEnabled, requestLocation, location: userLocation } = useLocationContext();
   const { toast } = useToast();
   const { theme, setTheme } = useTheme();
   
@@ -127,15 +125,26 @@ const Navbar = () => {
             )}
           </motion.button>
           
-          {/* Location Button */}
-          <motion.button 
-            onClick={requestLocation}
-            className="p-2 rounded-full text-[#2A866A] dark:text-[#4ECBA5] hover:bg-[#d5efe8] dark:hover:bg-gray-800 transition-colors"
+          {/* Main Shop Button */}
+          <motion.div
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
-            <MapPin className="h-6 w-6" />
-          </motion.button>
+            <Link 
+              to="/select-shops" 
+              className="p-2 rounded-full text-[#2A866A] dark:text-[#4ECBA5] hover:bg-[#d5efe8] dark:hover:bg-gray-800 transition-colors block"
+            >
+              {mainShop?.logo_url ? (
+                <img 
+                  src={mainShop.logo_url} 
+                  alt={mainShop.name}
+                  className="h-6 w-6 rounded-full object-cover"
+                />
+              ) : (
+                <Store className="h-6 w-6" />
+              )}
+            </Link>
+          </motion.div>
           
           {/* Cart Button */}
           <motion.div

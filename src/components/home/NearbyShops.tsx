@@ -1,19 +1,18 @@
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { getShops, Shop, getShopProducts } from '@/services/shopService';
+import { fetchAllShops } from '@/services/shopService';
 import { useLocation } from '@/context/LocationContext';
-import ShopCard from '@/components/shop/ShopCard';
 import ShopProductList from '@/components/shop/ShopProductList';
 import { Link } from 'react-router-dom';
 import { useTheme } from '@/context/ThemeContext';
+import { Shop } from '@/models/shop';
 
 const NearbyShops = () => {
   const [shops, setShops] = useState<Shop[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { isLocationEnabled, location, getNearbyShops } = useLocation();
   const { theme } = useTheme();
-  const containerRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
     // Initial load of shops
@@ -59,7 +58,43 @@ const NearbyShops = () => {
   
   return (
     <div className="space-y-8">
-      {shops.map((shop, index) => (
+      {/* Shop logos flowing horizontally */}
+      <div className="mb-8 overflow-hidden">
+        <div className="flex overflow-x-auto gap-4 pb-4 scrollbar-hide">
+          {shops.map((shop) => (
+            <Link to={`/shop/${shop.id}`} key={shop.id}>
+              <motion.div 
+                className="flex-shrink-0 flex flex-col items-center justify-center"
+                whileHover={{ 
+                  scale: 1.1,
+                  boxShadow: theme === 'dark' ? '0 0 10px rgba(209, 232, 226, 0.2)' : '0 4px 12px rgba(0,0,0,0.1)'
+                }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <div className="w-16 h-16 rounded-full overflow-hidden bg-card shadow-sm mb-2">
+                  {shop.logo_url ? (
+                    <img 
+                      src={shop.logo_url} 
+                      alt={`${shop.name} logo`}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-primary/10 flex items-center justify-center">
+                      <span className="text-sm font-medium text-primary">
+                        {shop.name.substring(0, 2).toUpperCase()}
+                      </span>
+                    </div>
+                  )}
+                </div>
+                <p className="text-xs font-medium text-center">{shop.name}</p>
+              </motion.div>
+            </Link>
+          ))}
+        </div>
+      </div>
+
+      {/* Shop products sections */}
+      {shops.map((shop) => (
         <div key={shop.id} className="mb-8">
           {/* Shop header with name and logo - now animated and clickable */}
           <Link to={`/shop/${shop.id}`} className="group flex items-center gap-3 mb-4">
@@ -101,7 +136,7 @@ const NearbyShops = () => {
           </Link>
           
           {/* Shop products in horizontal scroll */}
-          <ShopProductList shopId={shop.id} />
+          <ShopProductList shopId={shop.id} horizontal={true} />
         </div>
       ))}
     </div>

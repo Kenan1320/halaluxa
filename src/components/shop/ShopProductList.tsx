@@ -8,10 +8,11 @@ import EmptyProductCard from './EmptyProductCard';
 
 interface ShopProductListProps {
   shopId: string;
-  products?: Product[]; // Make products optional
+  initialProducts?: Product[]; // Optional products passed in from parent
+  horizontal?: boolean; // Control layout - horizontal or grid
 }
 
-const ShopProductList = ({ shopId, products: initialProducts }: ShopProductListProps) => {
+const ShopProductList = ({ shopId, initialProducts, horizontal = true }: ShopProductListProps) => {
   const [products, setProducts] = useState<Product[]>(initialProducts || []);
   const [isLoading, setIsLoading] = useState(!initialProducts);
   const navigate = useNavigate();
@@ -45,51 +46,63 @@ const ShopProductList = ({ shopId, products: initialProducts }: ShopProductListP
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+      <div className={`${horizontal ? 'flex overflow-x-auto scrollbar-hide' : 'grid grid-cols-2 md:grid-cols-3 gap-4'} pb-4`}>
         {[...Array(5)].map((_, i) => (
-          <div key={i} className="h-48 md:h-64 bg-muted rounded-lg animate-pulse" />
+          <div 
+            key={i} 
+            className={`${horizontal ? 'flex-shrink-0 w-48 md:w-56 mr-4' : ''} h-48 md:h-64 bg-muted rounded-lg animate-pulse`} 
+          />
         ))}
       </div>
     );
   }
 
+  // If no products are available, show empty product cards
+  if (products.length === 0) {
+    return (
+      <div className={`${horizontal ? 'flex overflow-x-auto scrollbar-hide' : 'grid grid-cols-2 md:grid-cols-3 gap-4'} pb-4`}>
+        {[...Array(5)].map((_, index) => (
+          <div className={`${horizontal ? 'flex-shrink-0 w-48 md:w-56 mr-4' : ''}`} key={index}>
+            <EmptyProductCard index={index} />
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  // If products exist, display them
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-      {products.length > 0 ? (
-        products.map((product, index) => (
-          <motion.div
-            key={product.id}
-            className="bg-card rounded-lg shadow-sm overflow-hidden cursor-pointer h-48 md:h-64 relative"
-            whileHover={{ y: -5, boxShadow: '0 10px 15px rgba(0,0,0,0.1)' }}
-            onClick={() => handleProductClick(product.id)}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: index * 0.05 }}
-          >
-            <div className="h-2/3 overflow-hidden">
-              <img
-                src={product.images[0] || '/placeholder.svg'}
-                alt={product.name}
-                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-              />
+    <div className={`${horizontal ? 'flex overflow-x-auto scrollbar-hide' : 'grid grid-cols-2 md:grid-cols-3 gap-4'} pb-4`}>
+      {products.map((product, index) => (
+        <motion.div
+          key={product.id}
+          className={`bg-card rounded-lg shadow-sm overflow-hidden cursor-pointer relative ${
+            horizontal ? 'flex-shrink-0 w-48 md:w-56 mr-4' : ''
+          } h-48 md:h-64`}
+          whileHover={{ y: -5, boxShadow: '0 10px 15px rgba(0,0,0,0.1)' }}
+          onClick={() => handleProductClick(product.id)}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: index * 0.05 }}
+        >
+          <div className="h-2/3 overflow-hidden">
+            <img
+              src={product.images[0] || '/placeholder.svg'}
+              alt={product.name}
+              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            />
+          </div>
+          <div className="p-3">
+            <p className="font-medium text-sm line-clamp-1">{product.name}</p>
+            <div className="flex justify-between items-center mt-1">
+              <span className="text-primary font-bold">${product.price.toFixed(2)}</span>
+              {product.isHalalCertified && (
+                <span className="text-xs px-2 py-0.5 bg-primary/10 text-primary rounded-full">Halal</span>
+              )}
             </div>
-            <div className="p-3">
-              <p className="font-medium text-sm line-clamp-1">{product.name}</p>
-              <div className="flex justify-between items-center mt-1">
-                <span className="text-primary font-bold">${product.price.toFixed(2)}</span>
-                {product.isHalalCertified && (
-                  <span className="text-xs px-2 py-0.5 bg-primary/10 text-primary rounded-full">Halal</span>
-                )}
-              </div>
-            </div>
-          </motion.div>
-        ))
-      ) : (
-        // Display empty product cards when no products are available
-        [...Array(6)].map((_, index) => (
-          <EmptyProductCard key={index} index={index} />
-        ))
-      )}
+          </div>
+        </motion.div>
+      ))}
     </div>
   );
 };

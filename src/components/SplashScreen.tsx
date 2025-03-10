@@ -8,6 +8,7 @@ const SplashScreen = ({ onFinish }: { onFinish: () => void }) => {
   const [showWord1, setShowWord1] = useState(false);
   const [showWord2, setShowWord2] = useState(false);
   const [showWord3, setShowWord3] = useState(false);
+  const [doorOpen, setDoorOpen] = useState(false);
   
   // Animation sequence timing
   useEffect(() => {
@@ -15,7 +16,8 @@ const SplashScreen = ({ onFinish }: { onFinish: () => void }) => {
     const timer2 = setTimeout(() => setShowWord1(true), 1000);
     const timer3 = setTimeout(() => setShowWord2(true), 1700);
     const timer4 = setTimeout(() => setShowWord3(true), 2400);
-    const timer5 = setTimeout(() => {
+    const timer5 = setTimeout(() => setDoorOpen(true), 3000);
+    const timer6 = setTimeout(() => {
       setVisible(false);
       setTimeout(() => onFinish(), 300); // Call onFinish after animation completes
     }, 4000);
@@ -26,6 +28,7 @@ const SplashScreen = ({ onFinish }: { onFinish: () => void }) => {
       clearTimeout(timer3);
       clearTimeout(timer4);
       clearTimeout(timer5);
+      clearTimeout(timer6);
     };
   }, [onFinish]);
   
@@ -96,60 +99,55 @@ const SplashScreen = ({ onFinish }: { onFinish: () => void }) => {
                     animate={showWord3 ? { opacity: 1 } : {}}
                     transition={{ duration: 0.5 }}
                   >
-                    Mall
+                    Village
                   </motion.span>
                 </>
               )}
             </div>
             
-            {/* Loading dots animation */}
+            {/* Door Animation */}
             <motion.div 
-              className="flex space-x-3 mt-12"
+              className="mt-12 w-24 h-32 relative"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.5, duration: 0.5 }}
             >
+              {/* Door frame */}
+              <div className="absolute inset-0 bg-[#2A866A]/20 dark:bg-[#4ECBA5]/20 rounded-t-lg border-2 border-[#2A866A]/30 dark:border-[#4ECBA5]/30"></div>
+              
+              {/* Left door */}
               <motion.div 
-                className="w-2.5 h-2.5 rounded-full bg-[#E4875E]"
-                animate={{ 
-                  scale: [1, 1.5, 1],
-                  opacity: [0.7, 1, 0.7]
-                }}
+                className="absolute top-0 left-0 w-1/2 h-full bg-[#2A866A] dark:bg-[#4ECBA5] rounded-tl-lg border-r border-[#E4F5F0]/20 dark:border-[#0d1b2a]/20"
+                initial={{ rotateY: 0 }}
+                animate={{ rotateY: doorOpen ? -85 : 0 }}
                 transition={{ 
-                  duration: 1.5,
-                  repeat: Infinity,
-                  repeatType: "loop",
-                  ease: "easeInOut",
-                  delay: 0
-                }}
-              />
-              <motion.div 
-                className="w-2.5 h-2.5 rounded-full bg-[#E4875E]"
-                animate={{ 
-                  scale: [1, 1.5, 1],
-                  opacity: [0.7, 1, 0.7]
-                }}
-                transition={{ 
-                  duration: 1.5,
-                  repeat: Infinity,
-                  repeatType: "loop",
+                  duration: 1, 
                   ease: "easeInOut",
                   delay: 0.2
                 }}
+                style={{ transformOrigin: "left center" }}
               />
+              
+              {/* Right door */}
               <motion.div 
-                className="w-2.5 h-2.5 rounded-full bg-[#E4875E]"
-                animate={{ 
-                  scale: [1, 1.5, 1],
-                  opacity: [0.7, 1, 0.7]
-                }}
+                className="absolute top-0 right-0 w-1/2 h-full bg-[#2A866A] dark:bg-[#4ECBA5] rounded-tr-lg border-l border-[#E4F5F0]/20 dark:border-[#0d1b2a]/20"
+                initial={{ rotateY: 0 }}
+                animate={{ rotateY: doorOpen ? 85 : 0 }}
                 transition={{ 
-                  duration: 1.5,
-                  repeat: Infinity,
-                  repeatType: "loop",
+                  duration: 1, 
                   ease: "easeInOut",
-                  delay: 0.4
+                  delay: 0.2
                 }}
+                style={{ transformOrigin: "right center" }}
+              />
+              
+              {/* Light from inside when door opens */}
+              <motion.div 
+                className="absolute inset-0 bg-white dark:bg-[#E4F5F0] rounded-t-lg"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: doorOpen ? 1 : 0 }}
+                transition={{ duration: 0.5, delay: 0.7 }}
+                style={{ zIndex: -1 }}
               />
             </motion.div>
           </div>

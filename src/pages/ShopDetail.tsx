@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { getShopById, getShopProducts } from '@/services/shopService';
@@ -125,10 +126,10 @@ export default function ShopDetail() {
         </div>
       </div>
 
-      {/* Product Listing */}
+      {/* Product Listing in Grid Layout */}
       <h2 className="text-xl font-serif font-bold mb-6">Products from {shop?.name}</h2>
       
-      <ShopProductList shopId={shopId || ''} products={products} />
+      <ShopProductList shopId={shopId || ''} initialProducts={products} horizontal={false} />
     </div>
   );
 }

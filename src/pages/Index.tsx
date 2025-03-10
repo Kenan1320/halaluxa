@@ -31,7 +31,7 @@ const Index = () => {
         </div>
       </section>
       
-      {/* Categories (flowing right under search) */}
+      {/* Categories flowing right under search */}
       <section className="py-4 bg-background dark:bg-[#0d1b2a]">
         <div className="container mx-auto px-4">
           <CategoryScroll />
