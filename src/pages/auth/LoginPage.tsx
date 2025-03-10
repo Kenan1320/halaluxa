@@ -17,7 +17,7 @@ import { supabase } from '@/integrations/supabase/client';
 const LoginPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, isLoggedIn, user } = useAuth();
+  const { login, isLoggedIn, user, isInitializing } = useAuth();
   const { toast } = useToast();
   const [formData, setFormData] = useState({
     email: '',
@@ -31,14 +31,15 @@ const LoginPage = () => {
   
   // If already logged in, redirect to appropriate page
   useEffect(() => {
-    if (isLoggedIn) {
-      if (user?.role === 'business') {
+    if (!isInitializing && isLoggedIn && user) {
+      console.log('User is already logged in, redirecting');
+      if (user.role === 'business') {
         navigate('/dashboard');
       } else {
         navigate('/shop');
       }
     }
-  }, [isLoggedIn, user, navigate]);
+  }, [isLoggedIn, user, navigate, isInitializing]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -50,22 +51,20 @@ const LoginPage = () => {
     setLoading(true);
     
     try {
-      // Attempt to login and get the user's actual role from the database
-      const role = await login(formData.email, formData.password);
+      // Attempt to login
+      const loggedInUser = await login(formData.email, formData.password);
       
-      if (role) {
-        console.log('Login successful with role:', role);
-        console.log('User selected type:', userType);
+      if (loggedInUser) {
+        console.log('Login successful:', loggedInUser);
         
         // Check if the role matches the selected type
-        if ((role === 'shopper' && userType === 'business') || (role === 'business' && userType === 'shopper')) {
+        if ((loggedInUser.role === 'shopper' && userType === 'business') || 
+            (loggedInUser.role === 'business' && userType === 'shopper')) {
           toast({
             title: "Account Type Mismatch",
-            description: `The account for ${formData.email} is registered as a ${role}, not as a ${userType}. Please select the correct account type.`,
-            variant: "destructive",
+            description: `The account for ${formData.email} is registered as a ${loggedInUser.role}, not as a ${userType}. Logging you in as ${loggedInUser.role}.`,
+            variant: "default",
           });
-          setLoading(false);
-          return;
         }
         
         toast({
@@ -74,7 +73,7 @@ const LoginPage = () => {
         });
         
         // Navigate to the appropriate destination based on role
-        if (role === 'business') {
+        if (loggedInUser.role === 'business') {
           navigate('/dashboard');
         } else {
           navigate(from === '/' ? '/shop' : from);
@@ -86,10 +85,10 @@ const LoginPage = () => {
           variant: "destructive",
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to log in",
+        description: error.message || "Failed to log in",
         variant: "destructive",
       });
     } finally {
@@ -118,6 +117,7 @@ const LoginPage = () => {
       }
       
       // The redirect will happen automatically
+      console.log('Google sign-in initiated:', data);
     } catch (error) {
       console.error('Error signing in with Google:', error);
       toast({
@@ -127,6 +127,20 @@ const LoginPage = () => {
       });
     }
   };
+
+  // Show loading state while initializing auth
+  if (isInitializing) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-haluna-primary"></div>
+      </div>
+    );
+  }
+
+  // If already logged in, no need to render the form
+  if (isLoggedIn && user) {
+    return null;
+  }
 
   // Animation variants
   const containerVariants = {

@@ -30,7 +30,7 @@ interface AuthContextType {
   isLoggedIn: boolean;
   isInitializing: boolean;
   user: User | null;
-  login: (email: string, password: string) => Promise<string | null>;
+  login: (email: string, password: string) => Promise<User | null>;
   register: (email: string, password: string, name: string, role: 'shopper' | 'business') => Promise<boolean>;
   signup: (email: string, password: string, name: string, role: 'shopper' | 'business') => Promise<boolean>;
   logout: () => Promise<void>;
@@ -84,11 +84,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     
     // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state change:', event, session);
+      
       if (event === 'SIGNED_IN' && session?.user) {
         await loadUserData(session.user.id);
       } else if (event === 'SIGNED_OUT') {
         setIsLoggedIn(false);
         setUser(null);
+      } else if (event === 'USER_UPDATED' && session?.user) {
+        await loadUserData(session.user.id);
       }
     });
     
@@ -146,6 +150,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         
         if (businessError) {
           console.error('Business profile load error:', businessError);
+          
+          // If it's not found, we may need to create it
+          if (businessError.code === 'PGRST116') {
+            // Create a new business profile
+            const { error: createError } = await supabase
+              .from('business_profiles')
+              .insert({
+                id: userId,
+                shop_name: null,
+                shop_description: null,
+                shop_category: null,
+                shop_location: null,
+                shop_logo: null,
+                business_verified: false
+              });
+              
+            if (createError) {
+              console.error('Error creating business profile:', createError);
+            }
+          }
         } else if (businessData) {
           // Add business fields if available
           userData.shopName = businessData.shop_name;
@@ -171,7 +195,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
   
   // Login function
-  const login = async (email: string, password: string): Promise<string | null> => {
+  const login = async (email: string, password: string): Promise<User | null> => {
     try {
       console.log('Attempting login for:', email);
       
@@ -191,8 +215,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // Load user data
       await loadUserData(data.user.id);
       
-      // Return the role for role-specific redirects
-      return user?.role || null;
+      // Return the user for role-specific redirects
+      return user;
     } catch (error) {
       console.error('Error during login:', error);
       return null;
@@ -239,6 +263,39 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       // If registration is successful and user is logged in immediately
       if (data?.user && data?.session) {
+        // Create profile record
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert({
+            id: data.user.id,
+            email: email,
+            name: name,
+            role: role,
+          });
+        
+        if (profileError) {
+          console.error('Error creating profile:', profileError);
+        }
+        
+        // If it's a business user, create business profile too
+        if (role === 'business') {
+          const { error: businessError } = await supabase
+            .from('business_profiles')
+            .insert({
+              id: data.user.id,
+              shop_name: null,
+              shop_description: null,
+              shop_category: null,
+              shop_location: null,
+              shop_logo: null,
+              business_verified: false
+            });
+            
+          if (businessError) {
+            console.error('Error creating business profile:', businessError);
+          }
+        }
+        
         await loadUserData(data.user.id);
         return true;
       }

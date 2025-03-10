@@ -1,6 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { PaymentMethod, SellerAccount, mapDbPaymentMethodToModel, mapModelToDb } from '@/models/payment';
+import { PaymentMethod, SellerAccount, mapDbPaymentMethodToModel, mapModelToDb, formatPaymentMethod } from '@/models/payment';
 
 // Get all payment methods for a shop
 export async function getSellerAccounts(shopId: string): Promise<PaymentMethod[]> {
@@ -42,9 +42,15 @@ export async function getSellerAccount(id: string): Promise<PaymentMethod | null
 export async function createSellerAccount(method: Partial<PaymentMethod>): Promise<PaymentMethod | null> {
   try {
     const dbMethod = mapModelToDb(method);
+    
+    // Ensure method_type is set (required field)
+    if (!dbMethod.method_type && method.type) {
+      dbMethod.method_type = method.type;
+    }
+    
     const { data, error } = await supabase
       .from('shop_payment_methods')
-      .insert(dbMethod)
+      .insert(dbMethod as any)
       .select()
       .single();
     
@@ -63,9 +69,15 @@ export async function updateSellerAccount(method: Partial<PaymentMethod>): Promi
     if (!method.id) return null;
 
     const dbMethod = mapModelToDb(method);
+    
+    // Ensure method_type is set if type is provided
+    if (!dbMethod.method_type && method.type) {
+      dbMethod.method_type = method.type;
+    }
+    
     const { data, error } = await supabase
       .from('shop_payment_methods')
-      .update(dbMethod)
+      .update(dbMethod as any)
       .eq('id', method.id)
       .select()
       .single();
@@ -105,4 +117,6 @@ export async function processPayment(cart: any, paymentMethodDetails: any, shipp
   }
 }
 
-export { formatPaymentMethod, PaymentMethod, SellerAccount };
+// Re-export types and helper functions
+export { formatPaymentMethod };
+export type { PaymentMethod, SellerAccount };

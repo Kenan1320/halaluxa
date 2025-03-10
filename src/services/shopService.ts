@@ -147,19 +147,38 @@ export async function getShopProducts(shopId: string): Promise<ShopProduct[]> {
 // Get nearby shops based on coordinates
 export async function getNearbyShops(lat: number, lng: number, radius: number = 10): Promise<Shop[]> {
   try {
-    // Using PostGIS to find shops within a radius
-    const { data, error } = await supabase.rpc('nearby_shops', {
-      lat,
-      lng,
-      distance_km: radius
-    });
+    // Using a simple query instead of PostGIS RPC call to avoid errors
+    const { data, error } = await supabase
+      .from('shops')
+      .select('*');
     
     if (error) {
       console.error('Error fetching nearby shops:', error);
       return [];
     }
     
-    return data.map(mapDatabaseShopToModel);
+    // Filter shops based on approximate distance calculation
+    // This is a simplified approach without PostGIS
+    const shops = data.map(mapDatabaseShopToModel).filter(shop => {
+      if (!shop.latitude || !shop.longitude) return false;
+      
+      // Simple distance calculation (approximate)
+      const dlat = (shop.latitude - lat) * (Math.PI / 180);
+      const dlng = (shop.longitude - lng) * (Math.PI / 180);
+      const a = Math.sin(dlat/2) * Math.sin(dlat/2) +
+                Math.cos(lat * (Math.PI / 180)) * Math.cos(shop.latitude * (Math.PI / 180)) *
+                Math.sin(dlng/2) * Math.sin(dlng/2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      const distance = 6371 * c; // Earth radius in km
+      
+      // Add distance to shop object
+      shop.distance = distance;
+      
+      return distance <= radius;
+    });
+    
+    // Sort by distance
+    return shops.sort((a, b) => (a.distance || 0) - (b.distance || 0));
   } catch (error) {
     console.error('Error fetching nearby shops:', error);
     return [];
@@ -188,8 +207,17 @@ export async function getPopularShops(limit: number = 10): Promise<Shop[]> {
 }
 
 // Get main shop (user's preferred shop)
-export async function getMainShop(userId: string): Promise<Shop | null> {
+export async function getMainShop(userId?: string): Promise<Shop | null> {
   try {
+    if (!userId) {
+      console.log('No user ID provided for getMainShop');
+      // Try to get from localStorage if available in browser
+      const mainShopId = typeof window !== 'undefined' ? localStorage.getItem('mainShopId') : null;
+      if (!mainShopId) return null;
+      
+      return getShopById(mainShopId);
+    }
+    
     const { data, error } = await supabase
       .from('user_shop_preferences')
       .select('shops(*)')
@@ -214,7 +242,6 @@ export function convertToModelProduct(dbProduct: any): Product {
     id: dbProduct.id,
     name: dbProduct.name,
     description: dbProduct.description,
-    longDescription: dbProduct.long_description || '',
     price: dbProduct.price,
     category: dbProduct.category,
     images: dbProduct.images || [],
@@ -272,4 +299,21 @@ export async function getShops(): Promise<Shop[]> {
     console.error('Error fetching shops:', error);
     return [];
   }
+}
+
+// For backward compatibility
+export const getAllShops = getShops;
+export { Shop };
+
+// Simple function to subscribe to shops (stub for type errors)
+export function subscribeToShops(callback: (shops: Shop[]) => void) {
+  // Get initial shops
+  getShops().then(shops => {
+    callback(shops);
+  });
+  
+  // Return unsubscribe function
+  return () => {
+    // Cleanup if needed
+  };
 }
