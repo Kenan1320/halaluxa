@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Product, productCategories } from '@/models/product';
 import { getRandomId } from '@/lib/utils';
@@ -155,7 +154,6 @@ export async function addProduct(product: Partial<Product>): Promise<boolean> {
       ...product,
       id: product.id || getRandomId(),
       createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
     });
     
     const { error } = await supabase
@@ -184,7 +182,6 @@ export async function updateProduct(product: Partial<Product>): Promise<boolean>
     // Convert frontend model to DB format
     const dbProduct = mapModelToDbProduct({
       ...product,
-      updatedAt: new Date().toISOString(),
     });
     
     const { error } = await supabase

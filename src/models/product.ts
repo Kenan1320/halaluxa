@@ -1,4 +1,3 @@
-
 export interface Product {
   id: string;
   name: string;
@@ -12,7 +11,7 @@ export interface Product {
   sellerId: string;
   sellerName?: string;
   rating?: number;
-  reviews?: number;
+  reviewCount?: number;
   images: string[];
   variants?: ProductVariant[];
   tags?: string[];
@@ -84,6 +83,7 @@ export const mapDbProductToModel = (data: any): Product => {
     sellerId: data.seller_id,
     sellerName: data.seller_name,
     rating: data.rating,
+    reviewCount: data.review_count,
     isHalalCertified: data.is_halal_certified,
     details: typeof data.details === 'string' ? JSON.parse(data.details) : data.details || {},
     createdAt: data.created_at
@@ -102,6 +102,7 @@ export const mapModelToDbProduct = (product: Partial<Product>) => {
     seller_id: product.sellerId,
     seller_name: product.sellerName,
     rating: product.rating,
+    review_count: product.reviewCount,
     is_halal_certified: product.isHalalCertified,
     details: product.details ? JSON.stringify(product.details) : '{}'
   };

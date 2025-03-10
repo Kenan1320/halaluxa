@@ -24,7 +24,7 @@ const BusinessOnboarding = () => {
   
   // Check if user already has a shop
   useEffect(() => {
-    if (user?.shop_name) {
+    if (user?.shopName) {
       setOnboardingComplete(true);
     }
   }, [user]);

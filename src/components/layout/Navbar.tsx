@@ -9,7 +9,8 @@ import { useCart } from '@/context/CartContext';
 import { useLocation as useLocationContext } from '@/context/LocationContext';
 import { motion } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
-import { getShopById, getMainShop, Shop } from '@/services/shopService';
+import { getShopById, getMainShop } from '@/services/shopService';
+import type { Shop } from '@/models/shop';
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -233,6 +234,7 @@ const Navbar = () => {
             </div>
           </div>
           
+          {/* Mobile menu navigation */}
           <nav className="grid grid-cols-1 gap-3">
             <Link
               to="/"

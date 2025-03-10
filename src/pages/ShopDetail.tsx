@@ -1,15 +1,14 @@
-
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { getShopById, getShopProducts } from '@/services/shopService';
-import { ShopProduct } from '@/models/shop';
+import { Shop } from '@/models/shop';
 import { Product } from '@/models/product';
 import ShopProductList from '@/components/shop/ShopProductList';
 import { MapPin, Check, Star, Package } from 'lucide-react';
 
 export default function ShopDetail() {
   const { shopId } = useParams<{ shopId: string }>();
-  const [shop, setShop] = useState<any | null>(null);
+  const [shop, setShop] = useState<Shop | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -23,26 +22,7 @@ export default function ShopDetail() {
           
           // Load shop products
           const shopProducts = await getShopProducts(shopId);
-          
-          // Convert ShopProduct to Product using the convertToModelProduct function
-          // But we're reimplementing it here to avoid circular dependencies
-          const convertedProducts: Product[] = shopProducts.map(sp => ({
-            id: sp.id,
-            name: sp.name,
-            description: sp.description,
-            price: sp.price,
-            category: sp.category,
-            images: sp.images,
-            sellerId: sp.sellerId,
-            sellerName: sp.sellerName,
-            rating: sp.rating || 0,
-            inStock: true, // Default to true
-            isHalalCertified: true, // Default to true
-            createdAt: new Date().toISOString(), // Use current date
-            details: {}
-          }));
-          
-          setProducts(convertedProducts);
+          setProducts(shopProducts);
         }
       }
       setIsLoading(false);
@@ -82,8 +62,8 @@ export default function ShopDetail() {
         <div 
           className="h-48 bg-cover bg-center flex items-end" 
           style={{ 
-            backgroundImage: shop.coverImage 
-              ? `url(${shop.coverImage})` 
+            backgroundImage: shop?.cover_image 
+              ? `url(${shop.cover_image})` 
               : 'linear-gradient(135deg, #2A866A, #1e5c4a)'
           }}
         >
@@ -91,18 +71,18 @@ export default function ShopDetail() {
             <div className="flex-shrink-0 mr-4">
               <div className="w-20 h-20 rounded-lg bg-white p-1 shadow-lg">
                 <img 
-                  src={shop.logo || '/placeholder.svg'} 
-                  alt={shop.name} 
+                  src={shop?.logo_url || '/placeholder.svg'} 
+                  alt={shop?.name} 
                   className="w-full h-full object-cover rounded-lg"
                 />
               </div>
             </div>
             <div>
               <h1 className="text-2xl font-serif font-bold animate-fade-in leading-tight">
-                {shop.name}
+                {shop?.name}
               </h1>
               <div className="flex items-center text-sm">
-                {shop.isVerified && (
+                {shop?.is_verified && (
                   <span className="flex items-center mr-3">
                     <Check className="h-4 w-4 mr-1 text-green-400" />
                     Verified
@@ -110,11 +90,11 @@ export default function ShopDetail() {
                 )}
                 <span className="flex items-center mr-3">
                   <Star className="h-4 w-4 mr-1 text-yellow-400" fill="currentColor" />
-                  {shop.rating?.toFixed(1)}
+                  {shop?.rating?.toFixed(1)}
                 </span>
                 <span className="flex items-center">
                   <Package className="h-4 w-4 mr-1" />
-                  {shop.productCount} Products
+                  {shop?.product_count} Products
                 </span>
               </div>
             </div>
@@ -125,27 +105,27 @@ export default function ShopDetail() {
         <div className="p-4">
           <div className="flex items-start mb-4">
             <MapPin className="h-5 w-5 text-gray-500 mr-2 mt-0.5 flex-shrink-0" />
-            <p className="text-gray-700">{shop.location}</p>
+            <p className="text-gray-700">{shop?.location}</p>
           </div>
           
           <div className="mb-4">
-            <h2 className="text-lg font-medium mb-2">About {shop.name}</h2>
-            <p className="text-gray-700">{shop.description}</p>
+            <h2 className="text-lg font-medium mb-2">About {shop?.name}</h2>
+            <p className="text-gray-700">{shop?.description}</p>
           </div>
           
           <div className="flex flex-wrap">
             <span className="px-3 py-1 bg-haluna-primary-light text-haluna-primary rounded-full text-sm mr-2 mb-2">
-              {shop.category}
+              {shop?.category}
             </span>
           </div>
         </div>
       </div>
 
       {/* Product Listing */}
-      <h2 className="text-xl font-serif font-bold mb-6">Products from {shop.name}</h2>
+      <h2 className="text-xl font-serif font-bold mb-6">Products from {shop?.name}</h2>
       
       {products.length > 0 ? (
-        <ShopProductList shopId={shop.id} products={products} />
+        <ShopProductList shopId={shopId || ''} products={products} />
       ) : (
         <div className="bg-white rounded-lg shadow-sm p-8 text-center">
           <div className="h-16 w-16 bg-haluna-primary-light rounded-full flex items-center justify-center mx-auto mb-4">

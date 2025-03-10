@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { getShops, Shop, getShopProducts, convertToModelProduct } from '@/services/shopService';
+import { getShops, Shop, getShopProducts } from '@/services/shopService';
 import { useLocation } from '@/context/LocationContext';
 import ShopCard from '@/components/shop/ShopCard';
 import ShopProductList from '@/components/shop/ShopProductList';
@@ -68,9 +68,9 @@ const NearbyShops = () => {
                 whileTap={{ scale: 0.95 }}
                 transition={{ type: "spring", stiffness: 400, damping: 10 }}
               >
-                {shop.logo ? (
+                {shop.logo_url ? (
                   <img 
-                    src={shop.logo} 
+                    src={shop.logo_url} 
                     alt={`${shop.name} logo`}
                     className="w-full h-full object-cover"
                   />

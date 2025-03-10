@@ -5,7 +5,7 @@ export interface Shop {
   description: string;
   category: string;
   location?: string;
-  logo_url?: string;
+  logo_url?: string; // Keep using logo_url for DB consistency
   owner_id: string;
   rating?: number;
   review_count?: number;
