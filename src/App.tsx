@@ -12,6 +12,7 @@ import { LocationProvider } from "@/context/LocationContext";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import AuthMiddleware from "@/components/auth/AuthMiddleware";
 import Navbar from "@/components/layout/Navbar";
+import BottomNavigation from "@/components/layout/BottomNavigation";
 import { setupDatabaseTables } from "@/services/shopService";
 
 // Pages
@@ -146,54 +147,18 @@ const AppRoutes = () => {
         {/* 404 route */}
         <Route path="*" element={<NotFound />} />
       </Routes>
+      {showNavbar && <BottomNavigation />}
     </AuthMiddleware>
   );
 };
 
-// Helper function to run database setup
-const runDatabaseSetup = async (): Promise<boolean> => {
-  try {
-    const success = await setupDatabaseTables();
-    return success;
-  } catch (error) {
-    console.error("Error setting up database:", error);
-    return false;
-  }
-};
-
 function App() {
-  const [isDatabaseReady, setIsDatabaseReady] = useState(false);
-  const [isInitializing, setIsInitializing] = useState(true);
-
+  // Run database setup in the background without blocking the UI render
   useEffect(() => {
-    // Run database setup when the app initializes
-    const initApp = async () => {
-      try {
-        const success = await runDatabaseSetup();
-        setIsDatabaseReady(success);
-      } catch (error) {
-        console.error('Database initialization error:', error);
-        // Continue with app even if DB setup fails
-        setIsDatabaseReady(true);
-      } finally {
-        setIsInitializing(false);
-      }
-    };
-    
-    initApp();
+    setupDatabaseTables().catch(error => {
+      console.error('Database initialization error:', error);
+    });
   }, []);
-
-  // Don't render anything until initialization is complete
-  if (isInitializing) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-white">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-[#2A866A] border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading application...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <QueryClientProvider client={queryClient}>

@@ -2,7 +2,6 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
-import SplashScreen from '@/components/SplashScreen';
 import BusinessOnboarding from './BusinessOnboarding';
 
 export interface AuthMiddlewareProps {
@@ -11,19 +10,9 @@ export interface AuthMiddlewareProps {
 
 const AuthMiddleware = ({ children }: AuthMiddlewareProps) => {
   const { isInitializing, isLoggedIn, user } = useAuth();
-  const [showSplash, setShowSplash] = useState(true);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    // Show splash screen for at least 1.2 seconds
-    const timer = setTimeout(() => {
-      setShowSplash(false);
-    }, 1200);
-
-    return () => clearTimeout(timer);
-  }, []);
 
   // Determine if business user needs onboarding
   useEffect(() => {
@@ -41,8 +30,9 @@ const AuthMiddleware = ({ children }: AuthMiddlewareProps) => {
     location.pathname === '/business-onboarding' || 
     location.pathname === '/dashboard/settings';
 
-  if (isInitializing || showSplash) {
-    return <SplashScreen onComplete={() => setShowSplash(false)} />;
+  // Show a minimal loader only while auth is initializing
+  if (isInitializing) {
+    return null; // Return nothing while initializing to avoid any flash
   }
 
   if (needsOnboarding && !isOnboardingOrSettings) {
