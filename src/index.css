@@ -329,7 +329,6 @@
 }
 
 /* Extend the mint color header */
-/* Changed to use direct class approach instead of @apply with black: variant */
 .mint-header {
   background-color: #E4F5F0;
   padding-bottom: 1rem;

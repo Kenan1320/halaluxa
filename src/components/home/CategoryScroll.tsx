@@ -2,31 +2,9 @@
 import { useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ShoppingCart, ShoppingBag, Home, BookOpen, Utensils, HeartPulse, Gift, Shirt, Laptop, Baby, Drumstick, Palette, Camera, Briefcase, Car, Coffee, Cog, Dumbbell, Plane, MapPin } from 'lucide-react';
+import { ShoppingBag } from 'lucide-react';
 import { useTheme } from '@/context/ThemeContext';
-
-// Ensure these categories match exactly with those in Categories.tsx
-const categories = [
-  { id: 1, name: 'Groceries', icon: ShoppingCart },
-  { id: 2, name: 'Food', icon: Utensils },
-  { id: 3, name: 'Modest Clothing', icon: Shirt },
-  { id: 4, name: 'Home', icon: Home },
-  { id: 5, name: 'Electronics', icon: Laptop },
-  { id: 6, name: 'Books', icon: BookOpen },
-  { id: 7, name: 'Health', icon: HeartPulse },
-  { id: 8, name: 'Baby', icon: Baby },
-  { id: 9, name: 'Gifts', icon: Gift },
-  { id: 10, name: 'Art', icon: Palette },
-  { id: 11, name: 'Halal Meat', icon: Drumstick },
-  { id: 12, name: 'Photography', icon: Camera },
-  { id: 13, name: 'Business', icon: Briefcase },
-  { id: 14, name: 'Automotive', icon: Car },
-  { id: 15, name: 'Cafe', icon: Coffee },
-  { id: 16, name: 'Technology', icon: Cog },
-  { id: 17, name: 'Fitness', icon: Dumbbell },
-  { id: 18, name: 'Travel', icon: Plane },
-  { id: 19, name: 'Pick Up Halal Food Nearby', icon: MapPin }
-];
+import { categories } from '@/constants/categories';
 
 const CategoryScroll = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -40,7 +18,6 @@ const CategoryScroll = () => {
     let animationId: number;
     let scrollPosition = 0;
     let isPaused = false;
-    const scrollDirection = 1; // Always scroll in one direction (left to right)
     
     const autoScroll = () => {
       if (!scrollContainer || isPaused) {
@@ -48,11 +25,13 @@ const CategoryScroll = () => {
         return;
       }
       
-      scrollPosition += 0.5 * scrollDirection;
+      // Increase scroll position (always scroll from right to left)
+      scrollPosition += 0.5;
       scrollContainer.scrollLeft = scrollPosition;
       
-      // Reset when reaching the end to create infinite loop
+      // Reset when reaching the end to create infinite loop effect
       if (scrollPosition >= scrollContainer.scrollWidth - scrollContainer.clientWidth) {
+        // Jump back to start without animation for seamless looping
         scrollPosition = 0;
       }
       
@@ -78,8 +57,8 @@ const CategoryScroll = () => {
     };
   }, []);
   
-  const handleCategoryClick = (category: string) => {
-    navigate(`/browse?category=${encodeURIComponent(category)}`);
+  const handleCategoryClick = (categoryName: string) => {
+    navigate(`/browse?category=${encodeURIComponent(categoryName)}`);
   };
   
   const getBoxShadow = () => {
@@ -122,7 +101,7 @@ const CategoryScroll = () => {
           <motion.button
             key={category.id}
             className={getCategoryButtonClasses()}
-            style={{ minWidth: '64px', height: '64px' }}
+            style={{ minWidth: '80px', height: '80px' }}
             whileHover={{ 
               scale: 1.05, 
               boxShadow: getBoxShadow()
@@ -130,14 +109,22 @@ const CategoryScroll = () => {
             whileTap={{ scale: 0.95 }}
             onClick={() => handleCategoryClick(category.name)}
           >
-            <category.icon className="h-5 w-5 text-primary mb-1" />
-            <span className="text-foreground text-xs font-medium text-center line-clamp-1">{category.name}</span>
+            <div className="h-10 w-10 mb-1 flex items-center justify-center">
+              <img 
+                src={category.iconSrc} 
+                alt={category.name}
+                className="h-8 w-8 object-contain"
+              />
+            </div>
+            <span className="text-foreground text-xs font-medium text-center line-clamp-2">
+              {category.displayName}
+            </span>
           </motion.button>
         ))}
         
         <motion.button
           className={getViewAllButtonClasses()}
-          style={{ minWidth: '64px', height: '64px' }}
+          style={{ minWidth: '80px', height: '80px' }}
           whileHover={{ 
             scale: 1.05, 
             boxShadow: getBoxShadow()
@@ -145,8 +132,8 @@ const CategoryScroll = () => {
           whileTap={{ scale: 0.95 }}
           onClick={() => navigate('/categories')}
         >
-          <ShoppingBag className="h-5 w-5 text-primary mb-1" />
-          <span className="text-foreground text-xs font-medium text-center line-clamp-1">View All</span>
+          <ShoppingBag className="h-8 w-8 text-primary mb-1" />
+          <span className="text-foreground text-xs font-medium text-center">View All</span>
         </motion.button>
       </div>
     </div>
