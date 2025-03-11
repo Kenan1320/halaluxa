@@ -1,3 +1,4 @@
+
 import { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useLocation } from '@/context/LocationContext';
@@ -7,8 +8,9 @@ import SearchBar from '@/components/home/SearchBar';
 import CategoryScroll from '@/components/home/CategoryScroll';
 import ProductGrid from '@/components/home/ProductGrid';
 import NearbyShops from '@/components/home/NearbyShops';
+import CategorySuggestions from '@/components/home/CategorySuggestions';
 import { motion, useAnimationControls } from 'framer-motion';
-import { getShopById, Shop, subscribeToShops } from '@/services/shopService';
+import { getShopById, subscribeToShops, Shop } from '@/services/shopService';
 
 const Index = () => {
   const { isLoggedIn, user } = useAuth();
@@ -121,9 +123,9 @@ const Index = () => {
   }, []);
 
   return (
-    <div className="min-h-screen pt-16 pb-20 bg-white">
+    <div className="min-h-screen pt-16 pb-20 bg-white dark:bg-gray-900">
       {/* Top container with lighter mint background */}
-      <div className="bg-[#E4F5F0] pt-2 pb-3">
+      <div className="bg-[#E4F5F0] dark:bg-gray-800 pt-2 pb-3">
         <div className="container mx-auto px-4">
           {/* Search bar */}
           <div className="mb-2">
@@ -136,7 +138,7 @@ const Index = () => {
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            <h2 className="text-xs font-medium text-[#2A866A]">
+            <h2 className="text-xs font-medium text-[#2A866A] dark:text-green-300">
               {greeting}, {isLoggedIn && user ? user.name : 'Guest'}
             </h2>
           </motion.div>
@@ -149,12 +151,12 @@ const Index = () => {
       </div>
       
       {/* Main content with white background */}
-      <div className="container mx-auto px-4 pt-3 bg-white">
+      <div className="container mx-auto px-4 pt-3 bg-white dark:bg-gray-900">
         {/* Selected/Featured Shops Section - Always visible */}
         <section className="mt-3 mb-5">
           <div className="flex justify-between items-center mb-2">
-            <h2 className="text-lg font-semibold text-gray-800">Your Shops</h2>
-            <Link to="/select-shops" className="text-xs text-[#29866B] hover:underline">
+            <h2 className="text-lg font-semibold text-gray-800 dark:text-white">Your Shops</h2>
+            <Link to="/select-shops" className="text-xs text-[#29866B] dark:text-green-300 hover:underline">
               Edit Selection
             </Link>
           </div>
@@ -300,15 +302,20 @@ const Index = () => {
           </div>
         </section>
         
+        {/* Category Suggestions - NEW SECTION */}
+        <section className="mt-4 mb-6">
+          <CategorySuggestions />
+        </section>
+        
         {/* Nearby Shops Section */}
         <section className="mt-1">
-          <h2 className="text-lg font-semibold mb-2 text-gray-800">Nearby Shops</h2>
+          <h2 className="text-lg font-semibold mb-2 text-gray-800 dark:text-white">Nearby Shops</h2>
           <NearbyShops />
         </section>
         
         {/* Featured Products Section */}
         <section className="mt-4">
-          <h2 className="text-lg font-semibold mb-2 text-gray-800">Featured Products</h2>
+          <h2 className="text-lg font-semibold mb-2 text-gray-800 dark:text-white">Featured Products</h2>
           <ProductGrid />
         </section>
       </div>

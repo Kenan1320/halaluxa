@@ -1,5 +1,5 @@
 
-import { Product } from './product';
+import { Product } from '@/models/product';
 
 export interface ShopCategory {
   id: string;
@@ -15,8 +15,14 @@ export interface DeliveryInfo {
   minOrder?: number;
 }
 
-export interface ShopDetails extends Shop {
+export interface ShopDetails {
+  id: string;
+  name: string;
+  description: string;
+  location: string;
   categories: ShopCategory[];
+  coverImage?: string;
+  logo?: string;
   deliveryInfo: DeliveryInfo;
   workingHours: {
     open: string;

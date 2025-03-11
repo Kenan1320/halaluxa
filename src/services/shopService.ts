@@ -1,6 +1,11 @@
 import { supabase } from '@/integrations/supabase/client';
-import { Shop, ShopProduct } from '@/models/shop';
 import { Product } from '@/models/product';
+import { Shop as ShopModel } from '@/models/shop';
+import { Shop } from '@/types/database';
+import { ShopProduct } from '@/models/shop';
+
+// Export the Shop type from database.ts
+export type { Shop };
 
 // Mapping database fields to model fields
 export const mapDbShopToModel = (dbShop: any): Shop => {
@@ -412,8 +417,8 @@ export async function getShopProducts(shopId: string): Promise<ShopProduct[]> {
       price: product.price,
       category: product.category,
       images: product.images || [],
-      sellerId: product.seller_id,
-      sellerName: product.seller_name,
+      sellerId: product.seller_id || shopId, // Fallback to shopId if seller_id is missing
+      sellerName: product.seller_name || '',  // Provide default if seller_name is missing
       rating: product.rating || 0
     }));
   } catch (error) {

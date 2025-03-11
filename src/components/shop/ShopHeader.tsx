@@ -1,11 +1,12 @@
 
 import { useState } from 'react';
-import { ArrowLeft, Heart, Search, MoreHorizontal, Clock, Users } from 'lucide-react';
+import { ArrowLeft, Heart, Search, MoreHorizontal, Clock, Users, Menu } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ShopDetails } from '@/types/shop';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Toggle } from '@/components/ui/toggle';
+import { motion } from 'framer-motion';
 
 interface ShopHeaderProps {
   shop: ShopDetails;
@@ -14,6 +15,7 @@ interface ShopHeaderProps {
 export function ShopHeader({ shop }: ShopHeaderProps) {
   const navigate = useNavigate();
   const [deliveryMode, setDeliveryMode] = useState<'delivery' | 'pickup'>('delivery');
+  const [menuOpen, setMenuOpen] = useState(false);
 
   return (
     <div className="sticky top-0 z-50 bg-background">
@@ -38,24 +40,31 @@ export function ShopHeader({ shop }: ShopHeaderProps) {
             <button className="text-white">
               <Heart className="h-6 w-6" />
             </button>
-            <button className="text-white">
+            <button className="text-white" onClick={() => setMenuOpen(!menuOpen)}>
               <MoreHorizontal className="h-6 w-6" />
             </button>
           </div>
         </div>
 
-        {/* Shop Logo & Info */}
-        <div className="absolute bottom-4 left-4 flex items-center gap-4">
-          <div className="w-16 h-16 rounded-full bg-white p-1">
+        {/* Menu Button for Category Navigation */}
+        <div className="absolute left-4 top-1/2 transform -translate-y-1/2">
+          <Button variant="outline" size="icon" className="rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/20" onClick={() => {}}>
+            <Menu className="h-5 w-5 text-white" />
+          </Button>
+        </div>
+
+        {/* Shop Logo & Info - Centered */}
+        <div className="absolute bottom-0 inset-x-0 flex flex-col items-center mb-4">
+          <div className="w-20 h-20 rounded-full bg-white p-1 mb-2">
             <img 
               src={shop.logo || '/placeholder.svg'} 
               alt={shop.name} 
               className="w-full h-full object-cover rounded-full"
             />
           </div>
-          <div className="text-white">
+          <div className="text-white text-center">
             <h1 className="text-2xl font-bold">{shop.name}</h1>
-            <div className="flex items-center gap-2 text-sm">
+            <div className="flex items-center justify-center gap-2 text-sm">
               <span>⭐ {shop.rating.average}</span>
               <span>•</span>
               <span>({shop.rating.count}+ ratings)</span>
@@ -114,7 +123,44 @@ export function ShopHeader({ shop }: ShopHeaderProps) {
             <p className="text-sm text-muted-foreground">Earliest arrival</p>
           </div>
         </div>
+        
+        {/* Shop-specific search */}
+        <div className="mt-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <input 
+              type="text" 
+              placeholder={`Search ${shop.name}`}
+              className="w-full h-12 pl-10 pr-4 rounded-full bg-secondary text-foreground placeholder:text-gray-400"
+            />
+          </div>
+        </div>
       </div>
+      
+      {/* More options menu (conditionally rendered) */}
+      {menuOpen && (
+        <motion.div 
+          className="absolute right-0 top-16 bg-card shadow-lg rounded-lg overflow-hidden z-50 w-64"
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.2 }}
+        >
+          <ul className="py-2">
+            <li className="px-4 py-3 flex items-center gap-3 hover:bg-secondary/50 cursor-pointer transition-colors">
+              <Users className="h-5 w-5 text-primary" />
+              <span>Start group order</span>
+            </li>
+            <li className="px-4 py-3 flex items-center gap-3 hover:bg-secondary/50 cursor-pointer transition-colors">
+              <Heart className="h-5 w-5 text-primary" />
+              <span>Add to favorites</span>
+            </li>
+            <li className="px-4 py-3 flex items-center gap-3 hover:bg-secondary/50 cursor-pointer transition-colors border-t">
+              <span className="h-5 w-5 flex items-center justify-center text-primary">ℹ️</span>
+              <span>Shop info</span>
+            </li>
+          </ul>
+        </motion.div>
+      )}
     </div>
   );
 }
