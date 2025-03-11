@@ -28,6 +28,7 @@ const ShopDetail = () => {
   const [isFavorite, setIsFavorite] = useState(false);
   
   const mapRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
     const fetchShopDetails = async () => {
@@ -96,6 +97,19 @@ const ShopDetail = () => {
         description: "Shop link copied to clipboard",
       });
     }
+  };
+  
+  const renderProductCard = (product: ShopProduct) => {
+    const productWithMissingProps = {
+      ...product,
+      inStock: true,
+      isHalalCertified: product.is_halal_certified || false,
+      createdAt: product.created_at
+    };
+    
+    return (
+      <ProductCard key={product.id} product={productWithMissingProps} />
+    );
   };
   
   if (loading) {
@@ -242,25 +256,7 @@ const ShopDetail = () => {
         <TabsContent value="products">
           {products.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {products.map((product) => (
-                <motion.div
-                  key={product.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <ProductCard 
-                    product={product}
-                    onAddToCart={() => {
-                      addToCart(product, 1);
-                      toast({
-                        title: "Added to cart",
-                        description: `${product.name} has been added to your cart`,
-                      });
-                    }}
-                  />
-                </motion.div>
-              ))}
+              {products.map(renderProductCard)}
             </div>
           ) : (
             <div className="text-center py-12">

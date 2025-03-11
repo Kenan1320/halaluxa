@@ -2,11 +2,12 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Home, Star, ShoppingBag, Store, MapPin, Check } from 'lucide-react';
+import { CheckCircle, MapPin, Star, Store } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/AuthContext';
 import { useLocation as useLocationContext } from '@/context/LocationContext';
+import { useTheme } from '@/context/ThemeContext';
 import { Shop, getAllShops } from '@/services/shopService';
 
 const SelectShops = () => {
@@ -20,6 +21,7 @@ const SelectShops = () => {
   const navigate = useNavigate();
   const { isLoggedIn } = useAuth();
   const { isLocationEnabled, location, getNearbyShops } = useLocationContext();
+  const { mode } = useTheme();
   
   // Load shops on component mount
   useEffect(() => {
@@ -128,13 +130,13 @@ const SelectShops = () => {
   
   if (isLoading) {
     return (
-      <div className="min-h-screen pt-24 pb-20 bg-white">
+      <div className={`min-h-screen pt-24 pb-20 ${mode === 'dark' ? 'bg-black' : 'bg-white'}`}>
         <div className="container mx-auto px-4">
           <div className="flex flex-col items-center justify-center py-10">
-            <h1 className="text-2xl font-bold mb-8">Loading shops...</h1>
+            <h1 className={`text-2xl font-bold mb-8 ${mode === 'dark' ? 'text-white' : 'text-black'}`}>Loading shops...</h1>
             <div className="flex flex-wrap gap-4 justify-center">
               {[1, 2, 3, 4, 5, 6].map((i) => (
-                <div key={i} className="w-24 h-24 bg-gray-100 rounded-md animate-pulse" />
+                <div key={i} className={`w-24 h-24 rounded-md animate-pulse ${mode === 'dark' ? 'bg-gray-800' : 'bg-gray-100'}`} />
               ))}
             </div>
           </div>
@@ -144,24 +146,24 @@ const SelectShops = () => {
   }
   
   return (
-    <div className="min-h-screen pt-24 pb-20 bg-white">
+    <div className={`min-h-screen pt-24 pb-20 ${mode === 'dark' ? 'bg-black' : 'bg-white'}`}>
       <div className="container mx-auto px-4">
         <div className="max-w-4xl mx-auto">
           <header className="mb-8 text-center">
-            <h1 className="text-2xl font-serif font-bold mb-2">Select Your Shops</h1>
-            <p className="text-gray-600 max-w-md mx-auto text-sm">
+            <h1 className={`text-2xl font-serif font-bold mb-2 ${mode === 'dark' ? 'text-white' : 'text-black'}`}>Select Your Shops</h1>
+            <p className={`max-w-md mx-auto text-sm ${mode === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
               Choose the shops you want to follow. These will appear on your home screen for quick access.
             </p>
           </header>
           
-          <div className="bg-[#E4F5F0]/40 rounded-lg p-4 mb-8">
+          <div className={`rounded-lg p-4 mb-8 ${mode === 'dark' ? 'bg-gray-900' : 'bg-gray-100'}`}>
             <div className="flex items-center gap-3 mb-3">
-              <Store className="w-5 h-5 text-[#29866B]" />
-              <h2 className="font-medium">Your Main Shop</h2>
+              <Store className={`w-5 h-5 ${mode === 'dark' ? 'text-white' : 'text-black'}`} />
+              <h2 className={`font-medium ${mode === 'dark' ? 'text-white' : 'text-black'}`}>Your Main Shop</h2>
             </div>
             
             {mainShopId ? (
-              <div className="flex items-center bg-white rounded-lg p-3 shadow-sm">
+              <div className={`flex items-center rounded-lg p-3 shadow-sm ${mode === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
                 {shops.find(s => s.id === mainShopId)?.logo ? (
                   <img 
                     src={shops.find(s => s.id === mainShopId)?.logo} 
@@ -169,18 +171,18 @@ const SelectShops = () => {
                     className="w-10 h-10 object-cover rounded-full mr-3"
                   />
                 ) : (
-                  <div className="w-10 h-10 rounded-full bg-[#29866B] flex items-center justify-center text-white mr-3">
+                  <div className={`w-10 h-10 rounded-full ${mode === 'dark' ? 'bg-gray-700' : 'bg-gray-200'} flex items-center justify-center ${mode === 'dark' ? 'text-white' : 'text-black'} mr-3`}>
                     {shops.find(s => s.id === mainShopId)?.name.charAt(0) || 'S'}
                   </div>
                 )}
                 <div>
-                  <h3 className="font-medium">{shops.find(s => s.id === mainShopId)?.name}</h3>
-                  <p className="text-xs text-gray-500">{shops.find(s => s.id === mainShopId)?.location || 'Location not specified'}</p>
+                  <h3 className={`font-medium ${mode === 'dark' ? 'text-white' : 'text-black'}`}>{shops.find(s => s.id === mainShopId)?.name}</h3>
+                  <p className={`text-xs ${mode === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>{shops.find(s => s.id === mainShopId)?.location || 'Location not specified'}</p>
                 </div>
               </div>
             ) : (
-              <div className="bg-white rounded-lg p-4 text-center">
-                <p className="text-gray-500 text-sm">No main shop selected. Select one from the list below.</p>
+              <div className={`rounded-lg p-4 text-center ${mode === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
+                <p className={`text-sm ${mode === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>No main shop selected. Select one from the list below.</p>
               </div>
             )}
           </div>
@@ -189,8 +191,8 @@ const SelectShops = () => {
           {Object.entries(locations).map(([location, locationShops]) => (
             <div key={location} className="mb-8">
               <div className="flex items-center gap-2 mb-3">
-                <MapPin className="w-4 h-4 text-[#29866B]" />
-                <h2 className="text-lg font-medium">{location}</h2>
+                <MapPin className={`w-4 h-4 ${mode === 'dark' ? 'text-white' : 'text-black'}`} />
+                <h2 className={`text-lg font-medium ${mode === 'dark' ? 'text-white' : 'text-black'}`}>{location}</h2>
               </div>
               
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
@@ -199,8 +201,8 @@ const SelectShops = () => {
                     key={shop.id}
                     className={`relative border rounded-lg p-4 cursor-pointer transition-all ${
                       selectedShops.includes(shop.id) 
-                        ? 'border-[#29866B] bg-[#E4F5F0]/20' 
-                        : 'border-gray-200 hover:border-gray-300'
+                        ? `${mode === 'dark' ? 'border-white bg-gray-800' : 'border-black bg-gray-100'}` 
+                        : `${mode === 'dark' ? 'border-gray-700 hover:border-gray-500' : 'border-gray-200 hover:border-gray-300'}`
                     }`}
                     onClick={() => toggleShopSelection(shop.id)}
                     whileHover={{ scale: 1.02 }}
@@ -208,8 +210,8 @@ const SelectShops = () => {
                   >
                     {/* Selection indicator */}
                     {selectedShops.includes(shop.id) && (
-                      <div className="absolute top-2 right-2 w-5 h-5 bg-[#29866B] rounded-full flex items-center justify-center">
-                        <Check className="w-3 h-3 text-white" />
+                      <div className={`absolute top-2 right-2 w-5 h-5 ${mode === 'dark' ? 'text-white' : 'text-black'}`}>
+                        <CheckCircle className="w-full h-full" />
                       </div>
                     )}
                     
@@ -217,7 +219,7 @@ const SelectShops = () => {
                     {mainShopId === shop.id && (
                       <div className="absolute top-2 left-2">
                         <motion.div 
-                          className="w-5 h-5 bg-[#E4875E] rounded-full flex items-center justify-center"
+                          className="w-5 h-5 text-yellow-400"
                           animate={{
                             scale: [1, 1.2, 1],
                           }}
@@ -226,7 +228,7 @@ const SelectShops = () => {
                             repeat: Infinity,
                           }}
                         >
-                          <Star className="w-3 h-3 text-white" />
+                          <Star className="w-full h-full fill-current" />
                         </motion.div>
                       </div>
                     )}
@@ -240,16 +242,20 @@ const SelectShops = () => {
                           className="w-16 h-16 object-cover rounded-full mb-3"
                         />
                       ) : (
-                        <div className="w-16 h-16 rounded-full bg-[#F9F5EB] flex items-center justify-center text-[#29866B] mb-3">
+                        <div className={`w-16 h-16 rounded-full ${mode === 'dark' ? 'bg-gray-700' : 'bg-gray-200'} flex items-center justify-center ${mode === 'dark' ? 'text-white' : 'text-black'} mb-3`}>
                           <span className="text-lg font-bold">{shop.name.charAt(0)}</span>
                         </div>
                       )}
                       
-                      <h3 className="font-medium text-center text-sm">{shop.name}</h3>
+                      <h3 className={`font-medium text-center text-sm ${mode === 'dark' ? 'text-white' : 'text-black'}`}>{shop.name}</h3>
                       
                       {selectedShops.includes(shop.id) && mainShopId !== shop.id && (
                         <button 
-                          className="mt-3 text-xs px-3 py-1 bg-white border border-[#29866B] text-[#29866B] rounded-full hover:bg-[#29866B] hover:text-white transition-colors"
+                          className={`mt-3 text-xs px-3 py-1 rounded-full transition-colors ${
+                            mode === 'dark' 
+                              ? 'bg-white text-black hover:bg-gray-200' 
+                              : 'bg-black text-white hover:bg-gray-800'
+                          }`}
                           onClick={(e) => {
                             e.stopPropagation();
                             setAsMainShop(shop.id);
@@ -269,13 +275,18 @@ const SelectShops = () => {
             <Button 
               variant="outline" 
               onClick={() => navigate('/')}
+              className={mode === 'dark' ? 'border-white text-white hover:bg-gray-800' : 'border-black text-black hover:bg-gray-100'}
             >
               Cancel
             </Button>
             <Button 
               onClick={saveSelections}
               disabled={selectedShops.length === 0}
-              className="bg-[#29866B] hover:bg-[#1e5c4a]"
+              className={`${
+                mode === 'dark' 
+                  ? 'bg-white text-black hover:bg-gray-200' 
+                  : 'bg-black text-white hover:bg-gray-800'
+              }`}
             >
               Save Preferences
             </Button>

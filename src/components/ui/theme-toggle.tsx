@@ -19,15 +19,17 @@ export function ThemeToggle({ className }: ThemeToggleProps) {
       onClick={toggleMode}
       className={cn(
         "rounded-full w-9 h-9 transition-colors",
-        mode === 'dark' ? 'bg-sidebar/50 hover:bg-sidebar/80' : 'hover:bg-primary/10',
+        mode === 'dark' 
+          ? 'bg-gray-800 hover:bg-gray-700' 
+          : 'bg-gray-100 hover:bg-gray-200',
         className
       )}
       aria-label="Toggle theme"
     >
       {mode === 'dark' ? (
-        <Sun className="h-5 w-5 text-yellow-400" />
+        <Sun className="h-5 w-5 text-white" />
       ) : (
-        <Moon className="h-5 w-5 text-primary" />
+        <Moon className="h-5 w-5 text-gray-800" />
       )}
     </Button>
   );

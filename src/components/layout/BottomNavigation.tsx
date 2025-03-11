@@ -1,13 +1,15 @@
 
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Store, Search, ShoppingCart, User } from 'lucide-react';
+import { LayoutDashboard, Store, Search, ShoppingBag, UserCircle2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
+import { useTheme } from '@/context/ThemeContext';
 
 const BottomNavigation = () => {
   const location = useLocation();
+  const { mode } = useTheme();
   const { isLoggedIn, user } = useAuth();
   const { cart } = useCart();
   const [isVisible, setIsVisible] = useState(true);
@@ -31,11 +33,11 @@ const BottomNavigation = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [lastScrollY]);
 
-  // Define navigation items
+  // Define navigation items with more modern icons
   const navItems = [
     {
       label: 'Home',
-      icon: <Home className="h-6 w-6" />,
+      icon: <LayoutDashboard className="h-6 w-6" />,
       path: '/',
       match: ['/']
     },
@@ -53,7 +55,7 @@ const BottomNavigation = () => {
     },
     {
       label: 'Cart',
-      icon: <ShoppingCart className="h-6 w-6" />,
+      icon: <ShoppingBag className="h-6 w-6" />,
       path: isLoggedIn && user?.role !== 'business' ? '/cart' : '/login',
       match: ['/cart', '/checkout', '/orders', '/order-confirmation'],
       badge: cart.items.length > 0 ? cart.items.length : undefined,
@@ -61,7 +63,7 @@ const BottomNavigation = () => {
     },
     {
       label: 'Account',
-      icon: <User className="h-6 w-6" />,
+      icon: <UserCircle2 className="h-6 w-6" />,
       path: isLoggedIn ? '/profile' : '/login',
       match: ['/profile', '/login', '/signup']
     }
@@ -87,8 +89,12 @@ const BottomNavigation = () => {
           transition={{ duration: 0.3 }}
         >
           <div 
-            className="flex justify-around items-center h-16 bg-white/90 backdrop-blur-md border-t border-gray-100 shadow-[0_-2px_10px_rgba(0,0,0,0.05)]"
-            style={{ borderTopLeftRadius: '24px', borderTopRightRadius: '24px' }}
+            className={`flex justify-around items-center h-16 ${
+              mode === 'dark' 
+                ? 'bg-gray-900/90 backdrop-blur-md border-t border-gray-800' 
+                : 'bg-white/90 backdrop-blur-md border-t border-gray-100'
+            } shadow-[0_-2px_10px_rgba(0,0,0,0.05)]`}
+            style={{ borderTopLeftRadius: '16px', borderTopRightRadius: '16px' }}
           >
             {filteredNavItems.map((item) => {
               const active = isActive(item);
@@ -105,7 +111,10 @@ const BottomNavigation = () => {
                     transition={{ duration: 0.2 }}
                   >
                     <div className="relative">
-                      <div className={active ? 'text-orange-400' : 'text-gray-400'}>
+                      <div className={active 
+                        ? (mode === 'dark' ? 'text-white' : 'text-black')
+                        : (mode === 'dark' ? 'text-gray-500' : 'text-gray-400')
+                      }>
                         {item.icon}
                       </div>
                       
@@ -113,21 +122,27 @@ const BottomNavigation = () => {
                         <motion.span 
                           initial={{ scale: 0 }}
                           animate={{ scale: 1 }}
-                          className="absolute -top-1.5 -right-1.5 flex items-center justify-center w-5 h-5 bg-orange-400 text-white text-[10px] rounded-full"
+                          className="absolute -top-1.5 -right-1.5 flex items-center justify-center w-5 h-5 bg-black dark:bg-white text-white dark:text-black text-[10px] rounded-full"
                         >
                           {item.badge > 9 ? '9+' : item.badge}
                         </motion.span>
                       )}
                     </div>
                     
-                    <span className={`mt-1 text-[10px] ${active ? 'text-orange-400 font-medium' : 'text-gray-500'}`}>
+                    <span className={`mt-1 text-[10px] ${
+                      active 
+                        ? (mode === 'dark' ? 'text-white font-medium' : 'text-black font-medium')
+                        : (mode === 'dark' ? 'text-gray-500' : 'text-gray-500')
+                    }`}>
                       {item.label}
                     </span>
                     
                     {active && (
                       <motion.div
                         layoutId="bottomNavIndicator"
-                        className="absolute bottom-0 w-10 h-1 rounded-full bg-orange-400"
+                        className={`absolute bottom-0 w-10 h-1 rounded-full ${
+                          mode === 'dark' ? 'bg-white' : 'bg-black'
+                        }`}
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}

@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { CartItem } from '@/models/cart';
 import { Product } from '@/models/product';
@@ -176,7 +175,7 @@ export const getSellerAccount = async (): Promise<SellerAccount | null> => {
 };
 
 // Get all seller accounts for current user
-export const getSellerAccounts = async (): Promise<SellerAccount[]> => {
+export const getAllSellerAccounts = async (): Promise<SellerAccount[]> => {
   try {
     const { data: user } = await supabase.auth.getUser();
     
@@ -274,5 +273,60 @@ export const formatPaymentMethod = (account: SellerAccount): string => {
       return 'Apple Pay';
     default:
       return `${account.bank_name} - ${account.account_number}`;
+  }
+};
+
+// Initialize seller account
+export const initializeSellerAccount = async (
+  sellerId: string,
+  accountName: string,
+  accountNumber: string,
+  bankName: string,
+  accountType: string,
+  paypalEmail: string,
+  stripeAccountId: string,
+  applePayMerchantId: string
+): Promise<SellerAccount | null> => {
+  try {
+    // Use the mocked service function instead of direct database access
+    const sellerAccount = await createSellerAccount({
+      userId: sellerId,
+      accountName,
+      accountNumber,
+      bankName,
+      accountType,
+      paypalEmail,
+      stripeAccountId,
+      applePayMerchantId
+    });
+
+    return sellerAccount;
+  } catch (error) {
+    console.error('Error initializing seller account:', error);
+    return null;
+  }
+};
+
+// Get seller account details
+export const getSellerAccountDetails = async (userId: string): Promise<SellerAccount | null> => {
+  try {
+    // Use the mocked service function
+    const sellerAccount = await getSellerAccount(userId);
+    return sellerAccount;
+  } catch (error) {
+    console.error('Error getting seller account details:', error);
+    return null;
+  }
+};
+
+// Get all seller account details
+export const getAllSellerAccountDetails = async (): Promise<SellerAccount[]> => {
+  try {
+    // Use the mocked service function
+    const accounts = await getAllSellerAccounts();
+    return accounts;
+  } catch (error) {
+    console.error('Error getting all seller accounts:', error);
+    return [];
   }
 };

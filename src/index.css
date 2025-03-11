@@ -7,83 +7,83 @@
 
 @layer base {
   :root {
-    --background: 60 33% 98%;
-    --foreground: 20 14.3% 4.1%;
+    --background: 0 0% 100%;
+    --foreground: 0 0% 0%;
 
     --card: 0 0% 100%;
-    --card-foreground: 20 14.3% 4.1%;
+    --card-foreground: 0 0% 0%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 20 14.3% 4.1%;
+    --popover-foreground: 0 0% 0%;
 
-    --primary: 142 53% 35%;
-    --primary-foreground: 60 9.1% 97.8%;
+    --primary: 0 0% 0%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 60 33% 96%;
-    --secondary-foreground: 24 9.8% 10%;
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 0%;
 
-    --muted: 60 4.8% 95.9%;
-    --muted-foreground: 25 5.3% 44.7%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 45%;
 
-    --accent: 20 83.7% 85.7%;
-    --accent-foreground: 24 9.8% 10%;
+    --accent: 0 0% 96%;
+    --accent-foreground: 0 0% 0%;
 
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 60 9.1% 97.8%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 20 5.9% 90%;
-    --input: 20 5.9% 90%;
-    --ring: 142 53% 35%;
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
+    --ring: 0 0% 0%;
 
     --radius: 0.5rem;
 
     --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 142 53% 35%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 60 33% 96%;
-    --sidebar-accent-foreground: 24 9.8% 10%;
-    --sidebar-border: 20 5.9% 90%;
-    --sidebar-ring: 142 53% 35%;
+    --sidebar-foreground: 0 0% 26.1%;
+    --sidebar-primary: 0 0% 0%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 96%;
+    --sidebar-accent-foreground: 0 0% 0%;
+    --sidebar-border: 0 0% 90%;
+    --sidebar-ring: 0 0% 0%;
   }
 
   .dark {
-    --background: 200 13% 12%;
+    --background: 0 0% 10%;
     --foreground: 0 0% 95%;
 
-    --card: 200 13% 10%;
+    --card: 0 0% 7%;
     --card-foreground: 0 0% 95%;
 
-    --popover: 200 13% 10%;
+    --popover: 0 0% 7%;
     --popover-foreground: 0 0% 95%;
 
-    --primary: 142 53% 35%;
-    --primary-foreground: 0 0% 98%;
+    --primary: 0 0% 100%;
+    --primary-foreground: 0 0% 0%;
 
-    --secondary: 200 13% 15%;
+    --secondary: 0 0% 15%;
     --secondary-foreground: 0 0% 98%;
 
-    --muted: 200 13% 15%;
-    --muted-foreground: 240 5% 64.9%;
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 65%;
 
-    --accent: 222 5.9% 20%;
+    --accent: 0 0% 20%;
     --accent-foreground: 0 0% 98%;
 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 142 53% 38%;
+    --border: 0 0% 15.9%;
+    --input: 0 0% 15.9%;
+    --ring: 0 0% 100%;
     
-    --sidebar-background: 200 13% 8%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 142 53% 35%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 142 53% 35%;
+    --sidebar-background: 0 0% 8%;
+    --sidebar-foreground: 0 0% 95.9%;
+    --sidebar-primary: 0 0% 100%;
+    --sidebar-primary-foreground: 0 0% 0%;
+    --sidebar-accent: 0 0% 15.9%;
+    --sidebar-accent-foreground: 0 0% 95.9%;
+    --sidebar-border: 0 0% 15.9%;
+    --sidebar-ring: 0 0% 100%;
   }
 }
 
@@ -144,7 +144,7 @@
 
 /* Dark mode styling */
 .dark .dark-card {
-  @apply bg-[#1C2526] border border-gray-800;
+  @apply bg-[#121212] border border-gray-800;
 }
 
 .dark .dark-button {
@@ -169,4 +169,32 @@
 
 .dark .dark-divider {
   @apply border-gray-700;
+}
+
+/* Uber-inspired animations */
+.menu-fade-in {
+  animation: menuFadeIn 0.3s ease forwards;
+}
+
+@keyframes menuFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.uber-card {
+  @apply rounded-xl bg-white dark:bg-gray-800 shadow-sm hover:shadow-md transition-all duration-300;
+}
+
+.uber-button {
+  @apply rounded-full bg-black dark:bg-white text-white dark:text-black font-medium px-4 py-2 transition-all hover:opacity-90 active:scale-95;
+}
+
+.uber-input {
+  @apply rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2 focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent;
 }

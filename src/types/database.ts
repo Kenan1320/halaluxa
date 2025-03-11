@@ -1,19 +1,18 @@
-
 import { Json } from '@/integrations/supabase/types';
 
 export interface Profile {
-  id: string;
-  email: string;
-  name: string;
-  avatar_url: string;
   address: string;
+  avatar_url: string;
   city: string;
-  state: string;
-  zip: string;
+  created_at: string;
+  email: string;
+  id: string;
+  name: string;
   phone: string;
   role: string;
-  created_at: string;
+  state: string;
   updated_at: string;
+  zip: string;
   shop_name?: string;
   shop_description?: string;
   shop_category?: string;
@@ -41,14 +40,14 @@ export interface Shop {
 export interface SellerAccount {
   id: string;
   user_id: string;
-  shop_id: string;
+  shop_id?: string;
   account_type: string;
-  account_name: string;
-  account_number: string;
-  bank_name: string;
-  paypal_email: string;
-  stripe_account_id: string;
-  applepay_merchant_id: string;
+  account_name?: string;
+  account_number?: string;
+  bank_name?: string;
+  paypal_email?: string;
+  stripe_account_id?: string;
+  applepay_merchant_id?: string;
   is_active: boolean;
   created_at: string;
   updated_at: string;

@@ -1,47 +1,85 @@
 
+import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ShoppingBag, ShoppingCart, Utensils, Bookmark } from 'lucide-react';
+import { ShoppingBag, ShoppingCart, Utensils, BookOpen, Shirt, GraduationCap } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useTheme } from '@/context/ThemeContext';
 
-const categories = [
+const localCategories = [
   {
     id: 'groceries',
-    name: 'Groceries Near You',
+    name: 'Groceries',
     icon: <ShoppingCart className="h-6 w-6" />,
     link: '/browse?category=groceries',
-    color: 'bg-green-500'
   },
+  {
+    id: 'restaurants',
+    name: 'Restaurants',
+    icon: <Utensils className="h-6 w-6" />,
+    link: '/browse?category=restaurants',
+  },
+  {
+    id: 'halal-items',
+    name: 'Halal Items',
+    icon: <ShoppingBag className="h-6 w-6" />,
+    link: '/browse?category=halal-essentials',
+  }
+];
+
+const onlineCategories = [
   {
     id: 'online-shops',
     name: 'Online Shops',
     icon: <ShoppingBag className="h-6 w-6" />,
     link: '/browse?category=online',
-    color: 'bg-blue-500'
   },
   {
-    id: 'restaurants',
-    name: 'Restaurants Near You',
-    icon: <Utensils className="h-6 w-6" />,
-    link: '/browse?category=restaurants',
-    color: 'bg-red-500'
+    id: 'clothing',
+    name: 'Clothing',
+    icon: <Shirt className="h-6 w-6" />,
+    link: '/browse?category=clothing',
   },
   {
-    id: 'essentials',
-    name: 'Halal Essentials',
-    icon: <Bookmark className="h-6 w-6" />,
-    link: '/browse?category=essentials',
-    color: 'bg-amber-500'
+    id: 'learning',
+    name: 'Learning',
+    icon: <GraduationCap className="h-6 w-6" />,
+    link: '/browse?category=learning',
   }
 ];
 
 export default function CategorySuggestions() {
   const { mode } = useTheme();
+  const [activeTab, setActiveTab] = useState<'nearby' | 'online'>('nearby');
+  const categories = activeTab === 'nearby' ? localCategories : onlineCategories;
 
   return (
     <div className="py-4">
-      <h2 className="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-100">Shop By Category</h2>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="flex justify-between items-center mb-4">
+        <div className="inline-flex rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+          <button
+            className={`px-4 py-2 text-sm font-medium ${
+              activeTab === 'nearby'
+                ? 'bg-black text-white dark:bg-white dark:text-black'
+                : 'bg-white text-gray-800 dark:bg-gray-800 dark:text-gray-200'
+            }`}
+            onClick={() => setActiveTab('nearby')}
+          >
+            Shop Nearby
+          </button>
+          <button
+            className={`px-4 py-2 text-sm font-medium ${
+              activeTab === 'online'
+                ? 'bg-black text-white dark:bg-white dark:text-black'
+                : 'bg-white text-gray-800 dark:bg-gray-800 dark:text-gray-200'
+            }`}
+            onClick={() => setActiveTab('online')}
+          >
+            Shop Online
+          </button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-3 gap-4">
         {categories.map((category, index) => (
           <motion.div
             key={category.id}
@@ -55,13 +93,19 @@ export default function CategorySuggestions() {
               to={category.link}
               className={`flex flex-col items-center gap-2 p-4 rounded-xl transition-all duration-300
                 ${mode === 'dark' 
-                  ? 'bg-gray-800 hover:bg-gray-700 shadow-[0_4px_12px_rgba(0,0,0,0.3)]' 
+                  ? 'bg-gray-800 hover:bg-gray-700 shadow-lg' 
                   : 'bg-white hover:shadow-md shadow-sm'}`}
             >
-              <div className={`w-12 h-12 rounded-full ${category.color} text-white flex items-center justify-center`}>
+              <div className={`w-12 h-12 rounded-full ${
+                mode === 'dark' ? 'bg-gray-700' : 'bg-gray-100'
+              } flex items-center justify-center ${
+                mode === 'dark' ? 'text-white' : 'text-black'
+              }`}>
                 {category.icon}
               </div>
-              <span className={`text-sm font-medium text-center ${mode === 'dark' ? 'text-white' : 'text-gray-800'}`}>
+              <span className={`text-sm font-medium text-center ${
+                mode === 'dark' ? 'text-white' : 'text-black'
+              }`}>
                 {category.name}
               </span>
             </Link>
