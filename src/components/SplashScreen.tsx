@@ -42,7 +42,7 @@ const SplashScreen = ({ onFinish }: { onFinish: () => void }) => {
           transition={{ duration: 0.3 }}
         >
           <div className="flex flex-col items-center">
-            {/* Logo with digital mall icon and Halvi text */}
+            {/* Logo with digital village icon and Halvi text */}
             <motion.div 
               className="flex flex-col items-center mb-6"
               initial={{ opacity: 0, y: 20 }}
@@ -62,11 +62,26 @@ const SplashScreen = ({ onFinish }: { onFinish: () => void }) => {
                     repeatType: "mirror"
                   }}
                 />
-                <img 
-                  src="/logo-digital-mall.svg" 
-                  alt="Halvi Digital Mall" 
-                  className="w-20 h-20 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" 
-                />
+                <motion.div
+                  className="w-20 h-20 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                >
+                  <svg viewBox="0 0 200 200" fill="none" className="w-full h-full">
+                    <circle cx="100" cy="100" r="90" stroke="#2A866A" strokeWidth="4" fill="none" />
+                    <path d="M100 20 L100 50" stroke="#2A866A" strokeWidth="4" />
+                    <path d="M100 150 L100 180" stroke="#2A866A" strokeWidth="4" />
+                    <path d="M20 100 L50 100" stroke="#2A866A" strokeWidth="4" />
+                    <path d="M150 100 L180 100" stroke="#2A866A" strokeWidth="4" />
+                    <circle cx="100" cy="100" r="40" fill="#2A866A" />
+                    <rect x="80" y="80" width="40" height="40" fill="#2A866A" />
+                    <path d="M70 100 L130 100" stroke="white" strokeWidth="2" />
+                    <path d="M100 70 L100 130" stroke="white" strokeWidth="2" />
+                    <circle cx="85" cy="85" r="5" fill="white" />
+                    <circle cx="115" cy="85" r="5" fill="white" />
+                    <path d="M85 115 Q100 125 115 115" stroke="white" strokeWidth="2" fill="none" />
+                  </svg>
+                </motion.div>
               </div>
               <h1 className="text-6xl font-giaza font-bold text-[#2A866A] dark:text-[#4ECBA5] tracking-wide">
                 Halvi

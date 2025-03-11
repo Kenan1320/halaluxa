@@ -2,9 +2,10 @@
 import { useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ShoppingCart, ShoppingBag, Home, BookOpen, Utensils, HeartPulse, Gift, Shirt, Laptop, Baby, Drumstick, Palette, Camera, Briefcase, Car, Coffee } from 'lucide-react';
+import { ShoppingCart, ShoppingBag, Home, BookOpen, Utensils, HeartPulse, Gift, Shirt, Laptop, Baby, Drumstick, Palette, Camera, Briefcase, Car, Coffee, Cog, Dumbbell, Plane, MapPin } from 'lucide-react';
 import { useTheme } from '@/context/ThemeContext';
 
+// Ensure these categories match exactly with those in Categories.tsx
 const categories = [
   { id: 1, name: 'Groceries', icon: ShoppingCart },
   { id: 2, name: 'Food', icon: Utensils },
@@ -20,7 +21,11 @@ const categories = [
   { id: 12, name: 'Photography', icon: Camera },
   { id: 13, name: 'Business', icon: Briefcase },
   { id: 14, name: 'Automotive', icon: Car },
-  { id: 15, name: 'Cafe', icon: Coffee }
+  { id: 15, name: 'Cafe', icon: Coffee },
+  { id: 16, name: 'Technology', icon: Cog },
+  { id: 17, name: 'Fitness', icon: Dumbbell },
+  { id: 18, name: 'Travel', icon: Plane },
+  { id: 19, name: 'Pick Up Halal Food Nearby', icon: MapPin }
 ];
 
 const CategoryScroll = () => {

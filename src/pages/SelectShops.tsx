@@ -10,11 +10,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { Toggle } from "@/components/ui/toggle";
 
 const SelectShops = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [selectedShopId, setSelectedShopId] = useState<string | null>(null);
+  const [selectedShops, setSelectedShops] = useState<string[]>([]);
   
   const { data: allShops, isLoading, error } = useQuery({
     queryKey: ['shops'],
@@ -24,11 +26,21 @@ const SelectShops = () => {
   // Filter shops based on the current user's ID
   const userShops = allShops?.filter(shop => shop.owner_id === user?.id) || [];
   
-  // Load the main shop ID from localStorage
+  // Load the main shop ID and selected shops from localStorage
   useEffect(() => {
     const mainShopId = localStorage.getItem('mainShopId');
     if (mainShopId) {
       setSelectedShopId(mainShopId);
+    }
+    
+    const savedSelectedShops = localStorage.getItem('selectedShops');
+    if (savedSelectedShops) {
+      try {
+        setSelectedShops(JSON.parse(savedSelectedShops));
+      } catch (e) {
+        console.error("Error parsing selected shops:", e);
+        setSelectedShops([]);
+      }
     }
   }, []);
   
@@ -50,6 +62,22 @@ const SelectShops = () => {
         variant: "destructive",
       });
     }
+  };
+
+  // Toggle shop selection for the flowing shop bar
+  const toggleShopSelection = (shopId: string) => {
+    setSelectedShops(prev => {
+      let newSelection;
+      if (prev.includes(shopId)) {
+        newSelection = prev.filter(id => id !== shopId);
+      } else {
+        newSelection = [...prev, shopId];
+      }
+      
+      // Save to localStorage
+      localStorage.setItem('selectedShops', JSON.stringify(newSelection));
+      return newSelection;
+    });
   };
 
   if (isLoading) {
@@ -80,7 +108,42 @@ const SelectShops = () => {
     <div className="container mx-auto px-4 pt-20 pb-10">
       <div className="mb-8">
         <h1 className="text-3xl font-serif font-bold text-[#2A866A] dark:text-[#4ECBA5] mb-2">Your Shops</h1>
-        <p className="text-gray-600 dark:text-gray-400">Select your main shop to display in the navigation bar</p>
+        <p className="text-gray-600 dark:text-gray-400 mb-6">Select your main shop to display in the navigation bar</p>
+        
+        <div className="bg-secondary/50 dark:bg-secondary/30 p-5 rounded-xl mb-8">
+          <h2 className="text-xl font-medium mb-3 text-primary">Shop Preferences</h2>
+          <p className="mb-4 text-gray-600 dark:text-gray-400">
+            Select the shops that you want to appear for you on the flowing shops bar
+          </p>
+          
+          {allShops && allShops.length > 0 ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+              {allShops.map(shop => (
+                <Toggle
+                  key={`toggle-${shop.id}`}
+                  pressed={selectedShops.includes(shop.id)}
+                  onPressedChange={() => toggleShopSelection(shop.id)}
+                  className="flex flex-col items-center justify-center p-3 h-auto data-[state=on]:bg-primary/20"
+                >
+                  <div className="w-12 h-12 rounded-full overflow-hidden mb-2 border border-border">
+                    {shop.logo_url ? (
+                      <img src={shop.logo_url} alt={shop.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full bg-primary/10 flex items-center justify-center">
+                        <span className="text-primary font-medium">
+                          {shop.name.substring(0, 2).toUpperCase()}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  <span className="text-xs text-center line-clamp-1">{shop.name}</span>
+                </Toggle>
+              ))}
+            </div>
+          ) : (
+            <p className="text-muted-foreground italic">No shops available to select</p>
+          )}
+        </div>
       </div>
       
       {userShops.length === 0 ? (

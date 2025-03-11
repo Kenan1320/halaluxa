@@ -59,7 +59,7 @@ const Categories = () => {
           </div>
           
           {/* Categories in circular layout */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6">
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-6 sm:gap-8">
             {filteredCategories.map((category, index) => {
               const Icon = category.icon;
               

@@ -7,14 +7,14 @@ type ThemeContextType = {
 };
 
 const ThemeContext = createContext<ThemeContextType>({
-  theme: 'light',
+  theme: 'dark', // Changed default to dark
   setTheme: () => {},
 });
 
 export const useTheme = () => useContext(ThemeContext);
 
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const [theme, setTheme] = useState<'light' | 'dark'>('dark'); // Changed default to dark
 
   // Initialize theme on mount
   useEffect(() => {
@@ -23,8 +23,8 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
     
     if (savedTheme === 'dark' || savedTheme === 'light') {
       setTheme(savedTheme);
-    } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      // Use system preference if no saved preference
+    } else {
+      // Default to dark theme if no preference saved
       setTheme('dark');
     }
   }, []);
