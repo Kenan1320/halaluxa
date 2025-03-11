@@ -1,59 +1,147 @@
 
-import React from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Search, Heart, ShoppingCart, User } from 'lucide-react';
+import { Home, Store, Search, ShoppingCart, User } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '@/context/AuthContext';
+import { useCart } from '@/context/CartContext';
 
 const BottomNavigation = () => {
   const location = useLocation();
+  const { isLoggedIn, user } = useAuth();
+  const { cart } = useCart();
+  const [isVisible, setIsVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
 
-  const isActive = (path: string) => {
-    return location.pathname === path;
+  // Hide navigation when scrolling down, show when scrolling up
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      
+      if (currentScrollY > lastScrollY && currentScrollY > 100) {
+        setIsVisible(false);
+      } else {
+        setIsVisible(true);
+      }
+      
+      setLastScrollY(currentScrollY);
+    };
+    
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [lastScrollY]);
+
+  // Define navigation items
+  const navItems = [
+    {
+      label: 'Home',
+      icon: <Home className="h-6 w-6" />,
+      path: '/',
+      match: ['/']
+    },
+    {
+      label: 'Shops',
+      icon: <Store className="h-6 w-6" />,
+      path: '/shops',
+      match: ['/shops', '/shop', '/shop/']
+    },
+    {
+      label: 'Search',
+      icon: <Search className="h-6 w-6" />,
+      path: '/browse',
+      match: ['/browse', '/browse/']
+    },
+    {
+      label: 'Cart',
+      icon: <ShoppingCart className="h-6 w-6" />,
+      path: isLoggedIn && user?.role !== 'business' ? '/cart' : '/login',
+      match: ['/cart', '/checkout', '/orders', '/order-confirmation'],
+      badge: cart.items.length > 0 ? cart.items.length : undefined,
+      hideForBusiness: true
+    },
+    {
+      label: 'Account',
+      icon: <User className="h-6 w-6" />,
+      path: isLoggedIn ? '/profile' : '/login',
+      match: ['/profile', '/login', '/signup']
+    }
+  ];
+
+  // Filter out cart for business users
+  const filteredNavItems = navItems.filter(item => 
+    !(user?.role === 'business' && item.hideForBusiness)
+  );
+
+  const isActive = (item: typeof navItems[0]) => {
+    return item.match.includes(location.pathname);
   };
 
   return (
-    <div className="fixed bottom-0 w-full bg-white border-t border-gray-200 z-40">
-      <div className="grid grid-cols-5 h-16">
-        <Link 
-          to="/" 
-          className={`flex flex-col items-center justify-center ${isActive('/') ? 'text-[#2A866A]' : 'text-gray-500'}`}
+    <AnimatePresence>
+      {isVisible && (
+        <motion.nav 
+          className="fixed bottom-0 left-0 right-0 z-40 md:hidden"
+          initial={{ y: 100 }}
+          animate={{ y: 0 }}
+          exit={{ y: 100 }}
+          transition={{ duration: 0.3 }}
         >
-          <Home className="h-6 w-6" />
-          <span className="text-xs mt-1">Home</span>
-        </Link>
-        
-        <Link 
-          to="/search" 
-          className={`flex flex-col items-center justify-center ${isActive('/search') ? 'text-[#2A866A]' : 'text-gray-500'}`}
-        >
-          <Search className="h-6 w-6" />
-          <span className="text-xs mt-1">Search</span>
-        </Link>
-        
-        <Link 
-          to="/wishlist" 
-          className={`flex flex-col items-center justify-center ${isActive('/wishlist') ? 'text-[#2A866A]' : 'text-gray-500'}`}
-        >
-          <Heart className="h-6 w-6" />
-          <span className="text-xs mt-1">Wishlist</span>
-        </Link>
-        
-        <Link 
-          to="/cart" 
-          className={`flex flex-col items-center justify-center ${isActive('/cart') ? 'text-[#2A866A]' : 'text-gray-500'}`}
-        >
-          <ShoppingCart className="h-6 w-6" />
-          <span className="text-xs mt-1">Cart</span>
-        </Link>
-        
-        <Link 
-          to="/profile/user" 
-          className={`flex flex-col items-center justify-center ${isActive('/profile/user') ? 'text-[#2A866A]' : 'text-gray-500'}`}
-        >
-          <User className="h-6 w-6" />
-          <span className="text-xs mt-1">Profile</span>
-        </Link>
-      </div>
-    </div>
+          <div 
+            className="flex justify-around items-center h-16 bg-white/90 backdrop-blur-md border-t border-gray-100 shadow-[0_-2px_10px_rgba(0,0,0,0.05)]"
+            style={{ borderTopLeftRadius: '24px', borderTopRightRadius: '24px' }}
+          >
+            {filteredNavItems.map((item) => {
+              const active = isActive(item);
+              
+              return (
+                <Link
+                  key={item.label}
+                  to={item.path}
+                  className="relative flex flex-col items-center justify-center w-full h-full"
+                >
+                  <motion.div 
+                    className={`flex flex-col items-center justify-center`}
+                    whileTap={{ scale: 0.9 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <div className="relative">
+                      <div className={active ? 'text-orange-400' : 'text-gray-400'}>
+                        {item.icon}
+                      </div>
+                      
+                      {item.badge && (
+                        <motion.span 
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          className="absolute -top-1.5 -right-1.5 flex items-center justify-center w-5 h-5 bg-orange-400 text-white text-[10px] rounded-full"
+                        >
+                          {item.badge > 9 ? '9+' : item.badge}
+                        </motion.span>
+                      )}
+                    </div>
+                    
+                    <span className={`mt-1 text-[10px] ${active ? 'text-orange-400 font-medium' : 'text-gray-500'}`}>
+                      {item.label}
+                    </span>
+                    
+                    {active && (
+                      <motion.div
+                        layoutId="bottomNavIndicator"
+                        className="absolute bottom-0 w-10 h-1 rounded-full bg-orange-400"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.3 }}
+                      />
+                    )}
+                  </motion.div>
+                </Link>
+              );
+            })}
+          </div>
+        </motion.nav>
+      )}
+    </AnimatePresence>
   );
 };
 

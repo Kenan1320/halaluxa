@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { getShops, Shop, getShopProducts, convertToModelProduct } from '@/services/shopService';
@@ -14,9 +14,11 @@ const NearbyShops = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
+    // Initial load of shops
     const loadShops = async () => {
       try {
         setIsLoading(true);
+        // Use getNearbyShops from the LocationContext
         const nearbyShops = await getNearbyShops();
         setShops(nearbyShops);
       } catch (error) {
@@ -29,6 +31,7 @@ const NearbyShops = () => {
     if (isLocationEnabled && location) {
       loadShops();
     } else {
+      // Load anyway for demo purposes
       loadShops();
     }
   }, [isLocationEnabled, location, getNearbyShops]);
@@ -56,6 +59,7 @@ const NearbyShops = () => {
     <div className="space-y-8">
       {shops.map((shop, index) => (
         <div key={shop.id} className="mb-8">
+          {/* Shop header with name and logo - now animated and clickable */}
           <div className="flex items-center justify-between mb-4">
             <Link to={`/shop/${shop.id}`} className="group flex items-center gap-3">
               <motion.div 
@@ -99,6 +103,7 @@ const NearbyShops = () => {
             </Link>
           </div>
           
+          {/* Shop products in horizontal scroll */}
           <ShopProductList shopId={shop.id} />
         </div>
       ))}

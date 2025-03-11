@@ -1,7 +1,7 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client'; 
-import { toast } from 'sonner';
-import { type ExtendedProfile } from '@/types/supabase-types';
+
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 // Define the user type
 export interface User {
@@ -54,11 +54,11 @@ const AuthContext = createContext<AuthContextType>({
 export const useAuth = () => useContext(AuthContext);
 
 // Provider component
-export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
   const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<ExtendedProfile | null>(null);
+  const { toast } = useToast();
   
   // Initialize: check if user is already logged in
   useEffect(() => {
@@ -94,7 +94,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
               zip: profile.zip || null,
             });
             setIsLoggedIn(true);
-            setProfile(profile);
           }
         }
       } catch (error) {
@@ -151,12 +150,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             zip: profile.zip || null,
           });
           setIsLoggedIn(true);
-          setProfile(profile);
         }
       } else if (event === 'SIGNED_OUT') {
         setIsLoggedIn(false);
         setUser(null);
-        setProfile(null);
       }
     });
     
@@ -203,7 +200,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         });
         
         setIsLoggedIn(true);
-        setProfile(profile);
         return profile.role;
       }
       
@@ -292,7 +288,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         });
         
         setIsLoggedIn(true);
-        setProfile(profile);
         return true;
       }
       
@@ -312,7 +307,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       await supabase.auth.signOut();
       setIsLoggedIn(false);
       setUser(null);
-      setProfile(null);
     } catch (error) {
       console.error('Error during logout:', error);
     }
@@ -391,7 +385,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             zip: profile.zip || null,
           });
           setIsLoggedIn(true);
-          setProfile(profile);
         }
       }
     } catch (error) {

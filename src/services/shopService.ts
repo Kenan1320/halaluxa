@@ -1,5 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
-import { Shop, SellerAccount } from '@/types/supabase-types';
+import { Shop, ShopProduct } from '@/models/shop';
+import { Product } from '@/models/product';
 
 // Mapping database fields to model fields
 export const mapDbShopToModel = (dbShop: any): Shop => {
