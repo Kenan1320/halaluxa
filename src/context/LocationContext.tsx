@@ -1,6 +1,6 @@
-
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Shop, getShops } from '@/services/shopService';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { getDistanceFromLatLonInKm } from '@/services/locationService';
+import { type Shop } from '@/types/supabase-types';
 
 interface LocationCoordinates {
   latitude: number;
