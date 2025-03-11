@@ -1,5 +1,24 @@
 import { supabase } from '@/integrations/supabase/client';
-import { Shop, Product } from '@/types/database';
+import type { Shop, Product } from '@/types/database';
+import { 
+  setupDatabaseTables,
+  getShops,
+  getShopProducts,
+  convertToModelProduct,
+  uploadProductImage,
+  mapShopToModel
+} from './shopServiceHelpers';
+
+// Export types and helper functions from shopServiceHelpers
+export type { Shop, Product };
+export { 
+  setupDatabaseTables,
+  getShops,
+  getShopProducts,
+  convertToModelProduct,
+  uploadProductImage,
+  mapShopToModel
+};
 
 // Function to subscribe to real-time updates for shops
 export const subscribeToShops = (callback: (shops: Shop[]) => void) => {
@@ -63,11 +82,10 @@ export const getNearbyShops = async (latitude?: number, longitude?: number): Pro
     const userLatitude = latitude || 37.7749;  // Default latitude
     const userLongitude = longitude || -122.4194; // Default longitude
 
-    const { data: shops, error } = await supabase.rpc('nearby_shops', {
-      user_latitude: userLatitude,
-      user_longitude: userLongitude,
-      max_distance: 10000, // 10km
-    });
+    // For now, return all shops as a mock
+    const { data: shops, error } = await supabase
+      .from('shops')
+      .select('*');
 
     if (error) {
       throw error;
@@ -97,9 +115,6 @@ export const getMainShop = async (): Promise<Shop | null> => {
   return getShopById(mainShopId);
 };
 
-// Export Shop type
-export type { Shop };
-
 // Function to get shops for a specific seller
 export const getShopsForSeller = async (sellerId: string): Promise<Shop[]> => {
   try {
@@ -117,88 +132,37 @@ export const getShopsForSeller = async (sellerId: string): Promise<Shop[]> => {
   }
 };
 
-// Function to get products for a specific shop
-export const getProductsForShop = async (shopId: string): Promise<Product[]> => {
-  try {
-    const { data: products, error } = await supabase
-      .from('products')
-      .select('*')
-      .eq('shop_id', shopId);
+// Interface for product results from database
+interface ShopProductResult {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  images: string[];
+  category: string;
+  shop_id: string;
+  is_featured: boolean;
+  is_halal_certified: boolean;
+  created_at: string;
+  updated_at: string;
+  seller_id?: string;
+  seller_name?: string;
+}
 
-    if (error) {
-      throw error;
-    }
-
-    return products as Product[];
-  } catch (error) {
-    console.error(`Error fetching products for shop with ID ${shopId}:`, error);
-    return [];
-  }
-};
-
-// Function to get featured products for a specific shop
-export const getFeaturedProductsForShop = async (shopId: string): Promise<Product[]> => {
-  try {
-    const { data: products, error } = await supabase
-      .from('products')
-      .select('*')
-      .eq('shop_id', shopId)
-      .eq('is_featured', true);
-
-    if (error) {
-      throw error;
-    }
-
-    return products as Product[];
-  } catch (error) {
-    console.error(`Error fetching featured products for shop with ID ${shopId}:`, error);
-    return [];
-  }
-};
-
-// Function to get all products with shop details
-export const getAllProductsWithShopDetails = async (): Promise<Product[]> => {
-  try {
-    const { data: products, error } = await supabase
-      .from('products')
-      .select(`
-        *,
-        shops (
-          name,
-          location
-        )
-      `);
-
-    if (error) {
-      throw error;
-    }
-
-    // Process shop products to match the required Product interface
-    if (!products) return [];
-    return processShopProducts(products as ShopProductResult[]);
-  } catch (error) {
-    console.error('Error fetching all products with shop details:', error);
-    return [];
-  }
-};
-
-// Function to get products for a specific category
-export const getProductsByCategory = async (category: string): Promise<Product[]> => {
-  try {
-    const { data: products, error } = await supabase
-      .from('products')
-      .select('*')
-      .eq('category', category);
-
-    if (error) {
-      throw error;
-    }
-
-    return products as Product[];
-  } catch (error) {
-    console.error(`Error fetching products for category ${category}:`, error);
-    return [];
-  }
+// Process shop products to match the required Product interface
+const processShopProducts = (products: any[]): Product[] => {
+  return products.map(product => ({
+    id: product.id,
+    name: product.name,
+    description: product.description,
+    price: product.price,
+    images: product.images,
+    category: product.category,
+    shopId: product.shop_id,
+    isHalalCertified: product.is_halal_certified || false,
+    inStock: true, // Assume true if not provided
+    createdAt: product.created_at,
+  }));
 };
 
 // Function to create a new shop
@@ -206,7 +170,20 @@ export const createShop = async (shop: Omit<Shop, 'id'>): Promise<Shop | null> =
   try {
     const { data: newShop, error } = await supabase
       .from('shops')
-      .insert([shop])
+      .insert([{
+        name: shop.name,
+        description: shop.description,
+        location: shop.location,
+        category: shop.category,
+        logo: shop.logo,
+        coverImage: shop.coverImage,
+        rating: shop.rating || 0,
+        productCount: shop.productCount || 0,
+        isVerified: shop.isVerified || false,
+        ownerId: shop.ownerId,
+        latitude: shop.latitude,
+        longitude: shop.longitude
+      }])
       .select('*')
       .single();
 
@@ -259,38 +236,4 @@ export const deleteShop = async (id: string): Promise<boolean> => {
     console.error(`Error deleting shop with ID ${id}:`, error);
     return false;
   }
-};
-
-// Fix any Product type references
-interface ShopProductResult {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  images: string[];
-  category: string;
-  shop_id: string;
-  is_featured: boolean;
-  is_halal_certified: boolean;
-  created_at: string;
-  updated_at: string;
-  seller_id?: string;
-  seller_name?: string;
-}
-
-// Process shop products to match the required Product interface
-const processShopProducts = (products: ShopProductResult[]): Product[] => {
-  return products.map(product => ({
-    id: product.id,
-    name: product.name,
-    description: product.description,
-    price: product.price,
-    images: product.images,
-    category: product.category,
-    shopId: product.shop_id,
-    inStock: true, // Assume true if not provided
-    isHalalCertified: product.is_halal_certified,
-    createdAt: product.created_at,
-    // Add any other required fields with default values
-  }));
 };

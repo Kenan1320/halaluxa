@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { CartItem } from '@/models/cart';
 import { Product } from '@/models/product';
@@ -208,6 +209,9 @@ export const getAllSellerAccounts = async (): Promise<SellerAccount[]> => {
   }
 };
 
+// Alias function to get multiple accounts (same as getAllSellerAccounts)
+export const getSellerAccounts = getAllSellerAccounts;
+
 // Save seller account - for backward compatibility
 export const saveSellerAccount = async (
   accountData: Partial<SellerAccount>
@@ -290,14 +294,14 @@ export const initializeSellerAccount = async (
   try {
     // Use the mocked service function instead of direct database access
     const sellerAccount = await createSellerAccount({
-      userId: sellerId,
-      accountName,
-      accountNumber,
-      bankName,
-      accountType,
-      paypalEmail,
-      stripeAccountId,
-      applePayMerchantId
+      user_id: sellerId,
+      account_name: accountName,
+      account_number: accountNumber,
+      bank_name: bankName,
+      account_type: accountType,
+      paypal_email: paypalEmail,
+      stripe_account_id: stripeAccountId,
+      applepay_merchant_id: applePayMerchantId
     });
 
     return sellerAccount;
@@ -308,10 +312,10 @@ export const initializeSellerAccount = async (
 };
 
 // Get seller account details
-export const getSellerAccountDetails = async (userId: string): Promise<SellerAccount | null> => {
+export const getSellerAccountDetails = async (): Promise<SellerAccount | null> => {
   try {
     // Use the mocked service function
-    const sellerAccount = await getSellerAccount(userId);
+    const sellerAccount = await getSellerAccount();
     return sellerAccount;
   } catch (error) {
     console.error('Error getting seller account details:', error);

@@ -14,7 +14,7 @@ interface ShopSetupFormProps {
 }
 
 export default function ShopSetupForm({ onComplete, onSkip }: ShopSetupFormProps) {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
@@ -95,16 +95,15 @@ export default function ShopSetupForm({ onComplete, onSkip }: ShopSetupFormProps
       
       if (shop) {
         // Update user profile with shop info
-        await supabase
-          .from('profiles')
-          .update({
-            shop_name: shopData.name,
-            shop_description: shopData.description,
-            shop_category: shopData.category,
-            shop_location: shopData.location,
-            shop_logo: logoPreview
-          })
-          .eq('id', user.id);
+        const updates = {
+          shopName: shopData.name,
+          shopDescription: shopData.description,
+          shopCategory: shopData.category,
+          shopLocation: shopData.location,
+          shopLogo: logoPreview
+        };
+        
+        await updateUser(updates);
         
         toast({
           title: "Success",

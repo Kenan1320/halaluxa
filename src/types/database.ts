@@ -1,3 +1,4 @@
+
 import { Json } from '@/integrations/supabase/types';
 
 export interface Profile {
@@ -51,4 +52,17 @@ export interface SellerAccount {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+}
+
+export interface Product {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  images: string[];
+  category: string;
+  shopId: string;
+  isHalalCertified: boolean;
+  inStock?: boolean;
+  createdAt: string;
 }

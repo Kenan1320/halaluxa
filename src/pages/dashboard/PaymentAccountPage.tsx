@@ -1,428 +1,221 @@
 
-import { useState, useEffect } from 'react';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { CreditCard, DollarSign, Trash2, AlertCircle, ChevronsUpDown, Plus, Check } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { motion } from 'framer-motion';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { 
-  getSellerAccount,
-  getSellerAccounts,
-  createSellerAccount,
-  updateSellerAccount,
-  SellerAccount,
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { 
+  getSellerAccount, 
+  saveSellerAccount,
   formatPaymentMethod
 } from '@/services/paymentService';
+import { SellerAccount } from '@/types/database';
 
 const PaymentAccountPage = () => {
-  const [accounts, setAccounts] = useState<SellerAccount[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('bank');
-  const [formData, setFormData] = useState({
-    account_name: '',
-    account_number: '',
-    bank_name: '',
-    account_type: 'bank',
-    paypal_email: '',
-    stripe_account_id: '',
-    applepay_merchant_id: '',
-  });
-  const [isFormVisible, setIsFormVisible] = useState(false);
   const { toast } = useToast();
-
+  const [isLoading, setIsLoading] = useState(true);
+  const [accountDetails, setAccountDetails] = useState<SellerAccount | null>(null);
+  const [accountType, setAccountType] = useState('bank');
+  
+  // Form fields
+  const [accountName, setAccountName] = useState('');
+  const [accountNumber, setAccountNumber] = useState('');
+  const [bankName, setBankName] = useState('');
+  const [paypalEmail, setPaypalEmail] = useState('');
+  const [stripeAccountId, setStripeAccountId] = useState('');
+  const [applePayMerchantId, setApplePayMerchantId] = useState('');
+  
   useEffect(() => {
-    fetchAccounts();
-  }, []);
-
-  const fetchAccounts = async () => {
+    const loadAccountDetails = async () => {
+      try {
+        const account = await getSellerAccount();
+        if (account) {
+          setAccountDetails(account);
+          setAccountType(account.account_type);
+          setAccountName(account.account_name || '');
+          setAccountNumber(account.account_number || '');
+          setBankName(account.bank_name || '');
+          setPaypalEmail(account.paypal_email || '');
+          setStripeAccountId(account.stripe_account_id || '');
+          setApplePayMerchantId(account.applepay_merchant_id || '');
+        }
+      } catch (error) {
+        console.error('Error loading account details:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to load payment account details',
+          variant: 'destructive'
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    loadAccountDetails();
+  }, [toast]);
+  
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     setIsLoading(true);
+    
     try {
-      const accountsData = await getSellerAccounts();
-      setAccounts(accountsData);
+      const updatedAccount = await saveSellerAccount({
+        ...accountDetails,
+        account_type: accountType,
+        account_name: accountName,
+        account_number: accountNumber,
+        bank_name: bankName,
+        paypal_email: paypalEmail,
+        stripe_account_id: stripeAccountId,
+        applepay_merchant_id: applePayMerchantId
+      });
+      
+      if (updatedAccount) {
+        setAccountDetails(updatedAccount);
+        toast({
+          title: 'Success',
+          description: 'Payment account details updated successfully'
+        });
+      }
     } catch (error) {
-      console.error("Error fetching accounts:", error);
+      console.error('Error saving account details:', error);
       toast({
-        title: "Error",
-        description: "Could not load payment accounts",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to update payment account details',
+        variant: 'destructive'
       });
     } finally {
       setIsLoading(false);
     }
   };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const resetForm = () => {
-    setFormData({
-      account_name: '',
-      account_number: '',
-      bank_name: '',
-      account_type: activeTab,
-      paypal_email: '',
-      stripe_account_id: '',
-      applepay_merchant_id: '',
-    });
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    try {
-      // Set account type based on active tab
-      const accountData = {
-        ...formData,
-        account_type: activeTab,
-      };
-      
-      const result = await createSellerAccount(accountData);
-      
-      if (result) {
-        toast({
-          title: "Success",
-          description: "Payment method added successfully",
-        });
-        
-        fetchAccounts();
-        resetForm();
-        setIsFormVisible(false);
-      }
-    } catch (error) {
-      console.error("Error saving account:", error);
-      toast({
-        title: "Error",
-        description: "Could not save payment information",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleTabChange = (value: string) => {
-    setActiveTab(value);
-    setFormData((prev) => ({
-      ...prev,
-      account_type: value,
-    }));
-  };
-
-  const getAccountTypeIcon = (type: string) => {
-    switch (type) {
-      case 'bank':
-        return <CreditCard className="h-5 w-5" />;
-      case 'paypal':
-        return (
-          <div className="bg-[#0070BA] text-white p-1 rounded-full">
-            <span className="font-bold text-xs">P</span>
-          </div>
-        );
-      case 'stripe':
-        return (
-          <div className="bg-purple-600 text-white p-1 rounded-full">
-            <span className="font-bold text-xs">S</span>
-          </div>
-        );
-      case 'applepay':
-        return (
-          <div className="bg-black text-white p-1 rounded-full">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M10 17a6 6 0 0 0 5.8-4M15 9a6 6 0 0 0-5.8 4" />
-              <path d="M17 9.3c-.5-.1-1.6-.2-2 .3-.5.7 1-.5 1-1 0-1-.2-1.3-.4-1.7a2 2 0 0 0-2.9-.3c-.2.2-.3.5-.3.800 0 .7 1.2 1 2 1.4.8.2 2 .5 2 1.5s-1 1.7-2 1.7c-.5 0-2 0-2-2"/>
-            </svg>
-          </div>
-        );
-      default:
-        return <CreditCard className="h-5 w-5" />;
-    }
-  };
-
+  
   return (
-    <div>
-      <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-serif font-bold text-haluna-text">Payment Methods</h1>
-          <p className="text-haluna-text-light">
-            Manage how you receive payments from customers
-          </p>
-        </div>
-        <Button
-          onClick={() => {
-            setIsFormVisible(!isFormVisible);
-            if (!isFormVisible) resetForm();
-          }}
-          className="flex items-center bg-orange-400 hover:bg-orange-500"
-        >
-          {isFormVisible ? (
-            <>Cancel</>
-          ) : (
-            <>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Payment Method
-            </>
-          )}
-        </Button>
-      </div>
-
-      {isFormVisible && (
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
-          <Card className="p-6">
-            <h2 className="text-xl font-medium mb-4">Add New Payment Method</h2>
-            
-            <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-              <TabsList className="grid grid-cols-4 mb-6">
-                <TabsTrigger value="bank" className="flex items-center gap-2">
-                  <CreditCard className="h-4 w-4" />
-                  <span>Bank</span>
-                </TabsTrigger>
-                <TabsTrigger value="paypal" className="flex items-center gap-2">
-                  <div className="bg-[#0070BA] text-white p-0.5 rounded-full">
-                    <span className="font-bold text-xs">P</span>
-                  </div>
-                  <span>PayPal</span>
-                </TabsTrigger>
-                <TabsTrigger value="stripe" className="flex items-center gap-2">
-                  <div className="bg-purple-600 text-white p-0.5 rounded-full">
-                    <span className="font-bold text-xs">S</span>
-                  </div>
-                  <span>Stripe</span>
-                </TabsTrigger>
-                <TabsTrigger value="applepay" className="flex items-center gap-2">
-                  <div className="bg-black text-white p-0.5 rounded-full">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M10 17a6 6 0 0 0 5.8-4M15 9a6 6 0 0 0-5.8 4" />
-                      <path d="M17 9.3c-.5-.1-1.6-.2-2 .3-.5.7 1-.5 1-1 0-1-.2-1.3-.4-1.7a2 2 0 0 0-2.9-.3c-.2.2-.3.5-.3.800 0 .7 1.2 1 2 1.4.8.2 2 .5 2 1.5s-1 1.7-2 1.7c-.5 0-2 0-2-2"/>
-                    </svg>
-                  </div>
-                  <span>Apple Pay</span>
-                </TabsTrigger>
-              </TabsList>
-              
-              <form onSubmit={handleSubmit}>
-                <TabsContent value="bank" className="space-y-4">
-                  <div>
-                    <label htmlFor="account_name" className="block text-sm font-medium mb-1">
-                      Account Holder Name
-                    </label>
-                    <input
-                      id="account_name"
-                      name="account_name"
-                      type="text"
-                      required
-                      className="w-full rounded-md border p-2"
-                      value={formData.account_name}
-                      onChange={handleInputChange}
-                    />
-                  </div>
-                  
-                  <div>
-                    <label htmlFor="account_number" className="block text-sm font-medium mb-1">
-                      Account Number
-                    </label>
-                    <input
-                      id="account_number"
-                      name="account_number"
-                      type="text"
-                      required
-                      className="w-full rounded-md border p-2"
-                      value={formData.account_number}
-                      onChange={handleInputChange}
-                    />
-                  </div>
-                  
-                  <div>
-                    <label htmlFor="bank_name" className="block text-sm font-medium mb-1">
-                      Bank Name
-                    </label>
-                    <input
-                      id="bank_name"
-                      name="bank_name"
-                      type="text"
-                      required
-                      className="w-full rounded-md border p-2"
-                      value={formData.bank_name}
-                      onChange={handleInputChange}
-                    />
-                  </div>
-                </TabsContent>
-                
-                <TabsContent value="paypal" className="space-y-4">
-                  <div>
-                    <label htmlFor="paypal_email" className="block text-sm font-medium mb-1">
-                      PayPal Email
-                    </label>
-                    <input
-                      id="paypal_email"
-                      name="paypal_email"
-                      type="email"
-                      required
-                      className="w-full rounded-md border p-2"
-                      value={formData.paypal_email}
-                      onChange={handleInputChange}
-                    />
-                  </div>
-                  
-                  <div className="bg-blue-50 p-4 rounded-md text-sm">
-                    <p>
-                      Payments will be sent to this PayPal account. Make sure the email is correct
-                      and associated with an active PayPal account.
-                    </p>
-                  </div>
-                </TabsContent>
-                
-                <TabsContent value="stripe" className="space-y-4">
-                  <div>
-                    <label htmlFor="stripe_account_id" className="block text-sm font-medium mb-1">
-                      Stripe Account ID
-                    </label>
-                    <input
-                      id="stripe_account_id"
-                      name="stripe_account_id"
-                      type="text"
-                      required
-                      className="w-full rounded-md border p-2"
-                      value={formData.stripe_account_id}
-                      onChange={handleInputChange}
-                    />
-                  </div>
-                  
-                  <div className="bg-purple-50 p-4 rounded-md text-sm">
-                    <p>
-                      Enter your Stripe account ID to receive payments directly to your Stripe account.
-                      You can find this in your Stripe dashboard.
-                    </p>
-                  </div>
-                </TabsContent>
-                
-                <TabsContent value="applepay" className="space-y-4">
-                  <div>
-                    <label htmlFor="applepay_merchant_id" className="block text-sm font-medium mb-1">
-                      Apple Pay Merchant ID
-                    </label>
-                    <input
-                      id="applepay_merchant_id"
-                      name="applepay_merchant_id"
-                      type="text"
-                      required
-                      className="w-full rounded-md border p-2"
-                      value={formData.applepay_merchant_id}
-                      onChange={handleInputChange}
-                    />
-                  </div>
-                  
-                  <div className="bg-gray-50 p-4 rounded-md text-sm">
-                    <p>
-                      Your Apple Pay Merchant ID is required to process Apple Pay payments.
-                      You can find this in your Apple Developer account.
-                    </p>
-                  </div>
-                </TabsContent>
-                
-                <div className="mt-6 flex justify-end gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setIsFormVisible(false)}
-                  >
-                    Cancel
-                  </Button>
-                  <Button type="submit" className="bg-orange-400 hover:bg-orange-500">
-                    Save Payment Method
-                  </Button>
-                </div>
-              </form>
-            </Tabs>
-          </Card>
-        </motion.div>
-      )}
-
-      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-        {isLoading ? (
-          <div className="p-6 space-y-4">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="animate-pulse flex items-center p-4 border rounded-lg">
-                <div className="h-10 w-10 bg-gray-200 rounded-full mr-4"></div>
-                <div className="flex-1">
-                  <div className="h-4 bg-gray-200 rounded w-1/3 mb-2"></div>
-                  <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : accounts.length > 0 ? (
-          <div className="divide-y">
-            {accounts.map((account) => (
-              <div
-                key={account.id}
-                className="p-4 flex items-center justify-between hover:bg-gray-50"
-              >
-                <div className="flex items-center">
-                  <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center mr-4">
-                    {getAccountTypeIcon(account.account_type)}
-                  </div>
-                  <div>
-                    <p className="font-medium">{formatPaymentMethod(account)}</p>
-                    <p className="text-sm text-haluna-text-light">
-                      Added on {new Date(account.created_at).toLocaleDateString()}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="flex items-center text-red-500 hover:text-red-700 hover:bg-red-50"
-                  >
-                    <Trash2 className="h-4 w-4 mr-1" />
-                    Remove
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="p-10 text-center">
-            <div className="h-16 w-16 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-4">
-              <CreditCard className="h-8 w-8 text-haluna-text-light" />
-            </div>
-            <h3 className="text-xl font-medium mb-2">No payment methods yet</h3>
-            <p className="text-haluna-text-light mb-6 max-w-md mx-auto">
-              Add a payment method to start receiving payments from your customers
-            </p>
-            <Button
-              onClick={() => setIsFormVisible(true)}
-              className="flex items-center mx-auto bg-orange-400 hover:bg-orange-500"
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Add Payment Method
-            </Button>
-          </div>
-        )}
-      </div>
+    <div className="container mx-auto py-6 space-y-6">
+      <h1 className="text-3xl font-bold">Payment Account</h1>
+      <p className="text-gray-500">
+        Manage your payment account details. This is where you'll receive payouts for your sales.
+      </p>
       
-      <div className="mt-8 bg-amber-50 border border-amber-200 rounded-lg p-6">
-        <div className="flex items-start gap-4">
-          <div className="flex-shrink-0">
-            <AlertCircle className="h-6 w-6 text-amber-500" />
-          </div>
-          <div>
-            <h3 className="font-medium mb-2">Important Information About Payouts</h3>
-            <p className="text-sm mb-4">
-              Payouts are processed within 3-5 business days after a successful order. 
-              The platform charges a 2% transaction fee on each order, which is deducted automatically.
-            </p>
-            <p className="text-sm">
-              Make sure your payment information is accurate to avoid delays in receiving your funds.
-            </p>
-          </div>
-        </div>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Account Details</CardTitle>
+          <CardDescription>
+            {accountDetails ? 
+              `Current payment method: ${formatPaymentMethod(accountDetails)}` : 
+              'Set up your payment method to receive payments'}
+          </CardDescription>
+        </CardHeader>
+        
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="accountType">Payment Method</Label>
+              <Select 
+                value={accountType} 
+                onValueChange={setAccountType}
+              >
+                <SelectTrigger id="accountType">
+                  <SelectValue placeholder="Select payment method" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="bank">Bank Account</SelectItem>
+                  <SelectItem value="paypal">PayPal</SelectItem>
+                  <SelectItem value="stripe">Stripe</SelectItem>
+                  <SelectItem value="applepay">Apple Pay</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            {accountType === 'bank' && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="accountName">Account Name</Label>
+                  <Input 
+                    id="accountName"
+                    value={accountName}
+                    onChange={(e) => setAccountName(e.target.value)}
+                    placeholder="e.g. John Doe"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="bankName">Bank Name</Label>
+                  <Input 
+                    id="bankName"
+                    value={bankName}
+                    onChange={(e) => setBankName(e.target.value)}
+                    placeholder="e.g. Bank of America"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="accountNumber">Account Number</Label>
+                  <Input 
+                    id="accountNumber"
+                    value={accountNumber}
+                    onChange={(e) => setAccountNumber(e.target.value)}
+                    placeholder="e.g. XXXX-XXXX-XXXX-XXXX"
+                    type="password"
+                  />
+                </div>
+              </>
+            )}
+            
+            {accountType === 'paypal' && (
+              <div className="space-y-2">
+                <Label htmlFor="paypalEmail">PayPal Email</Label>
+                <Input 
+                  id="paypalEmail"
+                  value={paypalEmail}
+                  onChange={(e) => setPaypalEmail(e.target.value)}
+                  placeholder="e.g. johndoe@example.com"
+                  type="email"
+                />
+              </div>
+            )}
+            
+            {accountType === 'stripe' && (
+              <div className="space-y-2">
+                <Label htmlFor="stripeAccountId">Stripe Account ID</Label>
+                <Input 
+                  id="stripeAccountId"
+                  value={stripeAccountId}
+                  onChange={(e) => setStripeAccountId(e.target.value)}
+                  placeholder="e.g. acct_1234567890"
+                />
+              </div>
+            )}
+            
+            {accountType === 'applepay' && (
+              <div className="space-y-2">
+                <Label htmlFor="applePayMerchantId">Apple Pay Merchant ID</Label>
+                <Input 
+                  id="applePayMerchantId"
+                  value={applePayMerchantId}
+                  onChange={(e) => setApplePayMerchantId(e.target.value)}
+                  placeholder="e.g. merchant.com.example.shop"
+                />
+              </div>
+            )}
+            
+            <Button 
+              type="submit" 
+              className="w-full"
+              disabled={isLoading}
+            >
+              {isLoading ? 'Saving...' : 'Save Account Details'}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 };

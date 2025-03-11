@@ -14,7 +14,6 @@ import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import AuthMiddleware from "@/components/auth/AuthMiddleware";
 import Navbar from "@/components/layout/Navbar";
 import BottomNavigation from "@/components/layout/BottomNavigation";
-import { setupDatabaseTables } from "@/services/shopService";
 
 // Pages
 import Index from "./pages/Index";
@@ -154,12 +153,7 @@ const AppRoutes = () => {
 };
 
 function App() {
-  // Run database setup in the background without blocking the UI render
-  useEffect(() => {
-    setupDatabaseTables().catch(error => {
-      console.error('Database initialization error:', error);
-    });
-  }, []);
+  // Initialization used to happen here, but we removed the reference to setupDatabaseTables
 
   return (
     <QueryClientProvider client={queryClient}>

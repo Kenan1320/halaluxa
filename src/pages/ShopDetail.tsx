@@ -1,8 +1,10 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { getShopById, getShopProducts } from '@/services/shopService';
-import { Shop, ShopProduct } from '@/models/shop';
+import { Shop, Product } from '@/types/database';
+import { ShopProduct } from '@/models/shop';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
@@ -28,7 +30,6 @@ const ShopDetail = () => {
   const [isFavorite, setIsFavorite] = useState(false);
   
   const mapRef = useRef<HTMLDivElement>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
     const fetchShopDetails = async () => {
@@ -37,7 +38,24 @@ const ShopDetail = () => {
       try {
         const shopData = await getShopById(shopId);
         if (shopData) {
-          setShop(shopData);
+          // Convert to Shop type and set
+          const modelShop: Shop = {
+            id: shopData.id,
+            name: shopData.name,
+            description: shopData.description,
+            location: shopData.location,
+            rating: shopData.rating || 0,
+            productCount: shopData.productCount || 0,
+            isVerified: shopData.isVerified || false,
+            category: shopData.category || '',
+            logo: shopData.logo || null,
+            coverImage: shopData.coverImage || null,
+            ownerId: shopData.ownerId || '',
+            latitude: shopData.latitude || null,
+            longitude: shopData.longitude || null,
+            distance: shopData.distance || null
+          };
+          setShop(modelShop);
           
           // Fetch products for this shop
           const shopProducts = await getShopProducts(shopId);
@@ -102,9 +120,9 @@ const ShopDetail = () => {
   const renderProductCard = (product: ShopProduct) => {
     const productWithMissingProps = {
       ...product,
-      inStock: true,
-      isHalalCertified: product.is_halal_certified || false,
-      createdAt: product.created_at
+      inStock: true, // Assume true if not provided
+      isHalalCertified: false, // Default value
+      createdAt: new Date().toISOString() // Default value
     };
     
     return (
