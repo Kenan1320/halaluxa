@@ -17,7 +17,7 @@ export const categories: Category[] = [
     name: 'restaurant',
     displayName: 'Local Halal Restaurants',
     type: 'local',
-    iconSrc: '/lovable-uploads/92014177-37c2-49a1-b293-a6b6a00bb42c.png',
+    iconSrc: '/lovable-uploads/1cacc804-a9e3-4e24-b114-6930d4963108.png',
     description: 'Find halal restaurants near you'
   },
   {
@@ -25,7 +25,7 @@ export const categories: Category[] = [
     name: 'halal-meat',
     displayName: 'Halal Butcher Shops',
     type: 'local',
-    iconSrc: '/lovable-uploads/b51a5653-fc5d-40c3-b440-f4857e0d941a.png',
+    iconSrc: '/lovable-uploads/23693524-531d-460f-80d6-4d7de692e370.png',
     description: 'Quality halal meat from verified butchers'
   },
   {
@@ -33,7 +33,7 @@ export const categories: Category[] = [
     name: 'groceries',
     displayName: 'Local Halal Grocery Stores',
     type: 'local',
-    iconSrc: '/lovable-uploads/b4faff98-b80c-4dda-896d-194d042d2c94.png',
+    iconSrc: '/lovable-uploads/33c78847-ecc3-4104-94db-d11f6dc381ba.png',
     description: 'Halal grocery stores in your area'
   },
   {
@@ -59,7 +59,7 @@ export const categories: Category[] = [
     name: 'decorations',
     displayName: 'Islamic Home Decor & Accessories',
     type: 'transitioning',
-    iconSrc: '/lovable-uploads/33c78847-ecc3-4104-94db-d11f6dc381ba.png',
+    iconSrc: '/lovable-uploads/23693524-531d-460f-80d6-4d7de692e370.png',
     description: 'Beautiful Islamic home decor and accessories'
   },
   {
@@ -109,7 +109,7 @@ export const categories: Category[] = [
     name: 'abaya',
     displayName: 'Modest Wear - Abayas & Dresses',
     type: 'online',
-    iconSrc: '/lovable-uploads/1cacc804-a9e3-4e24-b114-6930d4963108.png',
+    iconSrc: '/lovable-uploads/b51a5653-fc5d-40c3-b440-f4857e0d941a.png',
     description: 'Elegant abayas and modest dresses'
   },
   {
@@ -117,7 +117,7 @@ export const categories: Category[] = [
     name: 'thobes',
     displayName: 'Men\'s Islamic Wear - Thobes & Jubbas',
     type: 'online',
-    iconSrc: '/lovable-uploads/23693524-531d-460f-80d6-4d7de692e370.png',
+    iconSrc: '/lovable-uploads/92014177-37c2-49a1-b293-a6b6a00bb42c.png',
     description: 'Quality thobes and jubbas for men'
   },
   {
@@ -125,7 +125,7 @@ export const categories: Category[] = [
     name: 'books',
     displayName: 'Islamic Books & more',
     type: 'online',
-    iconSrc: '/lovable-uploads/23693524-531d-460f-80d6-4d7de692e370.png',
+    iconSrc: '/lovable-uploads/b4faff98-b80c-4dda-896d-194d042d2c94.png',
     description: 'Islamic literature, educational books and more'
   }
 ];

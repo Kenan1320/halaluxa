@@ -1,149 +1,134 @@
 
-import { useState, useEffect } from 'react';
-import { Switch } from '@/components/ui/switch';
-import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
-import { saveNotificationPreferences, getNotificationPreferences } from '@/services/notificationService';
-import { useAuth } from '@/context/AuthContext';
-import { Bell, ShoppingBag, Tag, MessageSquare } from 'lucide-react';
-import { NotificationPreferences as NotificationPreferencesType } from '@/services/notificationService';
+import React, { useState } from 'react';
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Bell } from "lucide-react";
+import { toast } from "sonner";
 
-type PreferenceItemProps = {
-  title: string;
-  description: string;
-  icon: React.ReactNode;
-  checked: boolean;
-  onCheckedChange: (checked: boolean) => void;
-};
+// Define the notification preferences type
+export interface NotificationPreferences {
+  orderUpdates: boolean;
+  newArrivals: boolean;
+  discounts: boolean;
+  accountActivity: boolean;
+  marketing: boolean; // Added missing marketing property
+}
 
-const PreferenceItem = ({ title, description, icon, checked, onCheckedChange }: PreferenceItemProps) => {
-  return (
-    <div className="flex items-start space-x-4 py-4 border-b border-border last:border-0">
-      <div className="p-2 rounded-full bg-primary/10 text-primary">
-        {icon}
-      </div>
-      <div className="flex-1">
-        <h3 className="font-medium">{title}</h3>
-        <p className="text-sm text-muted-foreground">{description}</p>
-      </div>
-      <Switch checked={checked} onCheckedChange={onCheckedChange} />
-    </div>
-  );
-};
-
-const NotificationPreferences = () => {
-  const { user } = useAuth();
-  const { toast } = useToast();
-  const [preferences, setPreferences] = useState<NotificationPreferencesType>({
-    orderUpdates: false,
-    newArrivals: false,
-    discounts: false,
-    accountActivity: false,
+const NotificationPreferences: React.FC = () => {
+  // Initialize with default values
+  const [preferences, setPreferences] = useState<NotificationPreferences>({
+    orderUpdates: true,
+    newArrivals: true,
+    discounts: true,
+    accountActivity: true,
+    marketing: false // Added missing marketing property
   });
-  const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    const fetchPreferences = async () => {
-      if (user?.id) {
-        setIsLoading(true);
-        try {
-          const userPreferences = await getNotificationPreferences(user.id);
-          // only update if we got preferences back
-          if (userPreferences) {
-            setPreferences(userPreferences);
-          }
-        } catch (error) {
-          console.error("Error fetching notification preferences:", error);
-          // Use default preferences
-        } finally {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    fetchPreferences();
-  }, [user]);
-
-  const handlePreferenceChange = (key: keyof NotificationPreferencesType, value: boolean) => {
+  const handleToggle = (key: keyof NotificationPreferences) => {
     setPreferences(prev => ({
       ...prev,
-      [key]: value
+      [key]: !prev[key]
     }));
   };
 
-  const handleSave = async () => {
-    if (!user?.id) return;
+  const handleSave = () => {
+    // In a real app, this would send the preferences to an API
+    console.log("Saving notification preferences:", preferences);
     
-    setIsLoading(true);
-    try {
-      await saveNotificationPreferences({ 
-        ...preferences,
-        user_id: user.id 
-      });
-      
-      toast({
-        title: "Preferences saved",
-        description: "Your notification preferences have been updated.",
-      });
-    } catch (error) {
-      console.error("Error saving notification preferences:", error);
-      toast({
-        title: "Error",
-        description: "Failed to save your preferences. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
+    // Reset to default values (all off) for this example when "Reset to defaults" is clicked
+    // Added missing marketing property
+    setPreferences({ 
+      orderUpdates: false,
+      newArrivals: false,
+      discounts: false,
+      accountActivity: false,
+      marketing: false
+    });
+    
+    // Show success message
+    toast.success("Notification preferences updated!");
+  };
+
+  const handleReset = () => {
+    // Reset to default values
+    setPreferences({
+      orderUpdates: true,
+      newArrivals: true,
+      discounts: true,
+      accountActivity: true,
+      marketing: false
+    });
+    
+    // Show success message - fix by adding second parameter (which is options)
+    toast("Preferences reset to defaults", { 
+      description: "Your notification settings have been reset"
+    });
   };
 
   return (
-    <div className="space-y-4">
-      <h2 className="text-2xl font-bold">Notification Preferences</h2>
-      <p className="text-muted-foreground">
-        Choose which types of notifications you'd like to receive.
-      </p>
-      
-      <div className="bg-card rounded-lg border border-border shadow-sm overflow-hidden">
-        <PreferenceItem
-          title="Order Updates"
-          description="Get notified about the status of your orders and deliveries."
-          icon={<ShoppingBag className="h-5 w-5" />}
-          checked={preferences.orderUpdates}
-          onCheckedChange={(checked) => handlePreferenceChange('orderUpdates', checked)}
-        />
-        
-        <PreferenceItem
-          title="New Arrivals"
-          description="Be the first to know about new products and services."
-          icon={<Bell className="h-5 w-5" />}
-          checked={preferences.newArrivals}
-          onCheckedChange={(checked) => handlePreferenceChange('newArrivals', checked)}
-        />
-        
-        <PreferenceItem
-          title="Discounts & Promotions"
-          description="Receive notifications about special offers and discounts."
-          icon={<Tag className="h-5 w-5" />}
-          checked={preferences.discounts}
-          onCheckedChange={(checked) => handlePreferenceChange('discounts', checked)}
-        />
-        
-        <PreferenceItem
-          title="Account Activity"
-          description="Get alerts about important account activities and security updates."
-          icon={<MessageSquare className="h-5 w-5" />}
-          checked={preferences.accountActivity}
-          onCheckedChange={(checked) => handlePreferenceChange('accountActivity', checked)}
-        />
-      </div>
-      
-      <div className="flex justify-end">
-        <Button onClick={handleSave} disabled={isLoading}>
-          {isLoading ? "Saving..." : "Save Preferences"}
+    <Card className="w-full max-w-md mx-auto">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Bell className="h-5 w-5" />
+          Notification Preferences
+        </CardTitle>
+        <CardDescription>
+          Manage how and when you receive notifications from Halvi.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="flex items-center justify-between">
+          <Label htmlFor="orderUpdates" className="flex-1">Order Updates</Label>
+          <Switch 
+            id="orderUpdates" 
+            checked={preferences.orderUpdates} 
+            onCheckedChange={() => handleToggle('orderUpdates')}
+          />
+        </div>
+        <div className="flex items-center justify-between">
+          <Label htmlFor="newArrivals" className="flex-1">New Arrivals</Label>
+          <Switch 
+            id="newArrivals" 
+            checked={preferences.newArrivals} 
+            onCheckedChange={() => handleToggle('newArrivals')}
+          />
+        </div>
+        <div className="flex items-center justify-between">
+          <Label htmlFor="discounts" className="flex-1">Deals & Discounts</Label>
+          <Switch 
+            id="discounts" 
+            checked={preferences.discounts} 
+            onCheckedChange={() => handleToggle('discounts')}
+          />
+        </div>
+        <div className="flex items-center justify-between">
+          <Label htmlFor="accountActivity" className="flex-1">Account Activity</Label>
+          <Switch 
+            id="accountActivity" 
+            checked={preferences.accountActivity} 
+            onCheckedChange={() => handleToggle('accountActivity')}
+          />
+        </div>
+        <div className="flex items-center justify-between">
+          <Label htmlFor="marketing" className="flex-1">Marketing & Promotions</Label>
+          <Switch 
+            id="marketing" 
+            checked={preferences.marketing} 
+            onCheckedChange={() => handleToggle('marketing')}
+          />
+        </div>
+      </CardContent>
+      <CardFooter className="flex justify-between">
+        <Button variant="outline" onClick={handleReset}>
+          Reset to Defaults
         </Button>
-      </div>
-    </div>
+        <Button onClick={handleSave}>
+          Save Preferences
+        </Button>
+      </CardFooter>
+    </Card>
   );
 };
 

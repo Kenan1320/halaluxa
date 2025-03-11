@@ -92,16 +92,16 @@ const CategoryScroll = () => {
   };
   
   return (
-    <div className="relative w-full my-1">
+    <div className="relative w-full my-0">
       <div
         ref={scrollRef}
-        className="flex overflow-x-auto scrollbar-hide py-2 space-x-4"
+        className="flex overflow-x-auto scrollbar-hide py-1.5 space-x-3"
       >
         {categories.map((category) => (
           <motion.button
             key={category.id}
             className={getCategoryButtonClasses()}
-            style={{ minWidth: '80px', height: '80px' }}
+            style={{ minWidth: '75px', height: '75px' }}
             whileHover={{ 
               scale: 1.05, 
               boxShadow: getBoxShadow()
@@ -109,14 +109,14 @@ const CategoryScroll = () => {
             whileTap={{ scale: 0.95 }}
             onClick={() => handleCategoryClick(category.name)}
           >
-            <div className="h-10 w-10 mb-1 flex items-center justify-center">
+            <div className="h-9 w-9 mb-1 flex items-center justify-center">
               <img 
                 src={category.iconSrc} 
                 alt={category.name}
-                className="h-8 w-8 object-contain"
+                className="h-7 w-7 object-contain"
               />
             </div>
-            <span className="text-foreground text-xs font-medium text-center line-clamp-2">
+            <span className="text-foreground text-xs font-medium text-center line-clamp-2 px-1">
               {category.displayName}
             </span>
           </motion.button>
@@ -124,7 +124,7 @@ const CategoryScroll = () => {
         
         <motion.button
           className={getViewAllButtonClasses()}
-          style={{ minWidth: '80px', height: '80px' }}
+          style={{ minWidth: '75px', height: '75px' }}
           whileHover={{ 
             scale: 1.05, 
             boxShadow: getBoxShadow()
@@ -132,7 +132,7 @@ const CategoryScroll = () => {
           whileTap={{ scale: 0.95 }}
           onClick={() => navigate('/categories')}
         >
-          <ShoppingBag className="h-8 w-8 text-primary mb-1" />
+          <ShoppingBag className="h-7 w-7 text-primary mb-1" />
           <span className="text-foreground text-xs font-medium text-center">View All</span>
         </motion.button>
       </div>

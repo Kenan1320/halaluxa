@@ -13,8 +13,8 @@ const Index = () => {
 
   return (
     <div className="min-h-screen pt-16 pb-0 bg-background dark:bg-[#0d1b2a] black:bg-black">
-      {/* Search bar header section - mint color extends down to include categories */}
-      <section className="relative py-6 md:py-8 overflow-hidden mint-header border-b border-border">
+      {/* Search bar header section with more compact layout */}
+      <section className="relative py-4 md:py-5 overflow-hidden mint-header border-b border-border">
         <div className="container mx-auto px-4">
           {/* Search bar */}
           <motion.div 
@@ -23,20 +23,24 @@ const Index = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <SearchBar />
+            <SearchBar placeholderText="Search Halvi: Your Hal Village" rotatingTexts={[
+              "Don't just shop—Halvi it! It's your Halvillage",
+              "Are you Halvi-ing your Groceries today?",
+              "You can Halvi & visit your online shops"
+            ]} />
           </motion.div>
         </div>
       </section>
       
       {/* Categories flowing right under search - still in mint color area */}
-      <section className="py-4 mint-header">
+      <section className="py-2 mint-header">
         <div className="container mx-auto px-4">
           <CategoryScroll />
         </div>
       </section>
       
       {/* Nearby Shops (right under categories) - reduced spacing */}
-      <section className="pt-2 pb-6 bg-background dark:bg-[#0d1b2a] black:bg-black">
+      <section className="pt-1 pb-4 bg-background dark:bg-[#0d1b2a] black:bg-black">
         <div className="container mx-auto px-4">
           <NearbyShops />
         </div>
