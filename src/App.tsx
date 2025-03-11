@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -32,6 +31,7 @@ import NotFound from "./pages/NotFound";
 import LoginPage from "./pages/auth/LoginPage";
 import SignUpPage from "./pages/auth/SignUpPage";
 import SelectShops from "./pages/SelectShops";
+import Wishlist from "./pages/Wishlist";
 
 // Dashboard imports
 import DashboardLayout from "./components/layout/DashboardLayout";
@@ -81,6 +81,7 @@ const AppRoutes = () => {
         <Route path="/shop/:shopId" element={<ShopDetail />} />
         <Route path="/product/:productId" element={<ProductDetail />} />
         <Route path="/select-shops" element={<SelectShops />} />
+        <Route path="/wishlist" element={<Wishlist />} />
         
         {/* Protected shopper routes - explicitly disallow business users */}
         <Route 
@@ -146,6 +147,7 @@ const AppRoutes = () => {
         {/* 404 route */}
         <Route path="*" element={<NotFound />} />
       </Routes>
+      {showNavbar && <BottomNavigation />}
     </AuthMiddleware>
   );
 };

@@ -1,14 +1,12 @@
 
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Store, Search, ShoppingCart, User } from 'lucide-react';
+import { Home, Search, ShoppingCart, Heart, User } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 
 const BottomNavigation = () => {
   const location = useLocation();
-  const { isLoggedIn, user } = useAuth();
   const { cart } = useCart();
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
@@ -40,37 +38,31 @@ const BottomNavigation = () => {
       match: ['/']
     },
     {
-      label: 'Shops',
-      icon: <Store className="h-6 w-6" />,
-      path: '/shops',
-      match: ['/shops', '/shop', '/shop/']
-    },
-    {
       label: 'Search',
       icon: <Search className="h-6 w-6" />,
-      path: '/browse',
-      match: ['/browse', '/browse/']
+      path: '/search',
+      match: ['/search', '/browse']
     },
     {
       label: 'Cart',
       icon: <ShoppingCart className="h-6 w-6" />,
-      path: isLoggedIn && user?.role !== 'business' ? '/cart' : '/login',
+      path: '/cart',
       match: ['/cart', '/checkout', '/orders', '/order-confirmation'],
-      badge: cart.items.length > 0 ? cart.items.length : undefined,
-      hideForBusiness: true
+      badge: cart.items.length > 0 ? cart.items.length : undefined
+    },
+    {
+      label: 'Wishlist',
+      icon: <Heart className="h-6 w-6" />,
+      path: '/wishlist', 
+      match: ['/wishlist']
     },
     {
       label: 'Account',
       icon: <User className="h-6 w-6" />,
-      path: isLoggedIn ? '/profile' : '/login',
+      path: '/profile',
       match: ['/profile', '/login', '/signup']
     }
   ];
-
-  // Filter out cart for business users
-  const filteredNavItems = navItems.filter(item => 
-    !(user?.role === 'business' && item.hideForBusiness)
-  );
 
   const isActive = (item: typeof navItems[0]) => {
     return item.match.includes(location.pathname);
@@ -87,10 +79,9 @@ const BottomNavigation = () => {
           transition={{ duration: 0.3 }}
         >
           <div 
-            className="flex justify-around items-center h-16 bg-white/90 backdrop-blur-md border-t border-gray-100 shadow-[0_-2px_10px_rgba(0,0,0,0.05)]"
-            style={{ borderTopLeftRadius: '24px', borderTopRightRadius: '24px' }}
+            className="flex justify-around items-center h-16 bg-white border-t border-gray-200"
           >
-            {filteredNavItems.map((item) => {
+            {navItems.map((item) => {
               const active = isActive(item);
               
               return (
@@ -99,13 +90,9 @@ const BottomNavigation = () => {
                   to={item.path}
                   className="relative flex flex-col items-center justify-center w-full h-full"
                 >
-                  <motion.div 
-                    className={`flex flex-col items-center justify-center`}
-                    whileTap={{ scale: 0.9 }}
-                    transition={{ duration: 0.2 }}
-                  >
+                  <div className={`flex flex-col items-center justify-center`}>
                     <div className="relative">
-                      <div className={active ? 'text-orange-400' : 'text-gray-400'}>
+                      <div className={active ? 'text-[#2A866A]' : 'text-gray-500'}>
                         {item.icon}
                       </div>
                       
@@ -113,28 +100,17 @@ const BottomNavigation = () => {
                         <motion.span 
                           initial={{ scale: 0 }}
                           animate={{ scale: 1 }}
-                          className="absolute -top-1.5 -right-1.5 flex items-center justify-center w-5 h-5 bg-orange-400 text-white text-[10px] rounded-full"
+                          className="absolute -top-1.5 -right-1.5 flex items-center justify-center w-5 h-5 bg-[#2A866A] text-white text-[10px] rounded-full"
                         >
                           {item.badge > 9 ? '9+' : item.badge}
                         </motion.span>
                       )}
                     </div>
                     
-                    <span className={`mt-1 text-[10px] ${active ? 'text-orange-400 font-medium' : 'text-gray-500'}`}>
+                    <span className={`mt-1 text-xs ${active ? 'text-[#2A866A]' : 'text-gray-500'}`}>
                       {item.label}
                     </span>
-                    
-                    {active && (
-                      <motion.div
-                        layoutId="bottomNavIndicator"
-                        className="absolute bottom-0 w-10 h-1 rounded-full bg-orange-400"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.3 }}
-                      />
-                    )}
-                  </motion.div>
+                  </div>
                 </Link>
               );
             })}
