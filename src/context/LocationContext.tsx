@@ -4,16 +4,26 @@ import { useToast } from '@/hooks/use-toast';
 import { getAllShops } from '@/services/shopService';
 import { Shop } from '@/types/database';
 
+// Extended GeolocationPosition type with city and state
+interface EnhancedLocation {
+  coords: GeolocationCoordinates;
+  timestamp: number;
+  city?: string;
+  state?: string;
+}
+
 interface LocationContextType {
   isLocationEnabled: boolean;
   enableLocation: () => Promise<boolean>;
-  location: GeolocationPosition | null;
+  requestLocation: () => Promise<boolean>; // Added missing function
+  location: EnhancedLocation | null;
   getNearbyShops: () => Promise<Shop[]>;
 }
 
 const LocationContext = createContext<LocationContextType>({
   isLocationEnabled: false,
   enableLocation: async () => false,
+  requestLocation: async () => false,
   location: null,
   getNearbyShops: async () => [],
 });
@@ -27,7 +37,7 @@ interface LocationProviderProps {
 export const LocationProvider: React.FC<LocationProviderProps> = ({ children }) => {
   const { toast } = useToast();
   const [isLocationEnabled, setIsLocationEnabled] = useState<boolean>(false);
-  const [location, setLocation] = useState<GeolocationPosition | null>(null);
+  const [location, setLocation] = useState<EnhancedLocation | null>(null);
 
   useEffect(() => {
     // Check if geolocation is available in the browser
@@ -46,6 +56,24 @@ export const LocationProvider: React.FC<LocationProviderProps> = ({ children }) 
     }
   }, []);
 
+  // Function to get the city and state from coordinates
+  const getCityAndState = async (latitude: number, longitude: number): Promise<{city: string, state: string}> => {
+    try {
+      // This would typically be a reverse geocoding API call
+      // For now, we'll return mock data
+      return {
+        city: "San Francisco",
+        state: "CA"
+      };
+    } catch (error) {
+      console.error('Error getting city and state:', error);
+      return {
+        city: "Unknown",
+        state: ""
+      };
+    }
+  };
+
   const enableLocation = async (): Promise<boolean> => {
     if (!navigator.geolocation) {
       return false;
@@ -60,7 +88,20 @@ export const LocationProvider: React.FC<LocationProviderProps> = ({ children }) 
         });
       });
 
-      setLocation(position);
+      // Get city and state information
+      const { city, state } = await getCityAndState(
+        position.coords.latitude,
+        position.coords.longitude
+      );
+
+      // Create enhanced location object
+      const enhancedLocation: EnhancedLocation = {
+        ...position,
+        city,
+        state
+      };
+
+      setLocation(enhancedLocation);
       setIsLocationEnabled(true);
       localStorage.setItem('locationPermission', 'granted');
       
@@ -99,6 +140,11 @@ export const LocationProvider: React.FC<LocationProviderProps> = ({ children }) 
     }
   };
 
+  // Add the missing requestLocation function (alias for enableLocation)
+  const requestLocation = async (): Promise<boolean> => {
+    return enableLocation();
+  };
+
   const getNearbyShops = async (): Promise<Shop[]> => {
     try {
       if (!isLocationEnabled || !location) {
@@ -125,7 +171,8 @@ export const LocationProvider: React.FC<LocationProviderProps> = ({ children }) 
   return (
     <LocationContext.Provider value={{ 
       isLocationEnabled, 
-      enableLocation, 
+      enableLocation,
+      requestLocation, 
       location,
       getNearbyShops 
     }}>

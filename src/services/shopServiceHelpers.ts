@@ -67,7 +67,7 @@ export const getShopProducts = async (shopId: string): Promise<ShopProduct[]> =>
       description: item.description,
       category: item.category,
       images: item.images || [], 
-      sellerId: item.seller_id || '',
+      sellerId: item.shop_id || '', // Use shop_id as seller_id
       sellerName: 'Shop Owner',
       rating: 0
     }));
@@ -89,7 +89,11 @@ export const convertToModelProduct = (product: any): ModelProduct => {
     shopId: product.shop_id,
     isHalalCertified: product.is_halal_certified || false,
     inStock: product.in_stock !== false,
-    createdAt: product.created_at
+    createdAt: product.created_at,
+    sellerId: product.shop_id, // Map shop_id to sellerId
+    sellerName: product.shop_name || 'Shop Owner',
+    rating: product.rating || 0,
+    details: product.details || {}
   };
 };
 

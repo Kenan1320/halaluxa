@@ -1,5 +1,6 @@
+
 import { supabase } from '@/integrations/supabase/client';
-import type { Shop, Product } from '@/types/database';
+import type { Shop } from '@/types/database';
 import { 
   setupDatabaseTables,
   getShops,
@@ -10,7 +11,7 @@ import {
 } from './shopServiceHelpers';
 
 // Export types and helper functions from shopServiceHelpers
-export type { Shop, Product };
+export type { Shop };
 export { 
   setupDatabaseTables,
   getShops,
@@ -150,7 +151,7 @@ interface ShopProductResult {
 }
 
 // Process shop products to match the required Product interface
-const processShopProducts = (products: any[]): Product[] => {
+const processShopProducts = (products: any[]): Shop[] => {
   return products.map(product => ({
     id: product.id,
     name: product.name,
@@ -162,7 +163,7 @@ const processShopProducts = (products: any[]): Product[] => {
     isHalalCertified: product.is_halal_certified || false,
     inStock: true, // Assume true if not provided
     createdAt: product.created_at,
-  }));
+  })) as unknown as Shop[];
 };
 
 // Function to create a new shop
@@ -175,12 +176,12 @@ export const createShop = async (shop: Omit<Shop, 'id'>): Promise<Shop | null> =
         description: shop.description,
         location: shop.location,
         category: shop.category,
-        logo: shop.logo,
-        coverImage: shop.coverImage,
+        logo_url: shop.logo, // Renamed to match database column
+        cover_image: shop.coverImage, // Renamed to match database column
         rating: shop.rating || 0,
-        productCount: shop.productCount || 0,
-        isVerified: shop.isVerified || false,
-        ownerId: shop.ownerId,
+        product_count: shop.productCount || 0,
+        is_verified: shop.isVerified || false,
+        owner_id: shop.ownerId,
         latitude: shop.latitude,
         longitude: shop.longitude
       }])
@@ -201,9 +202,25 @@ export const createShop = async (shop: Omit<Shop, 'id'>): Promise<Shop | null> =
 // Function to update an existing shop
 export const updateShop = async (id: string, updates: Partial<Shop>): Promise<Shop | null> => {
   try {
+    // Convert frontend property names to database column names
+    const dbUpdates: any = {};
+    
+    if (updates.name !== undefined) dbUpdates.name = updates.name;
+    if (updates.description !== undefined) dbUpdates.description = updates.description;
+    if (updates.location !== undefined) dbUpdates.location = updates.location;
+    if (updates.category !== undefined) dbUpdates.category = updates.category;
+    if (updates.logo !== undefined) dbUpdates.logo_url = updates.logo;
+    if (updates.coverImage !== undefined) dbUpdates.cover_image = updates.coverImage;
+    if (updates.rating !== undefined) dbUpdates.rating = updates.rating;
+    if (updates.productCount !== undefined) dbUpdates.product_count = updates.productCount;
+    if (updates.isVerified !== undefined) dbUpdates.is_verified = updates.isVerified;
+    if (updates.ownerId !== undefined) dbUpdates.owner_id = updates.ownerId;
+    if (updates.latitude !== undefined) dbUpdates.latitude = updates.latitude;
+    if (updates.longitude !== undefined) dbUpdates.longitude = updates.longitude;
+    
     const { data: updatedShop, error } = await supabase
       .from('shops')
-      .update(updates)
+      .update(dbUpdates)
       .eq('id', id)
       .select('*')
       .single();

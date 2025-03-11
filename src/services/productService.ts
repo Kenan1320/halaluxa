@@ -1,9 +1,9 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { Product, ProductDetails } from '@/models/product';
+import { Product } from '@/models/product';
 
 // Helper function to safely handle JSON conversion
-const safeJsonParse = (data: any): ProductDetails => {
+const safeJsonParse = (data: any): any => {
   if (typeof data === 'string') {
     try {
       return JSON.parse(data);
@@ -24,12 +24,14 @@ const mapDbProductToModel = (data: any): Product => {
     inStock: data.stock > 0,
     category: data.category,
     images: data.images || [],
+    shopId: data.shop_id,
+    isHalalCertified: data.is_halal_certified || false,
+    createdAt: data.created_at,
+    // Additional fields
     sellerId: data.business_owner_id,
     sellerName: data.business_owner_name,
     rating: data.rating,
-    isHalalCertified: data.is_halal_certified,
-    details: safeJsonParse(data.details),
-    createdAt: data.created_at
+    details: safeJsonParse(data.details)
   };
 };
 
@@ -86,6 +88,7 @@ const prepareProductForDb = (product: Partial<Product>) => {
     stock: product.inStock ? 1 : 0,
     category: product.category,
     images: product.images,
+    shop_id: product.shopId,
     business_owner_id: product.sellerId,
     business_owner_name: product.sellerName,
     rating: product.rating,
@@ -248,16 +251,17 @@ export function getMockProducts(): Product[] {
       inStock: true,
       category: "Food & Groceries",
       images: ["/lovable-uploads/0780684a-9c7f-4f32-affc-6f9ea641b814.png"],
+      shopId: "shop1",
+      isHalalCertified: true,
+      createdAt: new Date().toISOString(),
       sellerId: "seller1",
       sellerName: "Halal Meats & More",
       rating: 4.8,
-      isHalalCertified: true,
       details: {
         weight: "500g",
         servings: "4 patties",
         ingredients: "100% grass-fed beef, salt, black pepper"
-      },
-      createdAt: new Date().toISOString()
+      }
     },
     {
       id: "2",
@@ -267,16 +271,17 @@ export function getMockProducts(): Product[] {
       inStock: true,
       category: "Food & Groceries",
       images: ["/lovable-uploads/d4ab324c-23f0-4fcc-9069-0afbc77d1c3e.png"],
+      shopId: "shop2",
+      isHalalCertified: true,
+      createdAt: new Date().toISOString(),
       sellerId: "seller2",
       sellerName: "Barakah Organics",
       rating: 4.9,
-      isHalalCertified: true,
       details: {
         weight: "250g",
         origin: "Jordan",
         ingredients: "100% organic Medjool dates"
-      },
-      createdAt: new Date().toISOString()
+      }
     }
   ];
 }

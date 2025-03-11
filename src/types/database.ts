@@ -65,4 +65,9 @@ export interface Product {
   isHalalCertified: boolean;
   inStock?: boolean;
   createdAt: string;
+  // Additional fields needed for consistency with the model
+  sellerId?: string;
+  sellerName?: string;
+  rating?: number;
+  details?: any;
 }

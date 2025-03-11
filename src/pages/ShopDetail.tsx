@@ -1,354 +1,239 @@
 
-import React, { useState, useEffect, useRef } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { useAuth } from '@/context/AuthContext';
-import { getShopById, getShopProducts } from '@/services/shopService';
-import { Shop, Product } from '@/types/database';
-import { ShopProduct } from '@/models/shop';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useLocation } from '@/context/LocationContext';
+import { getShopProducts } from '@/services/shopServiceHelpers';
+import { getShopById } from '@/services/shopService';
+import { Shop } from '@/types/database';
+import { Shop as ModelShop, ShopProduct } from '@/models/shop';
+import { Product } from '@/models/product';
+import { ProductCard } from '@/components/cards/ProductCard';
+import { ShopHeader } from '@/components/shop/ShopHeader';
 import { useToast } from '@/hooks/use-toast';
-import { useCart } from '@/context/CartContext';
-import ProductCard from '@/components/shop/ProductCard';
-import { MapPin, Phone, Mail, Clock, CheckCircle, Star, ShoppingBag, Heart, Share2 } from 'lucide-react';
-import { motion } from 'framer-motion';
-import { formatCurrency } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { ShoppingBag, Phone, Mail, MapPin, Navigation, Star, Calendar, Clock, Info } from 'lucide-react';
 
-const ShopDetail = () => {
-  const { shopId } = useParams<{ shopId: string }>();
-  const { user } = useAuth();
+const ShopDetail: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { isLocationEnabled, enableLocation } = useLocation();
   const { toast } = useToast();
-  const { addToCart } = useCart();
   
-  const [shop, setShop] = useState<Shop | null>(null);
+  const [shop, setShop] = useState<ModelShop | null>(null);
   const [products, setProducts] = useState<ShopProduct[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('products');
-  const [isFavorite, setIsFavorite] = useState(false);
-  
-  const mapRef = useRef<HTMLDivElement>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
   
   useEffect(() => {
     const fetchShopDetails = async () => {
-      if (!shopId) return;
+      if (!id) {
+        setError('Shop ID is missing');
+        setLoading(false);
+        return;
+      }
       
       try {
-        const shopData = await getShopById(shopId);
-        if (shopData) {
-          // Convert to Shop type and set
-          const modelShop: Shop = {
-            id: shopData.id,
-            name: shopData.name,
-            description: shopData.description,
-            location: shopData.location,
-            rating: shopData.rating || 0,
-            productCount: shopData.productCount || 0,
-            isVerified: shopData.isVerified || false,
-            category: shopData.category || '',
-            logo: shopData.logo || null,
-            coverImage: shopData.coverImage || null,
-            ownerId: shopData.ownerId || '',
-            latitude: shopData.latitude || null,
-            longitude: shopData.longitude || null,
-            distance: shopData.distance || null
-          };
-          setShop(modelShop);
-          
-          // Fetch products for this shop
-          const shopProducts = await getShopProducts(shopId);
-          setProducts(shopProducts);
+        const shopData = await getShopById(id);
+        
+        if (!shopData) {
+          setError('Shop not found');
+          setLoading(false);
+          return;
         }
-      } catch (error) {
-        console.error('Error fetching shop details:', error);
-        toast({
-          title: "Error",
-          description: "Failed to load shop details. Please try again.",
-          variant: "destructive"
-        });
+        
+        // Convert database Shop to ModelShop
+        const modelShop: ModelShop = {
+          id: shopData.id,
+          name: shopData.name,
+          description: shopData.description,
+          location: shopData.location,
+          rating: shopData.rating || 0,
+          productCount: shopData.productCount || 0,
+          isVerified: shopData.isVerified || false,
+          category: shopData.category || '',
+          logo: shopData.logo || null,
+          coverImage: shopData.coverImage || null,
+          ownerId: shopData.ownerId || '',
+          latitude: shopData.latitude || null,
+          longitude: shopData.longitude || null,
+          distance: shopData.distance || null
+        };
+        
+        setShop(modelShop);
+        
+        // Fetch products for this shop
+        const shopProducts = await getShopProducts(id);
+        setProducts(shopProducts);
+      } catch (err) {
+        console.error('Error fetching shop details:', err);
+        setError('Failed to load shop details');
       } finally {
         setLoading(false);
       }
     };
     
     fetchShopDetails();
-  }, [shopId, toast]);
-  
-  useEffect(() => {
-    // Initialize map if shop has coordinates and map tab is active
-    if (shop?.latitude && shop?.longitude && activeTab === 'location' && mapRef.current) {
-      // This is a placeholder for map initialization
-      // You would use a mapping library like Google Maps, Mapbox, or Leaflet here
-      const mapElement = mapRef.current;
-      mapElement.innerHTML = `
-        <div style="background-color: #e9ecef; height: 100%; display: flex; align-items: center; justify-content: center; border-radius: 0.5rem;">
-          <p>Map showing ${shop.name} at ${shop.location}</p>
-          <p>Coordinates: ${shop.latitude}, ${shop.longitude}</p>
-        </div>
-      `;
-    }
-  }, [shop, activeTab]);
-  
-  const toggleFavorite = () => {
-    setIsFavorite(!isFavorite);
-    toast({
-      title: isFavorite ? "Removed from favorites" : "Added to favorites",
-      description: isFavorite ? `${shop?.name} removed from your favorites` : `${shop?.name} added to your favorites`,
-    });
-  };
-  
-  const handleShare = () => {
-    if (navigator.share) {
-      navigator.share({
-        title: shop?.name || 'Check out this shop',
-        text: `Check out ${shop?.name} on Haluna`,
-        url: window.location.href,
-      })
-      .catch((error) => console.log('Error sharing', error));
-    } else {
-      // Fallback for browsers that don't support the Web Share API
-      navigator.clipboard.writeText(window.location.href);
-      toast({
-        title: "Link copied",
-        description: "Shop link copied to clipboard",
-      });
-    }
-  };
-  
-  const renderProductCard = (product: ShopProduct) => {
-    const productWithMissingProps = {
-      ...product,
-      inStock: true, // Assume true if not provided
-      isHalalCertified: false, // Default value
-      createdAt: new Date().toISOString() // Default value
-    };
-    
-    return (
-      <ProductCard key={product.id} product={productWithMissingProps} />
-    );
-  };
+  }, [id]);
   
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="animate-pulse">
-          <div className="h-64 bg-gray-200 rounded-lg mb-6"></div>
-          <div className="h-8 bg-gray-200 rounded w-1/3 mb-4"></div>
-          <div className="h-4 bg-gray-200 rounded w-2/3 mb-6"></div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="h-48 bg-gray-200 rounded"></div>
-            <div className="h-48 bg-gray-200 rounded"></div>
-            <div className="h-48 bg-gray-200 rounded"></div>
+          <div className="h-40 bg-gray-200 rounded-xl mb-6"></div>
+          <div className="flex flex-col gap-4">
+            <div className="h-8 bg-gray-200 rounded w-1/3"></div>
+            <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+            <div className="h-4 bg-gray-200 rounded w-1/2"></div>
           </div>
         </div>
       </div>
     );
   }
   
-  if (!shop) {
+  if (error || !shop) {
     return (
       <div className="container mx-auto px-4 py-8 text-center">
-        <h2 className="text-2xl font-bold mb-4">Shop Not Found</h2>
-        <p className="mb-6">The shop you're looking for doesn't exist or has been removed.</p>
-        <Link to="/shops">
-          <Button>Browse Other Shops</Button>
-        </Link>
+        <Info className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+        <h1 className="text-2xl font-bold mb-2">Something went wrong</h1>
+        <p className="text-gray-500 mb-6">{error || 'Failed to load shop details'}</p>
+        <Button onClick={() => navigate('/shops')}>
+          Browse Other Shops
+        </Button>
       </div>
     );
   }
   
+  // Convert ShopProduct to Product for use with ProductCard
+  const convertToProduct = (shopProduct: ShopProduct): Product => {
+    return {
+      id: shopProduct.id,
+      name: shopProduct.name,
+      description: shopProduct.description,
+      price: shopProduct.price,
+      category: shopProduct.category,
+      images: shopProduct.images,
+      shopId: shop.id,
+      isHalalCertified: true, // Default to true as it's required
+      createdAt: new Date().toISOString(),
+      sellerId: shopProduct.sellerId,
+      sellerName: shopProduct.sellerName,
+      rating: shopProduct.rating,
+      inStock: true
+    };
+  };
+  
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Shop Header */}
-      <div className="relative rounded-xl overflow-hidden mb-8">
-        {/* Cover Image */}
-        <div className="h-64 bg-gradient-to-r from-green-600 to-green-400 relative">
-          {shop.coverImage && (
-            <img 
-              src={shop.coverImage} 
-              alt={`${shop.name} cover`} 
-              className="w-full h-full object-cover"
-            />
-          )}
-          <div className="absolute inset-0 bg-black bg-opacity-30"></div>
-        </div>
-        
-        {/* Shop Info Overlay */}
-        <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-          <div className="flex items-end">
-            {/* Shop Logo */}
-            <div className="mr-6">
-              <div className="w-24 h-24 rounded-lg bg-white p-1 shadow-lg">
-                {shop.logo ? (
-                  <img 
-                    src={shop.logo} 
-                    alt={`${shop.name} logo`} 
-                    className="w-full h-full object-contain rounded"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-green-100 rounded">
-                    <ShoppingBag className="w-12 h-12 text-green-600" />
-                  </div>
-                )}
-              </div>
-            </div>
-            
-            {/* Shop Name and Basic Info */}
-            <div className="flex-1">
-              <div className="flex items-center">
-                <h1 className="text-3xl font-bold mr-2">{shop.name}</h1>
-                {shop.isVerified && (
-                  <CheckCircle className="w-5 h-5 text-blue-400" />
-                )}
-              </div>
-              <div className="flex items-center text-sm mt-1">
-                <MapPin className="w-4 h-4 mr-1" />
-                <span>{shop.location}</span>
-                {shop.distance !== null && (
-                  <span className="ml-2">({shop.distance.toFixed(1)} miles away)</span>
-                )}
-              </div>
-              <div className="flex items-center mt-2">
-                <div className="flex items-center mr-4">
-                  <Star className="w-4 h-4 text-yellow-400 mr-1" />
-                  <span>{shop.rating || 'New'}</span>
-                </div>
-                <div className="flex items-center">
-                  <ShoppingBag className="w-4 h-4 mr-1" />
-                  <span>{shop.productCount || 0} products</span>
-                </div>
-              </div>
-            </div>
-            
-            {/* Action Buttons */}
-            <div className="flex space-x-2">
-              <Button 
-                variant="secondary" 
-                size="sm" 
-                className="bg-white/20 backdrop-blur-sm hover:bg-white/30"
-                onClick={toggleFavorite}
-              >
-                <Heart className={`w-4 h-4 mr-1 ${isFavorite ? 'fill-red-500 text-red-500' : ''}`} />
-                {isFavorite ? 'Saved' : 'Save'}
-              </Button>
-              <Button 
-                variant="secondary" 
-                size="sm" 
-                className="bg-white/20 backdrop-blur-sm hover:bg-white/30"
-                onClick={handleShare}
-              >
-                <Share2 className="w-4 h-4 mr-1" />
-                Share
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
+    <div className="container mx-auto px-4 py-6">
+      <ShopHeader shop={shop} />
       
-      {/* Shop Category Badge */}
-      {shop.category && (
-        <div className="mb-6">
-          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-            {shop.category}
-          </Badge>
-        </div>
-      )}
-      
-      {/* Shop Description */}
-      <div className="mb-8">
-        <p className="text-gray-700">{shop.description}</p>
-      </div>
-      
-      <Separator className="my-8" />
-      
-      {/* Tabs for Products, About, Location */}
-      <Tabs defaultValue="products" value={activeTab} onValueChange={setActiveTab} className="mb-8">
-        <TabsList className="mb-6">
-          <TabsTrigger value="products">Products</TabsTrigger>
-          <TabsTrigger value="about">About</TabsTrigger>
-          <TabsTrigger value="location">Location</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="products">
-          {products.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {products.map(renderProductCard)}
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <ShoppingBag className="w-12 h-12 mx-auto text-gray-300 mb-4" />
-              <h3 className="text-lg font-medium mb-2">No Products Available</h3>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8">
+        <div className="lg:col-span-2">
+          <h2 className="text-xl font-semibold mb-4">Products</h2>
+          
+          {products.length === 0 ? (
+            <div className="bg-gray-50 rounded-lg p-8 text-center">
+              <ShoppingBag className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+              <h3 className="text-lg font-medium mb-2">No products available</h3>
               <p className="text-gray-500">This shop hasn't added any products yet.</p>
             </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {products.map((product) => (
+                <ProductCard key={product.id} product={convertToProduct(product)} />
+              ))}
+            </div>
           )}
-        </TabsContent>
+        </div>
         
-        <TabsContent value="about">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div>
+          <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+            <h3 className="text-lg font-semibold mb-4">Shop Information</h3>
+            
+            <div className="space-y-4">
+              <div className="flex items-start">
+                <MapPin className="h-5 w-5 text-haluna-primary mt-0.5 mr-3 flex-shrink-0" />
                 <div>
-                  <h3 className="text-lg font-medium mb-4">About {shop.name}</h3>
-                  <p className="text-gray-700 mb-6">{shop.description}</p>
+                  <h4 className="font-medium text-sm">Location</h4>
+                  <p className="text-gray-600">{shop.location}</p>
                   
-                  <h4 className="font-medium mb-2">Business Hours</h4>
-                  <div className="flex items-start mb-4">
-                    <Clock className="w-5 h-5 text-gray-500 mr-2 mt-0.5" />
-                    <div>
-                      <p className="text-gray-700">Monday - Friday: 9:00 AM - 6:00 PM</p>
-                      <p className="text-gray-700">Saturday: 10:00 AM - 4:00 PM</p>
-                      <p className="text-gray-700">Sunday: Closed</p>
-                    </div>
-                  </div>
-                </div>
-                
-                <div>
-                  <h3 className="text-lg font-medium mb-4">Contact Information</h3>
-                  <div className="space-y-4">
-                    <div className="flex items-center">
-                      <MapPin className="w-5 h-5 text-gray-500 mr-3" />
-                      <span className="text-gray-700">{shop.location}</span>
-                    </div>
-                    <div className="flex items-center">
-                      <Phone className="w-5 h-5 text-gray-500 mr-3" />
-                      <span className="text-gray-700">(555) 123-4567</span>
-                    </div>
-                    <div className="flex items-center">
-                      <Mail className="w-5 h-5 text-gray-500 mr-3" />
-                      <span className="text-gray-700">contact@{shop.name.toLowerCase().replace(/\s+/g, '')}.com</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="location">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="mb-4">
-                <h3 className="text-lg font-medium mb-2">Find Us At</h3>
-                <div className="flex items-center text-gray-700 mb-4">
-                  <MapPin className="w-5 h-5 text-gray-500 mr-2" />
-                  <span>{shop.location}</span>
+                  {shop.latitude && shop.longitude && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="mt-2 text-xs"
+                      onClick={() => {
+                        if (!isLocationEnabled) {
+                          enableLocation().then(success => {
+                            if (success) {
+                              // Would typically open maps app with coordinates
+                              window.open(`https://maps.google.com/?q=${shop.latitude},${shop.longitude}`, '_blank');
+                            }
+                          });
+                        } else {
+                          window.open(`https://maps.google.com/?q=${shop.latitude},${shop.longitude}`, '_blank');
+                        }
+                      }}
+                    >
+                      <Navigation className="h-3 w-3 mr-1" />
+                      Get Directions
+                    </Button>
+                  )}
                 </div>
               </div>
               
-              <div 
-                ref={mapRef} 
-                className="w-full h-80 bg-gray-100 rounded-lg"
-              >
-                <div className="text-center">
-                  <p className="pt-32 text-gray-500">Map loading...</p>
+              <div className="flex items-start">
+                <Star className="h-5 w-5 text-haluna-primary mt-0.5 mr-3 flex-shrink-0" />
+                <div>
+                  <h4 className="font-medium text-sm">Rating</h4>
+                  <p className="text-gray-600">{shop.rating.toFixed(1)} out of 5</p>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+              
+              <div className="flex items-start">
+                <Calendar className="h-5 w-5 text-haluna-primary mt-0.5 mr-3 flex-shrink-0" />
+                <div>
+                  <h4 className="font-medium text-sm">Category</h4>
+                  <p className="text-gray-600">{shop.category}</p>
+                </div>
+              </div>
+              
+              <div className="flex items-start">
+                <Clock className="h-5 w-5 text-haluna-primary mt-0.5 mr-3 flex-shrink-0" />
+                <div>
+                  <h4 className="font-medium text-sm">Availability</h4>
+                  <p className="text-gray-600">Shop is currently open</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="bg-white rounded-lg shadow-sm p-6">
+            <h3 className="text-lg font-semibold mb-4">Contact Information</h3>
+            
+            <div className="space-y-4">
+              <div className="flex items-start">
+                <Phone className="h-5 w-5 text-haluna-primary mt-0.5 mr-3 flex-shrink-0" />
+                <div>
+                  <h4 className="font-medium text-sm">Phone</h4>
+                  <p className="text-gray-600">(123) 456-7890</p>
+                </div>
+              </div>
+              
+              <div className="flex items-start">
+                <Mail className="h-5 w-5 text-haluna-primary mt-0.5 mr-3 flex-shrink-0" />
+                <div>
+                  <h4 className="font-medium text-sm">Email</h4>
+                  <p className="text-gray-600">contact@{shop.name.toLowerCase().replace(/\s+/g, '')}.com</p>
+                </div>
+              </div>
+              
+              <Button className="w-full mt-2">
+                Contact Shop
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

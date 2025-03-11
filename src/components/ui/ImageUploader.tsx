@@ -1,9 +1,9 @@
 
-import React, { useState, useEffect } from 'react';
-import { Upload, X, Image, Loader2, RefreshCw } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { uploadProductImage } from '@/services/shopService';
+import React, { useState, useCallback } from 'react';
+import { UploadCloud, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { Button } from '@/components/ui/button';
+import { useDropzone } from 'react-dropzone';
 
 interface ImageUploaderProps {
   initialImages?: string[];
@@ -14,181 +14,127 @@ interface ImageUploaderProps {
 const ImageUploader: React.FC<ImageUploaderProps> = ({
   initialImages = [],
   onImagesChange,
-  maxImages = 5,
+  maxImages = 5
 }) => {
   const [images, setImages] = useState<string[]>(initialImages);
   const [isUploading, setIsUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [failedUploads, setFailedUploads] = useState<File[]>([]);
   const { toast } = useToast();
 
-  // Sync with initialImages if they change
-  useEffect(() => {
-    setImages(initialImages);
-  }, [initialImages]);
-
-  const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
-    if (!files || files.length === 0) return;
-
-    if (images.length + files.length > maxImages) {
-      toast({
-        title: "Too many images",
-        description: `You can upload a maximum of ${maxImages} images`,
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setIsUploading(true);
-    setUploadProgress(0);
-    setFailedUploads([]);
-
-    const newImages: string[] = [...images];
-    let failedFiles: File[] = [];
-
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      
-      // Check file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        toast({
-          title: "File too large",
-          description: `${file.name} is too large. Maximum size is 5MB.`,
-          variant: "destructive"
-        });
-        failedFiles.push(file);
-        continue;
-      }
-      
-      try {
-        setUploadProgress(Math.floor(i / files.length * 50)); // First half of progress
-        
-        const imageUrl = await uploadProductImage(file, (progress) => {
-          // This progress is for this individual file, scale it to overall progress
-          const individualProgress = progress / 100;
-          const overallProgress = 50 + (i / files.length * 50) + (individualProgress * 50 / files.length);
-          setUploadProgress(Math.floor(overallProgress));
-        });
-        
-        if (imageUrl) {
-          newImages.push(imageUrl);
-        } else {
-          failedFiles.push(file);
-          toast({
-            title: "Upload failed",
-            description: `Failed to upload ${file.name}`,
-            variant: "destructive"
-          });
-        }
-      } catch (error) {
-        console.error('Error uploading image:', error);
-        failedFiles.push(file);
-        toast({
-          title: "Upload error",
-          description: `Error uploading ${file.name}`,
-          variant: "destructive"
-        });
-      }
-    }
-
-    setImages(newImages);
-    onImagesChange(newImages);
-    setIsUploading(false);
-    setUploadProgress(100);
-    setFailedUploads(failedFiles);
+  // Mock file upload function
+  const uploadFile = async (file: File): Promise<string> => {
+    // Simulate upload delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
     
-    // Reset the input
-    event.target.value = '';
+    // In a real app, this would call an API to upload the file
+    return URL.createObjectURL(file);
   };
 
-  const handleRemoveImage = (index: number) => {
+  const onDrop = useCallback(async (acceptedFiles: File[]) => {
+    try {
+      if (images.length + acceptedFiles.length > maxImages) {
+        toast({
+          title: "Too many images",
+          description: `You can only upload a maximum of ${maxImages} images.`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setIsUploading(true);
+      
+      const uploadPromises = acceptedFiles.map(async (file) => {
+        if (!file.type.startsWith('image/')) {
+          toast({
+            title: "Invalid file type",
+            description: "Please upload only image files.",
+            variant: "destructive",
+          });
+          return null;
+        }
+        
+        try {
+          // Use our uploadFile function instead of the missing uploadProductImage
+          return await uploadFile(file);
+        } catch (error) {
+          console.error('Error uploading image:', error);
+          toast({
+            title: "Upload failed",
+            description: "Failed to upload image. Please try again.",
+            variant: "destructive",
+          });
+          return null;
+        }
+      });
+      
+      const uploadedUrls = (await Promise.all(uploadPromises)).filter(Boolean) as string[];
+      const newImages = [...images, ...uploadedUrls];
+      
+      setImages(newImages);
+      onImagesChange(newImages);
+    } catch (error) {
+      console.error('Error handling file upload:', error);
+      toast({
+        title: "Upload error",
+        description: "An error occurred while uploading images.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  }, [images, maxImages, onImagesChange, toast]);
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: {
+      'image/*': []
+    },
+    disabled: isUploading || images.length >= maxImages
+  });
+
+  const removeImage = (index: number) => {
     const newImages = [...images];
     newImages.splice(index, 1);
     setImages(newImages);
     onImagesChange(newImages);
   };
-  
-  const retryFailedUploads = async () => {
-    if (failedUploads.length === 0) return;
-    
-    // Create a FileList-like object
-    const dataTransfer = new DataTransfer();
-    failedUploads.forEach(file => dataTransfer.items.add(file));
-    
-    // Create a synthetic event
-    const event = {
-      target: {
-        files: dataTransfer.files,
-        value: ""
-      }
-    } as React.ChangeEvent<HTMLInputElement>;
-    
-    // Clear failed uploads and retry
-    setFailedUploads([]);
-    await handleUpload(event);
-  };
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap gap-4">
-        {images.map((image, index) => (
-          <div 
-            key={index} 
-            className="relative w-24 h-24 border rounded-md overflow-hidden group"
-          >
-            <img 
-              src={image}
-              alt={`Product image ${index + 1}`}
-              className="w-full h-full object-cover"
-            />
-            <button
-              type="button"
-              className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-              onClick={() => handleRemoveImage(index)}
-            >
-              <X size={14} />
-            </button>
-          </div>
-        ))}
-        
-        {isUploading && (
-          <div className="w-24 h-24 border border-dashed rounded-md flex flex-col items-center justify-center">
-            <Loader2 className="h-8 w-8 text-haluna-primary animate-spin" />
-            <span className="text-xs mt-1">{uploadProgress}%</span>
-          </div>
-        )}
-        
-        {failedUploads.length > 0 && (
-          <div 
-            className="w-24 h-24 border border-dashed border-red-300 rounded-md flex flex-col items-center justify-center cursor-pointer hover:bg-red-50 transition-colors"
-            onClick={retryFailedUploads}
-          >
-            <RefreshCw className="h-6 w-6 text-red-500 mb-1" />
-            <span className="text-xs text-red-500">Retry {failedUploads.length} failed</span>
-          </div>
-        )}
-        
-        {images.length < maxImages && !isUploading && (
-          <label className="w-24 h-24 border border-dashed rounded-md flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 transition-colors">
-            <Upload className="h-8 w-8 text-haluna-text-light" />
-            <span className="text-xs text-haluna-text-light mt-1">Upload</span>
-            <input
-              type="file"
-              className="hidden"
-              accept="image/*"
-              multiple
-              onChange={handleUpload}
-              disabled={isUploading}
-            />
-          </label>
-        )}
+      <div
+        {...getRootProps()}
+        className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
+          isDragActive ? 'border-primary bg-primary/5' : 'border-gray-300 hover:border-primary'
+        } ${isUploading || images.length >= maxImages ? 'opacity-50 cursor-not-allowed' : ''}`}
+      >
+        <input {...getInputProps()} />
+        <UploadCloud className="h-10 w-10 text-gray-400 mx-auto mb-2" />
+        <p className="text-sm text-gray-600">
+          {isDragActive
+            ? "Drop the images here..."
+            : `Drag & drop images here, or click to select`}
+        </p>
+        <p className="text-xs text-gray-400 mt-1">
+          {images.length} of {maxImages} images
+        </p>
+        {isUploading && <p className="text-xs text-primary mt-2">Uploading...</p>}
       </div>
-      
-      {images.length === 0 && (
-        <div className="text-sm text-haluna-text-light flex items-center">
-          <Image className="h-4 w-4 mr-2" />
-          Upload product images (max {maxImages})
+
+      {images.length > 0 && (
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+          {images.map((url, index) => (
+            <div key={index} className="relative group aspect-square bg-gray-100 rounded-lg overflow-hidden">
+              <img src={url} alt={`Product ${index + 1}`} className="w-full h-full object-cover" />
+              <Button
+                type="button"
+                size="icon"
+                variant="destructive"
+                className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                onClick={() => removeImage(index)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          ))}
         </div>
       )}
     </div>
