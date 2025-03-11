@@ -1,15 +1,25 @@
+
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Profile } from '@/types/database';
 
 // Define the user type
-export interface User extends Profile {
+export interface User {
+  id: string;
+  email: string;
+  name: string | null;
+  avatar?: string | null;
+  role: 'shopper' | 'business';
   shopName?: string | null;
   shopDescription?: string | null;
   shopCategory?: string | null;
   shopLocation?: string | null;
   shopLogo?: string | null;
+  phone?: string | null;
+  address?: string | null;
+  city?: string | null;
+  state?: string | null;
+  zip?: string | null;
 }
 
 // Define the context type

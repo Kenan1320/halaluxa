@@ -1,5 +1,6 @@
-import { Shop, SellerAccount } from '@/types/database';
 import { supabase } from '@/integrations/supabase/client';
+import { Shop, ShopProduct } from '@/models/shop';
+import { Product } from '@/models/product';
 
 // Mapping database fields to model fields
 export const mapDbShopToModel = (dbShop: any): Shop => {
@@ -76,11 +77,11 @@ export async function createShop(shopData: Partial<Shop>): Promise<Shop | null> 
 }
 
 // Link a user to their shop in the seller_accounts table
-export const linkUserToShop = async (userId: string, shopId: string) => {
+async function linkUserToShop(userId: string, shopId: string) {
   try {
     // Check if entry already exists
     const { data: existingData } = await supabase
-      .from('shop_payment_methods')
+      .from('seller_accounts')
       .select('*')
       .eq('user_id', userId)
       .single();
@@ -88,7 +89,7 @@ export const linkUserToShop = async (userId: string, shopId: string) => {
     if (existingData) {
       // Update existing record
       await supabase
-        .from('shop_payment_methods')
+        .from('seller_accounts')
         .update({ 
           shop_id: shopId, 
           is_active: true 
@@ -97,12 +98,11 @@ export const linkUserToShop = async (userId: string, shopId: string) => {
     } else {
       // Create new record
       await supabase
-        .from('shop_payment_methods')
+        .from('seller_accounts')
         .insert({
           user_id: userId,
           shop_id: shopId,
           is_active: true,
-          method_type: 'bank', // Default value
           created_at: new Date().toISOString()
         });
     }
@@ -112,7 +112,7 @@ export const linkUserToShop = async (userId: string, shopId: string) => {
     console.error('Error linking user to shop:', error);
     return false;
   }
-};
+}
 
 // Upload shop logo to supabase storage
 export async function uploadShopLogo(base64Image: string, ownerId: string) {
