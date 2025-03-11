@@ -329,6 +329,16 @@
 }
 
 /* Extend the mint color header */
+/* Changed to use direct class approach instead of @apply with black: variant */
 .mint-header {
-  @apply bg-[#E4F5F0] dark:bg-gray-900 black:bg-black pb-4;
+  background-color: #E4F5F0;
+  padding-bottom: 1rem;
+}
+
+.dark .mint-header {
+  background-color: #111827; /* dark:bg-gray-900 */
+}
+
+.black .mint-header {
+  background-color: #000000; /* black:bg-black */
 }

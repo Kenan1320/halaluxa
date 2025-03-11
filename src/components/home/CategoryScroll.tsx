@@ -88,6 +88,30 @@ const CategoryScroll = () => {
     return '0 10px 15px rgba(0,0,0,0.1)';
   };
   
+  const getCategoryButtonClasses = () => {
+    const baseClasses = "flex-shrink-0 flex flex-col items-center justify-center rounded-lg shadow-sm p-1.5 border";
+    
+    if (theme === 'dark') {
+      return `${baseClasses} bg-dark-card border-primary/10 shadow-md shadow-primary/5`;
+    } else if (theme === 'black') {
+      return `${baseClasses} bg-black/30 border-primary/10 shadow-md shadow-primary/5`;
+    }
+    
+    return `${baseClasses} bg-card border-border`;
+  };
+  
+  const getViewAllButtonClasses = () => {
+    const baseClasses = "flex-shrink-0 flex flex-col items-center justify-center rounded-lg shadow-sm p-1.5 border";
+    
+    if (theme === 'dark') {
+      return `${baseClasses} bg-primary/20 border-primary/10`;
+    } else if (theme === 'black') {
+      return `${baseClasses} bg-primary/20 border-primary/10`;
+    }
+    
+    return `${baseClasses} bg-primary/10 border-border`;
+  };
+  
   return (
     <div className="relative w-full my-1">
       <div
@@ -97,13 +121,7 @@ const CategoryScroll = () => {
         {categories.map((category) => (
           <motion.button
             key={category.id}
-            className={`flex-shrink-0 flex flex-col items-center justify-center rounded-lg shadow-sm p-1.5 border
-              ${theme === 'dark' 
-                ? 'bg-dark-card border-primary/10 shadow-md shadow-primary/5' 
-                : theme === 'black'
-                  ? 'bg-black/30 border-primary/10 shadow-md shadow-primary/5'
-                  : 'bg-card border-border'
-              }`}
+            className={getCategoryButtonClasses()}
             style={{ minWidth: '64px', height: '64px' }}
             whileHover={{ 
               scale: 1.05, 
@@ -118,13 +136,7 @@ const CategoryScroll = () => {
         ))}
         
         <motion.button
-          className={`flex-shrink-0 flex flex-col items-center justify-center rounded-lg shadow-sm p-1.5 border
-            ${theme === 'dark'
-              ? 'bg-primary/20 border-primary/10'
-              : theme === 'black'
-                ? 'bg-primary/20 border-primary/10'
-                : 'bg-primary/10 border-border'
-            }`}
+          className={getViewAllButtonClasses()}
           style={{ minWidth: '64px', height: '64px' }}
           whileHover={{ 
             scale: 1.05, 
