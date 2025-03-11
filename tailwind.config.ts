@@ -1,9 +1,9 @@
 
-import type { Config } from "tailwindcss"
-import { fontFamily } from "tailwindcss/defaultTheme"
+import type { Config } from "tailwindcss";
+import { fontFamily } from "tailwindcss/defaultTheme";
 
 const config = {
-  darkMode: ["class", "[data-theme='dark']"],
+  darkMode: ["class", '[data-theme="dark"]', '[data-theme="black"]'],
   content: [
     './pages/**/*.{ts,tsx}',
     './components/**/*.{ts,tsx}',
@@ -20,11 +20,6 @@ const config = {
       },
     },
     extend: {
-      fontFamily: {
-        sans: ["Montserrat", ...fontFamily.sans],
-        serif: ["Playfair Display", ...fontFamily.serif],
-        giaza: ["Giaza", ...fontFamily.serif],
-      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -59,23 +54,26 @@ const config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        haluna: {
-          primary: "#2A866A",
-          "primary-light": "#4ECBA5",
-          "primary-dark": "#1A6E55",
-          secondary: "#F8F7F4",
-          accent: "#E4875E",
-          text: "#333333",
-          "text-light": "#757575",
-          border: "#E5E5E5",
+        sidebar: {
+          background: "hsl(var(--sidebar-background))",
+          foreground: "hsl(var(--sidebar-foreground))",
+          primary: "hsl(var(--sidebar-primary))",
+          "primary-foreground": "hsl(var(--sidebar-primary-foreground))",
+          accent: "hsl(var(--sidebar-accent))",
+          "accent-foreground": "hsl(var(--sidebar-accent-foreground))",
+          border: "hsl(var(--sidebar-border))",
+          ring: "hsl(var(--sidebar-ring))",
         },
-        "dark-card": "#1b263b",
-        "black-glow": "rgba(0, 200, 255, 0.2)",
+        'dark-card': "hsl(var(--dark-card))",
       },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+      },
+      fontFamily: {
+        sans: ["Montserrat", "sans-serif", ...fontFamily.sans],
+        serif: ["Playfair Display", "serif"],
       },
       keyframes: {
         "accordion-down": {
@@ -91,27 +89,9 @@ const config = {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
       },
-      boxShadow: {
-        'glow-sm': '0 0 5px rgba(209, 232, 226, 0.3)',
-        'glow-md': '0 0 15px rgba(209, 232, 226, 0.3)',
-        'glow-lg': '0 0 25px rgba(209, 232, 226, 0.3)',
-        'black-glow-sm': '0 0 5px rgba(0, 200, 255, 0.3)',
-        'black-glow-md': '0 0 15px rgba(0, 200, 255, 0.3)',
-        'black-glow-lg': '0 0 25px rgba(0, 200, 255, 0.3)',
-      },
     },
   },
   plugins: [require("tailwindcss-animate")],
-  // Configure variants for the black theme
-  variants: {
-    extend: {
-      backgroundColor: ['dark', 'black'],
-      textColor: ['dark', 'black'],
-      borderColor: ['dark', 'black'],
-      gradientColorStops: ['dark', 'black'],
-      boxShadow: ['dark', 'black'],
-    },
-  },
-} satisfies Config
+} satisfies Config;
 
-export default config
+export default config;

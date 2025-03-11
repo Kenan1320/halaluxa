@@ -17,7 +17,7 @@ export const categories: Category[] = [
     name: 'restaurant',
     displayName: 'Local Halal Restaurants',
     type: 'local',
-    iconSrc: '/lovable-uploads/030fad52-a3a1-41aa-ad2f-bef06cca8b68.png',
+    iconSrc: '/lovable-uploads/92014177-37c2-49a1-b293-a6b6a00bb42c.png',
     description: 'Find halal restaurants near you'
   },
   {
@@ -25,7 +25,7 @@ export const categories: Category[] = [
     name: 'halal-meat',
     displayName: 'Halal Butcher Shops',
     type: 'local',
-    iconSrc: '/lovable-uploads/f4af6440-e335-4b84-a616-d6076b00b7a5.png',
+    iconSrc: '/lovable-uploads/b51a5653-fc5d-40c3-b440-f4857e0d941a.png',
     description: 'Quality halal meat from verified butchers'
   },
   {
@@ -33,7 +33,7 @@ export const categories: Category[] = [
     name: 'groceries',
     displayName: 'Local Halal Grocery Stores',
     type: 'local',
-    iconSrc: '/lovable-uploads/13439860-51af-441a-a5bf-bec747927146.png',
+    iconSrc: '/lovable-uploads/b4faff98-b80c-4dda-896d-194d042d2c94.png',
     description: 'Halal grocery stores in your area'
   },
   {
@@ -41,7 +41,7 @@ export const categories: Category[] = [
     name: 'muslim-therapists',
     displayName: 'Muslim Therapists',
     type: 'local',
-    iconSrc: '/lovable-uploads/bf6c8a77-55e8-4047-846f-a891c184f740.png',
+    iconSrc: '/lovable-uploads/110fd78a-d0e3-439f-bf36-08c57789f6bc.png',
     description: 'Muslim therapists, teachers and professionals coming soon'
   },
   
@@ -51,7 +51,7 @@ export const categories: Category[] = [
     name: 'furniture',
     displayName: 'Home & Furniture Stores',
     type: 'transitioning',
-    iconSrc: '/lovable-uploads/77c7f922-bc4a-4ceb-955a-52106829f38b.png',
+    iconSrc: '/lovable-uploads/120cad29-44ae-4e22-993b-a0daff7febfc.png',
     description: 'Islamic-friendly home and furniture stores'
   },
   {
@@ -59,7 +59,7 @@ export const categories: Category[] = [
     name: 'decorations',
     displayName: 'Islamic Home Decor & Accessories',
     type: 'transitioning',
-    iconSrc: '/lovable-uploads/2d27dc3c-5fab-43d0-bf50-b52095a1f8b8.png',
+    iconSrc: '/lovable-uploads/33c78847-ecc3-4104-94db-d11f6dc381ba.png',
     description: 'Beautiful Islamic home decor and accessories'
   },
   {
@@ -67,7 +67,7 @@ export const categories: Category[] = [
     name: 'arabic-calligraphy',
     displayName: 'Islamic Art & Calligraphy Services',
     type: 'transitioning',
-    iconSrc: '/lovable-uploads/d8a11f52-cfe0-454a-98fa-6125e46054c4.png',
+    iconSrc: '/lovable-uploads/7a395f81-98c5-43f0-9d9a-e34f43f4b8e2.png',
     description: 'Islamic art and Arabic calligraphy services'
   },
   {
@@ -75,7 +75,7 @@ export const categories: Category[] = [
     name: 'gifts',
     displayName: 'Islamic Gifts & Specialty Shops',
     type: 'transitioning',
-    iconSrc: '/lovable-uploads/cb245189-19e4-46c1-906f-e0e4eb7cfc06.png',
+    iconSrc: '/lovable-uploads/fe0ca085-0369-4993-b487-558642d13fab.png',
     description: 'Unique Islamic gifts for all occasions'
   },
   
@@ -85,7 +85,7 @@ export const categories: Category[] = [
     name: 'online-shops',
     displayName: 'Halvi Marketplace',
     type: 'online',
-    iconSrc: '/lovable-uploads/06d6d3d3-6ab3-4bb4-95fc-749de937edb6.png',
+    iconSrc: '/lovable-uploads/c397d648-1149-461e-bc2e-6b91d6c4df2e.png',
     description: 'Shop from our online marketplace'
   },
   {
@@ -93,7 +93,7 @@ export const categories: Category[] = [
     name: 'arabic-language',
     displayName: 'Learn Arabic',
     type: 'online',
-    iconSrc: '/lovable-uploads/29db70bb-32e7-4611-b8b1-938ad8336665.png',
+    iconSrc: '/lovable-uploads/564e654a-06d8-4254-b96b-61e59c789090.png',
     description: 'Resources to learn Arabic language'
   },
   {
@@ -101,7 +101,7 @@ export const categories: Category[] = [
     name: 'hijab',
     displayName: 'Modest Wear - Hijabs',
     type: 'online',
-    iconSrc: '/lovable-uploads/ba3d2108-c51f-4276-b3a8-db34422c4c58.png',
+    iconSrc: '/lovable-uploads/563c4e3d-44f6-4fe3-8d2d-e635e59a42ee.png',
     description: 'Beautiful hijabs and modest wear'
   },
   {
@@ -109,7 +109,7 @@ export const categories: Category[] = [
     name: 'abaya',
     displayName: 'Modest Wear - Abayas & Dresses',
     type: 'online',
-    iconSrc: '/lovable-uploads/b22c451d-63cb-4f96-854a-ffe5bd42587c.png',
+    iconSrc: '/lovable-uploads/1cacc804-a9e3-4e24-b114-6930d4963108.png',
     description: 'Elegant abayas and modest dresses'
   },
   {
@@ -117,7 +117,7 @@ export const categories: Category[] = [
     name: 'thobes',
     displayName: 'Men\'s Islamic Wear - Thobes & Jubbas',
     type: 'online',
-    iconSrc: '/lovable-uploads/5f9fc0dd-c3e7-4777-9ed2-a394922b7cc7.png',
+    iconSrc: '/lovable-uploads/23693524-531d-460f-80d6-4d7de692e370.png',
     description: 'Quality thobes and jubbas for men'
   },
   {
@@ -125,7 +125,7 @@ export const categories: Category[] = [
     name: 'books',
     displayName: 'Islamic Books & more',
     type: 'online',
-    iconSrc: '/lovable-uploads/ry8',
+    iconSrc: '/lovable-uploads/23693524-531d-460f-80d6-4d7de692e370.png',
     description: 'Islamic literature, educational books and more'
   }
 ];

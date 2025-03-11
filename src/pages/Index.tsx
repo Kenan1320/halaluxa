@@ -1,17 +1,11 @@
 
 import { useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { useAuth } from '@/context/AuthContext';
 import SearchBar from '@/components/home/SearchBar';
 import CategoryScroll from '@/components/home/CategoryScroll';
 import NearbyShops from '@/components/home/NearbyShops';
-import Footer from '@/components/layout/Footer';
-import { useTheme } from '@/context/ThemeContext';
 
 const Index = () => {
-  const { isLoggedIn, user } = useAuth();
-  const { theme } = useTheme();
-  
   // Scroll to top on page load
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -41,8 +35,8 @@ const Index = () => {
         </div>
       </section>
       
-      {/* Nearby Shops (right under categories) */}
-      <section className="py-6 bg-background dark:bg-[#0d1b2a] black:bg-black">
+      {/* Nearby Shops (right under categories) - reduced spacing */}
+      <section className="pt-2 pb-6 bg-background dark:bg-[#0d1b2a] black:bg-black">
         <div className="container mx-auto px-4">
           <NearbyShops />
         </div>

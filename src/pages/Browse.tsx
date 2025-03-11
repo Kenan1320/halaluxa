@@ -1,8 +1,9 @@
+
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getShops } from '@/services/shopService';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Store, Star, MapPin, Search, Filter, ArrowUpDown, Clock } from 'lucide-react';
+import { Store, Star, MapPin, Search, ArrowUpDown, Clock } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -89,6 +90,11 @@ const Browse = () => {
     setSearchParams(searchParams);
   };
 
+  // Group categories by type
+  const localCategories = categories.filter(cat => cat.type === 'local');
+  const transitioningCategories = categories.filter(cat => cat.type === 'transitioning');
+  const onlineCategories = categories.filter(cat => cat.type === 'online');
+
   return (
     <div className="container mx-auto px-4 pt-20 pb-10">
       <div className="mb-8">
@@ -109,25 +115,59 @@ const Browse = () => {
           />
         </div>
         
-        <div className="flex flex-wrap gap-2">
-          <Badge 
-            variant={selectedCategory === null ? "default" : "outline"}
-            className="cursor-pointer hover:bg-[#2A866A] hover:text-white dark:hover:bg-[#4ECBA5] black:hover:bg-primary"
-            onClick={() => handleCategoryChange(null)}
-          >
-            All
-          </Badge>
-          
-          {categories.map(category => (
-            <Badge
-              key={category.id}
-              variant={selectedCategory === category.name ? "default" : "outline"}
+        <div>
+          <h3 className="text-sm font-medium mb-2">All Categories</h3>
+          <div className="flex flex-wrap gap-2 mb-4">
+            <Badge 
+              variant={selectedCategory === null ? "default" : "outline"}
               className="cursor-pointer hover:bg-[#2A866A] hover:text-white dark:hover:bg-[#4ECBA5] black:hover:bg-primary"
-              onClick={() => handleCategoryChange(category.name)}
+              onClick={() => handleCategoryChange(null)}
             >
-              {category.displayName}
+              All
             </Badge>
-          ))}
+          </div>
+          
+          <h3 className="text-sm font-medium mb-2">Local</h3>
+          <div className="flex flex-wrap gap-2 mb-4">
+            {localCategories.map(category => (
+              <Badge
+                key={category.id}
+                variant={selectedCategory === category.name ? "default" : "outline"}
+                className="cursor-pointer hover:bg-[#2A866A] hover:text-white dark:hover:bg-[#4ECBA5] black:hover:bg-primary"
+                onClick={() => handleCategoryChange(category.name)}
+              >
+                {category.displayName}
+              </Badge>
+            ))}
+          </div>
+          
+          <h3 className="text-sm font-medium mb-2">In-Store & Online</h3>
+          <div className="flex flex-wrap gap-2 mb-4">
+            {transitioningCategories.map(category => (
+              <Badge
+                key={category.id}
+                variant={selectedCategory === category.name ? "default" : "outline"}
+                className="cursor-pointer hover:bg-[#2A866A] hover:text-white dark:hover:bg-[#4ECBA5] black:hover:bg-primary"
+                onClick={() => handleCategoryChange(category.name)}
+              >
+                {category.displayName}
+              </Badge>
+            ))}
+          </div>
+          
+          <h3 className="text-sm font-medium mb-2">Online</h3>
+          <div className="flex flex-wrap gap-2 mb-4">
+            {onlineCategories.map(category => (
+              <Badge
+                key={category.id}
+                variant={selectedCategory === category.name ? "default" : "outline"}
+                className="cursor-pointer hover:bg-[#2A866A] hover:text-white dark:hover:bg-[#4ECBA5] black:hover:bg-primary"
+                onClick={() => handleCategoryChange(category.name)}
+              >
+                {category.displayName}
+              </Badge>
+            ))}
+          </div>
         </div>
         
         <div className="flex justify-between items-center">
@@ -193,12 +233,14 @@ const Browse = () => {
                     )}
                     
                     <div className="absolute top-3 left-3">
-                      <Badge variant="secondary" className="bg-white/90 dark:bg-black/50 black:bg-black/70 text-gray-800 dark:text-gray-200 black:text-gray-200">
-                        {
-                          categories.find(cat => cat.name === shop.category)?.displayName || 
-                          shop.category
-                        }
-                      </Badge>
+                      {shop.category && (
+                        <Badge variant="secondary" className="bg-white/90 dark:bg-black/50 black:bg-black/70 text-gray-800 dark:text-gray-200 black:text-gray-200">
+                          {
+                            categories.find(cat => cat.name === shop.category)?.displayName || 
+                            shop.category
+                          }
+                        </Badge>
+                      )}
                     </div>
                     
                     {shop.featured && (

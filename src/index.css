@@ -99,7 +99,7 @@
     --dark-glow: 0 0 10px rgba(209, 232, 226, 0.2); /* Soft glow effect */
   }
 
-  .black {
+  [data-theme="black"] {
     --background: 0 0% 0%;
     --foreground: 0 0% 90%;
 
@@ -195,24 +195,24 @@
   }
   
   /* Black mode specific styles */
-  .black {
+  [data-theme="black"] {
     --shadow-color: rgba(0, 0, 0, 0.4);
   }
   
-  .black input,
-  .black select,
-  .black textarea {
+  [data-theme="black"] input,
+  [data-theme="black"] select,
+  [data-theme="black"] textarea {
     @apply bg-secondary border-border text-foreground;
   }
   
-  .black .glass-effect {
+  [data-theme="black"] .glass-effect {
     background: rgba(0, 0, 0, 0.7);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     border: 1px solid rgba(0, 200, 255, 0.1);
   }
   
-  .black .bottom-nav-glass {
+  [data-theme="black"] .bottom-nav-glass {
     background: rgba(0, 0, 0, 0.9);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
@@ -233,7 +233,7 @@
     @apply bg-opacity-5 border-white/5 shadow-lg;
   }
   
-  .black .glass-card {
+  [data-theme="black"] .glass-card {
     @apply bg-black/20 border-white/5 shadow-lg;
   }
   
@@ -254,7 +254,7 @@
     text-shadow: 0 0 5px hsl(var(--primary));
   }
   
-  .black .glow-effect:hover {
+  [data-theme="black"] .glow-effect:hover {
     filter: drop-shadow(0 0 5px hsl(var(--primary)));
     text-shadow: 0 0 5px hsl(var(--primary));
   }
@@ -263,7 +263,7 @@
     box-shadow: 0 0 10px hsl(var(--primary));
   }
   
-  .black .button-glow:hover {
+  [data-theme="black"] .button-glow:hover {
     box-shadow: 0 0 10px hsl(var(--primary));
   }
   
@@ -271,7 +271,7 @@
     @apply text-primary;
   }
   
-  .black .icon-teal {
+  [data-theme="black"] .icon-teal {
     @apply text-primary;
   }
   
@@ -283,7 +283,7 @@
     @apply bg-gradient-to-br from-secondary/20 to-background/10 border-primary/10 shadow-primary/5;
   }
   
-  .black .product-card-empty {
+  [data-theme="black"] .product-card-empty {
     @apply bg-gradient-to-br from-secondary/20 to-background/10 border-primary/10 shadow-primary/5;
   }
   
@@ -330,14 +330,13 @@
 
 /* Extend the mint color header */
 .mint-header {
-  background-color: #E4F5F0;
-  padding-bottom: 1rem;
+  @apply bg-[#E4F5F0] pb-4;
 }
 
 .dark .mint-header {
-  background-color: #111827; /* dark:bg-gray-900 */
+  @apply bg-gray-900;
 }
 
-.black .mint-header {
-  background-color: #000000; /* black:bg-black */
+[data-theme="black"] .mint-header {
+  @apply bg-black;
 }

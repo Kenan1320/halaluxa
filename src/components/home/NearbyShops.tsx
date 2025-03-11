@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { fetchAllShops } from '@/services/shopService';
@@ -8,20 +7,17 @@ import { Link } from 'react-router-dom';
 import { useTheme } from '@/context/ThemeContext';
 import { Shop } from '@/models/shop';
 import { useQuery } from '@tanstack/react-query';
-import { CarIcon, Store, MapPin } from 'lucide-react';
+import { Store } from 'lucide-react';
 
 const NearbyShops = () => {
   const [shops, setShops] = useState<Shop[]>([]);
   const [filteredShops, setFilteredShops] = useState<Shop[]>([]);
-  const [nearbyCity, setNearbyCity] = useState<string>("your area");
-  const [pickupMethod, setPickupMethod] = useState<string | null>(null);
-  const [showPickupOptions, setShowPickupOptions] = useState(false);
-  const { isLocationEnabled, location, getNearbyShops } = useLocation();
+  const { isLocationEnabled, getNearbyShops } = useLocation();
   const { theme } = useTheme();
   const shopLogosRef = useRef<HTMLDivElement>(null);
   
   // Use React Query to fetch shops
-  const { data: fetchedShops, isLoading, error } = useQuery({
+  const { data: fetchedShops, isLoading } = useQuery({
     queryKey: ['shops'],
     queryFn: fetchAllShops
   });
@@ -53,25 +49,6 @@ const NearbyShops = () => {
       }
     }
   }, [fetchedShops]);
-  
-  // Load nearby city and pickup preference
-  useEffect(() => {
-    if (location?.city) {
-      setNearbyCity(location.city);
-    }
-    
-    const savedPickupMethod = localStorage.getItem('pickupMethod');
-    if (savedPickupMethod) {
-      setPickupMethod(savedPickupMethod);
-    }
-  }, [location]);
-  
-  // Set pickup method
-  const handlePickupMethodSelect = (method: string) => {
-    setPickupMethod(method);
-    localStorage.setItem('pickupMethod', method);
-    setShowPickupOptions(false);
-  };
   
   // Enhanced infinite auto-scrolling for shop logos with perspective effect
   useEffect(() => {
@@ -147,54 +124,9 @@ const NearbyShops = () => {
   }
   
   return (
-    <div className="space-y-8">
-      {/* Location and Pickup Options Header */}
-      <div className="flex justify-between items-center mb-4">
-        <div className="flex items-center text-sm font-medium">
-          <MapPin className="h-4 w-4 text-primary mr-1" />
-          <span>Shops near {nearbyCity}</span>
-        </div>
-        
-        <div className="relative">
-          <button 
-            onClick={() => setShowPickupOptions(!showPickupOptions)}
-            className="flex items-center text-sm bg-secondary/70 dark:bg-secondary/40 black:bg-secondary/20 px-3 py-1.5 rounded-full hover:bg-secondary transition-colors"
-          >
-            <span className="mr-2">Pickup?</span>
-            {pickupMethod ? (
-              pickupMethod === 'car' ? (
-                <CarIcon className="h-4 w-4 text-primary" />
-              ) : (
-                <Store className="h-4 w-4 text-primary" />
-              )
-            ) : null}
-          </button>
-          
-          {showPickupOptions && (
-            <div className="absolute right-0 top-10 z-10 bg-card shadow-lg rounded-lg border border-border w-48 overflow-hidden">
-              <div className="p-1">
-                <button 
-                  onClick={() => handlePickupMethodSelect('store')}
-                  className="flex items-center w-full px-3 py-2 text-sm hover:bg-secondary/50 rounded-md transition-colors"
-                >
-                  <Store className="h-4 w-4 mr-2 text-primary" />
-                  <span>Pickup inside store</span>
-                </button>
-                <button 
-                  onClick={() => handlePickupMethodSelect('car')}
-                  className="flex items-center w-full px-3 py-2 text-sm hover:bg-secondary/50 rounded-md transition-colors"
-                >
-                  <CarIcon className="h-4 w-4 mr-2 text-primary" />
-                  <span>Pickup in your car</span>
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-      
+    <div className="space-y-6 mt-0">
       {/* Shop logos flowing horizontally with infinite scroll and perspective effect */}
-      <div className="mb-8 overflow-hidden">
+      <div className="overflow-hidden">
         <div 
           ref={shopLogosRef}
           className="flex overflow-x-auto gap-8 py-6 px-4 scrollbar-hide"
