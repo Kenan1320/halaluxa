@@ -1,11 +1,11 @@
 import { supabase } from '@/integrations/supabase/client';
-import { Product } from '@/models/product';
-import { Shop as ShopModel } from '@/models/shop';
-import { Shop } from '@/types/database';
-import { ShopProduct } from '@/models/shop';
+import { useToast } from '@/hooks/use-toast';
+import { Json } from '@/integrations/supabase/types';
+import { useLocation } from 'react-router-dom';
+import { Shop, ShopProduct } from '@/models/shop';
 
-// Export the Shop type from database.ts
-export { Shop } from '@/types/database';
+// Re-export shop types with 'export type' syntax
+export type { Shop } from '@/models/shop';
 
 // Mapping database fields to model fields
 export const mapDbShopToModel = (dbShop: any): Shop => {
