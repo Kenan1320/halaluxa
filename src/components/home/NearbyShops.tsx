@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { fetchAllShops } from '@/services/shopService';
@@ -81,7 +82,7 @@ const NearbyShops = () => {
     let animationId: number;
     let isPaused = false;
 
-    const scrollSpeed = 1.2; // Increased speed as requested
+    const scrollSpeed = 1.5; // Increased speed as requested
 
     const autoScroll = () => {
       if (isPaused) {
@@ -91,14 +92,15 @@ const NearbyShops = () => {
 
       if (logoContainer) {
         scrollAmount += scrollSpeed;
-        logoContainer.scrollLeft = scrollAmount;
-
-        // Check if we've scrolled to the end
-        if (scrollAmount >= logoContainer.scrollWidth - logoContainer.clientWidth) {
-          // Reset to beginning without stopping
+        
+        // Only reset when we've scrolled all the way through
+        // This creates a continuous scroll effect from right to left
+        if (scrollAmount >= logoContainer.scrollWidth / 3) {
+          // Jump back to first third without visual jump
           scrollAmount = 0;
-          logoContainer.scrollLeft = 0;
         }
+        
+        logoContainer.scrollLeft = scrollAmount;
       }
 
       animationId = requestAnimationFrame(autoScroll);
@@ -132,7 +134,7 @@ const NearbyShops = () => {
           {[1, 2, 3, 4].map((i) => (
             <div 
               key={i} 
-              className="flex-shrink-0 w-64 h-56 bg-muted rounded-lg animate-pulse dark:bg-muted/50"
+              className="flex-shrink-0 w-64 h-56 bg-muted rounded-lg animate-pulse dark:bg-muted/50 black:bg-muted/30"
             />
           ))}
         </div>
@@ -156,7 +158,7 @@ const NearbyShops = () => {
         <div className="relative">
           <button 
             onClick={() => setShowPickupOptions(!showPickupOptions)}
-            className="flex items-center text-sm bg-secondary/70 dark:bg-secondary/40 px-3 py-1.5 rounded-full hover:bg-secondary transition-colors"
+            className="flex items-center text-sm bg-secondary/70 dark:bg-secondary/40 black:bg-secondary/20 px-3 py-1.5 rounded-full hover:bg-secondary transition-colors"
           >
             <span className="mr-2">Pickup?</span>
             {pickupMethod ? (
@@ -199,41 +201,45 @@ const NearbyShops = () => {
           style={{ scrollBehavior: 'smooth' }}
         >
           {/* Triple the shops for smoother infinite scrolling */}
-          {[...filteredShops, ...filteredShops, ...filteredShops].map((shop, index) => (
-            <Link to={`/shop/${shop.id}`} key={`${shop.id}-${index}`}>
-              <motion.div 
-                className="flex-shrink-0 flex flex-col items-center justify-center perspective-effect"
-                initial={{ scale: index % filteredShops.length === Math.floor(filteredShops.length / 2) ? 1.1 : 0.9 }}
-                whileHover={{ 
-                  scale: 1.1,
-                  boxShadow: theme === 'dark' ? '0 0 10px rgba(209, 232, 226, 0.2)' : '0 4px 12px rgba(0,0,0,0.1)'
-                }}
-                whileTap={{ scale: 0.95 }}
-                style={{
-                  transform: index % filteredShops.length === Math.floor(filteredShops.length / 2) 
-                    ? 'scale(1.1) translateZ(20px)' 
-                    : 'scale(0.9) translateZ(0px)'
-                }}
-              >
-                <div className="w-16 h-16 rounded-full overflow-hidden bg-card shadow-sm mb-2">
-                  {shop.logo_url ? (
-                    <img 
-                      src={shop.logo_url} 
-                      alt={`${shop.name} logo`}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-primary/10 flex items-center justify-center">
-                      <span className="text-sm font-medium text-primary">
-                        {shop.name.substring(0, 2).toUpperCase()}
-                      </span>
-                    </div>
-                  )}
-                </div>
-                <p className="text-xs font-medium text-center">{shop.name}</p>
-              </motion.div>
-            </Link>
-          ))}
+          {[...filteredShops, ...filteredShops, ...filteredShops].map((shop, index) => {
+            // Calculate if this is the center shop based on index
+            const isCenter = index % filteredShops.length === Math.floor(filteredShops.length / 2);
+            
+            return (
+              <Link to={`/shop/${shop.id}`} key={`${shop.id}-${index}`}>
+                <motion.div 
+                  className="flex-shrink-0 flex flex-col items-center justify-center perspective-effect"
+                  whileHover={{ 
+                    scale: 1.1,
+                    boxShadow: theme === 'dark' ? '0 0 10px rgba(209, 232, 226, 0.2)' : 
+                              theme === 'black' ? '0 0 10px rgba(0, 200, 255, 0.2)' :
+                              '0 4px 12px rgba(0,0,0,0.1)'
+                  }}
+                  style={{
+                    transform: `scale(${isCenter ? 1.1 : 0.9}) translateZ(${isCenter ? 20 : 0}px)`,
+                    transition: 'all 0.5s ease-out'
+                  }}
+                >
+                  <div className="w-16 h-16 rounded-full overflow-hidden bg-card shadow-sm mb-2">
+                    {shop.logo_url ? (
+                      <img 
+                        src={shop.logo_url} 
+                        alt={`${shop.name} logo`}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-primary/10 flex items-center justify-center">
+                        <span className="text-sm font-medium text-primary">
+                          {shop.name.substring(0, 2).toUpperCase()}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-xs font-medium text-center">{shop.name}</p>
+                </motion.div>
+              </Link>
+            );
+          })}
         </div>
       </div>
 
@@ -243,10 +249,12 @@ const NearbyShops = () => {
           {/* Shop header with name and logo - now animated and clickable */}
           <Link to={`/shop/${shop.id}`} className="group flex items-center gap-3 mb-4">
             <motion.div 
-              className="w-10 h-10 rounded-full overflow-hidden bg-card shadow-sm flex items-center justify-center dark:shadow-md dark:shadow-primary/5"
+              className="w-10 h-10 rounded-full overflow-hidden bg-card shadow-sm flex items-center justify-center dark:shadow-md dark:shadow-primary/5 black:shadow-md black:shadow-primary/5"
               whileHover={{ 
                 scale: 1.1,
-                boxShadow: theme === 'dark' ? '0 0 10px rgba(209, 232, 226, 0.2)' : '0 4px 12px rgba(0,0,0,0.1)'
+                boxShadow: theme === 'dark' ? '0 0 10px rgba(209, 232, 226, 0.2)' : 
+                          theme === 'black' ? '0 0 10px rgba(0, 200, 255, 0.2)' :
+                          '0 4px 12px rgba(0,0,0,0.1)'
               }}
               whileTap={{ scale: 0.95 }}
               transition={{ type: "spring", stiffness: 400, damping: 10 }}
@@ -258,7 +266,7 @@ const NearbyShops = () => {
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <div className="w-full h-full bg-primary/10 flex items-center justify-center dark:bg-primary/20">
+                <div className="w-full h-full bg-primary/10 flex items-center justify-center dark:bg-primary/20 black:bg-primary/20">
                   <span className="text-xs font-medium text-primary">
                     {shop.name.substring(0, 2).toUpperCase()}
                   </span>

@@ -8,7 +8,6 @@ const SplashScreen = ({ onFinish }: { onFinish: () => void }) => {
   const [showWord1, setShowWord1] = useState(false);
   const [showWord2, setShowWord2] = useState(false);
   const [showWord3, setShowWord3] = useState(false);
-  const [doorOpen, setDoorOpen] = useState(false);
   
   // Animation sequence timing
   useEffect(() => {
@@ -16,11 +15,10 @@ const SplashScreen = ({ onFinish }: { onFinish: () => void }) => {
     const timer2 = setTimeout(() => setShowWord1(true), 1000);
     const timer3 = setTimeout(() => setShowWord2(true), 1700);
     const timer4 = setTimeout(() => setShowWord3(true), 2400);
-    const timer5 = setTimeout(() => setDoorOpen(true), 3000);
-    const timer6 = setTimeout(() => {
+    const timer5 = setTimeout(() => {
       setVisible(false);
       setTimeout(() => onFinish(), 300); // Call onFinish after animation completes
-    }, 4000);
+    }, 3500);
     
     return () => {
       clearTimeout(timer1);
@@ -28,7 +26,6 @@ const SplashScreen = ({ onFinish }: { onFinish: () => void }) => {
       clearTimeout(timer3);
       clearTimeout(timer4);
       clearTimeout(timer5);
-      clearTimeout(timer6);
     };
   }, [onFinish]);
   
@@ -36,22 +33,22 @@ const SplashScreen = ({ onFinish }: { onFinish: () => void }) => {
     <AnimatePresence>
       {visible && (
         <motion.div 
-          className="fixed inset-0 flex flex-col items-center justify-center bg-[#E4F5F0] dark:bg-[#0d1b2a] z-50"
+          className="fixed inset-0 flex flex-col items-center justify-center bg-[#E4F5F0] dark:bg-[#0d1b2a] black:bg-black z-50"
           initial={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.3 }}
         >
           <div className="flex flex-col items-center">
-            {/* Logo with digital village icon and Halvi text */}
+            {/* Minimalist Mall Logo */}
             <motion.div 
               className="flex flex-col items-center mb-6"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, ease: "easeOut" }}
             >
-              <div className="relative w-28 h-28 mb-3">
+              <div className="relative w-24 h-24 mb-3">
                 <motion.div
-                  className="absolute inset-0 bg-[#2A866A]/20 dark:bg-[#4ECBA5]/10 rounded-full"
+                  className="absolute inset-0 bg-[#2A866A]/20 dark:bg-[#4ECBA5]/10 black:bg-[#00C8FF]/10 rounded-full"
                   animate={{ 
                     scale: [1, 1.1, 1],
                     opacity: [0.5, 0.8, 0.5]
@@ -62,30 +59,36 @@ const SplashScreen = ({ onFinish }: { onFinish: () => void }) => {
                     repeatType: "mirror"
                   }}
                 />
-                <motion.div
-                  className="w-20 h-20 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                
+                {/* Minimalist Mall Icon */}
+                <motion.svg 
+                  viewBox="0 0 100 100" 
+                  className="w-full h-full absolute top-0 left-0"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.3, duration: 0.8 }}
                 >
-                  <svg viewBox="0 0 200 200" fill="none" className="w-full h-full">
-                    <circle cx="100" cy="100" r="90" stroke="#2A866A" strokeWidth="4" fill="none" />
-                    <path d="M100 20 L100 50" stroke="#2A866A" strokeWidth="4" />
-                    <path d="M100 150 L100 180" stroke="#2A866A" strokeWidth="4" />
-                    <path d="M20 100 L50 100" stroke="#2A866A" strokeWidth="4" />
-                    <path d="M150 100 L180 100" stroke="#2A866A" strokeWidth="4" />
-                    <circle cx="100" cy="100" r="40" fill="#2A866A" />
-                    <rect x="80" y="80" width="40" height="40" fill="#2A866A" />
-                    <path d="M70 100 L130 100" stroke="white" strokeWidth="2" />
-                    <path d="M100 70 L100 130" stroke="white" strokeWidth="2" />
-                    <circle cx="85" cy="85" r="5" fill="white" />
-                    <circle cx="115" cy="85" r="5" fill="white" />
-                    <path d="M85 115 Q100 125 115 115" stroke="white" strokeWidth="2" fill="none" />
-                  </svg>
-                </motion.div>
+                  {/* Background Circle */}
+                  <circle cx="50" cy="50" r="40" fill="none" stroke="#2A866A" strokeWidth="2" className="dark:stroke-[#4ECBA5] black:stroke-[#00C8FF]" />
+                  
+                  {/* Mall Building */}
+                  <rect x="30" y="35" width="40" height="40" fill="none" stroke="#2A866A" strokeWidth="2" rx="2" className="dark:stroke-[#4ECBA5] black:stroke-[#00C8FF]" />
+                  
+                  {/* Windows */}
+                  <rect x="35" y="40" width="8" height="8" fill="#2A866A" className="dark:fill-[#4ECBA5] black:fill-[#00C8FF]" rx="1" />
+                  <rect x="46" y="40" width="8" height="8" fill="#2A866A" className="dark:fill-[#4ECBA5] black:fill-[#00C8FF]" rx="1" />
+                  <rect x="57" y="40" width="8" height="8" fill="#2A866A" className="dark:fill-[#4ECBA5] black:fill-[#00C8FF]" rx="1" />
+                  
+                  <rect x="35" y="52" width="8" height="8" fill="#2A866A" className="dark:fill-[#4ECBA5] black:fill-[#00C8FF]" rx="1" />
+                  <rect x="57" y="52" width="8" height="8" fill="#2A866A" className="dark:fill-[#4ECBA5] black:fill-[#00C8FF]" rx="1" />
+                  
+                  {/* Door */}
+                  <rect x="46" y="52" width="8" height="16" fill="#2A866A" className="dark:fill-[#4ECBA5] black:fill-[#00C8FF]" rx="1" />
+                  
+                  {/* Roof */}
+                  <path d="M 28 35 L 50 25 L 72 35" fill="none" stroke="#2A866A" strokeWidth="2" className="dark:stroke-[#4ECBA5] black:stroke-[#00C8FF]" />
+                </motion.svg>
               </div>
-              <h1 className="text-6xl font-giaza font-bold text-[#2A866A] dark:text-[#4ECBA5] tracking-wide">
-                Halvi
-              </h1>
             </motion.div>
             
             {/* Tagline with word-by-word animation */}
@@ -93,7 +96,7 @@ const SplashScreen = ({ onFinish }: { onFinish: () => void }) => {
               {showTagline && (
                 <>
                   <motion.span 
-                    className="text-lg text-[#2A866A] dark:text-[#4ECBA5] opacity-0 font-medium tracking-wide"
+                    className="text-lg text-[#2A866A] dark:text-[#4ECBA5] black:text-[#00C8FF] opacity-0 font-medium tracking-wide"
                     initial={{ opacity: 0 }}
                     animate={showWord1 ? { opacity: 1 } : {}}
                     transition={{ duration: 0.5 }}
@@ -101,7 +104,7 @@ const SplashScreen = ({ onFinish }: { onFinish: () => void }) => {
                     The
                   </motion.span>
                   <motion.span 
-                    className="text-lg text-[#2A866A] dark:text-[#4ECBA5] opacity-0 font-medium tracking-wide"
+                    className="text-lg text-[#2A866A] dark:text-[#4ECBA5] black:text-[#00C8FF] opacity-0 font-medium tracking-wide"
                     initial={{ opacity: 0 }}
                     animate={showWord2 ? { opacity: 1 } : {}}
                     transition={{ duration: 0.5 }}
@@ -109,7 +112,7 @@ const SplashScreen = ({ onFinish }: { onFinish: () => void }) => {
                     Halal
                   </motion.span>
                   <motion.span 
-                    className="text-lg text-[#2A866A] dark:text-[#4ECBA5] opacity-0 font-medium tracking-wide"
+                    className="text-lg text-[#2A866A] dark:text-[#4ECBA5] black:text-[#00C8FF] opacity-0 font-medium tracking-wide"
                     initial={{ opacity: 0 }}
                     animate={showWord3 ? { opacity: 1 } : {}}
                     transition={{ duration: 0.5 }}
@@ -119,52 +122,6 @@ const SplashScreen = ({ onFinish }: { onFinish: () => void }) => {
                 </>
               )}
             </div>
-            
-            {/* Door Animation */}
-            <motion.div 
-              className="mt-12 w-24 h-32 relative"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.5, duration: 0.5 }}
-            >
-              {/* Door frame */}
-              <div className="absolute inset-0 bg-[#2A866A]/20 dark:bg-[#4ECBA5]/20 rounded-t-lg border-2 border-[#2A866A]/30 dark:border-[#4ECBA5]/30"></div>
-              
-              {/* Left door */}
-              <motion.div 
-                className="absolute top-0 left-0 w-1/2 h-full bg-[#2A866A] dark:bg-[#4ECBA5] rounded-tl-lg border-r border-[#E4F5F0]/20 dark:border-[#0d1b2a]/20"
-                initial={{ rotateY: 0 }}
-                animate={{ rotateY: doorOpen ? -85 : 0 }}
-                transition={{ 
-                  duration: 1, 
-                  ease: "easeInOut",
-                  delay: 0.2
-                }}
-                style={{ transformOrigin: "left center" }}
-              />
-              
-              {/* Right door */}
-              <motion.div 
-                className="absolute top-0 right-0 w-1/2 h-full bg-[#2A866A] dark:bg-[#4ECBA5] rounded-tr-lg border-l border-[#E4F5F0]/20 dark:border-[#0d1b2a]/20"
-                initial={{ rotateY: 0 }}
-                animate={{ rotateY: doorOpen ? 85 : 0 }}
-                transition={{ 
-                  duration: 1, 
-                  ease: "easeInOut",
-                  delay: 0.2
-                }}
-                style={{ transformOrigin: "right center" }}
-              />
-              
-              {/* Light from inside when door opens */}
-              <motion.div 
-                className="absolute inset-0 bg-white dark:bg-[#E4F5F0] rounded-t-lg"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: doorOpen ? 1 : 0 }}
-                transition={{ duration: 0.5, delay: 0.7 }}
-                style={{ zIndex: -1 }}
-              />
-            </motion.div>
           </div>
         </motion.div>
       )}

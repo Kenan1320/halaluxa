@@ -16,9 +16,9 @@ const Index = () => {
   }, []);
 
   return (
-    <div className="min-h-screen pt-16 pb-0 bg-background dark:bg-[#0d1b2a]">
-      {/* Search bar header section */}
-      <section className="relative py-6 md:py-8 overflow-hidden border-b border-border">
+    <div className="min-h-screen pt-16 pb-0 bg-background dark:bg-[#0d1b2a] black:bg-black">
+      {/* Search bar header section - mint color extends down to include categories */}
+      <section className="relative py-6 md:py-8 overflow-hidden bg-[#E4F5F0] dark:bg-gray-900 black:bg-black border-b border-border">
         <div className="container mx-auto px-4">
           {/* Search bar */}
           <motion.div 
@@ -32,15 +32,15 @@ const Index = () => {
         </div>
       </section>
       
-      {/* Categories flowing right under search */}
-      <section className="py-4 bg-background dark:bg-[#0d1b2a]">
+      {/* Categories flowing right under search - still in mint color area */}
+      <section className="py-4 bg-[#E4F5F0] dark:bg-gray-900 black:bg-black">
         <div className="container mx-auto px-4">
           <CategoryScroll />
         </div>
       </section>
       
       {/* Nearby Shops (right under categories) */}
-      <section className="py-6 bg-background dark:bg-[#0d1b2a]">
+      <section className="py-6 bg-background dark:bg-[#0d1b2a] black:bg-black">
         <div className="container mx-auto px-4">
           <NearbyShops />
         </div>

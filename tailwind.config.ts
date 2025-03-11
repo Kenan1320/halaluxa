@@ -3,7 +3,7 @@ import type { Config } from "tailwindcss"
 import { fontFamily } from "tailwindcss/defaultTheme"
 
 const config = {
-  darkMode: ["class"],
+  darkMode: ["class", "[data-theme='dark']"],
   content: [
     './pages/**/*.{ts,tsx}',
     './components/**/*.{ts,tsx}',
@@ -70,6 +70,7 @@ const config = {
           border: "#E5E5E5",
         },
         "dark-card": "#1b263b",
+        "black-glow": "rgba(0, 200, 255, 0.2)",
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -94,6 +95,9 @@ const config = {
         'glow-sm': '0 0 5px rgba(209, 232, 226, 0.3)',
         'glow-md': '0 0 15px rgba(209, 232, 226, 0.3)',
         'glow-lg': '0 0 25px rgba(209, 232, 226, 0.3)',
+        'black-glow-sm': '0 0 5px rgba(0, 200, 255, 0.3)',
+        'black-glow-md': '0 0 15px rgba(0, 200, 255, 0.3)',
+        'black-glow-lg': '0 0 25px rgba(0, 200, 255, 0.3)',
       },
     },
   },

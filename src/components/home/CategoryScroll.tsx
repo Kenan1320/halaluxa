@@ -39,8 +39,8 @@ const CategoryScroll = () => {
     
     let animationId: number;
     let scrollPosition = 0;
-    let scrollDirection = 1;
     let isPaused = false;
+    const scrollDirection = 1; // Always scroll in one direction (left to right)
     
     const autoScroll = () => {
       if (!scrollContainer || isPaused) {
@@ -51,10 +51,9 @@ const CategoryScroll = () => {
       scrollPosition += 0.5 * scrollDirection;
       scrollContainer.scrollLeft = scrollPosition;
       
+      // Reset when reaching the end to create infinite loop
       if (scrollPosition >= scrollContainer.scrollWidth - scrollContainer.clientWidth) {
-        scrollDirection = -1;
-      } else if (scrollPosition <= 0) {
-        scrollDirection = 1;
+        scrollPosition = 0;
       }
       
       animationId = requestAnimationFrame(autoScroll);
@@ -92,11 +91,13 @@ const CategoryScroll = () => {
         {categories.map((category) => (
           <motion.button
             key={category.id}
-            className="flex-shrink-0 flex flex-col items-center justify-center bg-card rounded-lg shadow-sm p-1.5 border border-border dark:border-primary/10 dark:bg-dark-card dark:shadow-md dark:shadow-primary/5"
+            className="flex-shrink-0 flex flex-col items-center justify-center bg-card rounded-lg shadow-sm p-1.5 border border-border dark:border-primary/10 dark:bg-dark-card dark:shadow-md dark:shadow-primary/5 black:border-primary/10 black:bg-black/30 black:shadow-md black:shadow-primary/5"
             style={{ minWidth: '64px', height: '64px' }}
             whileHover={{ 
               scale: 1.05, 
-              boxShadow: theme === 'dark' ? '0 0 12px rgba(209, 232, 226, 0.2)' : '0 10px 15px rgba(0,0,0,0.1)' 
+              boxShadow: theme === 'dark' ? '0 0 12px rgba(209, 232, 226, 0.2)' : 
+                         theme === 'black' ? '0 0 12px rgba(0, 200, 255, 0.2)' :
+                         '0 10px 15px rgba(0,0,0,0.1)' 
             }}
             whileTap={{ scale: 0.95 }}
             onClick={() => handleCategoryClick(category.name)}
@@ -107,11 +108,13 @@ const CategoryScroll = () => {
         ))}
         
         <motion.button
-          className="flex-shrink-0 flex flex-col items-center justify-center bg-primary/10 dark:bg-primary/20 rounded-lg shadow-sm p-1.5 border border-border dark:border-primary/10"
+          className="flex-shrink-0 flex flex-col items-center justify-center bg-primary/10 dark:bg-primary/20 black:bg-primary/20 rounded-lg shadow-sm p-1.5 border border-border dark:border-primary/10 black:border-primary/10"
           style={{ minWidth: '64px', height: '64px' }}
           whileHover={{ 
             scale: 1.05, 
-            boxShadow: theme === 'dark' ? '0 0 12px rgba(209, 232, 226, 0.2)' : '0 10px 15px rgba(0,0,0,0.1)' 
+            boxShadow: theme === 'dark' ? '0 0 12px rgba(209, 232, 226, 0.2)' : 
+                       theme === 'black' ? '0 0 12px rgba(0, 200, 255, 0.2)' :
+                       '0 10px 15px rgba(0,0,0,0.1)'
           }}
           whileTap={{ scale: 0.95 }}
           onClick={() => navigate('/categories')}
