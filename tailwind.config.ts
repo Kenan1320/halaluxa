@@ -102,6 +102,16 @@ const config = {
     },
   },
   plugins: [require("tailwindcss-animate")],
+  // Add this variant configuration to support the black: variant
+  variants: {
+    extend: {
+      backgroundColor: ['black'],
+      textColor: ['black'],
+      borderColor: ['black'],
+      gradientColorStops: ['black'],
+      boxShadow: ['black'],
+    },
+  },
 } satisfies Config
 
 export default config

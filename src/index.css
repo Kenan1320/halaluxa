@@ -226,7 +226,15 @@
 
 @layer components {
   .glass-card {
-    @apply backdrop-blur-md bg-white/70 border border-white/20 shadow-sm dark:bg-opacity-5 dark:border-white/5 dark:shadow-lg black:bg-black/20 black:border-white/5 black:shadow-lg;
+    @apply backdrop-blur-md bg-white/70 border border-white/20 shadow-sm;
+  }
+  
+  .dark .glass-card {
+    @apply bg-opacity-5 border-white/5 shadow-lg;
+  }
+  
+  .black .glass-card {
+    @apply bg-black/20 border-white/5 shadow-lg;
   }
   
   .hover-scale {
@@ -248,7 +256,7 @@
   
   .black .glow-effect:hover {
     filter: drop-shadow(0 0 5px hsl(var(--primary)));
-    text-shadow: 0 0 5px hsl(var(--primary)));
+    text-shadow: 0 0 5px hsl(var(--primary));
   }
   
   .dark .button-glow:hover {
@@ -269,8 +277,14 @@
   
   .product-card-empty {
     @apply relative flex flex-col items-center justify-center p-6 rounded-lg bg-gradient-to-br from-secondary/40 to-secondary/10 border border-border shadow-sm overflow-hidden;
-    @apply dark:from-secondary/20 dark:to-background/10 dark:border-primary/10 dark:shadow-primary/5;
-    @apply black:from-secondary/20 black:to-background/10 black:border-primary/10 black:shadow-primary/5;
+  }
+  
+  .dark .product-card-empty {
+    @apply bg-gradient-to-br from-secondary/20 to-background/10 border-primary/10 shadow-primary/5;
+  }
+  
+  .black .product-card-empty {
+    @apply bg-gradient-to-br from-secondary/20 to-background/10 border-primary/10 shadow-primary/5;
   }
   
   /* 3D perspective effect for shop logos */

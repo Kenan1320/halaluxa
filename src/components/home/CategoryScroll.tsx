@@ -82,6 +82,12 @@ const CategoryScroll = () => {
     navigate(`/browse?category=${encodeURIComponent(category)}`);
   };
   
+  const getBoxShadow = () => {
+    if (theme === 'dark') return '0 0 12px rgba(209, 232, 226, 0.2)';
+    if (theme === 'black') return '0 0 12px rgba(0, 200, 255, 0.2)';
+    return '0 10px 15px rgba(0,0,0,0.1)';
+  };
+  
   return (
     <div className="relative w-full my-1">
       <div
@@ -91,13 +97,17 @@ const CategoryScroll = () => {
         {categories.map((category) => (
           <motion.button
             key={category.id}
-            className="flex-shrink-0 flex flex-col items-center justify-center bg-card rounded-lg shadow-sm p-1.5 border border-border dark:border-primary/10 dark:bg-dark-card dark:shadow-md dark:shadow-primary/5 black:border-primary/10 black:bg-black/30 black:shadow-md black:shadow-primary/5"
+            className={`flex-shrink-0 flex flex-col items-center justify-center rounded-lg shadow-sm p-1.5 border
+              ${theme === 'dark' 
+                ? 'bg-dark-card border-primary/10 shadow-md shadow-primary/5' 
+                : theme === 'black'
+                  ? 'bg-black/30 border-primary/10 shadow-md shadow-primary/5'
+                  : 'bg-card border-border'
+              }`}
             style={{ minWidth: '64px', height: '64px' }}
             whileHover={{ 
               scale: 1.05, 
-              boxShadow: theme === 'dark' ? '0 0 12px rgba(209, 232, 226, 0.2)' : 
-                         theme === 'black' ? '0 0 12px rgba(0, 200, 255, 0.2)' :
-                         '0 10px 15px rgba(0,0,0,0.1)' 
+              boxShadow: getBoxShadow()
             }}
             whileTap={{ scale: 0.95 }}
             onClick={() => handleCategoryClick(category.name)}
@@ -108,13 +118,17 @@ const CategoryScroll = () => {
         ))}
         
         <motion.button
-          className="flex-shrink-0 flex flex-col items-center justify-center bg-primary/10 dark:bg-primary/20 black:bg-primary/20 rounded-lg shadow-sm p-1.5 border border-border dark:border-primary/10 black:border-primary/10"
+          className={`flex-shrink-0 flex flex-col items-center justify-center rounded-lg shadow-sm p-1.5 border
+            ${theme === 'dark'
+              ? 'bg-primary/20 border-primary/10'
+              : theme === 'black'
+                ? 'bg-primary/20 border-primary/10'
+                : 'bg-primary/10 border-border'
+            }`}
           style={{ minWidth: '64px', height: '64px' }}
           whileHover={{ 
             scale: 1.05, 
-            boxShadow: theme === 'dark' ? '0 0 12px rgba(209, 232, 226, 0.2)' : 
-                       theme === 'black' ? '0 0 12px rgba(0, 200, 255, 0.2)' :
-                       '0 10px 15px rgba(0,0,0,0.1)'
+            boxShadow: getBoxShadow()
           }}
           whileTap={{ scale: 0.95 }}
           onClick={() => navigate('/categories')}

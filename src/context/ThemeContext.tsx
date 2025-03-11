@@ -9,14 +9,14 @@ type ThemeContextType = {
 };
 
 const ThemeContext = createContext<ThemeContextType>({
-  theme: 'light', // Changed default to light
+  theme: 'light',
   setTheme: () => {},
 });
 
 export const useTheme = () => useContext(ThemeContext);
 
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
-  const [theme, setTheme] = useState<ThemeType>('light'); // Changed default to light
+  const [theme, setTheme] = useState<ThemeType>('light');
 
   // Initialize theme on mount
   useEffect(() => {
