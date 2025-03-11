@@ -102,9 +102,9 @@ const NearbyShops = () => {
         initial="hidden"
         animate="visible"
       >
-        {shops.map((shop) => (
+        {shops.map((shop, index) => (
           <motion.div key={shop.id} variants={itemVariants}>
-            <ShopCard shop={shop} />
+            <ShopCard shop={shop} index={index} minimal={true} />
           </motion.div>
         ))}
       </motion.div>
