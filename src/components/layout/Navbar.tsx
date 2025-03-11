@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X, Search, ShoppingCart, User, MapPin, Store, AlertCircle } from 'lucide-react';
@@ -10,6 +9,7 @@ import { useLocation as useLocationContext } from '@/context/LocationContext';
 import { motion } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
 import { getShopById, getMainShop, Shop } from '@/services/shopService';
+import { ThemeToggle } from '@/components/theme/ThemeToggle';
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -24,12 +24,10 @@ const Navbar = () => {
   const { isLocationEnabled, requestLocation, location: userLocation } = useLocationContext();
   const { toast } = useToast();
   
-  // Close mobile menu when route changes
   useEffect(() => {
     setMobileMenuOpen(false);
   }, [location]);
   
-  // Handle scroll for navbar styles
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
@@ -39,7 +37,6 @@ const Navbar = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
   
-  // Load main shop from localStorage
   useEffect(() => {
     const loadMainShop = async () => {
       try {
@@ -73,11 +70,10 @@ const Navbar = () => {
 
   return (
     <header 
-      className="fixed top-0 w-full z-50 transition-all duration-300 bg-[#E4F5F0]"
+      className="fixed top-0 w-full z-50 transition-all duration-300 bg-background border-b border-border"
       style={{ height: '70px' }}
     >
       <div className="container mx-auto px-4 h-full flex justify-between items-center">
-        {/* Menu Button */}
         <button
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           className="p-2 text-[#2A866A]"
@@ -90,14 +86,11 @@ const Navbar = () => {
           )}
         </button>
         
-        {/* Logo - with advanced animation */}
         <div className="flex items-center ml-3 mr-auto">
           <Link to="/" className="flex items-center">
             <span className="text-lg font-serif font-bold text-[#2A866A]">Haluna</span>
             
-            {/* Advanced animated logo design */}
             <div className="relative ml-1">
-              {/* Main orange ball */}
               <motion.div 
                 className="w-5 h-5 bg-[#E4875E] rounded-full"
                 animate={{
@@ -110,7 +103,6 @@ const Navbar = () => {
                 }}
               />
               
-              {/* Orbiting green ball */}
               <motion.div
                 className="w-2 h-2 bg-[#2A866B] rounded-full absolute"
                 animate={{
@@ -127,9 +119,9 @@ const Navbar = () => {
           </Link>
         </div>
         
-        {/* Right side buttons */}
         <div className="flex items-center gap-4">
-          {/* Location Button */}
+          <ThemeToggle />
+          
           <motion.button 
             onClick={requestLocation}
             className="p-2 rounded-full text-[#2A866A] hover:bg-[#d5efe8] transition-colors"
@@ -139,7 +131,6 @@ const Navbar = () => {
             <MapPin className="h-6 w-6" />
           </motion.button>
           
-          {/* Main Shop Button */}
           <motion.button 
             onClick={handleMainShopClick}
             className="relative p-2 rounded-full text-[#2A866A] hover:bg-[#d5efe8] transition-colors"
@@ -184,7 +175,6 @@ const Navbar = () => {
             )}
           </motion.button>
           
-          {/* Select Shops Button */}
           <motion.div
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -197,7 +187,6 @@ const Navbar = () => {
             </Link>
           </motion.div>
           
-          {/* Cart Button */}
           <motion.div
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -215,7 +204,6 @@ const Navbar = () => {
             </Link>
           </motion.div>
           
-          {/* User Profile */}
           <motion.div
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -230,7 +218,6 @@ const Navbar = () => {
         </div>
       </div>
       
-      {/* Mobile menu */}
       {mobileMenuOpen && (
         <div className="container mx-auto px-4 py-4 bg-white border-t border-gray-100">
           <div className="md:hidden mb-4">
@@ -272,7 +259,6 @@ const Navbar = () => {
             >
               <span>Browse</span>
             </Link>
-            {/* Select Shops link */}
             <Link
               to="/select-shops"
               className={`flex items-center gap-3 p-3 rounded-lg transition ${

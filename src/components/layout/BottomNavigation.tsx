@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Home, Store, Search, ShoppingCart, User } from 'lucide-react';
@@ -13,7 +12,6 @@ const BottomNavigation = () => {
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
 
-  // Hide navigation when scrolling down, show when scrolling up
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
@@ -31,7 +29,6 @@ const BottomNavigation = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [lastScrollY]);
 
-  // Define navigation items
   const navItems = [
     {
       label: 'Home',
@@ -67,7 +64,6 @@ const BottomNavigation = () => {
     }
   ];
 
-  // Filter out cart for business users
   const filteredNavItems = navItems.filter(item => 
     !(user?.role === 'business' && item.hideForBusiness)
   );
@@ -87,7 +83,7 @@ const BottomNavigation = () => {
           transition={{ duration: 0.3 }}
         >
           <div 
-            className="flex justify-around items-center h-16 bg-white/90 backdrop-blur-md border-t border-gray-100 shadow-[0_-2px_10px_rgba(0,0,0,0.05)]"
+            className="flex justify-around items-center h-16 bg-background/90 backdrop-blur-md border-t border-border shadow-lg"
             style={{ borderTopLeftRadius: '24px', borderTopRightRadius: '24px' }}
           >
             {filteredNavItems.map((item) => {
@@ -100,12 +96,12 @@ const BottomNavigation = () => {
                   className="relative flex flex-col items-center justify-center w-full h-full"
                 >
                   <motion.div 
-                    className={`flex flex-col items-center justify-center`}
+                    className="flex flex-col items-center justify-center"
                     whileTap={{ scale: 0.9 }}
                     transition={{ duration: 0.2 }}
                   >
                     <div className="relative">
-                      <div className={active ? 'text-orange-400' : 'text-gray-400'}>
+                      <div className={active ? 'text-primary' : 'text-muted-foreground'}>
                         {item.icon}
                       </div>
                       
@@ -113,21 +109,21 @@ const BottomNavigation = () => {
                         <motion.span 
                           initial={{ scale: 0 }}
                           animate={{ scale: 1 }}
-                          className="absolute -top-1.5 -right-1.5 flex items-center justify-center w-5 h-5 bg-orange-400 text-white text-[10px] rounded-full"
+                          className="absolute -top-1.5 -right-1.5 flex items-center justify-center w-5 h-5 bg-primary text-primary-foreground text-[10px] rounded-full"
                         >
                           {item.badge > 9 ? '9+' : item.badge}
                         </motion.span>
                       )}
                     </div>
                     
-                    <span className={`mt-1 text-[10px] ${active ? 'text-orange-400 font-medium' : 'text-gray-500'}`}>
+                    <span className={`mt-1 text-[10px] ${active ? 'text-primary font-medium' : 'text-muted-foreground'}`}>
                       {item.label}
                     </span>
                     
                     {active && (
                       <motion.div
                         layoutId="bottomNavIndicator"
-                        className="absolute bottom-0 w-10 h-1 rounded-full bg-orange-400"
+                        className="absolute bottom-0 w-10 h-1 rounded-full bg-primary"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}

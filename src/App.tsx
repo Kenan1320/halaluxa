@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -14,6 +13,7 @@ import AuthMiddleware from "@/components/auth/AuthMiddleware";
 import Navbar from "@/components/layout/Navbar";
 import BottomNavigation from "@/components/layout/BottomNavigation";
 import { setupDatabaseTables } from "@/services/shopService";
+import { ThemeProvider } from "@/context/ThemeContext";
 
 // Pages
 import Index from "./pages/Index";
@@ -166,15 +166,17 @@ function App() {
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <LanguageProvider>
-            <AuthProvider>
-              <CartProvider>
-                <LocationProvider>
-                  <AppRoutes />
-                </LocationProvider>
-              </CartProvider>
-            </AuthProvider>
-          </LanguageProvider>
+          <ThemeProvider>
+            <LanguageProvider>
+              <AuthProvider>
+                <CartProvider>
+                  <LocationProvider>
+                    <AppRoutes />
+                  </LocationProvider>
+                </CartProvider>
+              </AuthProvider>
+            </LanguageProvider>
+          </ThemeProvider>
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>
