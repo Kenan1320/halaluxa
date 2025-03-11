@@ -2,14 +2,26 @@
 import { useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ShoppingBag } from 'lucide-react';
-import { useTheme } from '@/context/ThemeContext';
-import { categories } from '@/constants/categories';
+import { ShoppingCart, ShoppingBag, Home, BookOpen, Utensils, HeartPulse, Gift, Shirt, Laptop, Baby, Drumstick, Palette } from 'lucide-react';
+
+const categories = [
+  { id: 1, name: 'Groceries', icon: ShoppingCart, color: '#2A866A' },
+  { id: 2, name: 'Food', icon: Utensils, color: '#2A866A' },
+  { id: 3, name: 'Modest Clothing', icon: Shirt, color: '#2A866A' },
+  { id: 4, name: 'Home', icon: Home, color: '#2A866A' },
+  { id: 5, name: 'Electronics', icon: Laptop, color: '#2A866A' },
+  { id: 6, name: 'Books', icon: BookOpen, color: '#2A866A' },
+  { id: 7, name: 'Health', icon: HeartPulse, color: '#2A866A' },
+  { id: 8, name: 'Toys', icon: Baby, color: '#2A866A' },
+  { id: 9, name: 'Gifts', icon: Gift, color: '#2A866A' },
+  { id: 10, name: 'Art', icon: Palette, color: '#2A866A' },
+  { id: 11, name: 'Baby', icon: Baby, color: '#2A866A' },
+  { id: 12, name: 'Halal Meat', icon: Drumstick, color: '#2A866A' }
+];
 
 const CategoryScroll = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
-  const { theme } = useTheme();
   
   useEffect(() => {
     const scrollContainer = scrollRef.current;
@@ -17,6 +29,7 @@ const CategoryScroll = () => {
     
     let animationId: number;
     let scrollPosition = 0;
+    let scrollDirection = 1;
     let isPaused = false;
     
     const autoScroll = () => {
@@ -25,14 +38,13 @@ const CategoryScroll = () => {
         return;
       }
       
-      // Increase scroll position (always scroll from right to left)
-      scrollPosition += 0.5;
+      scrollPosition += 0.5 * scrollDirection;
       scrollContainer.scrollLeft = scrollPosition;
       
-      // Reset when reaching the end to create infinite loop effect
       if (scrollPosition >= scrollContainer.scrollWidth - scrollContainer.clientWidth) {
-        // Jump back to start without animation for seamless looping
-        scrollPosition = 0;
+        scrollDirection = -1;
+      } else if (scrollPosition <= 0) {
+        scrollDirection = 1;
       }
       
       animationId = requestAnimationFrame(autoScroll);
@@ -57,84 +69,29 @@ const CategoryScroll = () => {
     };
   }, []);
   
-  const handleCategoryClick = (categoryName: string) => {
-    navigate(`/browse?category=${encodeURIComponent(categoryName)}`);
-  };
-  
-  const getBoxShadow = () => {
-    if (theme === 'dark') return '0 0 12px rgba(209, 232, 226, 0.2)';
-    if (theme === 'black') return '0 0 12px rgba(0, 200, 255, 0.2)';
-    return '0 10px 15px rgba(0,0,0,0.1)';
-  };
-  
-  const getCategoryButtonClasses = () => {
-    const baseClasses = "flex-shrink-0 flex flex-col items-center justify-center rounded-lg shadow-sm p-1.5 border";
-    
-    if (theme === 'dark') {
-      return `${baseClasses} bg-dark-card border-primary/10 shadow-md shadow-primary/5`;
-    } else if (theme === 'black') {
-      return `${baseClasses} bg-black/30 border-primary/10 shadow-md shadow-primary/5`;
-    }
-    
-    return `${baseClasses} bg-card border-border`;
-  };
-  
-  const getViewAllButtonClasses = () => {
-    const baseClasses = "flex-shrink-0 flex flex-col items-center justify-center rounded-lg shadow-sm p-1.5 border";
-    
-    if (theme === 'dark') {
-      return `${baseClasses} bg-primary/20 border-primary/10`;
-    } else if (theme === 'black') {
-      return `${baseClasses} bg-primary/20 border-primary/10`;
-    }
-    
-    return `${baseClasses} bg-primary/10 border-border`;
+  const handleCategoryClick = (category: string) => {
+    navigate(`/browse?category=${encodeURIComponent(category)}`);
   };
   
   return (
-    <div className="relative w-full my-0">
+    <div className="relative w-full my-1">
       <div
         ref={scrollRef}
-        className="flex overflow-x-auto scrollbar-hide py-1.5 space-x-3"
+        className="flex overflow-x-auto scrollbar-hide py-1 space-x-3"
       >
         {categories.map((category) => (
           <motion.button
             key={category.id}
-            className={getCategoryButtonClasses()}
-            style={{ minWidth: '75px', height: '75px' }}
-            whileHover={{ 
-              scale: 1.05, 
-              boxShadow: getBoxShadow()
-            }}
+            className="flex-shrink-0 flex flex-col items-center justify-center bg-white rounded-lg shadow-sm p-1 border border-gray-100"
+            style={{ minWidth: '62px', height: '62px' }}
+            whileHover={{ scale: 1.05, backgroundColor: '#F8F8F8' }}
             whileTap={{ scale: 0.95 }}
             onClick={() => handleCategoryClick(category.name)}
           >
-            <div className="h-9 w-9 mb-1 flex items-center justify-center">
-              <img 
-                src={category.iconSrc} 
-                alt={category.name}
-                className="h-7 w-7 object-contain"
-              />
-            </div>
-            <span className="text-foreground text-xs font-medium text-center line-clamp-2 px-1">
-              {category.displayName}
-            </span>
+            <category.icon className="h-5 w-5 text-[#2A866A] mb-1" />
+            <span className="text-gray-800 text-xs font-medium text-center line-clamp-1">{category.name}</span>
           </motion.button>
         ))}
-        
-        <motion.button
-          className={getViewAllButtonClasses()}
-          style={{ minWidth: '75px', height: '75px' }}
-          whileHover={{ 
-            scale: 1.05, 
-            boxShadow: getBoxShadow()
-          }}
-          whileTap={{ scale: 0.95 }}
-          onClick={() => navigate('/categories')}
-        >
-          <ShoppingBag className="h-7 w-7 text-primary mb-1" />
-          <span className="text-foreground text-xs font-medium text-center">View All</span>
-        </motion.button>
       </div>
     </div>
   );

@@ -1,67 +1,17 @@
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Search, Mic } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 
 interface SearchBarProps {
   onSearch?: (term: string) => void;
-  placeholderText?: string;
-  rotatingTexts?: string[];
 }
 
-const SearchBar = ({ 
-  onSearch, 
-  placeholderText = "Search Haluna", 
-  rotatingTexts = [] 
-}: SearchBarProps) => {
+const SearchBar = ({ onSearch }: SearchBarProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isRecording, setIsRecording] = useState(false);
-  const [currentPlaceholder, setCurrentPlaceholder] = useState(placeholderText);
-  const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const navigate = useNavigate();
-
-  // Setup rotating placeholder text
-  useEffect(() => {
-    if (!rotatingTexts || rotatingTexts.length === 0) return;
-
-    let mainTextTimeoutId: NodeJS.Timeout;
-    let rotatingTextTimeoutId: NodeJS.Timeout;
-    
-    const rotateText = () => {
-      // Show main text for 30 seconds
-      setCurrentPlaceholder(placeholderText);
-      
-      mainTextTimeoutId = setTimeout(() => {
-        // Start rotating through other texts
-        const rotateOtherTexts = (index: number) => {
-          setCurrentPlaceholder(rotatingTexts[index]);
-          setPlaceholderIndex((index + 1) % rotatingTexts.length);
-          
-          // Each rotating text shows for 3 seconds
-          rotatingTextTimeoutId = setTimeout(() => {
-            if (index < rotatingTexts.length - 1) {
-              rotateOtherTexts(index + 1);
-            } else {
-              // Start the cycle again
-              rotateText();
-            }
-          }, 3000);
-        };
-        
-        rotateOtherTexts(0);
-      }, 30000);
-    };
-    
-    // Start the rotation
-    rotateText();
-    
-    // Clean up timeouts on unmount
-    return () => {
-      clearTimeout(mainTextTimeoutId);
-      clearTimeout(rotatingTextTimeoutId);
-    };
-  }, [placeholderText, rotatingTexts]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -127,7 +77,7 @@ const SearchBar = ({
           
           <input
             type="text"
-            placeholder={currentPlaceholder}
+            placeholder="Search Haluna"
             className="pl-12 pr-14 py-3 w-full rounded-full border-none shadow-sm focus:ring-2 focus:ring-[#2A866A]/30 bg-white text-gray-700"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}

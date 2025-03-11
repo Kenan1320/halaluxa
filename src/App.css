@@ -32,21 +32,6 @@
   border-top: 1px solid rgba(229, 231, 235, 0.5);
 }
 
-/* Dark mode glass morphism */
-.dark .glass-effect {
-  background: rgba(13, 27, 42, 0.7);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(209, 232, 226, 0.1);
-}
-
-.dark .bottom-nav-glass {
-  background: rgba(13, 27, 42, 0.8);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border-top: 1px solid rgba(209, 232, 226, 0.1);
-}
-
 /* Payment method styles */
 .payment-card {
   transition: all 0.3s ease;
@@ -55,10 +40,6 @@
 .payment-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-.dark .payment-card:hover {
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3), 0 0 8px rgba(209, 232, 226, 0.2);
 }
 
 /* Animated checkout button */
@@ -87,15 +68,6 @@
   left: 100%;
 }
 
-.dark .checkout-button::after {
-  background: linear-gradient(
-    to right,
-    rgba(209, 232, 226, 0) 0%,
-    rgba(209, 232, 226, 0.2) 50%,
-    rgba(209, 232, 226, 0) 100%
-  );
-}
-
 /* Store pickup location styles */
 .store-location {
   transition: all 0.2s ease;
@@ -105,18 +77,9 @@
   background-color: rgba(42, 134, 106, 0.05);
 }
 
-.dark .store-location:hover {
-  background-color: rgba(209, 232, 226, 0.05);
-}
-
 .store-location-active {
   border-color: #2A866A;
   background-color: rgba(42, 134, 106, 0.1);
-}
-
-.dark .store-location-active {
-  border-color: hsl(var(--primary));
-  background-color: rgba(209, 232, 226, 0.1);
 }
 
 /* Custom checkbox styles */
@@ -128,10 +91,6 @@
   border: 2px solid #2A866A;
   border-radius: 4px;
   cursor: pointer;
-}
-
-.dark .custom-checkbox {
-  border-color: hsl(var(--primary));
 }
 
 .custom-checkbox.checked::after {
@@ -150,10 +109,6 @@
   background-color: #2A866A;
 }
 
-.dark .custom-checkbox.checked {
-  background-color: hsl(var(--primary));
-}
-
 /* Credit card input styling */
 .card-input {
   transition: all 0.2s ease;
@@ -162,46 +117,4 @@
 .card-input:focus {
   border-color: #2A866A;
   box-shadow: 0 0 0 2px rgba(42, 134, 106, 0.2);
-}
-
-.dark .card-input:focus {
-  border-color: hsl(var(--primary));
-  box-shadow: 0 0 0 2px rgba(209, 232, 226, 0.2);
-}
-
-/* Dark mode glow effects */
-.dark .glow-hover:hover {
-  box-shadow: 0 0 10px rgba(209, 232, 226, 0.3);
-}
-
-.dark .glow-active {
-  box-shadow: 0 0 10px rgba(209, 232, 226, 0.3);
-}
-
-.dark .icon-teal {
-  color: hsl(var(--primary));
-}
-
-/* Dark mode specific button styles */
-.dark .button-primary {
-  background-color: hsl(var(--primary));
-  color: hsl(var(--background));
-}
-
-.dark .button-primary:hover {
-  filter: brightness(1.1);
-  box-shadow: 0 0 10px rgba(209, 232, 226, 0.3);
-}
-
-/* Smooth transition for theme switching */
-body {
-  transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-* {
-  transition: 
-    background-color 0.3s ease, 
-    color 0.3s ease, 
-    border-color 0.3s ease, 
-    box-shadow 0.3s ease;
 }

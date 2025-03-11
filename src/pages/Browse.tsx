@@ -1,335 +1,391 @@
 
-import React from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { getShops } from '@/services/shopService';
-import { Link, useSearchParams } from 'react-router-dom';
-import { Store, Star, MapPin, Search, ArrowUpDown, Clock } from 'lucide-react';
-import { motion } from 'framer-motion';
-import { Badge } from '@/components/ui/badge';
+import { getProducts } from '@/services/productService';
+import { getAllShops } from '@/services/shopService';
+import { ProductCard } from '@/components/cards/ProductCard';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardFooter } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Skeleton } from '@/components/ui/skeleton';
-import { categories } from '@/constants/categories';
+import { Input } from "@/components/ui/input";
+import { Slider } from "@/components/ui/slider";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { ChevronLeft, ChevronRight, SearchX } from 'lucide-react';
+import Navbar from '@/components/layout/Navbar';
+import Footer from '@/components/layout/Footer';
+import { Product } from '@/models/product';
 
 const Browse = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [searchTerm, setSearchTerm] = React.useState('');
-  const [selectedCategory, setSelectedCategory] = React.useState<string | null>(
-    searchParams.get('category') || null
-  );
-  const [sortOption, setSortOption] = React.useState<'rating' | 'newest' | 'name'>('rating');
+  const [products, setProducts] = useState<Product[]>([]);
+  const [shops, setShops] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState(searchParams.get('q') || '');
+  const [priceRange, setPriceRange] = useState([0, 1000]);
+  const [categoryFilters, setCategoryFilters] = useState<string[]>([]);
+  const [shopFilters, setShopFilters] = useState<string[]>([]);
+  const [sortOption, setSortOption] = useState('relevance');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [productsPerPage] = useState(9);
+  const [showMobileFilter, setShowMobileFilter] = useState(false);
   
-  React.useEffect(() => {
-    const categoryParam = searchParams.get('category');
-    if (categoryParam) {
-      setSelectedCategory(categoryParam);
-    }
-  }, [searchParams]);
-  
-  const { data: shops, isLoading } = useQuery({
-    queryKey: ['shops'],
-    queryFn: () => getShops()
+  // Fetch products and shops using react-query
+  const { data: productsData, isLoading: isLoadingProducts } = useQuery({
+    queryKey: ['products'],
+    queryFn: getProducts,
+    staleTime: 60000, // 60 seconds
   });
   
-  // Filter shops based on search term and category
-  const filteredShops = React.useMemo(() => {
-    if (!shops) return [];
-    
-    return shops.filter(shop => {
-      const matchesSearch = searchTerm === '' || 
-        shop.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        shop.description?.toLowerCase().includes(searchTerm.toLowerCase());
-        
-      const matchesCategory = selectedCategory === null || shop.category === selectedCategory;
-      
-      return matchesSearch && matchesCategory;
-    });
-  }, [shops, searchTerm, selectedCategory]);
+  const { data: shopsData, isLoading: isLoadingShops } = useQuery({
+    queryKey: ['shops'],
+    queryFn: getAllShops,
+    staleTime: 60000, // 60 seconds
+  });
   
-  // Sort shops based on selected option
-  const sortedShops = React.useMemo(() => {
-    if (!filteredShops) return [];
-    
-    return [...filteredShops].sort((a, b) => {
-      if (sortOption === 'rating') {
-        return (b.rating || 0) - (a.rating || 0);
-      } else if (sortOption === 'newest') {
-        return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
-      } else {
-        return a.name.localeCompare(b.name);
-      }
-    });
-  }, [filteredShops, sortOption]);
-  
-  // Animation variants for the shop cards
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1
-      }
+  useEffect(() => {
+    if (productsData) {
+      setProducts(productsData as Product[]);
     }
-  };
+    if (shopsData) {
+      setShops(shopsData as any[]);
+    }
+    setIsLoading(isLoadingProducts || isLoadingShops);
+  }, [productsData, shopsData, isLoadingProducts, isLoadingShops]);
   
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0 }
-  };
-  
-  const handleCategoryChange = (categoryName: string | null) => {
-    setSelectedCategory(categoryName);
+  // Filter products based on search term, price range, categories, and shops
+  const filteredProducts = products.filter((product) => {
+    const searchTermMatch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const priceRangeMatch = product.price >= priceRange[0] && product.price <= priceRange[1];
+    const categoryMatch = categoryFilters.length === 0 || categoryFilters.includes(product.category);
+    const shopMatch = shopFilters.length === 0 || shopFilters.includes(product.sellerId);
     
-    // Update URL search params
-    if (categoryName) {
-      searchParams.set('category', categoryName);
+    return searchTermMatch && priceRangeMatch && categoryMatch && shopMatch;
+  });
+  
+  // Sort products based on selected option
+  const sortedProducts = useCallback(() => {
+    switch (sortOption) {
+      case 'price-asc':
+        return [...filteredProducts].sort((a, b) => a.price - b.price);
+      case 'price-desc':
+        return [...filteredProducts].sort((a, b) => b.price - a.price);
+      case 'date':
+        return [...filteredProducts].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      default:
+        return filteredProducts;
+    }
+  }, [filteredProducts, sortOption]);
+  
+  // Paginate products
+  const indexOfLastProduct = currentPage * productsPerPage;
+  const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
+  const currentProducts = sortedProducts().slice(indexOfFirstProduct, indexOfLastProduct);
+  
+  const totalPages = Math.ceil(filteredProducts.length / productsPerPage);
+  
+  const paginate = (pageNumber: number) => {
+    setCurrentPage(pageNumber);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+  
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const term = e.target.value;
+    setSearchTerm(term);
+    setSearchParams(term ? { q: term } : {});
+    setCurrentPage(1);
+  };
+  
+  const toggleCategoryFilter = (category: string) => {
+    if (categoryFilters.includes(category)) {
+      setCategoryFilters(categoryFilters.filter((c) => c !== category));
     } else {
-      searchParams.delete('category');
+      setCategoryFilters([...categoryFilters, category]);
     }
-    setSearchParams(searchParams);
+    setCurrentPage(1);
   };
-
-  // Group categories by type
-  const localCategories = categories.filter(cat => cat.type === 'local');
-  const transitioningCategories = categories.filter(cat => cat.type === 'transitioning');
-  const onlineCategories = categories.filter(cat => cat.type === 'online');
+  
+  const toggleShopFilter = (shopId: string) => {
+    if (shopFilters.includes(shopId)) {
+      setShopFilters(shopFilters.filter((s) => s !== shopId));
+    } else {
+      setShopFilters([...shopFilters, shopId]);
+    }
+    setCurrentPage(1);
+  };
+  
+  const resetFilters = () => {
+    setSearchTerm('');
+    setPriceRange([0, 1000]);
+    setCategoryFilters([]);
+    setShopFilters([]);
+    setSortOption('relevance');
+    setCurrentPage(1);
+    setSearchParams({});
+  };
 
   return (
-    <div className="container mx-auto px-4 pt-20 pb-10">
-      <div className="mb-8">
-        <h1 className="text-3xl font-serif font-bold text-[#2A866A] dark:text-[#4ECBA5] black:text-primary mb-2">Browse Shops</h1>
-        <p className="text-gray-600 dark:text-gray-400 black:text-gray-300">Discover local shops and their products</p>
-      </div>
+    <div className="min-h-screen">
+      <Navbar />
       
-      {/* Search and Filter */}
-      <div className="mb-6 space-y-4">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
-          <Input
-            type="text"
-            placeholder="Search shops by name or description..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 bg-white dark:bg-gray-800 black:bg-gray-900"
-          />
-        </div>
-        
-        <div>
-          <h3 className="text-sm font-medium mb-2">All Categories</h3>
-          <div className="flex flex-wrap gap-2 mb-4">
-            <Badge 
-              variant={selectedCategory === null ? "default" : "outline"}
-              className="cursor-pointer hover:bg-[#2A866A] hover:text-white dark:hover:bg-[#4ECBA5] black:hover:bg-primary"
-              onClick={() => handleCategoryChange(null)}
-            >
-              All
-            </Badge>
+      <main className="pt-28 pb-20">
+        <div className="container mx-auto px-4">
+          <div className="mb-8">
+            <h1 className="text-3xl md:text-4xl font-serif font-bold mb-2">Browse Products</h1>
+            <p className="text-haluna-text-light">
+              Explore our wide range of products from trusted Muslim businesses.
+            </p>
           </div>
           
-          <h3 className="text-sm font-medium mb-2">Local</h3>
-          <div className="flex flex-wrap gap-2 mb-4">
-            {localCategories.map(category => (
-              <Badge
-                key={category.id}
-                variant={selectedCategory === category.name ? "default" : "outline"}
-                className="cursor-pointer hover:bg-[#2A866A] hover:text-white dark:hover:bg-[#4ECBA5] black:hover:bg-primary"
-                onClick={() => handleCategoryChange(category.name)}
-              >
-                {category.displayName}
-              </Badge>
-            ))}
-          </div>
-          
-          <h3 className="text-sm font-medium mb-2">In-Store & Online</h3>
-          <div className="flex flex-wrap gap-2 mb-4">
-            {transitioningCategories.map(category => (
-              <Badge
-                key={category.id}
-                variant={selectedCategory === category.name ? "default" : "outline"}
-                className="cursor-pointer hover:bg-[#2A866A] hover:text-white dark:hover:bg-[#4ECBA5] black:hover:bg-primary"
-                onClick={() => handleCategoryChange(category.name)}
-              >
-                {category.displayName}
-              </Badge>
-            ))}
-          </div>
-          
-          <h3 className="text-sm font-medium mb-2">Online</h3>
-          <div className="flex flex-wrap gap-2 mb-4">
-            {onlineCategories.map(category => (
-              <Badge
-                key={category.id}
-                variant={selectedCategory === category.name ? "default" : "outline"}
-                className="cursor-pointer hover:bg-[#2A866A] hover:text-white dark:hover:bg-[#4ECBA5] black:hover:bg-primary"
-                onClick={() => handleCategoryChange(category.name)}
-              >
-                {category.displayName}
-              </Badge>
-            ))}
-          </div>
-        </div>
-        
-        <div className="flex justify-between items-center">
-          <div className="text-sm text-gray-500 dark:text-gray-400 black:text-gray-400">
-            {sortedShops.length} shop{sortedShops.length !== 1 ? 's' : ''} found
-          </div>
-          <div className="flex items-center gap-2">
-            <Button 
-              variant="outline" 
-              size="sm"
-              className="flex items-center gap-1"
-              onClick={() => setSortOption(sortOption === 'rating' ? 'name' : 'rating')}
-            >
-              <ArrowUpDown className="h-4 w-4" />
-              <span>Sort: {sortOption === 'rating' ? 'Top Rated' : sortOption === 'newest' ? 'Newest' : 'Name'}</span>
-            </Button>
-          </div>
-        </div>
-      </div>
-      
-      {/* Shop Listings */}
-      {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[...Array(6)].map((_, i) => (
-            <Card key={i} className="overflow-hidden">
-              <Skeleton className="h-48 w-full" />
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3 mb-3">
-                  <Skeleton className="h-10 w-10 rounded-full" />
-                  <div className="space-y-2 flex-1">
-                    <Skeleton className="h-4 w-3/4" />
-                    <Skeleton className="h-3 w-1/2" />
+          <div className="flex flex-col lg:flex-row gap-8">
+            <div className="lg:w-1/4">
+              {/* Desktop Filters */}
+              <div className="hidden lg:block bg-white rounded-xl shadow-sm p-6 sticky top-28">
+                <h2 className="text-xl font-medium mb-4">Filters</h2>
+                
+                {/* Price Range */}
+                <div className="mb-6">
+                  <h3 className="font-medium mb-2">Price Range</h3>
+                  <Slider
+                    defaultValue={priceRange}
+                    max={1000}
+                    step={10}
+                    onValueChange={(value) => setPriceRange(value)}
+                  />
+                  <div className="flex justify-between text-sm text-haluna-text-light mt-1">
+                    <span>${priceRange[0]}</span>
+                    <span>${priceRange[1]}</span>
                   </div>
                 </div>
-                <Skeleton className="h-4 w-full mb-2" />
-                <Skeleton className="h-4 w-2/3" />
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      ) : (
-        <motion.div 
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-        >
-          {sortedShops.length > 0 ? (
-            sortedShops.map(shop => (
-              <motion.div key={shop.id} variants={itemVariants}>
-                <Card className="overflow-hidden h-full hover:shadow-md transition-shadow">
-                  <div className="relative h-48 bg-gray-100 dark:bg-gray-800 black:bg-gray-900">
-                    {shop.cover_image ? (
-                      <img 
-                        src={shop.cover_image} 
-                        alt={shop.name} 
-                        className="w-full h-full object-cover"
+                
+                {/* Categories */}
+                <div className="mb-6">
+                  <h3 className="font-medium mb-2">Categories</h3>
+                  {Array.from(new Set(products.map((product) => product.category))).map((category) => (
+                    <div key={category} className="flex items-center space-x-2 mb-1">
+                      <Checkbox
+                        id={`category-${category}`}
+                        checked={categoryFilters.includes(category)}
+                        onCheckedChange={() => toggleCategoryFilter(category)}
                       />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-[#E4F5F0] dark:bg-[#2A866A]/20 black:bg-primary/10">
-                        <Store className="h-12 w-12 text-[#2A866A] dark:text-[#4ECBA5] black:text-primary" />
-                      </div>
-                    )}
-                    
-                    <div className="absolute top-3 left-3">
-                      {shop.category && (
-                        <Badge variant="secondary" className="bg-white/90 dark:bg-black/50 black:bg-black/70 text-gray-800 dark:text-gray-200 black:text-gray-200">
-                          {
-                            categories.find(cat => cat.name === shop.category)?.displayName || 
-                            shop.category
-                          }
-                        </Badge>
-                      )}
+                      <Label htmlFor={`category-${category}`} className="text-sm">
+                        {category}
+                      </Label>
                     </div>
-                    
-                    {shop.featured && (
-                      <div className="absolute top-3 right-3">
-                        <Badge className="bg-[#FF7A45] hover:bg-[#FF7A45]">
-                          Featured
-                        </Badge>
-                      </div>
-                    )}
-                  </div>
-                  
-                  <CardContent className="p-4">
-                    <div className="flex items-center mb-3">
-                      <div className="h-10 w-10 rounded-full overflow-hidden mr-3 bg-[#E4F5F0] dark:bg-[#2A866A]/20 black:bg-primary/20 flex items-center justify-center">
-                        {shop.logo_url ? (
-                          <img src={shop.logo_url} alt={shop.name} className="h-full w-full object-cover" />
-                        ) : (
-                          <Store className="h-5 w-5 text-[#2A866A] dark:text-[#4ECBA5] black:text-primary" />
-                        )}
-                      </div>
-                      
-                      <div className="flex-1">
-                        <h3 className="font-medium text-lg">{shop.name}</h3>
-                        <div className="flex items-center text-sm text-gray-500 dark:text-gray-400 black:text-gray-400">
-                          {shop.rating ? (
-                            <div className="flex items-center text-amber-500 mr-2">
-                              <Star className="h-4 w-4 fill-current mr-1" />
-                              <span>{shop.rating.toFixed(1)}</span>
-                              {shop.review_count && (
-                                <span className="text-gray-400 dark:text-gray-500 black:text-gray-500 ml-1">({shop.review_count})</span>
-                              )}
-                            </div>
-                          ) : (
-                            <span className="mr-2">No ratings</span>
-                          )}
-                          
-                          {shop.product_count && (
-                            <span>· {shop.product_count} products</span>
-                          )}
-                        </div>
-                      </div>
+                  ))}
+                </div>
+                
+                {/* Shops */}
+                <div className="mb-6">
+                  <h3 className="font-medium mb-2">Shops</h3>
+                  {shops.map((shop) => (
+                    <div key={shop.id} className="flex items-center space-x-2 mb-1">
+                      <Checkbox
+                        id={`shop-${shop.id}`}
+                        checked={shopFilters.includes(shop.id)}
+                        onCheckedChange={() => toggleShopFilter(shop.id)}
+                      />
+                      <Label htmlFor={`shop-${shop.id}`} className="text-sm">
+                        {shop.name}
+                      </Label>
                     </div>
-                    
-                    <p className="text-sm text-gray-600 dark:text-gray-400 black:text-gray-400 line-clamp-2 mb-3">
-                      {shop.description || "No description available"}
-                    </p>
-                    
-                    {shop.location && (
-                      <div className="flex items-center text-sm text-gray-500 dark:text-gray-400 black:text-gray-400 mb-2">
-                        <MapPin className="h-4 w-4 mr-1 flex-shrink-0" />
-                        <span className="truncate">{shop.location}</span>
-                      </div>
-                    )}
-                    
-                    {shop.created_at && (
-                      <div className="flex items-center text-xs text-gray-500 dark:text-gray-400 black:text-gray-400">
-                        <Clock className="h-3.5 w-3.5 mr-1 flex-shrink-0" />
-                        <span>Joined {new Date(shop.created_at).toLocaleDateString()}</span>
-                      </div>
-                    )}
-                  </CardContent>
-                  
-                  <CardFooter className="p-4 pt-0">
-                    <Button className="w-full">
-                      <Link to={`/shop/${shop.id}`}>
-                        Visit Shop
-                      </Link>
-                    </Button>
-                  </CardFooter>
-                </Card>
-              </motion.div>
-            ))
-          ) : (
-            <div className="col-span-full text-center py-12">
-              <div className="bg-[#E4F5F0] dark:bg-[#2A866A]/20 black:bg-primary/10 p-10 rounded-xl max-w-md mx-auto">
-                <Search className="h-12 w-12 text-[#2A866A] dark:text-[#4ECBA5] black:text-primary mx-auto mb-4" />
-                <h2 className="text-xl font-medium mb-2">No shops found</h2>
-                <p className="text-gray-600 dark:text-gray-400 black:text-gray-400 mb-6">Try adjusting your search or filters to find what you're looking for.</p>
-                <Button onClick={() => {
-                  setSearchTerm('');
-                  handleCategoryChange(null);
-                }}>
-                  Clear Filters
+                  ))}
+                </div>
+                
+                {/* Reset Filters */}
+                <Button onClick={resetFilters} variant="outline" className="w-full">
+                  Reset Filters
                 </Button>
               </div>
+              
+              {/* Mobile Filter Button */}
+              <Button onClick={() => setShowMobileFilter(true)} className="lg:hidden w-full">
+                Show Filters
+              </Button>
             </div>
-          )}
-        </motion.div>
-      )}
+            
+            <div className="lg:flex-1">
+              {/* Search and Sort Options */}
+              <div className="flex flex-col md:flex-row items-center justify-between mb-4">
+                <div className="mb-2 md:mb-0 md:w-1/2">
+                  <Input
+                    type="text"
+                    placeholder="Search products..."
+                    value={searchTerm}
+                    onChange={handleSearch}
+                    className="w-full"
+                  />
+                </div>
+                
+                <div className="md:w-auto">
+                  <select
+                    value={sortOption}
+                    onChange={(e) => setSortOption(e.target.value)}
+                    className="border rounded-lg p-2 text-sm"
+                  >
+                    <option value="relevance">Relevance</option>
+                    <option value="price-asc">Price: Low to High</option>
+                    <option value="price-desc">Price: High to Low</option>
+                    <option value="date">Newest</option>
+                  </select>
+                </div>
+              </div>
+              
+              {isLoading ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {[...Array(9)].map((_, i) => (
+                    <div key={i} className="space-y-2">
+                      <Skeleton className="h-40 w-full rounded-md" />
+                      <div className="space-y-1.5">
+                        <Skeleton className="h-4 w-3/4" />
+                        <Skeleton className="h-3 w-1/2" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <>
+                  {filteredProducts.length === 0 ? (
+                    <div className="text-center py-12">
+                      <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <SearchX className="h-10 w-10 text-haluna-text-light" />
+                      </div>
+                      <h2 className="text-2xl font-serif font-medium mb-4">No products found</h2>
+                      <p className="text-haluna-text-light mb-8 max-w-md mx-auto">
+                        We couldn't find any products matching your search criteria. Try adjusting your filters or search term.
+                      </p>
+                      <Button 
+                        onClick={() => resetFilters()}
+                        variant="outline"
+                      >
+                        Clear Filters
+                      </Button>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {currentProducts.map((product) => (
+                          <ProductCard key={product.id} product={product} />
+                        ))}
+                      </div>
+                      
+                      {/* Pagination */}
+                      <div className="flex justify-center mt-8">
+                        <div className="flex items-center space-x-2">
+                          <Button
+                            onClick={() => paginate(currentPage - 1)}
+                            disabled={currentPage === 1}
+                            variant="outline"
+                            className="w-10 h-10 p-0"
+                          >
+                            <ChevronLeft className="h-4 w-4" />
+                          </Button>
+                          
+                          {Array.from({ length: totalPages }, (_, i) => (
+                            <Button
+                              key={i}
+                              onClick={() => paginate(i + 1)}
+                              variant={currentPage === i + 1 ? "default" : "outline"}
+                              className="w-10 h-10 p-0"
+                            >
+                              {i + 1}
+                            </Button>
+                          ))}
+                          
+                          <Button
+                            onClick={() => paginate(currentPage + 1)}
+                            disabled={currentPage === totalPages}
+                            variant="outline"
+                            className="w-10 h-10 p-0"
+                          >
+                            <ChevronRight className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      </main>
+      
+      <Footer />
+      
+      {/* Mobile Filter Dialog */}
+      <Dialog open={showMobileFilter} onOpenChange={setShowMobileFilter}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Filter Products</DialogTitle>
+            <DialogDescription>
+              Adjust filters to find exactly what you're looking for.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            {/* Price Range */}
+            <div className="mb-6">
+              <h3 className="font-medium mb-2">Price Range</h3>
+              <Slider
+                defaultValue={priceRange}
+                max={1000}
+                step={10}
+                onValueChange={(value) => setPriceRange(value)}
+              />
+              <div className="flex justify-between text-sm text-haluna-text-light mt-1">
+                <span>${priceRange[0]}</span>
+                <span>${priceRange[1]}</span>
+              </div>
+            </div>
+            
+            {/* Categories */}
+            <div className="mb-6">
+              <h3 className="font-medium mb-2">Categories</h3>
+              {Array.from(new Set(products.map((product) => product.category))).map((category) => (
+                <div key={category} className="flex items-center space-x-2 mb-1">
+                  <Checkbox
+                    id={`category-mobile-${category}`}
+                    checked={categoryFilters.includes(category)}
+                    onCheckedChange={() => toggleCategoryFilter(category)}
+                  />
+                  <Label htmlFor={`category-mobile-${category}`} className="text-sm">
+                    {category}
+                  </Label>
+                </div>
+              ))}
+            </div>
+            
+            {/* Shops */}
+            <div className="mb-6">
+              <h3 className="font-medium mb-2">Shops</h3>
+              {shops.map((shop) => (
+                <div key={shop.id} className="flex items-center space-x-2 mb-1">
+                  <Checkbox
+                    id={`shop-mobile-${shop.id}`}
+                    checked={shopFilters.includes(shop.id)}
+                    onCheckedChange={() => toggleShopFilter(shop.id)}
+                  />
+                  <Label htmlFor={`shop-mobile-${shop.id}`} className="text-sm">
+                    {shop.name}
+                  </Label>
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button type="button" onClick={resetFilters} variant="outline">
+              Reset Filters
+            </Button>
+            <Button type="button" onClick={() => setShowMobileFilter(false)}>
+              Apply Filters
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
