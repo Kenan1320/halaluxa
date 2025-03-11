@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { Store, Search, MapPin, Filter } from 'lucide-react';
 import { getAllShops } from '@/services/shopService';
 import { useLocation } from '@/context/LocationContext';
-import { shopCategories, getCategoryIcon } from '@/models/shop';
 
 const Shops = () => {
   const [shops, setShops] = useState<any[]>([]);
@@ -40,7 +39,7 @@ const Shops = () => {
   }, [isLocationEnabled, getNearbyShops]);
   
   // Get unique categories from shops
-  const categories = ['All', ...shopCategories];
+  const categories = ['All', ...new Set(shops.map(shop => shop.category))];
   
   // Filter shops by search query and category
   const filteredShops = shops.filter(shop => {
@@ -76,7 +75,7 @@ const Shops = () => {
                   <input
                     type="text"
                     className="pl-12 pr-4 py-3 w-full border rounded-full focus:ring-1 focus:ring-haluna-primary focus:border-haluna-primary transition"
-                    placeholder="Search Halvi: Your Hal Village"
+                    placeholder="Search for shops and businesses..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
@@ -112,20 +111,13 @@ const Shops = () => {
               {categories.map((category, index) => (
                 <button
                   key={index}
-                  className={`flex items-center px-4 py-2 rounded-full text-sm transition-colors ${
+                  className={`px-4 py-2 rounded-full text-sm transition-colors ${
                     categoryFilter === category || (category === 'All' && categoryFilter === '')
                       ? 'bg-haluna-primary text-white'
                       : 'bg-gray-100 text-haluna-text-light hover:bg-gray-200'
                   }`}
                   onClick={() => setCategoryFilter(category === 'All' ? '' : category)}
                 >
-                  {category !== 'All' && (
-                    <img 
-                      src={getCategoryIcon(category)} 
-                      alt={category}
-                      className="w-5 h-5 mr-2"
-                    />
-                  )}
                   {category}
                 </button>
               ))}

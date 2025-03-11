@@ -2,15 +2,22 @@
 import { useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { shopCategories, getCategoryIcon } from '@/models/shop';
+import { ShoppingCart, ShoppingBag, Home, BookOpen, Utensils, HeartPulse, Gift, Shirt, Laptop, Baby, Drumstick, Palette } from 'lucide-react';
 
-// Map to the categories data structure with icons
-const categories = shopCategories.map((name, index) => ({
-  id: index + 1,
-  name,
-  icon: getCategoryIcon(name),
-  color: '#2A866A'
-}));
+const categories = [
+  { id: 1, name: 'Groceries', icon: ShoppingCart, color: '#2A866A' },
+  { id: 2, name: 'Food', icon: Utensils, color: '#2A866A' },
+  { id: 3, name: 'Modest Clothing', icon: Shirt, color: '#2A866A' },
+  { id: 4, name: 'Home', icon: Home, color: '#2A866A' },
+  { id: 5, name: 'Electronics', icon: Laptop, color: '#2A866A' },
+  { id: 6, name: 'Books', icon: BookOpen, color: '#2A866A' },
+  { id: 7, name: 'Health', icon: HeartPulse, color: '#2A866A' },
+  { id: 8, name: 'Toys', icon: Baby, color: '#2A866A' },
+  { id: 9, name: 'Gifts', icon: Gift, color: '#2A866A' },
+  { id: 10, name: 'Art', icon: Palette, color: '#2A866A' },
+  { id: 11, name: 'Baby', icon: Baby, color: '#2A866A' },
+  { id: 12, name: 'Halal Meat', icon: Drumstick, color: '#2A866A' }
+];
 
 const CategoryScroll = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -76,19 +83,13 @@ const CategoryScroll = () => {
           <motion.button
             key={category.id}
             className="flex-shrink-0 flex flex-col items-center justify-center bg-white rounded-lg shadow-sm p-1 border border-gray-100"
-            style={{ minWidth: '70px', height: '70px' }}
+            style={{ minWidth: '62px', height: '62px' }}
             whileHover={{ scale: 1.05, backgroundColor: '#F8F8F8' }}
             whileTap={{ scale: 0.95 }}
             onClick={() => handleCategoryClick(category.name)}
           >
-            <img 
-              src={category.icon} 
-              alt={category.name}
-              className="h-7 w-7 mb-1"
-            />
-            <span className="text-gray-800 text-xs font-medium text-center line-clamp-1 px-1">
-              {category.name.split(' ')[0]}
-            </span>
+            <category.icon className="h-5 w-5 text-[#2A866A] mb-1" />
+            <span className="text-gray-800 text-xs font-medium text-center line-clamp-1">{category.name}</span>
           </motion.button>
         ))}
       </div>

@@ -4,7 +4,6 @@ import { motion } from 'framer-motion';
 import { Store } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
-import { getCategoryIcon } from '@/models/shop';
 
 interface ShopCardProps {
   shop: any;
@@ -104,18 +103,9 @@ const ShopCard = memo(({ shop, index, featured = false, minimal = false }: ShopC
         </p>
         
         <div className="flex items-center justify-between mb-4">
-          {shop.category && (
-            <div className="flex items-center">
-              <img 
-                src={getCategoryIcon(shop.category)} 
-                alt={shop.category} 
-                className="w-5 h-5 mr-2"
-              />
-              <span className="text-sm bg-gray-100 px-3 py-1 rounded-full">
-                {shop.category}
-              </span>
-            </div>
-          )}
+          <span className="text-sm bg-gray-100 px-3 py-1 rounded-full">
+            {shop.category}
+          </span>
           
           <div className="flex items-center text-sm text-haluna-text-light">
             {shop.location}

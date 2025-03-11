@@ -1,106 +1,107 @@
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { Search, Mic } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Search } from 'lucide-react';
-import RotatingPlaceholder from '@/components/ui/RotatingPlaceholder';
+import { motion } from 'framer-motion';
 
-const SearchBar = () => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [currentPlaceholder, setCurrentPlaceholder] = useState('');
+interface SearchBarProps {
+  onSearch?: (term: string) => void;
+}
+
+const SearchBar = ({ onSearch }: SearchBarProps) => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isRecording, setIsRecording] = useState(false);
   const navigate = useNavigate();
 
-  const rotatingTexts = [
-    "Don't just shop—Halvi it! it's your Halvillage",
-    "Are you Halvi-ing your Groceries today?",
-    "You can Halvi & visit your online shops"
-  ];
-  
-  const defaultPlaceholder = "Search Halvi: Your Hal Village";
-  
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (searchQuery.trim()) {
-      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+    if (searchTerm.trim()) {
+      if (onSearch) {
+        onSearch(searchTerm);
+      } else {
+        navigate(`/browse?search=${encodeURIComponent(searchTerm)}`);
+      }
     }
   };
-  
-  return (
-    <form 
-      onSubmit={handleSearch}
-      className="relative w-full max-w-4xl mx-auto"
-    >
-      <div className="relative">
-        <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
-          <Search className="h-5 w-5 text-haluna-text-light" />
-        </div>
+
+  const startVoiceSearch = () => {
+    setIsRecording(true);
+    
+    // Check if the browser supports the Web Speech API
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+      // @ts-ignore - TypeScript doesn't have types for the Web Speech API
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const recognition = new SpeechRecognition();
+      
+      recognition.lang = 'en-US';
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      
+      recognition.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript;
+        setSearchTerm(transcript);
+        setIsRecording(false);
         
-        <input
-          type="text"
-          className="w-full pl-12 pr-16 py-3 rounded-full border border-gray-200 focus:ring-2 focus:ring-haluna-primary focus:border-transparent transition-all duration-200 shadow-sm"
-          placeholder={
-            <RotatingPlaceholder
-              texts={rotatingTexts}
-              defaultText={defaultPlaceholder}
-              rotationInterval={3000}
-              defaultInterval={30000}
-              onChange={setCurrentPlaceholder}
-            /> as unknown as string
+        // Auto submit after voice input
+        if (transcript.trim()) {
+          if (onSearch) {
+            onSearch(transcript);
+          } else {
+            navigate(`/browse?search=${encodeURIComponent(transcript)}`);
           }
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
-        
-        <AnimatePresence>
-          {searchQuery && (
-            <motion.button
-              type="button"
-              className="absolute inset-y-0 right-14 flex items-center pr-3 text-gray-400"
-              onClick={() => setSearchQuery('')}
-              initial={{ opacity: 0, x: 10 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 10 }}
-              transition={{ duration: 0.2 }}
+        }
+      };
+      
+      recognition.onerror = () => {
+        setIsRecording(false);
+      };
+      
+      recognition.onend = () => {
+        setIsRecording(false);
+      };
+      
+      recognition.start();
+    } else {
+      alert('Voice search is not supported in your browser.');
+      setIsRecording(false);
+    }
+  };
+
+  return (
+    <div className="w-full max-w-3xl mx-auto">
+      <form onSubmit={handleSearch} className="relative">
+        <div className="relative flex items-center w-full">
+          <div className="absolute left-4">
+            <Search className="h-5 w-5 text-[#2A866A]" />
+          </div>
+          
+          <input
+            type="text"
+            placeholder="Search Haluna"
+            className="pl-12 pr-14 py-3 w-full rounded-full border-none shadow-sm focus:ring-2 focus:ring-[#2A866A]/30 bg-white text-gray-700"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+          
+          <div className="absolute right-4">
+            <button 
+              type="button" 
+              className={`bg-transparent p-1.5 rounded-full ${isRecording ? 'bg-red-100' : 'hover:bg-[#2A866A]/20'}`}
+              onClick={startVoiceSearch}
             >
-              <span className="sr-only">Clear search</span>
-              <svg 
-                className="h-4 w-4" 
-                fill="none" 
-                viewBox="0 0 24 24" 
-                stroke="currentColor"
-              >
-                <path 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round" 
-                  strokeWidth={2} 
-                  d="M6 18L18 6M6 6l12 12" 
+              <Mic className={`h-5 w-5 ${isRecording ? 'text-red-500 animate-pulse' : 'text-[#2A866A]'}`} />
+              {isRecording && (
+                <motion.div
+                  className="absolute inset-0 rounded-full bg-red-100 z-[-1]"
+                  animate={{ scale: [1, 1.2, 1] }}
+                  transition={{ duration: 1.5, repeat: Infinity }}
                 />
-              </svg>
-            </motion.button>
-          )}
-        </AnimatePresence>
-        
-        <button
-          type="submit"
-          className="absolute inset-y-0 right-0 flex items-center px-4 text-haluna-primary bg-transparent rounded-r-full hover:text-haluna-primary-dark transition-colors duration-200"
-        >
-          <span className="sr-only">Search</span>
-          <svg 
-            className="h-5 w-5" 
-            fill="none" 
-            viewBox="0 0 24 24" 
-            stroke="currentColor"
-          >
-            <path 
-              strokeLinecap="round" 
-              strokeLinejoin="round" 
-              strokeWidth={2} 
-              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" 
-            />
-          </svg>
-        </button>
-      </div>
-    </form>
+              )}
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
   );
 };
 
