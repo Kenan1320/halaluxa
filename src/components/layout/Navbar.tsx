@@ -6,10 +6,13 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
+import { useTheme } from '@/context/ThemeContext';
 import { useLocation as useLocationContext } from '@/context/LocationContext';
 import { motion } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
-import { getShopById, getMainShop, Shop } from '@/services/shopService';
+import { getShopById, getMainShop } from '@/services/shopService';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { Shop } from '@/types/database';
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -23,6 +26,7 @@ const Navbar = () => {
   const { cart } = useCart();
   const { isLocationEnabled, requestLocation, location: userLocation } = useLocationContext();
   const { toast } = useToast();
+  const { mode } = useTheme();
   
   // Close mobile menu when route changes
   useEffect(() => {
@@ -73,14 +77,17 @@ const Navbar = () => {
 
   return (
     <header 
-      className="fixed top-0 w-full z-50 transition-all duration-300 bg-[#E4F5F0]"
+      className={`fixed top-0 w-full z-50 transition-all duration-300 
+        ${mode === 'dark' 
+          ? 'bg-[#1C2526] text-white border-b border-gray-800' 
+          : 'bg-[#E4F5F0]'}`}
       style={{ height: '70px' }}
     >
       <div className="container mx-auto px-4 h-full flex justify-between items-center">
         {/* Menu Button */}
         <button
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="p-2 text-[#2A866A]"
+          className={`p-2 ${mode === 'dark' ? 'text-white' : 'text-[#2A866A]'}`}
           aria-label="Toggle menu"
         >
           {mobileMenuOpen ? (
@@ -93,7 +100,7 @@ const Navbar = () => {
         {/* Logo - with advanced animation */}
         <div className="flex items-center ml-3 mr-auto">
           <Link to="/" className="flex items-center">
-            <span className="text-lg font-serif font-bold text-[#2A866A]">Haluna</span>
+            <span className={`text-lg font-serif font-bold ${mode === 'dark' ? 'text-white' : 'text-[#2A866A]'}`}>Haluna</span>
             
             {/* Advanced animated logo design */}
             <div className="relative ml-1">
@@ -112,7 +119,7 @@ const Navbar = () => {
               
               {/* Orbiting green ball */}
               <motion.div
-                className="w-2 h-2 bg-[#2A866B] rounded-full absolute"
+                className={`w-2 h-2 ${mode === 'dark' ? 'bg-[#3AA88C]' : 'bg-[#2A866B]'} rounded-full absolute`}
                 animate={{
                   x: [2, 1.5, 0, -1.5, -2, -1.5, 0, 1.5, 2],
                   y: [0, 1.5, 2, 1.5, 0, -1.5, -2, -1.5, 0],
@@ -128,11 +135,18 @@ const Navbar = () => {
         </div>
         
         {/* Right side buttons */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
+          {/* Theme Toggle */}
+          <ThemeToggle />
+          
           {/* Location Button */}
           <motion.button 
             onClick={requestLocation}
-            className="p-2 rounded-full text-[#2A866A] hover:bg-[#d5efe8] transition-colors"
+            className={`p-2 rounded-full ${
+              mode === 'dark' 
+                ? 'text-white hover:bg-gray-700' 
+                : 'text-[#2A866A] hover:bg-[#d5efe8]'
+            } transition-colors`}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
@@ -142,7 +156,11 @@ const Navbar = () => {
           {/* Main Shop Button */}
           <motion.button 
             onClick={handleMainShopClick}
-            className="relative p-2 rounded-full text-[#2A866A] hover:bg-[#d5efe8] transition-colors"
+            className={`relative p-2 rounded-full ${
+              mode === 'dark' 
+                ? 'text-white hover:bg-gray-700' 
+                : 'text-[#2A866A] hover:bg-[#d5efe8]'
+            } transition-colors`}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
@@ -191,7 +209,11 @@ const Navbar = () => {
           >
             <Link 
               to="/select-shops" 
-              className="p-2 rounded-full text-[#2A866A] hover:bg-[#d5efe8] transition-colors block"
+              className={`p-2 rounded-full ${
+                mode === 'dark' 
+                  ? 'text-white hover:bg-gray-700' 
+                  : 'text-[#2A866A] hover:bg-[#d5efe8]'
+              } transition-colors block`}
             >
               <Store className="h-6 w-6" />
             </Link>
@@ -232,13 +254,21 @@ const Navbar = () => {
       
       {/* Mobile menu */}
       {mobileMenuOpen && (
-        <div className="container mx-auto px-4 py-4 bg-white border-t border-gray-100">
+        <div className={`container mx-auto px-4 py-4 ${
+          mode === 'dark' 
+            ? 'bg-[#1C2526] border-t border-gray-800' 
+            : 'bg-white border-t border-gray-100'
+        }`}>
           <div className="md:hidden mb-4">
             <div className="relative w-full">
               <input
                 type="text"
                 placeholder="Search your shop and products"
-                className="w-full py-2 px-4 pl-10 bg-[#F5F5F5] border border-[#E0E0E0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2A866A]/30"
+                className={`w-full py-2 px-4 pl-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2A866A]/30 ${
+                  mode === 'dark'
+                    ? 'bg-gray-800 border border-gray-700 text-white placeholder:text-gray-400'
+                    : 'bg-[#F5F5F5] border border-[#E0E0E0]'
+                }`}
               />
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
             </div>
@@ -248,7 +278,13 @@ const Navbar = () => {
             <Link
               to="/"
               className={`flex items-center gap-3 p-3 rounded-lg transition ${
-                isActive('/') ? 'bg-[#E4F5F0] text-[#2A866A]' : 'text-gray-700 hover:bg-gray-100'
+                mode === 'dark'
+                  ? (isActive('/') 
+                    ? 'bg-[#2A866A]/20 text-white' 
+                    : 'text-gray-300 hover:bg-gray-800')
+                  : (isActive('/') 
+                    ? 'bg-[#E4F5F0] text-[#2A866A]' 
+                    : 'text-gray-700 hover:bg-gray-100')
               }`}
               onClick={() => setMobileMenuOpen(false)}
             >
@@ -257,7 +293,13 @@ const Navbar = () => {
             <Link
               to="/shops"
               className={`flex items-center gap-3 p-3 rounded-lg transition ${
-                isActive('/shops') ? 'bg-[#E4F5F0] text-[#2A866A]' : 'text-gray-700 hover:bg-gray-100'
+                mode === 'dark'
+                  ? (isActive('/shops') 
+                    ? 'bg-[#2A866A]/20 text-white' 
+                    : 'text-gray-300 hover:bg-gray-800')
+                  : (isActive('/shops') 
+                    ? 'bg-[#E4F5F0] text-[#2A866A]' 
+                    : 'text-gray-700 hover:bg-gray-100')
               }`}
               onClick={() => setMobileMenuOpen(false)}
             >
@@ -266,7 +308,13 @@ const Navbar = () => {
             <Link
               to="/browse"
               className={`flex items-center gap-3 p-3 rounded-lg transition ${
-                isActive('/browse') ? 'bg-[#E4F5F0] text-[#2A866A]' : 'text-gray-700 hover:bg-gray-100'
+                mode === 'dark'
+                  ? (isActive('/browse') 
+                    ? 'bg-[#2A866A]/20 text-white' 
+                    : 'text-gray-300 hover:bg-gray-800')
+                  : (isActive('/browse') 
+                    ? 'bg-[#E4F5F0] text-[#2A866A]' 
+                    : 'text-gray-700 hover:bg-gray-100')
               }`}
               onClick={() => setMobileMenuOpen(false)}
             >
@@ -276,7 +324,13 @@ const Navbar = () => {
             <Link
               to="/select-shops"
               className={`flex items-center gap-3 p-3 rounded-lg transition ${
-                isActive('/select-shops') ? 'bg-[#E4F5F0] text-[#2A866A]' : 'text-gray-700 hover:bg-gray-100'
+                mode === 'dark'
+                  ? (isActive('/select-shops') 
+                    ? 'bg-[#2A866A]/20 text-white' 
+                    : 'text-gray-300 hover:bg-gray-800')
+                  : (isActive('/select-shops') 
+                    ? 'bg-[#E4F5F0] text-[#2A866A]' 
+                    : 'text-gray-700 hover:bg-gray-100')
               }`}
               onClick={() => setMobileMenuOpen(false)}
             >
@@ -286,7 +340,13 @@ const Navbar = () => {
               <Link
                 to="/dashboard"
                 className={`flex items-center gap-3 p-3 rounded-lg transition ${
-                  isActive('/dashboard') ? 'bg-[#E4F5F0] text-[#2A866A]' : 'text-gray-700 hover:bg-gray-100'
+                  mode === 'dark'
+                    ? (isActive('/dashboard') 
+                      ? 'bg-[#2A866A]/20 text-white' 
+                      : 'text-gray-300 hover:bg-gray-800')
+                    : (isActive('/dashboard') 
+                      ? 'bg-[#E4F5F0] text-[#2A866A]' 
+                      : 'text-gray-700 hover:bg-gray-100')
                 }`}
                 onClick={() => setMobileMenuOpen(false)}
               >
@@ -296,7 +356,13 @@ const Navbar = () => {
             <Link
               to={isLoggedIn ? '/profile' : '/login'}
               className={`flex items-center gap-3 p-3 rounded-lg transition ${
-                isActive('/profile') || isActive('/login') ? 'bg-[#E4F5F0] text-[#2A866A]' : 'text-gray-700 hover:bg-gray-100'
+                mode === 'dark'
+                  ? (isActive('/profile') || isActive('/login') 
+                    ? 'bg-[#2A866A]/20 text-white' 
+                    : 'text-gray-300 hover:bg-gray-800')
+                  : (isActive('/profile') || isActive('/login') 
+                    ? 'bg-[#E4F5F0] text-[#2A866A]' 
+                    : 'text-gray-700 hover:bg-gray-100')
               }`}
               onClick={() => setMobileMenuOpen(false)}
             >

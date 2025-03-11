@@ -5,7 +5,7 @@ import { Shop } from '@/types/database';
 import { ShopProduct } from '@/models/shop';
 
 // Export the Shop type from database.ts
-export type { Shop };
+export { Shop } from '@/types/database';
 
 // Mapping database fields to model fields
 export const mapDbShopToModel = (dbShop: any): Shop => {

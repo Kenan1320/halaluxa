@@ -9,6 +9,7 @@ import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { CartProvider } from "@/context/CartContext";
 import { LanguageProvider } from "@/context/LanguageContext";
 import { LocationProvider } from "@/context/LocationContext";
+import { ThemeProvider } from "@/context/ThemeContext";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import AuthMiddleware from "@/components/auth/AuthMiddleware";
 import Navbar from "@/components/layout/Navbar";
@@ -166,15 +167,17 @@ function App() {
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <LanguageProvider>
-            <AuthProvider>
-              <CartProvider>
-                <LocationProvider>
-                  <AppRoutes />
-                </LocationProvider>
-              </CartProvider>
-            </AuthProvider>
-          </LanguageProvider>
+          <ThemeProvider>
+            <LanguageProvider>
+              <AuthProvider>
+                <CartProvider>
+                  <LocationProvider>
+                    <AppRoutes />
+                  </LocationProvider>
+                </CartProvider>
+              </AuthProvider>
+            </LanguageProvider>
+          </ThemeProvider>
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>

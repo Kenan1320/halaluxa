@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Toggle } from '@/components/ui/toggle';
 import { motion } from 'framer-motion';
+import { useTheme } from '@/context/ThemeContext';
 
 interface ShopHeaderProps {
   shop: ShopDetails;
@@ -16,9 +17,11 @@ export function ShopHeader({ shop }: ShopHeaderProps) {
   const navigate = useNavigate();
   const [deliveryMode, setDeliveryMode] = useState<'delivery' | 'pickup'>('delivery');
   const [menuOpen, setMenuOpen] = useState(false);
+  const { mode } = useTheme();
+  const isDark = mode === 'dark';
 
   return (
-    <div className="sticky top-0 z-50 bg-background">
+    <div className={`sticky top-0 z-50 ${isDark ? 'bg-[#1C2526]' : 'bg-background'}`}>
       {/* Hero Image */}
       <div className="relative h-48 overflow-hidden">
         <img 
@@ -74,7 +77,7 @@ export function ShopHeader({ shop }: ShopHeaderProps) {
       </div>
 
       {/* Delivery Options */}
-      <div className="p-4 bg-background border-b">
+      <div className={`p-4 border-b ${isDark ? 'border-gray-800' : 'border-gray-200'}`}>
         <div className="flex justify-between items-center mb-4">
           <div className="flex gap-2">
             <Toggle
@@ -82,7 +85,9 @@ export function ShopHeader({ shop }: ShopHeaderProps) {
               onPressedChange={() => setDeliveryMode('delivery')}
               className={cn(
                 "rounded-full px-4",
-                deliveryMode === 'delivery' ? "bg-primary text-white" : "bg-secondary"
+                deliveryMode === 'delivery' 
+                  ? "bg-primary text-white" 
+                  : isDark ? "bg-gray-800 text-gray-300" : "bg-secondary"
               )}
             >
               Delivery
@@ -92,14 +97,21 @@ export function ShopHeader({ shop }: ShopHeaderProps) {
               onPressedChange={() => setDeliveryMode('pickup')}
               className={cn(
                 "rounded-full px-4",
-                deliveryMode === 'pickup' ? "bg-primary text-white" : "bg-secondary"
+                deliveryMode === 'pickup' 
+                  ? "bg-primary text-white" 
+                  : isDark ? "bg-gray-800 text-gray-300" : "bg-secondary"
               )}
             >
               Pickup
             </Toggle>
           </div>
           {shop.isGroupOrderEnabled && (
-            <Button variant="outline" className="rounded-full gap-2">
+            <Button 
+              variant="outline" 
+              className={`rounded-full gap-2 ${
+                isDark ? 'border-gray-700 hover:bg-gray-800' : ''
+              }`}
+            >
               <Users className="h-4 w-4" />
               Group order
             </Button>
@@ -107,31 +119,41 @@ export function ShopHeader({ shop }: ShopHeaderProps) {
         </div>
 
         <div className="grid grid-cols-2 gap-4">
-          <div className="p-4 rounded-lg bg-card">
-            <p className="text-lg font-semibold">
+          <div className={`p-4 rounded-lg ${
+            isDark ? 'bg-gray-800 border border-gray-700' : 'bg-card'
+          }`}>
+            <p className={`text-lg font-semibold ${isDark ? 'text-white' : ''}`}>
               ${deliveryMode === 'delivery' ? shop.deliveryInfo.deliveryFee.toFixed(2) : '0.00'}
             </p>
-            <p className="text-sm text-muted-foreground">
+            <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-muted-foreground'}`}>
               {deliveryMode === 'delivery' ? 'Delivery fee' : 'No fee for pickup'}
             </p>
           </div>
-          <div className="p-4 rounded-lg bg-card">
+          <div className={`p-4 rounded-lg ${
+            isDark ? 'bg-gray-800 border border-gray-700' : 'bg-card'
+          }`}>
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4 text-primary" />
-              <p className="text-lg font-semibold">{shop.deliveryInfo.estimatedTime}</p>
+              <p className={`text-lg font-semibold ${isDark ? 'text-white' : ''}`}>{shop.deliveryInfo.estimatedTime}</p>
             </div>
-            <p className="text-sm text-muted-foreground">Earliest arrival</p>
+            <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-muted-foreground'}`}>Earliest arrival</p>
           </div>
         </div>
         
         {/* Shop-specific search */}
         <div className="mt-4">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 ${
+              isDark ? 'text-gray-500' : 'text-gray-400'
+            }`} />
             <input 
               type="text" 
               placeholder={`Search ${shop.name}`}
-              className="w-full h-12 pl-10 pr-4 rounded-full bg-secondary text-foreground placeholder:text-gray-400"
+              className={`w-full h-12 pl-10 pr-4 rounded-full placeholder:text-gray-400 ${
+                isDark 
+                  ? 'bg-gray-800 text-white border border-gray-700 focus:border-primary focus:outline-none' 
+                  : 'bg-secondary text-foreground'
+              }`}
             />
           </div>
         </div>
@@ -140,23 +162,31 @@ export function ShopHeader({ shop }: ShopHeaderProps) {
       {/* More options menu (conditionally rendered) */}
       {menuOpen && (
         <motion.div 
-          className="absolute right-0 top-16 bg-card shadow-lg rounded-lg overflow-hidden z-50 w-64"
+          className={`absolute right-0 top-16 shadow-lg rounded-lg overflow-hidden z-50 w-64 ${
+            isDark ? 'bg-gray-800 border border-gray-700' : 'bg-card'
+          }`}
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.2 }}
         >
           <ul className="py-2">
-            <li className="px-4 py-3 flex items-center gap-3 hover:bg-secondary/50 cursor-pointer transition-colors">
+            <li className={`px-4 py-3 flex items-center gap-3 cursor-pointer transition-colors ${
+              isDark ? 'hover:bg-gray-700' : 'hover:bg-secondary/50'
+            }`}>
               <Users className="h-5 w-5 text-primary" />
-              <span>Start group order</span>
+              <span className={isDark ? 'text-white' : ''}>Start group order</span>
             </li>
-            <li className="px-4 py-3 flex items-center gap-3 hover:bg-secondary/50 cursor-pointer transition-colors">
+            <li className={`px-4 py-3 flex items-center gap-3 cursor-pointer transition-colors ${
+              isDark ? 'hover:bg-gray-700' : 'hover:bg-secondary/50'
+            }`}>
               <Heart className="h-5 w-5 text-primary" />
-              <span>Add to favorites</span>
+              <span className={isDark ? 'text-white' : ''}>Add to favorites</span>
             </li>
-            <li className="px-4 py-3 flex items-center gap-3 hover:bg-secondary/50 cursor-pointer transition-colors border-t">
+            <li className={`px-4 py-3 flex items-center gap-3 cursor-pointer transition-colors border-t ${
+              isDark ? 'border-gray-700 hover:bg-gray-700' : 'hover:bg-secondary/50'
+            }`}>
               <span className="h-5 w-5 flex items-center justify-center text-primary">ℹ️</span>
-              <span>Shop info</span>
+              <span className={isDark ? 'text-white' : ''}>Shop info</span>
             </li>
           </ul>
         </motion.div>
