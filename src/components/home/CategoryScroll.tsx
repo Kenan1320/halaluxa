@@ -2,24 +2,15 @@
 import { useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { shopCategories, getCategoryIcon } from '@/models/shop';
 
-// Define categories with new names and image paths for the uploaded icons
-const categories = [
-  { id: 1, name: 'Local Halal Restaurants', icon: '/lovable-uploads/33473605-0fc6-42cb-b43f-611ca39e7974.png', color: '#2A866A' },
-  { id: 2, name: 'Halal Butcher Shops', icon: '/lovable-uploads/f6d6f4f3-7512-4062-a680-623cc1fedbeb.png', color: '#2A866A' },
-  { id: 3, name: 'Local Halal Grocery Stores', icon: '/lovable-uploads/945fdb0b-0a69-4959-8bbd-7e04b4d2c302.png', color: '#2A866A' },
-  { id: 4, name: 'Halal Wellness & Therapy Centers', icon: '/lovable-uploads/afa25d90-d483-4dc6-869f-7ae45dc603c1.png', color: '#2A866A' },
-  { id: 5, name: 'Home & Furniture Stores', icon: '/lovable-uploads/7dc19b16-ff98-421a-b0eb-0a361c1d2b71.png', color: '#2A866A' },
-  { id: 6, name: 'Islamic Home Decor & Accessories', icon: '/lovable-uploads/ce21c020-0b24-44ca-b4ae-d65aeb2c1521.png', color: '#2A866A' },
-  { id: 7, name: 'Islamic Art & Calligraphy Services', icon: '/lovable-uploads/1965192d-c719-48ca-bdc0-a04304367fa1.png', color: '#2A866A' },
-  { id: 8, name: 'Islamic Gifts & Specialty Shops', icon: '/lovable-uploads/4405a5c7-2649-47d1-b9c6-23aed24cbd78.png', color: '#2A866A' },
-  { id: 9, name: 'Halvi Marketplace', icon: '/lovable-uploads/90ba1157-a6f3-48db-a573-42025b1b9b8f.png', color: '#2A866A' },
-  { id: 10, name: 'Learn Arabic', icon: '/lovable-uploads/c37a7b51-ecf8-41f5-80b4-ce2b04638ccf.png', color: '#2A866A' },
-  { id: 11, name: 'Modest Wear - Hijabs', icon: '/lovable-uploads/8273b5a9-f0c1-42f0-9379-3066df673278.png', color: '#2A866A' },
-  { id: 12, name: 'Modest Wear - Abayas & Dresses', icon: '/lovable-uploads/b715b790-ea10-4ff3-8580-ebe7a7170ee4.png', color: '#2A866A' },
-  { id: 13, name: 'Men\'s Islamic Wear - Thobes & Jubbas', icon: '/lovable-uploads/42d710d1-d270-40bf-8c4a-7c152adaad99.png', color: '#2A866A' },
-  { id: 14, name: 'Islamic Books & more', icon: '/lovable-uploads/b7391005-ab3c-4698-85d5-1192b4fc4df6.png', color: '#2A866A' }
-];
+// Map to the categories data structure with icons
+const categories = shopCategories.map((name, index) => ({
+  id: index + 1,
+  name,
+  icon: getCategoryIcon(name),
+  color: '#2A866A'
+}));
 
 const CategoryScroll = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
