@@ -2,29 +2,38 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
+import { createShop } from '@/services/shopService';
 import { useToast } from '@/hooks/use-toast';
 import { motion } from 'framer-motion';
-import {
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { 
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { Store, MapPin, Tag, FileText, Upload, X } from 'lucide-react';
 import ShopSetupForm from './ShopSetupForm';
 
 const BusinessOnboarding = () => {
   const { user, isLoggedIn } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [onboardingStep, setOnboardingStep] = useState(0);
   const [onboardingComplete, setOnboardingComplete] = useState(false);
   
+  // Check if user already has a shop
   useEffect(() => {
-    if (user?.shop_name) {
+    if (user?.shopName) {
       setOnboardingComplete(true);
     }
   }, [user]);
   
+  // If user completes onboarding or skips, redirect them
   useEffect(() => {
     if (onboardingComplete) {
       navigate('/dashboard');
@@ -51,6 +60,7 @@ const BusinessOnboarding = () => {
     return null;
   }
   
+  // Check if user is a business account
   if (user.role !== 'business') {
     return null;
   }

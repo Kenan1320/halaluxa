@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
@@ -20,8 +21,10 @@ const LoginPage = () => {
   const [loading, setLoading] = useState(false);
   const [userType, setUserType] = useState<'shopper' | 'business' | null>(null);
 
+  // Get the intended destination, if any
   const from = location.state?.from?.pathname || '/';
   
+  // If already logged in, redirect to appropriate page
   useEffect(() => {
     if (isLoggedIn) {
       if (user?.role === 'business') {
@@ -52,12 +55,14 @@ const LoginPage = () => {
     setLoading(true);
     
     try {
+      // Attempt to login and get the user's actual role from the database
       const role = await login(formData.email, formData.password);
       
       if (role) {
         console.log('Login successful with role:', role);
         console.log('User selected type:', userType);
         
+        // Check if the role matches the selected type
         if ((role === 'shopper' && userType === 'business') || (role === 'business' && userType === 'shopper')) {
           toast({
             title: "Account Type Mismatch",
@@ -73,6 +78,7 @@ const LoginPage = () => {
           description: "Logged in successfully",
         });
         
+        // Navigate to the appropriate destination based on role
         if (role === 'business') {
           navigate('/dashboard');
         } else {
@@ -107,6 +113,7 @@ const LoginPage = () => {
     }
     
     try {
+      // Store the selected user type in localStorage temporarily
       localStorage.setItem('signupUserType', userType);
       
       const { data, error } = await supabase.auth.signInWithOAuth({
@@ -124,7 +131,7 @@ const LoginPage = () => {
         throw error;
       }
       
-      navigate('/login');
+      // The redirect will happen automatically
     } catch (error) {
       console.error('Error signing in with Google:', error);
       toast({
@@ -135,6 +142,7 @@ const LoginPage = () => {
     }
   };
 
+  // Animation variants
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: { 
@@ -175,6 +183,7 @@ const LoginPage = () => {
           <LoginSelector onSelect={setUserType} selectedType={userType} />
         </motion.div>
         
+        {/* Google Sign In Button */}
         <motion.div variants={itemVariants} className="mb-6">
           <Button 
             type="button" 

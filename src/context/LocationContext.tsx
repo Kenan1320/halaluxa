@@ -1,169 +1,182 @@
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { getNearbyShops } from '@/services/shopService';
-import { Shop } from '@/types/database';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { getAllShops } from '@/services/shopService';
+import { Shop } from '@/types/database';
 
-// Using a more complete location interface that matches what we need
-export interface EnhancedLocation {
-  coords: {
-    latitude: number;
-    longitude: number;
-  };
+// Extended GeolocationPosition type with city and state
+interface EnhancedLocation {
+  coords: GeolocationCoordinates;
   timestamp: number;
   city?: string;
   state?: string;
 }
 
-interface LocationContextProps {
+interface LocationContextType {
   isLocationEnabled: boolean;
+  enableLocation: () => Promise<boolean>;
+  requestLocation: () => Promise<boolean>; // Added missing function
   location: EnhancedLocation | null;
-  userLocation: EnhancedLocation | null; // Added userLocation
-  requestLocation: () => void;
-  getCurrentLocation: () => void; // Added getCurrentLocation
   getNearbyShops: () => Promise<Shop[]>;
 }
 
-const LocationContext = createContext<LocationContextProps>({
+const LocationContext = createContext<LocationContextType>({
   isLocationEnabled: false,
+  enableLocation: async () => false,
+  requestLocation: async () => false,
   location: null,
-  userLocation: null, // Added userLocation
-  requestLocation: () => {},
-  getCurrentLocation: () => {}, // Added getCurrentLocation
   getNearbyShops: async () => [],
 });
 
-export const LocationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [isLocationEnabled, setIsLocationEnabled] = useState(false);
-  const [location, setLocation] = useState<EnhancedLocation | null>(null);
-  const { toast } = useToast();
+export const useLocation = () => useContext(LocationContext);
 
-  // Create userLocation as an alias to location for backward compatibility
-  const userLocation = location;
+interface LocationProviderProps {
+  children: ReactNode;
+}
+
+export const LocationProvider: React.FC<LocationProviderProps> = ({ children }) => {
+  const { toast } = useToast();
+  const [isLocationEnabled, setIsLocationEnabled] = useState<boolean>(false);
+  const [location, setLocation] = useState<EnhancedLocation | null>(null);
 
   useEffect(() => {
-    // Load saved location from localStorage
-    const savedLocationStr = localStorage.getItem('userLocation');
-    if (savedLocationStr) {
-      try {
-        const savedLocation = JSON.parse(savedLocationStr);
-        setLocation(savedLocation);
-        setIsLocationEnabled(true);
-      } catch (error) {
-        console.error('Error parsing saved location:', error);
-      }
+    // Check if geolocation is available in the browser
+    if (!navigator.geolocation) {
+      toast({
+        title: "Geolocation not supported",
+        description: "Your browser does not support geolocation features.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check if location permission was previously granted
+    if (localStorage.getItem('locationPermission') === 'granted') {
+      enableLocation();
     }
   }, []);
 
-  const requestLocation = () => {
-    if (navigator.geolocation) {
-      toast({
-        title: "Accessing location",
-        description: "Please allow location access to find shops near you.",
-      });
-      
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          // Get coordinates
-          const { latitude, longitude } = position.coords;
-          
-          // Create enhanced location object
-          const newLocation: EnhancedLocation = {
-            coords: {
-              latitude,
-              longitude,
-            },
-            timestamp: position.timestamp,
-            // We'll add city and state later if available
-          };
-          
-          // Try to get city and state using reverse geocoding
-          fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`)
-            .then(response => response.json())
-            .then(data => {
-              if (data && data.address) {
-                // Update location with city and state
-                const updatedLocation: EnhancedLocation = {
-                  ...newLocation,
-                  city: data.address.city || data.address.town || data.address.village || 'Unknown',
-                  state: data.address.state || data.address.region || 'Unknown'
-                };
-                
-                setLocation(updatedLocation);
-                localStorage.setItem('userLocation', JSON.stringify(updatedLocation));
-              } else {
-                setLocation(newLocation);
-                localStorage.setItem('userLocation', JSON.stringify(newLocation));
-              }
-            })
-            .catch(error => {
-              console.error("Error getting location details:", error);
-              setLocation(newLocation);
-              localStorage.setItem('userLocation', JSON.stringify(newLocation));
-            });
-          
-          setIsLocationEnabled(true);
-          
-          toast({
-            title: "Location updated",
-            description: "We'll now show you shops and products near you.",
-          });
-        },
-        (error) => {
-          console.error("Error getting location:", error);
-          setIsLocationEnabled(false);
-          
-          toast({
-            title: "Location access denied",
-            description: "We'll show you shops and products from all locations.",
-            variant: "destructive",
-          });
-        }
-      );
-    } else {
-      toast({
-        title: "Geolocation not supported",
-        description: "Your browser doesn't support geolocation.",
-        variant: "destructive",
-      });
+  // Function to get the city and state from coordinates
+  const getCityAndState = async (latitude: number, longitude: number): Promise<{city: string, state: string}> => {
+    try {
+      // This would typically be a reverse geocoding API call
+      // For now, we'll return mock data
+      return {
+        city: "San Francisco",
+        state: "CA"
+      };
+    } catch (error) {
+      console.error('Error getting city and state:', error);
+      return {
+        city: "Unknown",
+        state: ""
+      };
     }
   };
 
-  // Add getCurrentLocation as an alias to requestLocation for backward compatibility
-  const getCurrentLocation = requestLocation;
+  const enableLocation = async (): Promise<boolean> => {
+    if (!navigator.geolocation) {
+      return false;
+    }
 
-  const fetchNearbyShops = async (): Promise<Shop[]> => {
-    if (isLocationEnabled && location) {
-      try {
-        return await getNearbyShops(location.coords.latitude, location.coords.longitude);
-      } catch (error) {
-        console.error("Error fetching nearby shops:", error);
-        return [];
+    try {
+      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: true,
+          timeout: 5000,
+          maximumAge: 0,
+        });
+      });
+
+      // Get city and state information
+      const { city, state } = await getCityAndState(
+        position.coords.latitude,
+        position.coords.longitude
+      );
+
+      // Create enhanced location object
+      const enhancedLocation: EnhancedLocation = {
+        ...position,
+        city,
+        state
+      };
+
+      setLocation(enhancedLocation);
+      setIsLocationEnabled(true);
+      localStorage.setItem('locationPermission', 'granted');
+      
+      toast({
+        title: "Location enabled",
+        description: "We can now show shops near you.",
+      });
+
+      return true;
+    } catch (error) {
+      console.error('Error getting location:', error);
+      
+      if (error instanceof GeolocationPositionError) {
+        if (error.code === error.PERMISSION_DENIED) {
+          toast({
+            title: "Location access denied",
+            description: "Please enable location in your browser settings to see nearby shops.",
+            variant: "destructive",
+          });
+        } else if (error.code === error.TIMEOUT) {
+          toast({
+            title: "Location timeout",
+            description: "Getting your location took too long. Please try again.",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Location error",
+            description: "Could not get your location. Please try again.",
+            variant: "destructive",
+          });
+        }
       }
-    } else {
-      try {
-        return await getNearbyShops();
-      } catch (error) {
-        console.error("Error fetching shops:", error);
-        return [];
+      
+      return false;
+    }
+  };
+
+  // Add the missing requestLocation function (alias for enableLocation)
+  const requestLocation = async (): Promise<boolean> => {
+    return enableLocation();
+  };
+
+  const getNearbyShops = async (): Promise<Shop[]> => {
+    try {
+      if (!isLocationEnabled || !location) {
+        return await getAllShops();
       }
+
+      const { latitude, longitude } = location.coords;
+      
+      // In a real app, we would call a function that retrieves shops sorted by distance
+      // For now, we'll just get all shops and set a mocked distance
+      const shops = await getAllShops();
+      
+      // Add a random distance to each shop for demo purposes
+      return shops.map(shop => ({
+        ...shop,
+        distance: Math.random() * 5 // Random distance between 0 and 5 miles
+      })).sort((a, b) => (a.distance || 99) - (b.distance || 99));
+    } catch (error) {
+      console.error('Error getting nearby shops:', error);
+      return [];
     }
   };
 
   return (
-    <LocationContext.Provider
-      value={{
-        isLocationEnabled,
-        location,
-        userLocation, // Add userLocation
-        requestLocation,
-        getCurrentLocation, // Add getCurrentLocation
-        getNearbyShops: fetchNearbyShops,
-      }}
-    >
+    <LocationContext.Provider value={{ 
+      isLocationEnabled, 
+      enableLocation,
+      requestLocation, 
+      location,
+      getNearbyShops 
+    }}>
       {children}
     </LocationContext.Provider>
   );
 };
-
-export const useLocation = () => useContext(LocationContext);

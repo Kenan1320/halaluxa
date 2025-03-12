@@ -114,50 +114,39 @@ const Navbar = () => {
         {/* Logo - with advanced animation */}
         <div className="flex items-center ml-3 mr-auto">
           <Link to="/" className="flex items-center">
-            <motion.span 
-              className={`text-lg font-bold ${mode === 'dark' ? 'text-white' : 'text-[#2A866A]'}`}
-              style={{ 
-                fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif",
-                letterSpacing: "0.5px"
-              }}
-              whileHover={{ scale: 1.05 }}
-              transition={{ duration: 0.2 }}
-            >
-              Halvi
-            </motion.span>
+            <span className={`text-lg font-serif font-bold ${mode === 'dark' ? 'text-white' : 'text-[#2A866A]'}`}
+                  style={{ fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}>
+              Haluna
+            </span>
             
-            {/* Animated mall icon */}
-            <div className="relative ml-2 flex items-center">
-              {/* Building/mall animation */}
+            {/* Advanced animated logo design */}
+            <div className="relative ml-1">
+              {/* Main orange ball */}
               <motion.div 
-                className="relative"
-                initial={{ y: 0 }}
-                animate={{ y: [0, -2, 0] }}
-                transition={{ 
-                  duration: 1.5,
-                  repeat: Infinity,
-                  repeatType: "reverse",
-                  ease: "easeInOut"
+                className="w-5 h-5 bg-[#E4875E] rounded-full"
+                animate={{
+                  scale: [1, 1.1, 1],
                 }}
-              >
-                <Store 
-                  className={`h-5 w-5 ${mode === 'dark' ? 'text-[#3AA88C]' : 'text-[#2A866A]'}`} 
-                />
-                
-                {/* Pulsing effect */}
-                <motion.div
-                  className="absolute -right-1 -top-1 w-2 h-2 bg-[#E4875E] rounded-full"
-                  animate={{
-                    scale: [1, 1.5, 1],
-                    opacity: [0.7, 1, 0.7]
-                  }}
-                  transition={{
-                    duration: 2,
-                    repeat: Infinity,
-                    ease: "easeInOut"
-                  }}
-                />
-              </motion.div>
+                transition={{
+                  duration: 6,
+                  repeat: Infinity,
+                  repeatType: "reverse"
+                }}
+              />
+              
+              {/* Orbiting green ball */}
+              <motion.div
+                className={`w-2 h-2 ${mode === 'dark' ? 'bg-[#3AA88C]' : 'bg-[#2A866B]'} rounded-full absolute`}
+                animate={{
+                  x: [2, 1.5, 0, -1.5, -2, -1.5, 0, 1.5, 2],
+                  y: [0, 1.5, 2, 1.5, 0, -1.5, -2, -1.5, 0],
+                }}
+                transition={{
+                  duration: 8,
+                  repeat: Infinity,
+                  ease: "linear"
+                }}
+              />
             </div>
           </Link>
         </div>
@@ -178,7 +167,7 @@ const Navbar = () => {
             <MapPin className="h-6 w-6" />
           </motion.button>
           
-          {/* Main Shop Button - Only shop with pulse animation */}
+          {/* Main Shop Button - Only main shop left */}
           <motion.button 
             onClick={handleMainShopClick}
             className={`relative p-2 rounded-full ${
@@ -260,83 +249,124 @@ const Navbar = () => {
         </div>
       </div>
       
-      {/* Mobile menu - Compact with only icons */}
+      {/* Mobile menu - Simplified dropdown menu */}
       <AnimatePresence>
         {mobileMenuOpen && (
           <motion.div 
-            className="fixed inset-0 z-50"
+            className="fixed inset-0 z-50 bg-black bg-opacity-50"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setMobileMenuOpen(false)}
           >
             <motion.div 
-              className={`absolute left-0 top-[70px] py-3 px-2 ${
+              className={`absolute left-0 top-[70px] bottom-0 w-[280px] p-4 ${
                 mode === 'dark' 
-                  ? 'bg-[#1C2526]/95 text-white border-r border-gray-800 backdrop-blur-md' 
-                  : 'bg-white/95 border-r border-gray-100 backdrop-blur-md'
-              } overflow-hidden rounded-r-xl shadow-lg`}
-              initial={{ width: 0, opacity: 0 }}
-              animate={{ width: "auto", opacity: 1 }}
-              exit={{ width: 0, opacity: 0 }}
-              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+                  ? 'bg-[#1C2526] text-white border-r border-gray-800' 
+                  : 'bg-white border-r border-gray-100'
+              } overflow-y-auto`}
+              initial={{ x: -280 }}
+              animate={{ x: 0 }}
+              exit={{ x: -280 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex flex-col gap-2.5 items-center">
-                {/* Menu navigation - sleek icon-only buttons */}
+              {/* User info section */}
+              <div className={`p-4 mb-4 rounded-lg ${
+                mode === 'dark' ? 'bg-gray-800' : 'bg-[#E4F5F0]'
+              }`}>
+                <div className="flex items-center gap-3">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                    mode === 'dark' ? 'bg-gray-700' : 'bg-[#2A866A]'
+                  } text-white`}>
+                    {isLoggedIn && user ? user.name.charAt(0).toUpperCase() : <User size={20} />}
+                  </div>
+                  <div>
+                    <p className="font-medium">
+                      {isLoggedIn && user ? user.name : 'Welcome'}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      {isLoggedIn && user ? user.email : 'Sign in for the best experience'}
+                    </p>
+                  </div>
+                </div>
+                
+                {!isLoggedIn && (
+                  <Link 
+                    to="/login"
+                    className="mt-3 block w-full py-2 bg-[#2A866A] text-white text-center rounded-full text-sm font-medium"
+                  >
+                    Sign In
+                  </Link>
+                )}
+              </div>
+              
+              {/* Theme toggle button in menu */}
+              <button
+                onClick={toggleMode}
+                className={`flex items-center gap-4 p-3 rounded-lg transition w-full text-left mb-3 ${
+                  mode === 'dark'
+                    ? 'bg-gray-800 text-white' 
+                    : 'bg-gray-100 text-gray-700'
+                }`}
+              >
+                {mode === 'dark' ? (
+                  <>
+                    <Sun size={20} />
+                    <span className="text-sm">Light Mode</span>
+                  </>
+                ) : (
+                  <>
+                    <Moon size={20} />
+                    <span className="text-sm">Dark Mode</span>
+                  </>
+                )}
+              </button>
+              
+              {/* Menu navigation - simple dropdown buttons */}
+              <div className="space-y-1">
                 {menuItems.map((item) => (
                   <Link
                     key={item.path}
                     to={item.path}
-                    className={`flex items-center justify-center p-3 rounded-xl w-11 h-11 transition-colors ${
+                    className={`flex items-center gap-4 p-3 rounded-lg transition ${
                       mode === 'dark'
                         ? (isActive(item.path) 
-                          ? 'bg-[#2A866A] text-white' 
+                          ? 'bg-[#2A866A]/20 text-white' 
                           : 'text-gray-300 hover:bg-gray-800')
                         : (isActive(item.path) 
                           ? 'bg-[#E4F5F0] text-[#2A866A]' 
                           : 'text-gray-700 hover:bg-gray-100')
                     }`}
-                    title={item.label}
                   >
                     {item.icon}
+                    <span className="text-sm">{item.label}</span>
                   </Link>
                 ))}
                 
-                {/* Theme toggle - icon only */}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleMode();
-                  }}
-                  className={`flex items-center justify-center p-3 rounded-xl w-11 h-11 transition-colors ${
-                    mode === 'dark'
-                      ? 'text-gray-300 hover:bg-gray-800' 
-                      : 'text-gray-700 hover:bg-gray-100'
-                  }`}
-                  title={mode === 'dark' ? 'Light Mode' : 'Dark Mode'}
-                >
-                  {mode === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
-                </button>
-                
-                {/* Sign out button - icon only */}
                 {isLoggedIn && (
                   <button
-                    onClick={(e) => {
-                      e.stopPropagation();
+                    onClick={() => {
                       logout();
                       setMobileMenuOpen(false);
                     }}
-                    className={`flex items-center justify-center p-3 rounded-xl w-11 h-11 transition-colors ${
+                    className={`flex items-center gap-4 p-3 rounded-lg transition w-full text-left ${
                       mode === 'dark'
                         ? 'text-gray-300 hover:bg-gray-800'
                         : 'text-gray-700 hover:bg-gray-100'
                     }`}
-                    title="Sign Out"
                   >
                     <LogOut size={20} />
+                    <span className="text-sm">Sign Out</span>
                   </button>
                 )}
+              </div>
+              
+              {/* App version */}
+              <div className="mt-8 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <p className="text-xs text-gray-500 text-center">
+                  Version 1.0.0
+                </p>
               </div>
             </motion.div>
           </motion.div>

@@ -13,13 +13,8 @@ const ProtectedRoute = ({
   requiredRole = 'any',
   businessAllowed = true
 }: ProtectedRouteProps) => {
-  const { isLoggedIn, user, isInitializing } = useAuth();
+  const { isLoggedIn, user } = useAuth();
   const location = useLocation();
-  
-  // Don't render anything while initializing auth
-  if (isInitializing) {
-    return null;
-  }
   
   if (!isLoggedIn) {
     // Redirect to login if not logged in
