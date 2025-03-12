@@ -1,4 +1,3 @@
-
 import { createClient } from '@supabase/supabase-js';
 import { Shop } from '@/types/database';
 
@@ -137,6 +136,10 @@ export const createShop = async (shopData: Omit<Shop, 'id'>): Promise<Shop | nul
   return data;
 };
 
+// Use export type for Shop interface when re-exporting
+export type { Shop } from '@/types/database';
+
+// Add getShopProducts function if it's missing
 export const getShopProducts = async (shopId: string) => {
   const { data, error } = await supabase
     .from('products')
@@ -150,14 +153,3 @@ export const getShopProducts = async (shopId: string) => {
   
   return data || [];
 };
-
-export const convertToModelProduct = (dbProduct: any) => {
-  // This is a placeholder to fix type errors
-  return {
-    ...dbProduct,
-    in_stock: dbProduct.in_stock ?? true,
-  };
-};
-
-// Explicitly export Shop type from database module
-export { Shop };

@@ -1,4 +1,3 @@
-
 import { createClient } from '@supabase/supabase-js';
 import { Product } from '@/types/database';
 import { Product as ModelProduct } from '@/models/product';
@@ -29,7 +28,7 @@ export const convertToModelProduct = (dbProduct: Product): ModelProduct => {
 };
 
 // Get all products
-export const getAllProducts = async (): Promise<ModelProduct[]> => {
+export const getProducts = async (): Promise<ModelProduct[]> => {
   const { data, error } = await supabase
     .from('products')
     .select('*')
@@ -205,6 +204,28 @@ export const searchProducts = async (query: string): Promise<ModelProduct[]> => 
     
   if (error) {
     console.error(`Error searching products with query '${query}':`, error);
+    return [];
+  }
+  
+  if (!data) return [];
+  
+  return data.map(product => convertToModelProduct({
+    ...product,
+    in_stock: product.in_stock ?? true
+  }));
+};
+
+// Add getFeaturedProducts function
+export const getFeaturedProducts = async (): Promise<ModelProduct[]> => {
+  const { data, error } = await supabase
+    .from('products')
+    .select('*')
+    .eq('is_published', true)
+    .order('rating', { ascending: false })
+    .limit(8);
+    
+  if (error) {
+    console.error('Error fetching featured products:', error);
     return [];
   }
   

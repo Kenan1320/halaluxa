@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
@@ -23,22 +22,15 @@ const SelectShops = () => {
   const { isLocationEnabled, location, getNearbyShops } = useLocationContext();
   const { mode } = useTheme();
   
-  // Load shops on component mount
   useEffect(() => {
     const loadShops = async () => {
       setIsLoading(true);
       try {
-        // Get all shops
         const allShops = await getAllShops();
-        
-        // Get nearby shops to prioritize them
         const nearbyShops = isLocationEnabled ? await getNearbyShops() : [];
-        
-        // Combine and deduplicate
         const nearbyIds = new Set(nearbyShops.map(shop => shop.id));
         const otherShops = allShops.filter(shop => !nearbyIds.has(shop.id));
         
-        // Sort shops by location
         const locationMap: Record<string, Shop[]> = {};
         [...nearbyShops, ...otherShops].forEach(shop => {
           const location = shop.location || 'Other';
@@ -51,13 +43,11 @@ const SelectShops = () => {
         setLocations(locationMap);
         setShops([...nearbyShops, ...otherShops]);
         
-        // Load previously selected shops from localStorage
         const savedShops = localStorage.getItem('selectedShops');
         if (savedShops) {
           setSelectedShops(JSON.parse(savedShops));
         }
         
-        // Load main shop from localStorage
         const savedMainShop = localStorage.getItem('mainShopId');
         if (savedMainShop) {
           setMainShopId(savedMainShop);
@@ -80,13 +70,11 @@ const SelectShops = () => {
   const toggleShopSelection = (shopId: string) => {
     setSelectedShops(prev => {
       if (prev.includes(shopId)) {
-        // If removing the main shop, also clear main shop
         if (mainShopId === shopId) {
           setMainShopId(null);
         }
         return prev.filter(id => id !== shopId);
       } else {
-        // If this is the first shop being selected, also make it the main shop
         if (prev.length === 0) {
           setMainShopId(shopId);
         }
@@ -96,7 +84,6 @@ const SelectShops = () => {
   };
   
   const setAsMainShop = (shopId: string) => {
-    // Ensure the shop is in the selected list
     if (!selectedShops.includes(shopId)) {
       setSelectedShops(prev => [...prev, shopId]);
     }
@@ -114,7 +101,6 @@ const SelectShops = () => {
     if (mainShopId) {
       localStorage.setItem('mainShopId', mainShopId);
     } else if (selectedShops.length > 0) {
-      // If no main shop is set but shops are selected, set the first one as main
       localStorage.setItem('mainShopId', selectedShops[0]);
     } else {
       localStorage.removeItem('mainShopId');
@@ -164,9 +150,9 @@ const SelectShops = () => {
             
             {mainShopId ? (
               <div className={`flex items-center rounded-lg p-3 shadow-sm ${mode === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
-                {shops.find(s => s.id === mainShopId)?.logo ? (
+                {shops.find(s => s.id === mainShopId)?.logo_url ? (
                   <img 
-                    src={shops.find(s => s.id === mainShopId)?.logo} 
+                    src={shops.find(s => s.id === mainShopId)?.logo_url} 
                     alt="Main shop" 
                     className="w-10 h-10 object-cover rounded-full mr-3"
                   />
@@ -187,7 +173,6 @@ const SelectShops = () => {
             )}
           </div>
           
-          {/* Shops by location */}
           {Object.entries(locations).map(([location, locationShops]) => (
             <div key={location} className="mb-8">
               <div className="flex items-center gap-2 mb-3">
@@ -208,14 +193,12 @@ const SelectShops = () => {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                   >
-                    {/* Selection indicator */}
                     {selectedShops.includes(shop.id) && (
                       <div className={`absolute top-2 right-2 w-5 h-5 ${mode === 'dark' ? 'text-white' : 'text-black'}`}>
                         <CheckCircle className="w-full h-full" />
                       </div>
                     )}
                     
-                    {/* Main shop indicator */}
                     {mainShopId === shop.id && (
                       <div className="absolute top-2 left-2">
                         <motion.div 
@@ -233,11 +216,10 @@ const SelectShops = () => {
                       </div>
                     )}
                     
-                    {/* Shop logo */}
                     <div className="flex flex-col items-center">
-                      {shop.logo ? (
+                      {shop.logo_url ? (
                         <img 
-                          src={shop.logo} 
+                          src={shop.logo_url} 
                           alt={shop.name} 
                           className="w-16 h-16 object-cover rounded-full mb-3"
                         />

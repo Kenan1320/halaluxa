@@ -23,6 +23,25 @@ interface User {
   shop_logo?: string;
 }
 
+// Update profile interface
+interface DatabaseProfile {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+  role: string;
+  avatar_url?: string;
+  shop_name?: string;
+  shop_description?: string;
+  shop_category?: string;
+  shop_location?: string;
+  shop_logo?: string;
+}
+
 interface AuthContextProps {
   user: User | null;
   isLoggedIn: boolean;

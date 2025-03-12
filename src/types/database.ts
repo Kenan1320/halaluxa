@@ -1,4 +1,3 @@
-
 export interface DatabaseProfile {
   id: string;
   name: string;
@@ -73,19 +72,18 @@ export interface Product {
 export interface SellerAccount {
   id: string;
   user_id: string;
-  account_number: string;
-  routing_number?: string;
-  bank_name: string;
-  account_type: string;
-  is_verified: boolean;
-  created_at: string;
-  updated_at: string;
-  balance: number;
-  currency: string;
   shop_id?: string;
+  account_type: string;
+  account_name: string;
+  account_number: string;
+  bank_name: string;
   paypal_email?: string;
   stripe_account_id?: string;
   applepay_merchant_id?: string;
-  account_name?: string;
   is_active?: boolean;
+  created_at: string;
+  updated_at: string;
+  is_verified: boolean;
+  balance: number;
+  currency: string;
 }
