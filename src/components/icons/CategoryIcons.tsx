@@ -1,3 +1,4 @@
+
 import React from 'react';
 
 interface CategoryIconProps {
@@ -31,10 +32,10 @@ export const HalalMeatIcon: React.FC<CategoryIconProps> = ({ className }) => (
   />
 );
 
-// Renamed from Online Shops to Furniture
+// Replace Furniture icon with the new uploaded image
 export const FurnitureIcon: React.FC<CategoryIconProps> = ({ className }) => (
   <img 
-    src="/lovable-uploads/b7391005-ab3c-4698-85d5-1192b4fc4df6.png" 
+    src="/lovable-uploads/c5a94586-b070-41f1-91ec-272ded3fba65.png" 
     alt="Furniture" 
     className={className || "w-6 h-6"}
   />

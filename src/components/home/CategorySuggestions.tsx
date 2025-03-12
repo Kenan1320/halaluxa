@@ -19,7 +19,7 @@ const TabItem = ({ isActive, onClick, icon, children }: {
     }`}
   >
     {icon}
-    <span className="text-lg font-heading">{children}</span>
+    <span className="text-xl font-heading font-bold">{children}</span>
     {isActive && (
       <motion.div
         className="absolute bottom-0 left-0 right-0 h-0.5 bg-black dark:bg-white"
@@ -30,15 +30,19 @@ const TabItem = ({ isActive, onClick, icon, children }: {
   </button>
 );
 
-const CategoryIcon = ({ category, onClick }: { category: string; onClick: () => void }) => (
+const CategoryIcon = ({ category, onClick, isSelected }: { 
+  category: string; 
+  onClick: () => void;
+  isSelected?: boolean;
+}) => (
   <div 
     onClick={onClick}
     className="flex flex-col items-center space-y-2 min-w-fit cursor-pointer"
   >
     <div className="w-12 h-12 flex items-center justify-center">
-      {getCategoryIcon(category, 'w-8 h-8')}
+      {getCategoryIcon(category, `w-8 h-8 ${isSelected ? 'text-[#29866B]' : ''}`)}
     </div>
-    <span className="text-xs text-gray-600 dark:text-gray-300 whitespace-nowrap">
+    <span className={`text-xs text-gray-600 dark:text-gray-300 whitespace-nowrap ${isSelected ? 'font-bold text-[#29866B] dark:text-[#5bbea7]' : ''}`}>
       {category}
     </span>
   </div>
@@ -57,14 +61,20 @@ export default function CategorySuggestions() {
       <div className="flex border-b border-gray-200 dark:border-gray-800 mb-6">
         <TabItem
           isActive={activeTab === 'nearby'}
-          onClick={() => setActiveTab('nearby')}
+          onClick={() => {
+            setActiveTab('nearby');
+            setSelectedCategory(null);
+          }}
           icon={getCategoryIcon('Groceries', 'w-5 h-5')}
         >
           Halvi't Nearby
         </TabItem>
         <TabItem
           isActive={activeTab === 'online'}
-          onClick={() => setActiveTab('online')}
+          onClick={() => {
+            setActiveTab('online');
+            setSelectedCategory(null);
+          }}
           icon={getCategoryIcon('Online Shops', 'w-5 h-5')}
         >
           Halvi Mall
@@ -78,6 +88,7 @@ export default function CategorySuggestions() {
             <CategoryIcon 
               key={category} 
               category={category}
+              isSelected={selectedCategory === category}
               onClick={() => setSelectedCategory(selectedCategory === category ? null : category)}
             />
           ))}
