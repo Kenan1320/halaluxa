@@ -116,7 +116,7 @@ const Navbar = () => {
           <Link to="/" className="flex items-center">
             <span className={`text-lg font-serif font-bold ${mode === 'dark' ? 'text-white' : 'text-[#2A866A]'}`}
                   style={{ fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}>
-              Haluna
+              Halvi
             </span>
             
             {/* Advanced animated logo design */}
@@ -167,40 +167,60 @@ const Navbar = () => {
             <MapPin className="h-6 w-6" />
           </motion.button>
           
-          {/* Main Shop Button - Only main shop left */}
+          {/* Main Shop Button - Now with pulsing animation and no circle */}
           <motion.button 
             onClick={handleMainShopClick}
-            className={`relative p-2 rounded-full ${
-              mode === 'dark' 
-                ? 'text-white hover:bg-gray-700' 
-                : 'text-[#2A866A] hover:bg-[#d5efe8]'
-            } transition-colors shadow-sm`}
+            className="relative p-2"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
             {mainShop ? (
               <>
                 {mainShop.logo_url ? (
-                  <div className="w-6 h-6 rounded-full overflow-hidden border-2 border-[#2A866A]">
+                  <motion.div
+                    animate={{
+                      scale: [1, 1.05, 1],
+                      boxShadow: [
+                        "0px 0px 0px rgba(42,134,106,0)",
+                        "0px 0px 8px rgba(42,134,106,0.5)",
+                        "0px 0px 0px rgba(42,134,106,0)"
+                      ]
+                    }}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity,
+                      repeatType: "loop"
+                    }}
+                    className="w-7 h-7 overflow-hidden"
+                  >
                     <img src={mainShop.logo_url} alt={mainShop.name} className="w-full h-full object-cover" />
-                  </div>
+                  </motion.div>
                 ) : (
-                  <Store className="h-6 w-6" />
+                  <motion.div
+                    animate={{
+                      scale: [1, 1.05, 1],
+                      boxShadow: [
+                        "0px 0px 0px rgba(42,134,106,0)",
+                        "0px 0px 8px rgba(42,134,106,0.5)",
+                        "0px 0px 0px rgba(42,134,106,0)"
+                      ]
+                    }}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity,
+                      repeatType: "loop"
+                    }}
+                    className={`h-7 w-7 flex items-center justify-center ${
+                      mode === 'dark' ? 'text-white' : 'text-[#2A866A]'
+                    }`}
+                  >
+                    <Store className="h-7 w-7" />
+                  </motion.div>
                 )}
-                <motion.div 
-                  className="absolute -bottom-1 -right-1 w-2 h-2 bg-[#E4875E] rounded-full"
-                  animate={{
-                    scale: [1, 1.5, 1],
-                  }}
-                  transition={{
-                    duration: 2,
-                    repeat: Infinity,
-                  }}
-                />
               </>
             ) : (
               <div className="relative">
-                <Store className="h-6 w-6" />
+                <Store className="h-7 w-7 text-gray-400" />
                 <motion.div 
                   className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"
                   animate={{
@@ -323,7 +343,7 @@ const Navbar = () => {
                 )}
               </button>
               
-              {/* Menu navigation - simple dropdown buttons */}
+              {/* Menu navigation */}
               <div className="space-y-1">
                 {menuItems.map((item) => (
                   <Link

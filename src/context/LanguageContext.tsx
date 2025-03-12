@@ -63,6 +63,9 @@ const translations: Record<string, Record<string, string>> = {
     'Clear Filters': 'Clear Filters',
     'Products': 'Products',
     'Verified': 'Verified',
+    'Search The Hal Village with Halvi': 'Search The Hal Village with Halvi',
+    'From Local Finds to Global Treasures!': 'From Local Finds to Global Treasures!',
+    'Your Halal Village, All in One Place': 'Your Halal Village, All in One Place',
   }
 };
 

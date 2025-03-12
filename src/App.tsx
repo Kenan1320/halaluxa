@@ -14,6 +14,7 @@ import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import AuthMiddleware from "@/components/auth/AuthMiddleware";
 import Navbar from "@/components/layout/Navbar";
 import BottomNavigation from "@/components/layout/BottomNavigation";
+import Footer from "@/components/layout/Footer";
 
 // Pages
 import Index from "./pages/Index";
@@ -64,6 +65,9 @@ const AppRoutes = () => {
                     (!location.pathname.startsWith('/dashboard') && 
                      location.pathname !== '/login' && 
                      location.pathname !== '/signup');
+                     
+  // Only show Footer on About page
+  const showFooter = location.pathname === '/about';
   
   return (
     <AuthMiddleware>
@@ -83,7 +87,7 @@ const AppRoutes = () => {
         <Route path="/product/:productId" element={<ProductDetail />} />
         <Route path="/select-shops" element={<SelectShops />} />
         
-        {/* Protected shopper routes - explicitly disallow business users */}
+        {/* Protected shopper routes */}
         <Route 
           path="/cart" 
           element={
@@ -148,13 +152,12 @@ const AppRoutes = () => {
         <Route path="*" element={<NotFound />} />
       </Routes>
       {showNavbar && <BottomNavigation />}
+      {showFooter && <Footer />}
     </AuthMiddleware>
   );
 };
 
 function App() {
-  // Initialization used to happen here, but we removed the reference to setupDatabaseTables
-
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
