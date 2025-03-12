@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useLocation } from '@/context/LocationContext';
@@ -162,7 +161,7 @@ const ShopDetail: React.FC = () => {
     description: shop.description,
     location: shop.location,
     categories: shopCategories,
-    coverImage: shop.coverImage || undefined,
+    cover_image: shop.coverImage || undefined,
     logo: shop.logo || undefined,
     deliveryInfo: {
       isDeliveryAvailable: true,
@@ -180,10 +179,10 @@ const ShopDetail: React.FC = () => {
       average: shop.rating,
       count: 25
     },
-    productCount: shop.productCount,
-    isVerified: shop.isVerified,
+    product_count: shop.productCount,
+    is_verified: shop.isVerified,
     category: shop.category,
-    ownerId: shop.ownerId,
+    owner_id: shop.ownerId,
     latitude: shop.latitude,
     longitude: shop.longitude,
     distance: shop.distance

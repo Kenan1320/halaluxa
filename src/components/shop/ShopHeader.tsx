@@ -56,7 +56,7 @@ export function ShopHeader({ shop }: ShopHeaderProps) {
       {/* Hero Image */}
       <div className="relative h-48 overflow-hidden">
         <img 
-          src={shop.coverImage || '/placeholder.svg'} 
+          src={shop.cover_image || '/placeholder.svg'} 
           alt={shop.name}
           className="w-full h-full object-cover"
         />

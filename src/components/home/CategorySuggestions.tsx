@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { useTheme } from '@/context/ThemeContext';
 import { getCategoryIcon } from '../icons/CategoryIcons';
+import { productCategories } from '@/models/product';
 import { Store, ShoppingBag } from 'lucide-react';
 
 const TabItem = ({ isActive, onClick, icon, children }) => (

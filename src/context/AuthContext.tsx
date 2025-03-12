@@ -1,7 +1,7 @@
-
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { DatabaseProfile } from '@/types/shop';
 
 // Define the user type
 export interface User {
@@ -76,22 +76,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             .single();
           
           if (profile) {
+            const dbProfile = profile as DatabaseProfile;
             setUser({
               id: session.user.id,
               email: session.user.email || '',
-              name: profile.name || session.user.user_metadata?.full_name || null,
+              name: dbProfile.name || session.user.user_metadata?.full_name || null,
               avatar: session.user.user_metadata?.avatar_url || null,
-              role: profile.role as 'shopper' | 'business',
-              shopName: profile.shop_name || null,
-              shopDescription: profile.shop_description || null,
-              shopCategory: profile.shop_category || null,
-              shopLocation: profile.shop_location || null,
-              shopLogo: profile.shop_logo || null,
-              phone: profile.phone || null,
-              address: profile.address || null,
-              city: profile.city || null,
-              state: profile.state || null,
-              zip: profile.zip || null,
+              role: dbProfile.role as 'shopper' | 'business',
+              shopName: dbProfile.shop_name || null,
+              shopDescription: dbProfile.shop_description || null,
+              shopCategory: dbProfile.shop_category || null,
+              shopLocation: dbProfile.shop_location || null,
+              shopLogo: dbProfile.shop_logo || null,
+              phone: dbProfile.phone || null,
+              address: dbProfile.address || null,
+              city: dbProfile.city || null,
+              state: dbProfile.state || null,
+              zip: dbProfile.zip || null,
             });
             setIsLoggedIn(true);
           }
@@ -116,6 +117,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           .single();
         
         if (profile) {
+          const dbProfile = profile as DatabaseProfile;
           // Check if this was a social sign-in and we need to update the role
           const storedUserType = localStorage.getItem('signupUserType');
           if (storedUserType && (storedUserType === 'shopper' || storedUserType === 'business')) {
@@ -126,7 +128,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               .eq('id', session.user.id);
             
             // Update the local profile object
-            profile.role = storedUserType;
+            dbProfile.role = storedUserType;
             
             // Clear the stored user type
             localStorage.removeItem('signupUserType');
@@ -135,19 +137,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setUser({
             id: session.user.id,
             email: session.user.email || '',
-            name: profile.name || session.user.user_metadata?.full_name || null,
+            name: dbProfile.name || session.user.user_metadata?.full_name || null,
             avatar: session.user.user_metadata?.avatar_url || null,
-            role: profile.role as 'shopper' | 'business',
-            shopName: profile.shop_name || null,
-            shopDescription: profile.shop_description || null,
-            shopCategory: profile.shop_category || null,
-            shopLocation: profile.shop_location || null,
-            shopLogo: profile.shop_logo || null,
-            phone: profile.phone || null,
-            address: profile.address || null,
-            city: profile.city || null,
-            state: profile.state || null,
-            zip: profile.zip || null,
+            role: dbProfile.role as 'shopper' | 'business',
+            shopName: dbProfile.shop_name || null,
+            shopDescription: dbProfile.shop_description || null,
+            shopCategory: dbProfile.shop_category || null,
+            shopLocation: dbProfile.shop_location || null,
+            shopLogo: dbProfile.shop_logo || null,
+            phone: dbProfile.phone || null,
+            address: dbProfile.address || null,
+            city: dbProfile.city || null,
+            state: dbProfile.state || null,
+            zip: dbProfile.zip || null,
           });
           setIsLoggedIn(true);
         }
@@ -367,22 +369,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           .single();
         
         if (profile) {
+          const dbProfile = profile as DatabaseProfile;
           setUser({
             id: session.user.id,
             email: session.user.email || '',
-            name: profile.name || session.user.user_metadata?.full_name || null,
+            name: dbProfile.name || session.user.user_metadata?.full_name || null,
             avatar: session.user.user_metadata?.avatar_url || null,
-            role: profile.role as 'shopper' | 'business',
-            shopName: profile.shop_name || null,
-            shopDescription: profile.shop_description || null,
-            shopCategory: profile.shop_category || null,
-            shopLocation: profile.shop_location || null,
-            shopLogo: profile.shop_logo || null,
-            phone: profile.phone || null,
-            address: profile.address || null,
-            city: profile.city || null,
-            state: profile.state || null,
-            zip: profile.zip || null,
+            role: dbProfile.role as 'shopper' | 'business',
+            shopName: dbProfile.shop_name || null,
+            shopDescription: dbProfile.shop_description || null,
+            shopCategory: dbProfile.shop_category || null,
+            shopLocation: dbProfile.shop_location || null,
+            shopLogo: dbProfile.shop_logo || null,
+            phone: dbProfile.phone || null,
+            address: dbProfile.address || null,
+            city: dbProfile.city || null,
+            state: dbProfile.state || null,
+            zip: dbProfile.zip || null,
           });
           setIsLoggedIn(true);
         }
