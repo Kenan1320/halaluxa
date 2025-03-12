@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useLocation } from '@/context/LocationContext';
@@ -20,7 +19,8 @@ const Index = () => {
   const [isLoadingShops, setIsLoadingShops] = useState(false);
   const [activeShopIndex, setActiveShopIndex] = useState(0);
   const shopScrollRef = useRef<HTMLDivElement>(null);
-  
+  const [activeTab, setActiveTab] = useState('online');
+
   // Scroll to top on page load
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -155,8 +155,13 @@ const Index = () => {
         {/* Selected/Featured Shops Section - Always visible */}
         <section className="mt-3 mb-5">
           <div className="flex justify-between items-center mb-2">
-            <h2 className="text-lg font-semibold text-gray-800 dark:text-white">Your Shops</h2>
-            <Link to="/select-shops" className="text-xs text-[#29866B] dark:text-green-300 hover:underline">
+            <div className="bg-gray-100 rounded-full px-4 py-1">
+              <h2 className="text-lg font-semibold text-gray-800 dark:text-white">Your Shops</h2>
+            </div>
+            <Link 
+              to="/select-shops" 
+              className="bg-gray-100 hover:bg-gray-200 transition-colors duration-200 rounded-full px-4 py-1 text-sm text-gray-800"
+            >
               Edit Selection
             </Link>
           </div>
@@ -309,13 +314,24 @@ const Index = () => {
         
         {/* Nearby Shops Section */}
         <section className="mt-1">
-          <h2 className="text-lg font-semibold mb-2 text-gray-800 dark:text-white">Nearby Shops</h2>
+          {activeTab === 'online' ? (
+            <h2 className="text-lg font-semibold mb-2 bg-gray-100 rounded-full px-4 py-1 inline-block text-gray-800 dark:text-white">
+              Shops
+            </h2>
+          ) : (
+            <h2 className="text-lg font-semibold mb-2 bg-gray-100 rounded-full px-4 py-1 inline-block text-gray-800 dark:text-white">
+              Nearby Shops
+            </h2>
+          )}
+          
           <NearbyShops />
         </section>
         
         {/* Featured Products Section */}
         <section className="mt-4">
-          <h2 className="text-lg font-semibold mb-2 text-gray-800 dark:text-white">Featured Products</h2>
+          <h2 className="text-lg font-semibold mb-2 bg-gray-100 rounded-full px-4 py-1 inline-block text-gray-800 dark:text-white">
+            Featured Products
+          </h2>
           <ProductGrid />
         </section>
       </div>
