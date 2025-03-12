@@ -87,7 +87,7 @@ export default function ShopSetupForm({ onComplete, onSkip }: ShopSetupFormProps
         logo: logoPreview || undefined,
         category: shopData.category,
         location: shopData.location,
-        rating: 0,
+        rating: { average: 0, count: 0 },
         productCount: 0,
         isVerified: false,
         ownerId: user.id

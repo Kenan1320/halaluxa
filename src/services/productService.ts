@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Product } from '@/models/product';
 import type { Json } from '@/integrations/supabase/types';
@@ -267,5 +266,37 @@ export const mockProducts = async (): Promise<void> => {
     }
   } catch (error) {
     console.error('Error mocking products:', error);
+  }
+};
+
+// Function to create a product
+export const createProduct = async (productData: any) => {
+  try {
+    // Format the data for Supabase
+    const formattedData = {
+      name: productData.name,
+      description: productData.description,
+      price: productData.price,
+      category: productData.category,
+      images: productData.images || [],
+      shop_id: productData.shopId,
+      is_halal_certified: productData.isHalalCertified || false,
+      stock: productData.inventoryCount || 0,
+      status: productData.status || 'active',
+      details: productData.details || {},
+      tags: productData.tags || []
+    };
+
+    const { data, error } = await supabase
+      .from('products')
+      .insert([formattedData])
+      .select('*')
+      .single();
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('Error creating product:', error);
+    throw error;
   }
 };

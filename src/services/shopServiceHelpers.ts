@@ -21,7 +21,7 @@ export const getShops = async (): Promise<ModelShop[]> => {
       throw error;
     }
 
-    return (shops || []).map(mapShopToModel);
+    return (shops || []).map(shopData => mapShopToModel(shopData as any));
   } catch (error) {
     console.error('Error fetching shops:', error);
     return [];
@@ -29,19 +29,19 @@ export const getShops = async (): Promise<ModelShop[]> => {
 };
 
 // Convert database Shop to model Shop
-export const mapShopToModel = (shop: Shop): ModelShop => {
+export const mapShopToModel = (shop: any): ModelShop => {
   return {
     id: shop.id,
     name: shop.name,
     description: shop.description,
-    location: shop.location,
-    rating: shop.rating || 0,
-    productCount: shop.productCount || 0,
-    isVerified: shop.isVerified || false,
+    location: shop.location || '',
+    rating: shop.rating?.average || shop.rating || 0,
+    productCount: shop.product_count || 0,
+    isVerified: shop.is_verified || false,
     category: shop.category || '',
-    logo: shop.logo || null,
-    coverImage: shop.coverImage || null,
-    ownerId: shop.ownerId || '',
+    logo: shop.logo_url || null,
+    coverImage: shop.cover_image || null,
+    ownerId: shop.owner_id || '',
     latitude: shop.latitude || null,
     longitude: shop.longitude || null,
     distance: shop.distance || null

@@ -44,6 +44,7 @@ export interface SellerAccount {
   paypal_email?: string;
   stripe_account_id?: string;
   applepay_merchant_id?: string;
+  is_active?: boolean;
 }
 
 export interface Shop {
@@ -52,8 +53,8 @@ export interface Shop {
   updated_at: string;
   name: string;
   description?: string;
-  logo?: string;
-  coverImage?: string;
+  logo_url?: string;
+  cover_image?: string;
   address?: string;
   city?: string;
   state?: string;
@@ -63,10 +64,14 @@ export interface Shop {
   website?: string;
   status?: string;
   owner_id?: string;
-  categories?: string[];
-  rating?: { average: number; count: number };
-  productCount?: number;
+  category?: string;
+  location?: string;
+  latitude?: number;
+  longitude?: number;
+  is_verified?: boolean;
+  product_count?: number;
   distance?: number;
+  rating: { average: number; count: number };
   isGroupOrderEnabled?: boolean;
   deliveryInfo?: {
     deliveryFee: number;

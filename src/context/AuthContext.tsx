@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -9,6 +8,7 @@ export interface User {
   email: string;
   name: string | null;
   avatar?: string | null;
+  avatar_url?: string | null;
   role: 'shopper' | 'business';
   shopName?: string | null;
   shopDescription?: string | null;
@@ -20,6 +20,7 @@ export interface User {
   city?: string | null;
   state?: string | null;
   zip?: string | null;
+  shop_id?: string | null;
 }
 
 // Define the context type
@@ -81,6 +82,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               email: session.user.email || '',
               name: profile.name || session.user.user_metadata?.full_name || null,
               avatar: session.user.user_metadata?.avatar_url || null,
+              avatar_url: session.user.user_metadata?.avatar_url || null,
               role: profile.role as 'shopper' | 'business',
               shopName: profile.shop_name || null,
               shopDescription: profile.shop_description || null,
@@ -92,6 +94,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               city: profile.city || null,
               state: profile.state || null,
               zip: profile.zip || null,
+              shop_id: profile.shop_id || null,
             });
             setIsLoggedIn(true);
           }
@@ -137,6 +140,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             email: session.user.email || '',
             name: profile.name || session.user.user_metadata?.full_name || null,
             avatar: session.user.user_metadata?.avatar_url || null,
+            avatar_url: session.user.user_metadata?.avatar_url || null,
             role: profile.role as 'shopper' | 'business',
             shopName: profile.shop_name || null,
             shopDescription: profile.shop_description || null,
@@ -148,6 +152,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             city: profile.city || null,
             state: profile.state || null,
             zip: profile.zip || null,
+            shop_id: profile.shop_id || null,
           });
           setIsLoggedIn(true);
         }
@@ -197,6 +202,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           city: profile.city || null,
           state: profile.state || null,
           zip: profile.zip || null,
+          shop_id: profile.shop_id || null,
         });
         
         setIsLoggedIn(true);
@@ -285,6 +291,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           city: null,
           state: null,
           zip: null,
+          shop_id: null,
         });
         
         setIsLoggedIn(true);
@@ -331,6 +338,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (updates.city !== undefined) dbUpdates.city = updates.city;
       if (updates.state !== undefined) dbUpdates.state = updates.state;
       if (updates.zip !== undefined) dbUpdates.zip = updates.zip;
+      if (updates.shop_id !== undefined) dbUpdates.shop_id = updates.shop_id;
       
       // Update user in database
       const { error } = await supabase
@@ -372,6 +380,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             email: session.user.email || '',
             name: profile.name || session.user.user_metadata?.full_name || null,
             avatar: session.user.user_metadata?.avatar_url || null,
+            avatar_url: session.user.user_metadata?.avatar_url || null,
             role: profile.role as 'shopper' | 'business',
             shopName: profile.shop_name || null,
             shopDescription: profile.shop_description || null,
@@ -383,6 +392,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             city: profile.city || null,
             state: profile.state || null,
             zip: profile.zip || null,
+            shop_id: profile.shop_id || null,
           });
           setIsLoggedIn(true);
         }
