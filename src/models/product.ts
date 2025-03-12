@@ -36,5 +36,7 @@ export const productCategories = [
   "Online Shops",
   "Gifts",
   "Arabic Calligraphy",
-  "Muslim Therapists"
+  "Muslim Therapists",
+  "Coffee Shops",
+  "Hoodies"
 ];
