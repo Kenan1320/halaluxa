@@ -25,9 +25,9 @@ const localCategories = [
 
 const onlineCategories = [
   {
-    id: 'modest-clothing',
-    name: 'Modest Clothing',
-    link: '/browse?category=Modest%20Clothing',
+    id: 'thobes',
+    name: 'Thobes',
+    link: '/browse?category=Thobes',
   },
   {
     id: 'books',

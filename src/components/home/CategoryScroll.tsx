@@ -3,24 +3,7 @@ import { useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { getCategoryIcon } from '../icons/CategoryIcons';
-
-// Define categories array without the showcase images
-const categories = [
-  { id: 1, name: 'Restaurants' },
-  { id: 2, name: 'Groceries' },
-  { id: 3, name: 'Halal Meat' },
-  { id: 4, name: 'Books' },
-  { id: 5, name: 'Furniture' },
-  { id: 6, name: 'Modest Clothing' },
-  { id: 7, name: 'Hijab' },
-  { id: 8, name: 'Thobes' },
-  { id: 9, name: 'Abaya' },
-  { id: 10, name: 'Gifts' },
-  { id: 11, name: 'Decorations' },
-  { id: 12, name: 'Arabic Language' },
-  { id: 13, name: 'Arabic Calligraphy' },
-  { id: 14, name: 'Online Shops' }
-];
+import { productCategories } from '@/models/product';
 
 const CategoryScroll = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -82,20 +65,20 @@ const CategoryScroll = () => {
         ref={scrollRef}
         className="flex overflow-x-auto scrollbar-hide py-1 space-x-4"
       >
-        {categories.map((category) => (
+        {productCategories.map((category, index) => (
           <motion.button
-            key={category.id}
+            key={index}
             className="flex-shrink-0 flex flex-col items-center justify-center p-1"
             style={{ minWidth: '55px' }}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            onClick={() => handleCategoryClick(category.name)}
+            onClick={() => handleCategoryClick(category)}
           >
             <div className="h-8 w-8 mb-1 flex items-center justify-center">
-              {getCategoryIcon(category.name, "h-7 w-7")}
+              {getCategoryIcon(category, "h-7 w-7")}
             </div>
             <span className="text-black dark:text-white text-xs font-medium text-center line-clamp-1">
-              {category.name}
+              {category}
             </span>
           </motion.button>
         ))}

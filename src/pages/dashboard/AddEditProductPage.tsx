@@ -37,7 +37,6 @@ import { addProduct, getProductById, updateProduct } from '@/services/productSer
 import { ArrowLeft, Save } from 'lucide-react';
 import ImageUploader from '@/components/ui/ImageUploader';
 
-// Define form schema
 const formSchema = z.object({
   name: z.string().min(2, 'Product name must be at least 2 characters'),
   description: z.string().min(10, 'Description must be at least 10 characters'),
@@ -59,7 +58,6 @@ const AddEditProductPage = () => {
   const [product, setProduct] = useState<Product | null>(null);
   const isEditMode = !!id;
   
-  // Initialize form
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -73,7 +71,6 @@ const AddEditProductPage = () => {
     },
   });
   
-  // Load product data if in edit mode
   useEffect(() => {
     const loadProduct = async () => {
       if (id) {
@@ -81,7 +78,6 @@ const AddEditProductPage = () => {
         if (data) {
           setProduct(data);
           
-          // Set form values
           form.reset({
             name: data.name,
             description: data.description,
@@ -105,7 +101,6 @@ const AddEditProductPage = () => {
     loadProduct();
   }, [id, navigate, toast, form]);
   
-  // Handle form submission
   const onSubmit = async (values: FormValues) => {
     if (!user) {
       toast({
@@ -119,19 +114,16 @@ const AddEditProductPage = () => {
     setIsSubmitting(true);
     
     try {
-      // Prepare product data
       const productData: Partial<Product> = {
         ...values,
         sellerId: user.id,
         sellerName: user.name || 'Unknown Seller',
       };
       
-      // If editing, add the ID
       if (isEditMode && product) {
         productData.id = product.id;
       }
       
-      // Save the product
       const result = isEditMode
         ? await updateProduct(productData)
         : await addProduct(productData);
