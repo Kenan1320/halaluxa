@@ -109,10 +109,10 @@ export default function CategorySuggestions() {
               className={`flex flex-col items-center gap-2 p-3 rounded-lg transition-all duration-300 ${
                 isDark ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-100'
               } shadow-sm`}
-              style={{ minWidth: '72px', minHeight: '72px' }}
+              style={{ minWidth: '70px', minHeight: '70px' }}
             >
-              <div className="w-10 h-10 flex items-center justify-center">
-                {getCategoryIcon(category.name, "w-9 h-9")}
+              <div className="w-12 h-12 flex items-center justify-center">
+                {getCategoryIcon(category.name, "w-11 h-11")}
               </div>
             </Link>
           </motion.div>

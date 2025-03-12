@@ -63,7 +63,7 @@ const Index = () => {
       // If no selected shops yet, select the top shops by product count
       if (shops.length > 0 && selectedShops.length === 0) {
         // Sort by product count (popularity) first
-        const sortedShops = [...shops].sort((a, b) => (b.productCount || 0) - (a.productCount || 0));
+        const sortedShops = [...shops].sort((a, b) => (b.product_count || 0) - (a.product_count || 0));
         setSelectedShops(sortedShops.slice(0, 5));
         
         // Also update localStorage
@@ -91,7 +91,7 @@ const Index = () => {
           // If location is not enabled, just get all shops
           nearby = await getNearbyShops();
           // Sort by product count if no location
-          nearby = nearby.sort((a, b) => (b.productCount || 0) - (a.productCount || 0));
+          nearby = nearby.sort((a, b) => (b.product_count || 0) - (a.product_count || 0));
         }
         
         setNearbyShops(nearby);
@@ -220,14 +220,14 @@ const Index = () => {
                       >
                         <Link to={`/shop/${shop.id}`}>
                           <motion.div 
-                            className={`w-16 h-16 rounded-lg ${
+                            className={`w-[70px] h-[70px] rounded-lg ${
                               isDark ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-100'
                             } shadow-sm flex items-center justify-center overflow-hidden`}
                             whileHover={{ scale: 1.1, boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}
                             transition={{ type: "spring", stiffness: 400, damping: 10 }}
                           >
-                            {shop.logo ? (
-                              <img src={shop.logo} alt={shop.name} className="w-12 h-12 object-contain" />
+                            {shop.logo_url ? (
+                              <img src={shop.logo_url} alt={shop.name} className="w-12 h-12 object-contain" />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center bg-[#F9F5EB] text-[#29866B] font-medium">
                                 {shop.name.charAt(0)}
@@ -267,14 +267,14 @@ const Index = () => {
                       >
                         <Link to={`/shop/${shop.id}`}>
                           <motion.div 
-                            className={`w-16 h-16 rounded-lg ${
+                            className={`w-[70px] h-[70px] rounded-lg ${
                               isDark ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-100'
                             } shadow-sm flex items-center justify-center overflow-hidden`}
                             whileHover={{ scale: 1.1, boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}
                             transition={{ type: "spring", stiffness: 400, damping: 10 }}
                           >
-                            {shop.logo ? (
-                              <img src={shop.logo} alt={shop.name} className="w-12 h-12 object-contain" />
+                            {shop.logo_url ? (
+                              <img src={shop.logo_url} alt={shop.name} className="w-12 h-12 object-contain" />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center bg-[#F9F5EB] text-[#29866B] font-medium">
                                 {shop.name.charAt(0)}

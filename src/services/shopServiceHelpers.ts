@@ -35,7 +35,7 @@ export const mapShopToModel = (shop: any): ModelShop => {
     name: shop.name,
     description: shop.description,
     location: shop.location || '',
-    rating: shop.rating?.average || shop.rating || 0,
+    rating: shop.rating?.average || (typeof shop.rating === 'number' ? shop.rating : 0),
     productCount: shop.product_count || 0,
     isVerified: shop.is_verified || false,
     category: shop.category || '',

@@ -75,13 +75,13 @@ const CategoryScroll = () => {
             className={`flex-shrink-0 flex flex-col items-center justify-center p-2 rounded-lg ${
               isDark ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-100'
             } shadow-sm`}
-            style={{ minWidth: '68px', minHeight: '68px' }}
+            style={{ minWidth: '70px', minHeight: '70px' }}
             whileHover={{ scale: 1.05, boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
             whileTap={{ scale: 0.95 }}
             onClick={() => handleCategoryClick(category)}
           >
-            <div className="h-10 w-10 flex items-center justify-center">
-              {getCategoryIcon(category, "h-9 w-9")}
+            <div className="h-12 w-12 flex items-center justify-center">
+              {getCategoryIcon(category, "h-11 w-11")}
             </div>
           </motion.button>
         ))}

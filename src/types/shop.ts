@@ -21,8 +21,8 @@ export interface ShopDetails {
   description: string;
   location: string;
   categories: ShopCategory[];
-  coverImage?: string;
-  logo?: string;
+  cover_image?: string;
+  logo_url?: string;
   deliveryInfo: DeliveryInfo;
   workingHours: {
     open: string;
@@ -34,10 +34,10 @@ export interface ShopDetails {
     count: number;
   };
   // Additional properties needed for compatibility
-  productCount?: number;
-  isVerified?: boolean;
+  product_count?: number;
+  is_verified?: boolean;
   category?: string;
-  ownerId?: string;
+  owner_id?: string;
   latitude?: number | null;
   longitude?: number | null;
   distance?: number | null;

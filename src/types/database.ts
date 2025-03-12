@@ -17,6 +17,7 @@ export interface Profile {
   shop_category?: string;
   shop_location?: string;
   shop_logo?: string;
+  shop_id?: string;
 }
 
 export interface SellerAccount {
