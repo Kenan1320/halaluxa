@@ -11,11 +11,10 @@ import NearbyShops from '@/components/home/NearbyShops';
 import CategorySuggestions from '@/components/home/CategorySuggestions';
 import { motion, useAnimationControls } from 'framer-motion';
 import { getShopById, subscribeToShops, Shop } from '@/services/shopService';
-import { ChevronRight } from 'lucide-react';
 
 const Index = () => {
   const { isLoggedIn, user } = useAuth();
-  const { isLocationEnabled, requestLocation, getNearbyShops } = useLocation();
+  const { isLocationEnabled, requestLocation, location, getNearbyShops } = useLocation();
   const [selectedShops, setSelectedShops] = useState<Shop[]>([]);
   const [nearbyShops, setNearbyShops] = useState<Shop[]>([]);
   const [isLoadingShops, setIsLoadingShops] = useState(false);
@@ -125,15 +124,15 @@ const Index = () => {
 
   return (
     <div className="min-h-screen pt-16 pb-20 bg-white dark:bg-gray-900">
-      {/* Top container with gradient background */}
-      <div className="bg-gradient-to-b from-[#DFF0D8] to-[#E4F5F0] dark:from-[#1f3a29] dark:to-[#1C2526] pt-2 pb-3">
+      {/* Top container with lighter mint background */}
+      <div className="bg-[#E4F5F0] dark:bg-gray-800 pt-2 pb-3">
         <div className="container mx-auto px-4">
           {/* Search bar */}
           <div className="mb-2">
             <SearchBar />
           </div>
           
-          {/* Personalized greeting for user */}
+          {/* Personalized greeting for user - smaller text */}
           <motion.div
             className="mb-1"
             initial={{ opacity: 0, y: -10 }}
@@ -153,18 +152,18 @@ const Index = () => {
       
       {/* Main content with white background */}
       <div className="container mx-auto px-4 pt-3 bg-white dark:bg-gray-900">
-        {/* Selected/Featured Shops Section */}
-        <section className="mt-2 mb-3">
-          <div className="flex justify-between items-center mb-1">
-            <h2 className="text-sm font-medium text-gray-800 dark:text-white">Your Shops</h2>
-            <Link to="/select-shops" className="text-xs font-medium text-black dark:text-white hover:underline transition-all">
+        {/* Selected/Featured Shops Section - Always visible */}
+        <section className="mt-3 mb-5">
+          <div className="flex justify-between items-center mb-2">
+            <h2 className="text-lg font-semibold text-gray-800 dark:text-white">Your Shops</h2>
+            <Link to="/select-shops" className="text-xs text-[#29866B] dark:text-green-300 hover:underline">
               Edit Selection
             </Link>
           </div>
           
           {/* Shop carousel */}
-          <div ref={shopScrollRef} className="relative h-20 overflow-hidden">
-            {selectedShops.length > 0 ? (
+          <div ref={shopScrollRef} className="relative h-28 overflow-hidden">
+            {selectedShops.length > 0 && (
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="w-full h-full flex items-center">
                   {/* Create a continuous flow of logos - first set */}
@@ -183,10 +182,10 @@ const Index = () => {
                     {[...selectedShops, ...selectedShops, ...selectedShops].map((shop, index) => (
                       <motion.div
                         key={`${shop.id}-flow1-${index}`}
-                        className="flex flex-col items-center mx-4 relative"
+                        className="flex flex-col items-center mx-6 relative"
                         animate={{
                           scale: activeShopIndex % selectedShops.length === index % selectedShops.length ? 1.15 : 1,
-                          y: activeShopIndex % selectedShops.length === index % selectedShops.length ? -3 : 0,
+                          y: activeShopIndex % selectedShops.length === index % selectedShops.length ? -5 : 0,
                           zIndex: activeShopIndex % selectedShops.length === index % selectedShops.length ? 10 : 1,
                         }}
                         transition={{
@@ -196,12 +195,12 @@ const Index = () => {
                       >
                         <Link to={`/shop/${shop.id}`}>
                           <motion.div 
-                            className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center overflow-hidden"
+                            className="w-14 h-14 rounded-full bg-white shadow-sm flex items-center justify-center overflow-hidden"
                             whileHover={{ scale: 1.1, boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}
                             transition={{ type: "spring", stiffness: 400, damping: 10 }}
                           >
                             {shop.logo ? (
-                              <img src={shop.logo} alt={shop.name} className="w-8 h-8 object-contain" />
+                              <img src={shop.logo} alt={shop.name} className="w-10 h-10 object-contain" />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center bg-[#F9F5EB] text-[#29866B] font-semibold">
                                 {shop.name.charAt(0)}
@@ -209,11 +208,11 @@ const Index = () => {
                             )}
                           </motion.div>
                           <motion.span 
-                            className="text-[10px] text-center mt-1 block font-medium tracking-tight"
+                            className="text-xs text-center mt-1 block font-medium tracking-tight"
                             initial={{ opacity: 0.8 }}
                             whileHover={{ opacity: 1, scale: 1.05, color: "#29866B" }}
                             animate={{
-                              y: [0, -1, 0],
+                              y: [0, -2, 0],
                               color: activeShopIndex % selectedShops.length === index % selectedShops.length 
                                 ? ["#000000", "#29866B", "#000000"] 
                                 : "#000000",
@@ -226,7 +225,7 @@ const Index = () => {
                               }
                             }}
                           >
-                            {shop.name.length > 8 ? `${shop.name.substring(0, 8)}...` : shop.name}
+                            {shop.name.length > 10 ? `${shop.name.substring(0, 10)}...` : shop.name}
                           </motion.span>
                         </Link>
                       </motion.div>
@@ -248,10 +247,10 @@ const Index = () => {
                     {[...selectedShops, ...selectedShops, ...selectedShops].map((shop, index) => (
                       <motion.div
                         key={`${shop.id}-flow2-${index}`}
-                        className="flex flex-col items-center mx-4 relative"
+                        className="flex flex-col items-center mx-6 relative"
                         animate={{
                           scale: activeShopIndex % selectedShops.length === index % selectedShops.length ? 1.15 : 1,
-                          y: activeShopIndex % selectedShops.length === index % selectedShops.length ? -3 : 0,
+                          y: activeShopIndex % selectedShops.length === index % selectedShops.length ? -5 : 0,
                           zIndex: activeShopIndex % selectedShops.length === index % selectedShops.length ? 10 : 1,
                         }}
                         transition={{
@@ -261,12 +260,12 @@ const Index = () => {
                       >
                         <Link to={`/shop/${shop.id}`}>
                           <motion.div 
-                            className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center overflow-hidden"
+                            className="w-14 h-14 rounded-full bg-white shadow-sm flex items-center justify-center overflow-hidden"
                             whileHover={{ scale: 1.1, boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}
                             transition={{ type: "spring", stiffness: 400, damping: 10 }}
                           >
                             {shop.logo ? (
-                              <img src={shop.logo} alt={shop.name} className="w-8 h-8 object-contain" />
+                              <img src={shop.logo} alt={shop.name} className="w-10 h-10 object-contain" />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center bg-[#F9F5EB] text-[#29866B] font-semibold">
                                 {shop.name.charAt(0)}
@@ -274,11 +273,11 @@ const Index = () => {
                             )}
                           </motion.div>
                           <motion.span 
-                            className="text-[10px] text-center mt-1 block font-medium tracking-tight"
+                            className="text-xs text-center mt-1 block font-medium tracking-tight"
                             initial={{ opacity: 0.8 }}
                             whileHover={{ opacity: 1, scale: 1.05, color: "#29866B" }}
                             animate={{
-                              y: [0, -1, 0],
+                              y: [0, -2, 0],
                               color: activeShopIndex % selectedShops.length === index % selectedShops.length 
                                 ? ["#000000", "#29866B", "#000000"] 
                                 : "#000000",
@@ -291,7 +290,7 @@ const Index = () => {
                               }
                             }}
                           >
-                            {shop.name.length > 8 ? `${shop.name.substring(0, 8)}...` : shop.name}
+                            {shop.name.length > 10 ? `${shop.name.substring(0, 10)}...` : shop.name}
                           </motion.span>
                         </Link>
                       </motion.div>
@@ -299,51 +298,24 @@ const Index = () => {
                   </motion.div>
                 </div>
               </div>
-            ) : (
-              <div className="flex items-center justify-center h-full">
-                <Link 
-                  to="/select-shops"
-                  className="text-sm text-[#2A866A] dark:text-green-300 hover:underline"
-                >
-                  Select your favorite shops
-                </Link>
-              </div>
             )}
           </div>
         </section>
         
-        {/* Category Suggestions */}
-        <section className="mt-1 mb-4">
+        {/* Category Suggestions - NEW SECTION */}
+        <section className="mt-4 mb-6">
           <CategorySuggestions />
         </section>
         
         {/* Nearby Shops Section */}
         <section className="mt-1">
-          <div className="flex justify-between items-center mb-2">
-            <h2 className="text-sm font-medium text-gray-800 dark:text-white">Nearby Shops</h2>
-            <Link 
-              to="/shops" 
-              className="text-xs font-medium flex items-center text-black dark:text-white"
-            >
-              See All
-              <ChevronRight className="h-3 w-3 ml-1" />
-            </Link>
-          </div>
+          <h2 className="text-lg font-semibold mb-2 text-gray-800 dark:text-white">Nearby Shops</h2>
           <NearbyShops />
         </section>
         
         {/* Featured Products Section */}
         <section className="mt-4">
-          <div className="flex justify-between items-center mb-2">
-            <h2 className="text-sm font-medium text-gray-800 dark:text-white">Featured Products</h2>
-            <Link 
-              to="/browse" 
-              className="text-xs font-medium flex items-center text-black dark:text-white"
-            >
-              See All
-              <ChevronRight className="h-3 w-3 ml-1" />
-            </Link>
-          </div>
+          <h2 className="text-lg font-semibold mb-2 text-gray-800 dark:text-white">Featured Products</h2>
           <ProductGrid />
         </section>
       </div>

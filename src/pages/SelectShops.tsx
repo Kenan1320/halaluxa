@@ -1,8 +1,8 @@
 
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { CheckCircle, Star, Store, ChevronRight } from 'lucide-react';
+import { CheckCircle, MapPin, Star, Store } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/AuthContext';
@@ -105,8 +105,6 @@ const SelectShops = () => {
     toast({
       title: "Main shop updated",
       description: "Your main shop has been successfully set.",
-      className: "bg-white border border-gray-200 text-black shadow-lg",
-      duration: 3000
     });
   };
   
@@ -124,9 +122,7 @@ const SelectShops = () => {
     
     toast({
       title: "Preferences saved",
-      description: "Your shop selection has been saved successfully.",
-      className: "bg-white border border-gray-200 text-black shadow-lg",
-      duration: 3000
+      description: "Your selected shops have been saved.",
     });
     
     navigate('/');
@@ -134,13 +130,13 @@ const SelectShops = () => {
   
   if (isLoading) {
     return (
-      <div className="min-h-screen pt-20 pb-20 bg-white dark:bg-black">
-        <div className="container mx-auto px-4 max-w-4xl">
+      <div className={`min-h-screen pt-24 pb-20 ${mode === 'dark' ? 'bg-black' : 'bg-white'}`}>
+        <div className="container mx-auto px-4">
           <div className="flex flex-col items-center justify-center py-10">
-            <h1 className="text-xl font-serif font-medium mb-6 text-center">Loading shops...</h1>
-            <div className="grid grid-cols-3 sm:grid-cols-4 gap-4">
+            <h1 className={`text-2xl font-bold mb-8 ${mode === 'dark' ? 'text-white' : 'text-black'}`}>Loading shops...</h1>
+            <div className="flex flex-wrap gap-4 justify-center">
               {[1, 2, 3, 4, 5, 6].map((i) => (
-                <div key={i} className="w-20 h-20 rounded-full animate-pulse bg-gray-100 dark:bg-gray-800" />
+                <div key={i} className={`w-24 h-24 rounded-md animate-pulse ${mode === 'dark' ? 'bg-gray-800' : 'bg-gray-100'}`} />
               ))}
             </div>
           </div>
@@ -150,81 +146,85 @@ const SelectShops = () => {
   }
   
   return (
-    <div className="min-h-screen pt-20 pb-20 bg-white dark:bg-black">
-      <div className="container mx-auto px-4 max-w-4xl">
+    <div className={`min-h-screen pt-24 pb-20 ${mode === 'dark' ? 'bg-black' : 'bg-white'}`}>
+      <div className="container mx-auto px-4">
         <div className="max-w-4xl mx-auto">
-          <header className="mb-6 text-center">
-            <h1 className="text-xl font-serif font-medium mb-1">Your Shops</h1>
-            <p className="max-w-md mx-auto text-xs text-gray-600 dark:text-gray-400">
-              Select shops to follow and set your main shop
+          <header className="mb-8 text-center">
+            <h1 className={`text-2xl font-serif font-bold mb-2 ${mode === 'dark' ? 'text-white' : 'text-black'}`}>Select Your Shops</h1>
+            <p className={`max-w-md mx-auto text-sm ${mode === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+              Choose the shops you want to follow. These will appear on your home screen for quick access.
             </p>
           </header>
           
-          {mainShopId && (
-            <div className="mb-6">
-              <div className="flex items-center gap-2 mb-2">
-                <Star className="w-4 h-4 text-yellow-500" fill="currentColor" />
-                <h2 className="text-sm font-medium">Main Shop</h2>
-              </div>
-              
-              <motion.div 
-                className="flex items-center rounded-lg p-3 shadow-sm bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-              >
+          <div className={`rounded-lg p-4 mb-8 ${mode === 'dark' ? 'bg-gray-900' : 'bg-gray-100'}`}>
+            <div className="flex items-center gap-3 mb-3">
+              <Store className={`w-5 h-5 ${mode === 'dark' ? 'text-white' : 'text-black'}`} />
+              <h2 className={`font-medium ${mode === 'dark' ? 'text-white' : 'text-black'}`}>Your Main Shop</h2>
+            </div>
+            
+            {mainShopId ? (
+              <div className={`flex items-center rounded-lg p-3 shadow-sm ${mode === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
                 {shops.find(s => s.id === mainShopId)?.logo ? (
-                  <div className="w-10 h-10 rounded-full overflow-hidden border border-gray-100 dark:border-gray-700 mr-3">
-                    <img 
-                      src={shops.find(s => s.id === mainShopId)?.logo} 
-                      alt="Main shop" 
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
+                  <img 
+                    src={shops.find(s => s.id === mainShopId)?.logo} 
+                    alt="Main shop" 
+                    className="w-10 h-10 object-cover rounded-full mr-3"
+                  />
                 ) : (
-                  <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-500 dark:text-gray-300 mr-3">
+                  <div className={`w-10 h-10 rounded-full ${mode === 'dark' ? 'bg-gray-700' : 'bg-gray-200'} flex items-center justify-center ${mode === 'dark' ? 'text-white' : 'text-black'} mr-3`}>
                     {shops.find(s => s.id === mainShopId)?.name.charAt(0) || 'S'}
                   </div>
                 )}
                 <div>
-                  <h3 className="font-medium text-sm">{shops.find(s => s.id === mainShopId)?.name}</h3>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">{shops.find(s => s.id === mainShopId)?.location || 'No location'}</p>
+                  <h3 className={`font-medium ${mode === 'dark' ? 'text-white' : 'text-black'}`}>{shops.find(s => s.id === mainShopId)?.name}</h3>
+                  <p className={`text-xs ${mode === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>{shops.find(s => s.id === mainShopId)?.location || 'Location not specified'}</p>
                 </div>
-                <div className="ml-auto">
-                  <ChevronRight className="w-4 h-4 text-gray-400" />
-                </div>
-              </motion.div>
-            </div>
-          )}
+              </div>
+            ) : (
+              <div className={`rounded-lg p-4 text-center ${mode === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
+                <p className={`text-sm ${mode === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>No main shop selected. Select one from the list below.</p>
+              </div>
+            )}
+          </div>
           
           {/* Shops by location */}
           {Object.entries(locations).map(([location, locationShops]) => (
-            <div key={location} className="mb-6">
-              <h2 className="text-sm font-medium mb-3">{location}</h2>
+            <div key={location} className="mb-8">
+              <div className="flex items-center gap-2 mb-3">
+                <MapPin className={`w-4 h-4 ${mode === 'dark' ? 'text-white' : 'text-black'}`} />
+                <h2 className={`text-lg font-medium ${mode === 'dark' ? 'text-white' : 'text-black'}`}>{location}</h2>
+              </div>
               
-              <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                 {locationShops.map((shop) => (
                   <motion.div
                     key={shop.id}
-                    className={`relative rounded-lg p-3 cursor-pointer transition-all border ${
+                    className={`relative border rounded-lg p-4 cursor-pointer transition-all ${
                       selectedShops.includes(shop.id) 
-                        ? 'border-black dark:border-white bg-black/5 dark:bg-white/10' 
-                        : 'border-gray-200 dark:border-gray-700'
+                        ? `${mode === 'dark' ? 'border-white bg-gray-800' : 'border-black bg-gray-100'}` 
+                        : `${mode === 'dark' ? 'border-gray-700 hover:border-gray-500' : 'border-gray-200 hover:border-gray-300'}`
                     }`}
                     onClick={() => toggleShopSelection(shop.id)}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                   >
+                    {/* Selection indicator */}
+                    {selectedShops.includes(shop.id) && (
+                      <div className={`absolute top-2 right-2 w-5 h-5 ${mode === 'dark' ? 'text-white' : 'text-black'}`}>
+                        <CheckCircle className="w-full h-full" />
+                      </div>
+                    )}
+                    
                     {/* Main shop indicator */}
                     {mainShopId === shop.id && (
-                      <div className="absolute top-2 right-2">
+                      <div className="absolute top-2 left-2">
                         <motion.div 
-                          className="w-4 h-4 text-yellow-500"
+                          className="w-5 h-5 text-yellow-400"
                           animate={{
                             scale: [1, 1.2, 1],
                           }}
                           transition={{
-                            duration: 1.5,
+                            duration: 2,
                             repeat: Infinity,
                           }}
                         >
@@ -235,48 +235,34 @@ const SelectShops = () => {
                     
                     {/* Shop logo */}
                     <div className="flex flex-col items-center">
-                      <div className="mb-2 relative">
-                        {shop.logo ? (
-                          <img 
-                            src={shop.logo} 
-                            alt={shop.name} 
-                            className="w-14 h-14 object-cover rounded-full border border-gray-200 dark:border-gray-700"
-                          />
-                        ) : (
-                          <div className="w-14 h-14 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-500 dark:text-gray-400">
-                            <span className="text-lg font-medium">{shop.name.charAt(0)}</span>
-                          </div>
-                        )}
-                        
-                        {/* Selection indicator */}
-                        <AnimatePresence>
-                          {selectedShops.includes(shop.id) && (
-                            <motion.div 
-                              className="absolute -bottom-1 -right-1 bg-green-500 rounded-full border-2 border-white dark:border-black"
-                              initial={{ scale: 0 }}
-                              animate={{ scale: 1 }}
-                              exit={{ scale: 0 }}
-                            >
-                              <CheckCircle className="w-4 h-4 text-white" />
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-                      </div>
+                      {shop.logo ? (
+                        <img 
+                          src={shop.logo} 
+                          alt={shop.name} 
+                          className="w-16 h-16 object-cover rounded-full mb-3"
+                        />
+                      ) : (
+                        <div className={`w-16 h-16 rounded-full ${mode === 'dark' ? 'bg-gray-700' : 'bg-gray-200'} flex items-center justify-center ${mode === 'dark' ? 'text-white' : 'text-black'} mb-3`}>
+                          <span className="text-lg font-bold">{shop.name.charAt(0)}</span>
+                        </div>
+                      )}
                       
-                      <h3 className="font-medium text-center text-xs">{shop.name}</h3>
+                      <h3 className={`font-medium text-center text-sm ${mode === 'dark' ? 'text-white' : 'text-black'}`}>{shop.name}</h3>
                       
                       {selectedShops.includes(shop.id) && mainShopId !== shop.id && (
-                        <motion.button 
-                          className="mt-2 text-[10px] px-2 py-0.5 rounded-full border border-gray-200 dark:border-gray-700 hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-colors"
+                        <button 
+                          className={`mt-3 text-xs px-3 py-1 rounded-full transition-colors ${
+                            mode === 'dark' 
+                              ? 'bg-white text-black hover:bg-gray-200' 
+                              : 'bg-black text-white hover:bg-gray-800'
+                          }`}
                           onClick={(e) => {
                             e.stopPropagation();
                             setAsMainShop(shop.id);
                           }}
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
                         >
                           Set as main
-                        </motion.button>
+                        </button>
                       )}
                     </div>
                   </motion.div>
@@ -285,18 +271,22 @@ const SelectShops = () => {
             </div>
           ))}
           
-          <div className="mt-8 flex justify-center gap-3">
+          <div className="mt-10 flex justify-center gap-4">
             <Button 
               variant="outline" 
               onClick={() => navigate('/')}
-              className="text-xs h-9 px-3"
+              className={mode === 'dark' ? 'border-white text-white hover:bg-gray-800' : 'border-black text-black hover:bg-gray-100'}
             >
               Cancel
             </Button>
             <Button 
               onClick={saveSelections}
               disabled={selectedShops.length === 0}
-              className="text-xs h-9 px-3 bg-black text-white hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-200"
+              className={`${
+                mode === 'dark' 
+                  ? 'bg-white text-black hover:bg-gray-200' 
+                  : 'bg-black text-white hover:bg-gray-800'
+              }`}
             >
               Save Preferences
             </Button>
