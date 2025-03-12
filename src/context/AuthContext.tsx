@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
@@ -301,6 +302,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         state: profile.state,
         zip: profile.zip,
         avatar_url: profile.avatar_url,
+        shop_name: profile.shop_name,
+        shop_description: profile.shop_description,
+        shop_category: profile.shop_category,
+        shop_location: profile.shop_location,
+        shop_logo: profile.shop_logo,
       };
       
       const { error } = await supabase
