@@ -25,19 +25,19 @@ export interface Product {
   details?: ProductDetails;
 }
 
-// Product categories with renamed categories as requested
+// Product categories with updated names to match the provided icons
 export const productCategories = [
-  "Groceries",
-  "Restaurants",
-  "Halal Meat",
-  "Furniture",
-  "Books",
-  "Hijab",
-  "Gifts",
-  "Decorations",
-  "Abaya",
-  "Online Shops",
-  "Thobes",
-  "Arabic Calligraphy",
-  "Muslim Therapists"
+  "Groceries",             // Was "Halal Meat" (1)
+  "Restaurants",           // Was "Books" (2)
+  "Halal Meat",            // Was "Furniture" (10)
+  "Furniture",             // Was "Online Shops" (11)
+  "Books",                 // Was "Arabic Calligraphy" (6)
+  "Thobes",                // Was "Modest Clothing" (9)
+  "Hijab",                 // Was "Thobes" (4)
+  "Decorations",           // Was "Abaya" (8)
+  "Abaya",                 // Was "Decorations" (7)
+  "Online Shops",          // Was "Arabic Language" (5)
+  "Gifts",                 // Was "Hijab" (3)
+  "Arabic Calligraphy",    // New category
+  "Muslim Therapists"      // New category
 ];

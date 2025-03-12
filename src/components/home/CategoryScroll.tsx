@@ -77,7 +77,7 @@ const CategoryScroll = () => {
             <div className="h-8 w-8 mb-1 flex items-center justify-center">
               {getCategoryIcon(category, "h-7 w-7")}
             </div>
-            <span className="text-white dark:text-white text-xs font-medium text-center line-clamp-1">
+            <span className="text-black dark:text-white text-xs font-medium text-center line-clamp-1">
               {category}
             </span>
           </motion.button>

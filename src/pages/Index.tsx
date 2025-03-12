@@ -81,14 +81,12 @@ const Index = () => {
       try {
         // Always get nearby shops based on location
         const nearby = await getNearbyShops();
-        if (nearby) {
-          setNearbyShops(nearby);
-          
-          // If no selected shops, use 5 nearby shops as default
-          if ((!localStorage.getItem('selectedShops') || JSON.parse(localStorage.getItem('selectedShops') || '[]').length === 0) && nearby.length > 0) {
-            setSelectedShops(nearby.slice(0, 5));
-            localStorage.setItem('selectedShops', JSON.stringify(nearby.slice(0, 5).map(s => s.id)));
-          }
+        setNearbyShops(nearby);
+        
+        // If no selected shops, use 5 nearby shops as default
+        if ((!localStorage.getItem('selectedShops') || JSON.parse(localStorage.getItem('selectedShops') || '[]').length === 0) && nearby.length > 0) {
+          setSelectedShops(nearby.slice(0, 5));
+          localStorage.setItem('selectedShops', JSON.stringify(nearby.slice(0, 5).map(s => s.id)));
         }
       } catch (error) {
         console.error('Error loading nearby shops:', error);
@@ -126,8 +124,8 @@ const Index = () => {
 
   return (
     <div className="min-h-screen pt-16 pb-20 bg-white dark:bg-gray-900">
-      {/* Top container with Islamic-inspired premium gradient */}
-      <div className="premium-gradient islamic-pattern-overlay pt-2 pb-3">
+      {/* Top container with lighter mint background */}
+      <div className="bg-[#E4F5F0] dark:bg-gray-800 pt-2 pb-3">
         <div className="container mx-auto px-4">
           {/* Search bar */}
           <div className="mb-2">
@@ -140,12 +138,12 @@ const Index = () => {
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            <h2 className="text-xs font-medium text-white dark:text-white">
+            <h2 className="text-xs font-medium text-[#2A866A] dark:text-green-300">
               {greeting}, {isLoggedIn && user ? user.name : 'Guest'}
             </h2>
           </motion.div>
           
-          {/* Category scroll inside gradient background */}
+          {/* Category scroll inside mint background */}
           <div className="mt-1">
             <CategoryScroll />
           </div>
@@ -158,7 +156,7 @@ const Index = () => {
         <section className="mt-3 mb-5">
           <div className="flex justify-between items-center mb-2">
             <h2 className="text-lg font-semibold text-gray-800 dark:text-white">Your Shops</h2>
-            <Link to="/select-shops" className="text-xs text-[#3F8C54] dark:text-green-300 hover:underline">
+            <Link to="/select-shops" className="text-xs text-[#29866B] dark:text-green-300 hover:underline">
               Edit Selection
             </Link>
           </div>
@@ -204,7 +202,7 @@ const Index = () => {
                             {shop.logo ? (
                               <img src={shop.logo} alt={shop.name} className="w-10 h-10 object-contain" />
                             ) : (
-                              <div className="w-full h-full flex items-center justify-center bg-[#F9F5EB] text-[#3F8C54] font-semibold">
+                              <div className="w-full h-full flex items-center justify-center bg-[#F9F5EB] text-[#29866B] font-semibold">
                                 {shop.name.charAt(0)}
                               </div>
                             )}
@@ -212,11 +210,11 @@ const Index = () => {
                           <motion.span 
                             className="text-xs text-center mt-1 block font-medium tracking-tight"
                             initial={{ opacity: 0.8 }}
-                            whileHover={{ opacity: 1, scale: 1.05, color: "#3F8C54" }}
+                            whileHover={{ opacity: 1, scale: 1.05, color: "#29866B" }}
                             animate={{
                               y: [0, -2, 0],
                               color: activeShopIndex % selectedShops.length === index % selectedShops.length 
-                                ? ["#000000", "#3F8C54", "#000000"] 
+                                ? ["#000000", "#29866B", "#000000"] 
                                 : "#000000",
                               transition: {
                                 duration: 2,
@@ -269,7 +267,7 @@ const Index = () => {
                             {shop.logo ? (
                               <img src={shop.logo} alt={shop.name} className="w-10 h-10 object-contain" />
                             ) : (
-                              <div className="w-full h-full flex items-center justify-center bg-[#F9F5EB] text-[#3F8C54] font-semibold">
+                              <div className="w-full h-full flex items-center justify-center bg-[#F9F5EB] text-[#29866B] font-semibold">
                                 {shop.name.charAt(0)}
                               </div>
                             )}
@@ -277,11 +275,11 @@ const Index = () => {
                           <motion.span 
                             className="text-xs text-center mt-1 block font-medium tracking-tight"
                             initial={{ opacity: 0.8 }}
-                            whileHover={{ opacity: 1, scale: 1.05, color: "#3F8C54" }}
+                            whileHover={{ opacity: 1, scale: 1.05, color: "#29866B" }}
                             animate={{
                               y: [0, -2, 0],
                               color: activeShopIndex % selectedShops.length === index % selectedShops.length 
-                                ? ["#000000", "#3F8C54", "#000000"] 
+                                ? ["#000000", "#29866B", "#000000"] 
                                 : "#000000",
                               transition: {
                                 duration: 2,
