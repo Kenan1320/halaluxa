@@ -167,7 +167,7 @@ const Navbar = () => {
             <MapPin className="h-6 w-6" />
           </motion.button>
           
-          {/* Main Shop Button - Only main shop left */}
+          {/* Main Shop Button - Only shop with pulse animation */}
           <motion.button 
             onClick={handleMainShopClick}
             className={`relative p-2 rounded-full ${
@@ -249,124 +249,83 @@ const Navbar = () => {
         </div>
       </div>
       
-      {/* Mobile menu - Simplified dropdown menu */}
+      {/* Mobile menu - More compact with just icons for the sleek look */}
       <AnimatePresence>
         {mobileMenuOpen && (
           <motion.div 
-            className="fixed inset-0 z-50 bg-black bg-opacity-50"
+            className="fixed inset-0 z-50"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setMobileMenuOpen(false)}
           >
             <motion.div 
-              className={`absolute left-0 top-[70px] bottom-0 w-[280px] p-4 ${
+              className={`absolute left-0 top-[70px] py-4 px-2 ${
                 mode === 'dark' 
-                  ? 'bg-[#1C2526] text-white border-r border-gray-800' 
-                  : 'bg-white border-r border-gray-100'
-              } overflow-y-auto`}
-              initial={{ x: -280 }}
-              animate={{ x: 0 }}
-              exit={{ x: -280 }}
+                  ? 'bg-[#1C2526]/95 text-white border-r border-gray-800 backdrop-blur-sm' 
+                  : 'bg-white/95 border-r border-gray-100 backdrop-blur-sm'
+              } overflow-hidden rounded-r-xl shadow-lg`}
+              initial={{ width: 0, opacity: 0 }}
+              animate={{ width: "auto", opacity: 1 }}
+              exit={{ width: 0, opacity: 0 }}
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
               onClick={(e) => e.stopPropagation()}
             >
-              {/* User info section */}
-              <div className={`p-4 mb-4 rounded-lg ${
-                mode === 'dark' ? 'bg-gray-800' : 'bg-[#E4F5F0]'
-              }`}>
-                <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                    mode === 'dark' ? 'bg-gray-700' : 'bg-[#2A866A]'
-                  } text-white`}>
-                    {isLoggedIn && user ? user.name.charAt(0).toUpperCase() : <User size={20} />}
-                  </div>
-                  <div>
-                    <p className="font-medium">
-                      {isLoggedIn && user ? user.name : 'Welcome'}
-                    </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {isLoggedIn && user ? user.email : 'Sign in for the best experience'}
-                    </p>
-                  </div>
-                </div>
-                
-                {!isLoggedIn && (
-                  <Link 
-                    to="/login"
-                    className="mt-3 block w-full py-2 bg-[#2A866A] text-white text-center rounded-full text-sm font-medium"
-                  >
-                    Sign In
-                  </Link>
-                )}
-              </div>
-              
-              {/* Theme toggle button in menu */}
-              <button
-                onClick={toggleMode}
-                className={`flex items-center gap-4 p-3 rounded-lg transition w-full text-left mb-3 ${
-                  mode === 'dark'
-                    ? 'bg-gray-800 text-white' 
-                    : 'bg-gray-100 text-gray-700'
-                }`}
-              >
-                {mode === 'dark' ? (
-                  <>
-                    <Sun size={20} />
-                    <span className="text-sm">Light Mode</span>
-                  </>
-                ) : (
-                  <>
-                    <Moon size={20} />
-                    <span className="text-sm">Dark Mode</span>
-                  </>
-                )}
-              </button>
-              
-              {/* Menu navigation - simple dropdown buttons */}
-              <div className="space-y-1">
+              <div className="flex flex-col gap-3 items-center">
+                {/* Menu navigation - sleek icon-only buttons */}
                 {menuItems.map((item) => (
                   <Link
                     key={item.path}
                     to={item.path}
-                    className={`flex items-center gap-4 p-3 rounded-lg transition ${
+                    className={`flex flex-col items-center justify-center p-3 rounded-full w-12 h-12 transition-colors ${
                       mode === 'dark'
                         ? (isActive(item.path) 
-                          ? 'bg-[#2A866A]/20 text-white' 
+                          ? 'bg-[#2A866A] text-white' 
                           : 'text-gray-300 hover:bg-gray-800')
                         : (isActive(item.path) 
                           ? 'bg-[#E4F5F0] text-[#2A866A]' 
                           : 'text-gray-700 hover:bg-gray-100')
                     }`}
+                    title={item.label}
                   >
                     {item.icon}
-                    <span className="text-sm">{item.label}</span>
                   </Link>
                 ))}
                 
+                {/* Theme toggle - icon only */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleMode();
+                  }}
+                  className={`flex items-center justify-center p-3 rounded-full w-12 h-12 transition-colors ${
+                    mode === 'dark'
+                      ? 'text-gray-300 hover:bg-gray-800' 
+                      : 'text-gray-700 hover:bg-gray-100'
+                  }`}
+                  title={mode === 'dark' ? 'Light Mode' : 'Dark Mode'}
+                >
+                  {mode === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+                </button>
+                
+                {/* Sign out button - icon only */}
                 {isLoggedIn && (
                   <button
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.stopPropagation();
                       logout();
                       setMobileMenuOpen(false);
                     }}
-                    className={`flex items-center gap-4 p-3 rounded-lg transition w-full text-left ${
+                    className={`flex items-center justify-center p-3 rounded-full w-12 h-12 transition-colors ${
                       mode === 'dark'
                         ? 'text-gray-300 hover:bg-gray-800'
                         : 'text-gray-700 hover:bg-gray-100'
                     }`}
+                    title="Sign Out"
                   >
                     <LogOut size={20} />
-                    <span className="text-sm">Sign Out</span>
                   </button>
                 )}
-              </div>
-              
-              {/* App version */}
-              <div className="mt-8 pt-4 border-t border-gray-200 dark:border-gray-700">
-                <p className="text-xs text-gray-500 text-center">
-                  Version 1.0.0
-                </p>
               </div>
             </motion.div>
           </motion.div>

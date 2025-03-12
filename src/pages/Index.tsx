@@ -1,9 +1,10 @@
+
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useTheme } from '@/context/ThemeContext';
 import { useLocation } from '@/context/LocationContext';
-import { getNearbyShops, getOnlineShops } from '@/services/shopService';
+import { getNearbyShops } from '@/services/shopService';
 import { Shop } from '@/models/shop';
 import CategorySuggestions from '@/components/home/CategorySuggestions';
 import SearchBar from '@/components/home/SearchBar';
@@ -20,12 +21,15 @@ const Index = () => {
     const loadShops = async () => {
       setIsLoading(true);
       try {
-        if (location) {
-          const nearby = await getNearbyShops(location.latitude, location.longitude);
+        // Load nearby shops based on location if available
+        if (location && location.coords) {
+          const nearby = await getNearbyShops(location.coords.latitude, location.coords.longitude);
           setNearbyShops(nearby);
+        } else {
+          // If no location, load shops without location filtering
+          const shops = await getNearbyShops();
+          setNearbyShops(shops);
         }
-        const online = await getOnlineShops();
-        setOnlineShops(online);
       } catch (error) {
         console.error("Error loading shops:", error);
       } finally {
@@ -40,31 +44,52 @@ const Index = () => {
     <div className="container mx-auto px-4 py-6 max-w-7xl">
       <div className="space-y-8">
         {/* Hero section */}
-        <section className="text-center mb-12">
+        <section className="text-center mb-10">
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
             Discover and Shop Halal Products
           </h1>
-          <p className="text-lg md:text-xl text-gray-600 dark:text-gray-300">
+          <p className="text-lg md:text-xl text-gray-600 dark:text-gray-300 mb-8">
             Find verified halal products from trusted local and online sellers
           </p>
+          
+          {/* Search Bar */}
+          <div className="mb-10">
+            <SearchBar />
+          </div>
         </section>
 
         {/* Main content */}
-        <div className="space-y-8">
-          {/* Shopping modes tabs */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm">
-            <SearchBar />
-          </div>
+        <div className="space-y-10">
+          {/* Shopping modes section */}
+          <section className="mb-2">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-semibold tracking-tight sf-pro">Halvi't Nearby</h2>
+              <Link to="/shops" className="text-sm font-medium text-black dark:text-white hover:underline sf-pro">
+                View All
+              </Link>
+            </div>
+            <CategorySuggestions />
+          </section>
 
-          {/* Categories section */}
-          <section>
-            <h2 className="text-2xl font-semibold mb-6">Categories</h2>
+          {/* Online Shopping section */}
+          <section className="mb-2">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-semibold tracking-tight sf-pro">Halvi Mall</h2>
+              <Link to="/browse" className="text-sm font-medium text-black dark:text-white hover:underline sf-pro">
+                View All
+              </Link>
+            </div>
             <CategorySuggestions />
           </section>
 
           {/* Shops section */}
           <section>
-            <h2 className="text-2xl font-semibold mb-6">Featured Shops</h2>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-semibold tracking-tight sf-pro">Featured Shops</h2>
+              <Link to="/shops" className="text-sm font-medium text-black dark:text-white hover:underline sf-pro">
+                View All
+              </Link>
+            </div>
             <NearbyShops shops={nearbyShops} isLoading={isLoading} />
           </section>
         </div>
