@@ -1,11 +1,9 @@
 
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from "@/hooks/use-toast";
-import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Form, FormField, FormItem, FormLabel, FormControl } from "@/components/ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -44,7 +42,7 @@ const UserProfilePage = () => {
     try {
       const success = await updateUserProfile(values);
       
-      if (success === true) {
+      if (success) {
         toast({
           title: 'Profile updated',
           description: 'Your profile information has been updated successfully.',

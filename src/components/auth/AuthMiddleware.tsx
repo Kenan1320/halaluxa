@@ -12,7 +12,6 @@ const AuthMiddleware = ({ children }: AuthMiddlewareProps) => {
   const { isInitializing, isLoggedIn, user } = useAuth();
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
   const location = useLocation();
-  const navigate = useNavigate();
 
   useEffect(() => {
     if (!isInitializing && isLoggedIn && user?.role === 'business' && !user?.shop_name) {

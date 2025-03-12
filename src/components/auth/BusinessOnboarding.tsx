@@ -1,28 +1,22 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
-import { createShop } from '@/services/shopService';
 import { useToast } from '@/hooks/use-toast';
 import { motion } from 'framer-motion';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { 
+import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Store, MapPin, Tag, FileText, Upload, X } from 'lucide-react';
 import ShopSetupForm from './ShopSetupForm';
 
 const BusinessOnboarding = () => {
   const { user, isLoggedIn } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [onboardingStep, setOnboardingStep] = useState(0);
   const [onboardingComplete, setOnboardingComplete] = useState(false);
   
   useEffect(() => {
