@@ -15,12 +15,12 @@ const TabItem = ({ isActive, onClick, icon, children }: {
   <button
     onClick={onClick}
     className={`flex-1 flex items-center justify-center gap-2 py-3 relative ${
-      isActive ? 'text-black dark:text-white font-extrabold' : 'text-gray-500 dark:text-gray-400'
+      isActive ? 'text-black dark:text-white font-bold' : 'text-gray-500 dark:text-gray-400'
     }`}
     style={{ fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}
   >
     {icon}
-    <span className="text-base font-medium">{children}</span>
+    <span className="text-base font-semibold">{children}</span>
     {isActive && (
       <motion.div
         className="absolute bottom-0 left-0 right-0 h-0.5 bg-black dark:bg-white"
@@ -40,13 +40,13 @@ const CategoryIcon = ({ category, onClick, isSelected }: {
     onClick={onClick}
     className="flex flex-col items-center space-y-2 min-w-[80px] cursor-pointer px-1"
   >
-    <div className={`w-12 h-12 flex items-center justify-center rounded-full ${
-      isSelected ? 'bg-[#29866B]/10' : 'bg-gray-100 dark:bg-gray-800'
+    <div className={`w-14 h-14 flex items-center justify-center ${
+      isSelected ? 'text-[#29866B]' : 'text-gray-600 dark:text-gray-300'
     }`}>
-      {getCategoryIcon(category.name, `w-7 h-7 ${isSelected ? 'text-[#29866B]' : 'text-gray-600 dark:text-gray-300'}`)}
+      {getCategoryIcon(category.name, `w-8 h-8 ${isSelected ? 'text-[#29866B]' : 'text-gray-600 dark:text-gray-300'}`)}
     </div>
     <span className={`text-xs text-center text-gray-600 dark:text-gray-300 whitespace-nowrap ${
-      isSelected ? 'font-bold text-[#29866B] dark:text-[#5bbea7]' : ''
+      isSelected ? 'font-bold text-[#2A866A] dark:text-[#5bbea7]' : ''
     }`}>
       {category.name}
     </span>

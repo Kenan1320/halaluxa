@@ -1,110 +1,41 @@
 
 import { useState } from 'react';
-import { Search, Mic } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { useTheme } from '@/context/ThemeContext';
 
-interface SearchBarProps {
-  onSearch?: (term: string) => void;
-}
-
-const SearchBar = ({ onSearch }: SearchBarProps) => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [isRecording, setIsRecording] = useState(false);
+const SearchBar = () => {
+  const [query, setQuery] = useState('');
   const navigate = useNavigate();
   const { mode } = useTheme();
 
-  const handleSearch = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (searchTerm.trim()) {
-      if (onSearch) {
-        onSearch(searchTerm);
-      } else {
-        navigate(`/browse?search=${encodeURIComponent(searchTerm)}`);
-      }
-    }
-  };
-
-  const startVoiceSearch = () => {
-    setIsRecording(true);
-    
-    // Check if the browser supports the Web Speech API
-    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-      // @ts-ignore - TypeScript doesn't have types for the Web Speech API
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      const recognition = new SpeechRecognition();
-      
-      recognition.lang = 'en-US';
-      recognition.continuous = false;
-      recognition.interimResults = false;
-      
-      recognition.onresult = (event: any) => {
-        const transcript = event.results[0][0].transcript;
-        setSearchTerm(transcript);
-        setIsRecording(false);
-        
-        // Auto submit after voice input
-        if (transcript.trim()) {
-          if (onSearch) {
-            onSearch(transcript);
-          } else {
-            navigate(`/browse?search=${encodeURIComponent(transcript)}`);
-          }
-        }
-      };
-      
-      recognition.onerror = () => {
-        setIsRecording(false);
-      };
-      
-      recognition.onend = () => {
-        setIsRecording(false);
-      };
-      
-      recognition.start();
-    } else {
-      alert('Voice search is not supported in your browser.');
-      setIsRecording(false);
+    if (query.trim()) {
+      navigate(`/search?q=${encodeURIComponent(query)}`);
     }
   };
 
   return (
-    <div className="w-full max-w-3xl mx-auto">
-      <form onSubmit={handleSearch} className="relative">
-        <div className="relative flex items-center w-full">
-          <div className="absolute left-4">
-            <Search className="h-5 w-5 text-[#2A866A]" />
-          </div>
-          
-          <input
-            type="text"
-            placeholder="Halvi: Explore Your Halal Village"
-            className="pl-12 pr-14 py-3.5 w-full rounded-full border-none shadow-sm focus:ring-2 focus:ring-[#2A866A]/30 bg-white text-gray-700 font-sans text-base"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            style={{ fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}
-          />
-          
-          <div className="absolute right-4">
-            <button 
-              type="button" 
-              className={`bg-transparent p-1.5 rounded-full ${isRecording ? 'bg-red-100' : 'hover:bg-[#2A866A]/20'}`}
-              onClick={startVoiceSearch}
-            >
-              <Mic className={`h-5 w-5 ${isRecording ? 'text-red-500 animate-pulse' : 'text-[#2A866A]'}`} />
-              {isRecording && (
-                <motion.div
-                  className="absolute inset-0 rounded-full bg-red-100 z-[-1]"
-                  animate={{ scale: [1, 1.2, 1] }}
-                  transition={{ duration: 1.5, repeat: Infinity }}
-                />
-              )}
-            </button>
-          </div>
-        </div>
-      </form>
-    </div>
+    <form onSubmit={handleSubmit} className="w-full">
+      <div className={`flex items-center rounded-full ${
+        mode === 'dark' 
+          ? 'bg-gray-800 text-white border border-gray-700' 
+          : 'bg-white text-gray-700 border border-gray-200'
+      } px-4 py-2 shadow-sm`}>
+        <Search className="w-5 h-5 mr-2 text-gray-400" />
+        <input
+          type="text"
+          placeholder="Halvi: Explore Your Halal Village"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          className={`w-full outline-none ${
+            mode === 'dark' ? 'bg-gray-800 text-white' : 'bg-white'
+          } text-sm font-medium`}
+          style={{ fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}
+        />
+      </div>
+    </form>
   );
 };
 

@@ -37,8 +37,6 @@ export interface Shop {
   longitude?: number;
   distance?: number;
   address?: string;
-  // Adding the alias for logo to fix type issues
-  logo?: string; // Alias for logo_url to maintain compatibility
   // For product display mode
   display_mode?: 'online' | 'local_pickup' | 'local_delivery';
   pickup_options?: {
@@ -58,7 +56,7 @@ export interface Product {
   created_at: string;
   updated_at: string;
   is_halal_certified: boolean;
-  in_stock: boolean; // Added this as required field
+  in_stock: boolean; // Required field
   details?: Record<string, any>;
   long_description?: string;
   is_published?: boolean;
@@ -72,12 +70,6 @@ export interface Product {
     store: boolean;
     curbside: boolean;
   };
-  // Adding aliases to match model properties
-  shopId?: string; // Alias for shop_id
-  isHalalCertified?: boolean; // Alias for is_halal_certified
-  inStock?: boolean; // Alias for in_stock
-  createdAt?: string; // Alias for created_at
-  sellerId?: string; // Alias for seller_id
 }
 
 export interface SellerAccount {

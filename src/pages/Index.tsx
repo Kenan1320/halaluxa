@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useLocation } from '@/context/LocationContext';
@@ -10,7 +9,7 @@ import ProductGrid from '@/components/home/ProductGrid';
 import NearbyShops from '@/components/home/NearbyShops';
 import CategorySuggestions from '@/components/home/CategorySuggestions';
 import { motion, useAnimationControls } from 'framer-motion';
-import { getShopById, subscribeToShops, Shop } from '@/services/shopService';
+import { getShopById, subscribeToShops, getShops, Shop } from '@/services/shopService';
 import { useTheme } from '@/context/ThemeContext';
 
 const Index = () => {
@@ -55,6 +54,32 @@ const Index = () => {
   useEffect(() => {
     setIsLoadingShops(true);
     
+    // Always load shops regardless of location status
+    const loadAllShops = async () => {
+      try {
+        const allShops = await getShops();
+        setNearbyShops(allShops);
+        
+        // If no selected shops, use 5 shops as default
+        if ((!localStorage.getItem('selectedShops') || 
+             JSON.parse(localStorage.getItem('selectedShops') || '[]').length === 0) && 
+             allShops.length > 0) {
+          setSelectedShops(allShops.slice(0, 5));
+          localStorage.setItem('selectedShops', JSON.stringify(allShops.slice(0, 5).map(s => s.id)));
+          
+          // Set the first shop as main if none is set
+          if (!localStorage.getItem('mainShopId')) {
+            localStorage.setItem('mainShopId', allShops[0].id);
+          }
+        }
+        
+        setIsLoadingShops(false);
+      } catch (error) {
+        console.error('Error loading shops:', error);
+        setIsLoadingShops(false);
+      }
+    };
+    
     // Setup real-time subscription for shops
     const channel = subscribeToShops((shops) => {
       // If we received real-time shops and have no selected shops yet,
@@ -77,25 +102,10 @@ const Index = () => {
       setIsLoadingShops(false);
     });
     
-    // Load selected shops and nearby shops initially
+    // Load selected shops and all shops initially
     const initialLoad = async () => {
       await loadSelectedShops();
-      
-      try {
-        // Always get nearby shops based on location
-        const nearby = await getNearbyShops();
-        setNearbyShops(nearby);
-        
-        // If no selected shops, use 5 nearby shops as default
-        if ((!localStorage.getItem('selectedShops') || JSON.parse(localStorage.getItem('selectedShops') || '[]').length === 0) && nearby.length > 0) {
-          setSelectedShops(nearby.slice(0, 5));
-          localStorage.setItem('selectedShops', JSON.stringify(nearby.slice(0, 5).map(s => s.id)));
-        }
-      } catch (error) {
-        console.error('Error loading nearby shops:', error);
-      } finally {
-        setIsLoadingShops(false);
-      }
+      await loadAllShops();
     };
     
     initialLoad();
@@ -104,7 +114,7 @@ const Index = () => {
     return () => {
       channel.unsubscribe();
     };
-  }, [getNearbyShops, loadSelectedShops, selectedShops.length]);
+  }, [loadSelectedShops]);
 
   // Cycling shop index animation effect with more efficient interval
   useEffect(() => {
@@ -125,9 +135,9 @@ const Index = () => {
     return "Good evening";
   }, []);
 
-  // Heading style for section titles
+  // Heading style for section titles - made bolder
   const SectionHeading = ({ children }: { children: React.ReactNode }) => (
-    <h2 className={`text-sm font-medium tracking-wide ${
+    <h2 className={`text-sm font-bold tracking-wide ${
       mode === 'dark'
         ? 'text-white bg-gray-800/90 dark:border dark:border-gray-700'
         : 'text-gray-700 bg-gray-100'

@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, Search, ShoppingCart, User, MapPin, Store, AlertCircle, Home, Package, CreditCard, Settings, LogOut, Info, HelpCircle } from 'lucide-react';
+import { Menu, X, Search, ShoppingCart, User, MapPin, Store, AlertCircle, Home, Package, CreditCard, Settings, LogOut, Info, HelpCircle, Moon, Sun } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/context/AuthContext';
@@ -11,7 +11,6 @@ import { useLocation as useLocationContext } from '@/context/LocationContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
 import { getShopById, getMainShop } from '@/services/shopService';
-import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { Shop } from '@/types/database';
 
 const Navbar = () => {
@@ -26,7 +25,7 @@ const Navbar = () => {
   const { cart } = useCart();
   const { isLocationEnabled, requestLocation, location: userLocation } = useLocationContext();
   const { toast } = useToast();
-  const { mode } = useTheme();
+  const { mode, toggleMode } = useTheme();
   
   // Close mobile menu when route changes
   useEffect(() => {
@@ -95,7 +94,7 @@ const Navbar = () => {
       style={{ height: '70px' }}
     >
       <div className="container mx-auto px-4 h-full flex justify-between items-center">
-        {/* Menu Button with modern styling */}
+        {/* Menu Button - simplified to a dropdown */}
         <button
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           className={`p-2 rounded-full ${
@@ -154,9 +153,6 @@ const Navbar = () => {
         
         {/* Right side buttons */}
         <div className="flex items-center gap-3">
-          {/* Theme Toggle */}
-          <ThemeToggle />
-          
           {/* Location Button */}
           <motion.button 
             onClick={requestLocation}
@@ -171,7 +167,7 @@ const Navbar = () => {
             <MapPin className="h-6 w-6" />
           </motion.button>
           
-          {/* Main Shop Button - Modernized */}
+          {/* Main Shop Button - Only main shop left */}
           <motion.button 
             onClick={handleMainShopClick}
             className={`relative p-2 rounded-full ${
@@ -220,23 +216,6 @@ const Navbar = () => {
             )}
           </motion.button>
           
-          {/* Select Shops Button - Modernized */}
-          <motion.div
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <Link 
-              to="/select-shops" 
-              className={`p-2 rounded-full ${
-                mode === 'dark' 
-                  ? 'text-white hover:bg-gray-700' 
-                  : 'text-[#2A866A] hover:bg-[#d5efe8]'
-              } transition-colors block shadow-sm`}
-            >
-              <Store className="h-6 w-6" />
-            </Link>
-          </motion.div>
-          
           {/* Cart Button - Modernized */}
           <motion.div
             whileHover={{ scale: 1.05 }}
@@ -270,7 +249,7 @@ const Navbar = () => {
         </div>
       </div>
       
-      {/* Mobile menu - Redesigned to match Amazon mobile menu style */}
+      {/* Mobile menu - Simplified dropdown menu */}
       <AnimatePresence>
         {mobileMenuOpen && (
           <motion.div 
@@ -322,7 +301,29 @@ const Navbar = () => {
                 )}
               </div>
               
-              {/* Menu navigation */}
+              {/* Theme toggle button in menu */}
+              <button
+                onClick={toggleMode}
+                className={`flex items-center gap-4 p-3 rounded-lg transition w-full text-left mb-3 ${
+                  mode === 'dark'
+                    ? 'bg-gray-800 text-white' 
+                    : 'bg-gray-100 text-gray-700'
+                }`}
+              >
+                {mode === 'dark' ? (
+                  <>
+                    <Sun size={20} />
+                    <span className="text-sm">Light Mode</span>
+                  </>
+                ) : (
+                  <>
+                    <Moon size={20} />
+                    <span className="text-sm">Dark Mode</span>
+                  </>
+                )}
+              </button>
+              
+              {/* Menu navigation - simple dropdown buttons */}
               <div className="space-y-1">
                 {menuItems.map((item) => (
                   <Link
