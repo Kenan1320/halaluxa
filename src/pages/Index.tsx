@@ -9,8 +9,9 @@ import CategoryScroll from '@/components/home/CategoryScroll';
 import ProductGrid from '@/components/home/ProductGrid';
 import NearbyShops from '@/components/home/NearbyShops';
 import CategorySuggestions from '@/components/home/CategorySuggestions';
-import { motion, useAnimationControls } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { getShopById, subscribeToShops, Shop } from '@/services/shopService';
+import { useTheme } from '@/context/ThemeContext';
 
 const Index = () => {
   const { isLoggedIn, user } = useAuth();
@@ -20,6 +21,8 @@ const Index = () => {
   const [isLoadingShops, setIsLoadingShops] = useState(false);
   const [activeShopIndex, setActiveShopIndex] = useState(0);
   const shopScrollRef = useRef<HTMLDivElement>(null);
+  const { mode } = useTheme();
+  const isDark = mode === 'dark';
   
   // Scroll to top on page load
   useEffect(() => {
@@ -54,8 +57,10 @@ const Index = () => {
     
     // Setup real-time subscription for shops
     const channel = subscribeToShops((shops) => {
-      // If we received real-time shops and have no selected shops yet,
-      // use the first 5 as the default selection
+      // Always update the nearby shops list
+      setNearbyShops(shops);
+      
+      // If no selected shops yet, select the top shops by product count
       if (shops.length > 0 && selectedShops.length === 0) {
         // Sort by product count (popularity) first
         const sortedShops = [...shops].sort((a, b) => (b.productCount || 0) - (a.productCount || 0));
@@ -70,7 +75,6 @@ const Index = () => {
         }
       }
       
-      setNearbyShops(shops);
       setIsLoadingShops(false);
     });
     
@@ -79,11 +83,20 @@ const Index = () => {
       await loadSelectedShops();
       
       try {
-        // Always get nearby shops based on location
-        const nearby = await getNearbyShops();
+        // Get nearby shops
+        let nearby;
+        if (isLocationEnabled && location) {
+          nearby = await getNearbyShops();
+        } else {
+          // If location is not enabled, just get all shops
+          nearby = await getNearbyShops();
+          // Sort by product count if no location
+          nearby = nearby.sort((a, b) => (b.productCount || 0) - (a.productCount || 0));
+        }
+        
         setNearbyShops(nearby);
         
-        // If no selected shops, use 5 nearby shops as default
+        // If no selected shops yet, use top shops as default
         if ((!localStorage.getItem('selectedShops') || JSON.parse(localStorage.getItem('selectedShops') || '[]').length === 0) && nearby.length > 0) {
           setSelectedShops(nearby.slice(0, 5));
           localStorage.setItem('selectedShops', JSON.stringify(nearby.slice(0, 5).map(s => s.id)));
@@ -113,7 +126,7 @@ const Index = () => {
       channel.unsubscribe();
       window.removeEventListener('shopsSelectionChanged', handleShopSelectionChange);
     };
-  }, [getNearbyShops, loadSelectedShops, selectedShops.length]);
+  }, [getNearbyShops, loadSelectedShops, selectedShops.length, isLocationEnabled, location]);
 
   // Cycling shop index animation effect with more efficient interval
   useEffect(() => {
@@ -207,38 +220,20 @@ const Index = () => {
                       >
                         <Link to={`/shop/${shop.id}`}>
                           <motion.div 
-                            className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center overflow-hidden"
+                            className={`w-16 h-16 rounded-lg ${
+                              isDark ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-100'
+                            } shadow-sm flex items-center justify-center overflow-hidden`}
                             whileHover={{ scale: 1.1, boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}
                             transition={{ type: "spring", stiffness: 400, damping: 10 }}
                           >
                             {shop.logo ? (
-                              <img src={shop.logo} alt={shop.name} className="w-8 h-8 object-contain" />
+                              <img src={shop.logo} alt={shop.name} className="w-12 h-12 object-contain" />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center bg-[#F9F5EB] text-[#29866B] font-medium">
                                 {shop.name.charAt(0)}
                               </div>
                             )}
                           </motion.div>
-                          <motion.span 
-                            className="text-[10px] text-center mt-1 block font-medium tracking-tight"
-                            initial={{ opacity: 0.8 }}
-                            whileHover={{ opacity: 1, scale: 1.05, color: "#29866B" }}
-                            animate={{
-                              y: [0, -1, 0],
-                              color: activeShopIndex % selectedShops.length === index % selectedShops.length 
-                                ? ["#000000", "#29866B", "#000000"] 
-                                : "#000000",
-                              transition: {
-                                duration: 2,
-                                repeat: Infinity,
-                                repeatType: "mirror",
-                                ease: "easeInOut",
-                                delay: index * 0.2 % 1,
-                              }
-                            }}
-                          >
-                            {shop.name.length > 10 ? `${shop.name.substring(0, 10)}...` : shop.name}
-                          </motion.span>
                         </Link>
                       </motion.div>
                     ))}
@@ -272,38 +267,20 @@ const Index = () => {
                       >
                         <Link to={`/shop/${shop.id}`}>
                           <motion.div 
-                            className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center overflow-hidden"
+                            className={`w-16 h-16 rounded-lg ${
+                              isDark ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-100'
+                            } shadow-sm flex items-center justify-center overflow-hidden`}
                             whileHover={{ scale: 1.1, boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}
                             transition={{ type: "spring", stiffness: 400, damping: 10 }}
                           >
                             {shop.logo ? (
-                              <img src={shop.logo} alt={shop.name} className="w-8 h-8 object-contain" />
+                              <img src={shop.logo} alt={shop.name} className="w-12 h-12 object-contain" />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center bg-[#F9F5EB] text-[#29866B] font-medium">
                                 {shop.name.charAt(0)}
                               </div>
                             )}
                           </motion.div>
-                          <motion.span 
-                            className="text-[10px] text-center mt-1 block font-medium tracking-tight"
-                            initial={{ opacity: 0.8 }}
-                            whileHover={{ opacity: 1, scale: 1.05, color: "#29866B" }}
-                            animate={{
-                              y: [0, -1, 0],
-                              color: activeShopIndex % selectedShops.length === index % selectedShops.length 
-                                ? ["#000000", "#29866B", "#000000"] 
-                                : "#000000",
-                              transition: {
-                                duration: 2,
-                                repeat: Infinity,
-                                repeatType: "mirror",
-                                ease: "easeInOut",
-                                delay: index * 0.2 % 1,
-                              }
-                            }}
-                          >
-                            {shop.name.length > 10 ? `${shop.name.substring(0, 10)}...` : shop.name}
-                          </motion.span>
                         </Link>
                       </motion.div>
                     ))}

@@ -65,6 +65,7 @@ export default function CategorySuggestions() {
   const { mode } = useTheme();
   const [activeTab, setActiveTab] = useState<'nearby' | 'online'>('nearby');
   const categories = activeTab === 'nearby' ? localCategories : onlineCategories;
+  const isDark = mode === 'dark';
 
   return (
     <div className="py-2">
@@ -93,7 +94,7 @@ export default function CategorySuggestions() {
         </div>
       </div>
 
-      <div className="flex overflow-x-auto scroll-smooth scrollbar-hide gap-3 pb-2">
+      <div className="flex overflow-x-auto scroll-smooth scrollbar-hide gap-4 pb-2">
         {categories.map((category, index) => (
           <motion.div
             key={category.id}
@@ -105,16 +106,14 @@ export default function CategorySuggestions() {
           >
             <Link 
               to={category.link}
-              className={`flex flex-col items-center gap-1 p-2 rounded-lg transition-all duration-300`}
+              className={`flex flex-col items-center gap-2 p-3 rounded-lg transition-all duration-300 ${
+                isDark ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-100'
+              } shadow-sm`}
+              style={{ minWidth: '72px', minHeight: '72px' }}
             >
-              <div className="w-14 h-14 flex items-center justify-center">
-                {getCategoryIcon(category.name, "w-12 h-12")}
+              <div className="w-10 h-10 flex items-center justify-center">
+                {getCategoryIcon(category.name, "w-9 h-9")}
               </div>
-              <span className={`text-sm font-medium text-center mt-1 ${
-                mode === 'dark' ? 'text-white' : 'text-black'
-              }`}>
-                {category.name}
-              </span>
             </Link>
           </motion.div>
         ))}

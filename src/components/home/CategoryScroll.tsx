@@ -4,10 +4,13 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { getCategoryIcon } from '../icons/CategoryIcons';
 import { productCategories } from '@/models/product';
+import { useTheme } from '@/context/ThemeContext';
 
 const CategoryScroll = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const { mode } = useTheme();
+  const isDark = mode === 'dark';
   
   useEffect(() => {
     const scrollContainer = scrollRef.current;
@@ -60,27 +63,26 @@ const CategoryScroll = () => {
   };
   
   return (
-    <div className="relative w-full my-1">
+    <div className="relative w-full my-2">
       <div
         ref={scrollRef}
-        className="flex overflow-x-auto scrollbar-hide py-1 space-x-4"
+        className="flex overflow-x-auto scrollbar-hide py-2 space-x-5"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
         {productCategories.map((category, index) => (
           <motion.button
             key={index}
-            className="flex-shrink-0 flex flex-col items-center justify-center p-1"
-            style={{ minWidth: '60px' }}
-            whileHover={{ scale: 1.05 }}
+            className={`flex-shrink-0 flex flex-col items-center justify-center p-2 rounded-lg ${
+              isDark ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-100'
+            } shadow-sm`}
+            style={{ minWidth: '68px', minHeight: '68px' }}
+            whileHover={{ scale: 1.05, boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
             whileTap={{ scale: 0.95 }}
             onClick={() => handleCategoryClick(category)}
           >
-            <div className="h-8 w-8 mb-1 flex items-center justify-center">
-              {getCategoryIcon(category, "h-7 w-7")}
+            <div className="h-10 w-10 flex items-center justify-center">
+              {getCategoryIcon(category, "h-9 w-9")}
             </div>
-            <span className="text-black dark:text-white text-xs font-medium text-center line-clamp-1">
-              {category}
-            </span>
           </motion.button>
         ))}
       </div>
