@@ -25,16 +25,20 @@ export interface Product {
   details?: ProductDetails;
 }
 
-// Product categories for use in forms and filters
+// Product categories with updated names to match the provided icons
 export const productCategories = [
-  "Food & Groceries",
-  "Clothing & Accessories",
-  "Health & Beauty",
-  "Home & Kitchen",
-  "Books & Learning",
-  "Religious Items",
-  "Technology",
-  "Toys & Games",
-  "Baby & Kids",
-  "Other"
+  "Groceries",
+  "Restaurants",
+  "Halal Meat",
+  "Furniture",
+  "Books",
+  "Modest Clothing",
+  "Hijab",
+  "Thobes",
+  "Abaya",
+  "Online Shops",
+  "Gifts",
+  "Decorations",
+  "Arabic Language",
+  "Arabic Calligraphy"
 ];

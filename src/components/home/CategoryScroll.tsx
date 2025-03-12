@@ -2,22 +2,14 @@
 import { useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ShoppingCart, ShoppingBag, Home, BookOpen, Utensils, HeartPulse, Gift, Shirt, Laptop, Baby, Drumstick, Palette } from 'lucide-react';
+import { getCategoryIcon } from '../icons/CategoryIcons';
+import { productCategories } from '@/models/product';
 
-const categories = [
-  { id: 1, name: 'Groceries', icon: ShoppingCart, color: '#2A866A' },
-  { id: 2, name: 'Food', icon: Utensils, color: '#2A866A' },
-  { id: 3, name: 'Modest Clothing', icon: Shirt, color: '#2A866A' },
-  { id: 4, name: 'Home', icon: Home, color: '#2A866A' },
-  { id: 5, name: 'Electronics', icon: Laptop, color: '#2A866A' },
-  { id: 6, name: 'Books', icon: BookOpen, color: '#2A866A' },
-  { id: 7, name: 'Health', icon: HeartPulse, color: '#2A866A' },
-  { id: 8, name: 'Toys', icon: Baby, color: '#2A866A' },
-  { id: 9, name: 'Gifts', icon: Gift, color: '#2A866A' },
-  { id: 10, name: 'Art', icon: Palette, color: '#2A866A' },
-  { id: 11, name: 'Baby', icon: Baby, color: '#2A866A' },
-  { id: 12, name: 'Halal Meat', icon: Drumstick, color: '#2A866A' }
-];
+// Convert the categories array to a format with ids
+const categories = productCategories.map((name, index) => ({
+  id: index + 1,
+  name,
+}));
 
 const CategoryScroll = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -82,14 +74,18 @@ const CategoryScroll = () => {
         {categories.map((category) => (
           <motion.button
             key={category.id}
-            className="flex-shrink-0 flex flex-col items-center justify-center bg-white rounded-lg shadow-sm p-1 border border-gray-100"
+            className="flex-shrink-0 flex flex-col items-center justify-center bg-white dark:bg-gray-800 rounded-lg shadow-sm p-1 border border-gray-100 dark:border-gray-700"
             style={{ minWidth: '62px', height: '62px' }}
             whileHover={{ scale: 1.05, backgroundColor: '#F8F8F8' }}
             whileTap={{ scale: 0.95 }}
             onClick={() => handleCategoryClick(category.name)}
           >
-            <category.icon className="h-5 w-5 text-[#2A866A] mb-1" />
-            <span className="text-gray-800 text-xs font-medium text-center line-clamp-1">{category.name}</span>
+            <div className="h-8 w-8 mb-1 flex items-center justify-center">
+              {getCategoryIcon(category.name, "h-7 w-7")}
+            </div>
+            <span className="text-black dark:text-white text-xs font-medium text-center line-clamp-1">
+              {category.name}
+            </span>
           </motion.button>
         ))}
       </div>

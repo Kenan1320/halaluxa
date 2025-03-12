@@ -69,7 +69,8 @@ export const getShopProducts = async (shopId: string): Promise<ShopProduct[]> =>
       images: item.images || [], 
       sellerId: item.shop_id || '', // Use shop_id as seller_id
       sellerName: 'Shop Owner',
-      rating: 0
+      rating: 0,
+      isHalalCertified: item.is_halal_certified || false
     }));
   } catch (error) {
     console.error(`Error fetching products for shop with ID ${shopId}:`, error);
