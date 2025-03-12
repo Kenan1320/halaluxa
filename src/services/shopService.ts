@@ -133,39 +133,6 @@ export const getShopsForSeller = async (sellerId: string): Promise<Shop[]> => {
   }
 };
 
-// Interface for product results from database
-interface ShopProductResult {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  images: string[];
-  category: string;
-  shop_id: string;
-  is_featured: boolean;
-  is_halal_certified: boolean;
-  created_at: string;
-  updated_at: string;
-  seller_id?: string;
-  seller_name?: string;
-}
-
-// Process shop products to match the required Product interface
-const processShopProducts = (products: any[]): Shop[] => {
-  return products.map(product => ({
-    id: product.id,
-    name: product.name,
-    description: product.description,
-    price: product.price,
-    images: product.images,
-    category: product.category,
-    shopId: product.shop_id,
-    isHalalCertified: product.is_halal_certified || false,
-    inStock: true, // Assume true if not provided
-    createdAt: product.created_at,
-  })) as unknown as Shop[];
-};
-
 // Function to create a new shop
 export const createShop = async (shop: Omit<Shop, 'id'>): Promise<Shop | null> => {
   try {
@@ -176,8 +143,8 @@ export const createShop = async (shop: Omit<Shop, 'id'>): Promise<Shop | null> =
         description: shop.description,
         location: shop.location,
         category: shop.category,
-        logo_url: shop.logo, // Renamed to match database column
-        cover_image: shop.coverImage, // Renamed to match database column
+        logo_url: shop.logo, // Map to database column
+        cover_image: shop.coverImage, // Map to database column
         rating: shop.rating || 0,
         product_count: shop.productCount || 0,
         is_verified: shop.isVerified || false,

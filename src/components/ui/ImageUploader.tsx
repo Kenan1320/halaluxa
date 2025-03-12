@@ -53,7 +53,6 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
         }
         
         try {
-          // Use our uploadFile function instead of the missing uploadProductImage
           return await uploadFile(file);
         } catch (error) {
           console.error('Error uploading image:', error);

@@ -81,7 +81,7 @@ export async function getProductById(id: string): Promise<Product | undefined> {
 
 // Helper function to prepare product data for database
 const prepareProductForDb = (product: Partial<Product>) => {
-  const dbProduct: any = {
+  const dbProduct: Record<string, any> = {
     name: product.name,
     description: product.description,
     price: product.price,
@@ -92,9 +92,15 @@ const prepareProductForDb = (product: Partial<Product>) => {
     business_owner_id: product.sellerId,
     business_owner_name: product.sellerName,
     rating: product.rating,
-    is_halal_certified: product.isHalalCertified,
-    details: product.details ? JSON.stringify(product.details) : '{}'
+    is_halal_certified: product.isHalalCertified
   };
+  
+  // Handle details separately to avoid infinite recursion
+  if (product.details) {
+    dbProduct.details = JSON.stringify(product.details);
+  } else {
+    dbProduct.details = '{}';
+  }
   
   // Only include id if it exists (for updates)
   if (product.id) {

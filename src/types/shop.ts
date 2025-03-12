@@ -33,4 +33,12 @@ export interface ShopDetails {
     average: number;
     count: number;
   };
+  // Additional properties needed for compatibility
+  productCount?: number;
+  isVerified?: boolean;
+  category?: string;
+  ownerId?: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  distance?: number | null;
 }

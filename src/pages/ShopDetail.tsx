@@ -12,6 +12,7 @@ import { ShopHeader } from '@/components/shop/ShopHeader';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { ShoppingBag, Phone, Mail, MapPin, Navigation, Star, Calendar, Clock, Info } from 'lucide-react';
+import { ShopDetails } from '@/types/shop';
 
 const ShopDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -120,6 +121,39 @@ const ShopDetail: React.FC = () => {
       rating: shopProduct.rating,
       inStock: true
     };
+  };
+  
+  // Convert ModelShop to ShopDetails for rendering
+  const shopDetails: ShopDetails = {
+    id: shop.id,
+    name: shop.name,
+    description: shop.description,
+    location: shop.location,
+    categories: [],
+    coverImage: shop.coverImage || undefined,
+    logo: shop.logo || undefined,
+    deliveryInfo: {
+      isDeliveryAvailable: true,
+      isPickupAvailable: true,
+      deliveryFee: 2.99,
+      estimatedTime: '30-45 min'
+    },
+    workingHours: {
+      open: '9:00 AM',
+      close: '9:00 PM'
+    },
+    isGroupOrderEnabled: false,
+    rating: {
+      average: shop.rating,
+      count: 0
+    },
+    productCount: shop.productCount,
+    isVerified: shop.isVerified,
+    category: shop.category,
+    ownerId: shop.ownerId,
+    latitude: shop.latitude,
+    longitude: shop.longitude,
+    distance: shop.distance
   };
   
   return (
