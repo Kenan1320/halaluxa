@@ -1,7 +1,6 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Product } from '@/models/product';
-import type { Json } from '@/integrations/supabase/types';
+import { convertToModelProduct } from '@/services/shopServiceHelpers';
 
 // Helper function to convert DB columns to Product model
 const convertToProduct = (product: any): Product => {
@@ -26,15 +25,13 @@ const convertToProduct = (product: any): Product => {
 // Function to get all products
 export const getProducts = async (): Promise<Product[]> => {
   try {
-    const { data, error } = await supabase
+    const { data: products, error } = await supabase
       .from('products')
       .select('*');
 
-    if (error) {
-      throw error;
-    }
+    if (error) throw error;
 
-    return (data || []).map(convertToProduct);
+    return products.map(convertToModelProduct);
   } catch (error) {
     console.error('Error fetching products:', error);
     return [];
@@ -191,16 +188,17 @@ export const searchProducts = async (query: string): Promise<Product[]> => {
 // Function to get featured products
 export const getFeaturedProducts = async (): Promise<Product[]> => {
   try {
-    const { data, error } = await supabase
+    const { data: products, error } = await supabase
       .from('products')
       .select('*')
-      .limit(8);
+      .limit(8)
+      .order('created_at', { ascending: false });
 
     if (error) {
       throw error;
     }
 
-    return (data || []).map(convertToProduct);
+    return products.map(convertToModelProduct);
   } catch (error) {
     console.error('Error fetching featured products:', error);
     return [];
