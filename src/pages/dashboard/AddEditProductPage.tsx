@@ -141,8 +141,8 @@ const AddEditProductPage = () => {
       console.error('Error saving product:', error);
       toast({
         title: "Error",
-        description: `Failed to ${isEditMode ? 'update' : 'create'} product`,
-        variant: "destructive",
+        description: "Failed to save product. Please try again.",
+        variant: "destructive"
       });
     } finally {
       setIsSubmitting(false);

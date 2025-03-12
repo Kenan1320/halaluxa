@@ -36,6 +36,10 @@
     --ring: 0 0% 0%;
 
     --radius: 0.5rem;
+    
+    /* Premium Green Gradient Colors */
+    --gradient-light: 97 74% 89%; /* #DFF0D8 */
+    --gradient-dark: 139 38% 40%; /* #3F8C54 */
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 0 0% 26.1%;
@@ -75,6 +79,10 @@
     --border: 0 0% 15.9%;
     --input: 0 0% 15.9%;
     --ring: 0 0% 100%;
+    
+    /* Premium Green Gradient Colors - Dark Mode */
+    --gradient-light: 139 30% 30%; /* Darker version of the light green */
+    --gradient-dark: 139 38% 25%; /* Deeper version of the dark green */
     
     --sidebar-background: 0 0% 8%;
     --sidebar-foreground: 0 0% 95.9%;
@@ -122,6 +130,43 @@
   
   .text-balance {
     text-wrap: balance;
+  }
+  
+  /* Premium Gradient Backgrounds */
+  .premium-gradient {
+    background: linear-gradient(to bottom, hsl(var(--gradient-light)), hsl(var(--gradient-dark)));
+  }
+  
+  .premium-gradient-subtle {
+    background: linear-gradient(to bottom, hsl(var(--gradient-light)/0.8), hsl(var(--gradient-light)/0.3));
+  }
+  
+  .premium-gradient-header {
+    background: linear-gradient(to bottom, hsl(var(--gradient-light)), hsl(var(--gradient-dark)/0.9));
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Islamic-inspired design elements */
+  .islamic-pattern-overlay {
+    position: relative;
+  }
+  
+  .islamic-pattern-overlay::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: url('/patterns/geometric-light.svg');
+    background-size: 200px;
+    opacity: 0.05;
+    pointer-events: none;
+  }
+  
+  .dark .islamic-pattern-overlay::before {
+    background-image: url('/patterns/geometric-dark.svg');
+    opacity: 0.08;
   }
 }
 

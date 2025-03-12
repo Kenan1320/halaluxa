@@ -17,6 +17,19 @@
   }
 }
 
+/* Islamic-inspired gradient */
+.islamic-gradient {
+  background: linear-gradient(to bottom, #DFF0D8, #3F8C54);
+}
+
+.islamic-gradient-light {
+  background: linear-gradient(to bottom, #DFF0D8, #DFF0D8 40%, rgba(223, 240, 216, 0.85));
+}
+
+.islamic-gradient-dark {
+  background: linear-gradient(to bottom, rgba(63, 140, 84, 0.9), rgba(45, 100, 60, 0.95));
+}
+
 /* Glass morphism effects */
 .glass-effect {
   background: rgba(255, 255, 255, 0.7);
@@ -74,12 +87,12 @@
 }
 
 .store-location:hover {
-  background-color: rgba(42, 134, 106, 0.05);
+  background-color: rgba(63, 140, 84, 0.05);
 }
 
 .store-location-active {
-  border-color: #2A866A;
-  background-color: rgba(42, 134, 106, 0.1);
+  border-color: #3F8C54;
+  background-color: rgba(63, 140, 84, 0.1);
 }
 
 /* Custom checkbox styles */
@@ -88,7 +101,7 @@
   display: block;
   width: 20px;
   height: 20px;
-  border: 2px solid #2A866A;
+  border: 2px solid #3F8C54;
   border-radius: 4px;
   cursor: pointer;
 }
@@ -106,7 +119,7 @@
 }
 
 .custom-checkbox.checked {
-  background-color: #2A866A;
+  background-color: #3F8C54;
 }
 
 /* Credit card input styling */
@@ -115,6 +128,6 @@
 }
 
 .card-input:focus {
-  border-color: #2A866A;
-  box-shadow: 0 0 0 2px rgba(42, 134, 106, 0.2);
+  border-color: #3F8C54;
+  box-shadow: 0 0 0 2px rgba(63, 140, 84, 0.2);
 }

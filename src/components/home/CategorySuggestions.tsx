@@ -53,7 +53,7 @@ export default function CategorySuggestions() {
           <button
             className={`px-4 py-2 text-sm font-medium ${
               activeTab === 'nearby'
-                ? 'bg-black text-white dark:bg-white dark:text-black'
+                ? 'bg-[#3F8C54] text-white dark:bg-[#3F8C54] dark:text-white'
                 : 'bg-white text-black dark:bg-gray-800 dark:text-white'
             }`}
             onClick={() => setActiveTab('nearby')}
@@ -63,7 +63,7 @@ export default function CategorySuggestions() {
           <button
             className={`px-4 py-2 text-sm font-medium ${
               activeTab === 'online'
-                ? 'bg-black text-white dark:bg-white dark:text-black'
+                ? 'bg-[#3F8C54] text-white dark:bg-[#3F8C54] dark:text-white'
                 : 'bg-white text-black dark:bg-gray-800 dark:text-white'
             }`}
             onClick={() => setActiveTab('online')}
