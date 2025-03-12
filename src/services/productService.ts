@@ -28,7 +28,7 @@ export const convertToModelProduct = (dbProduct: Product): ModelProduct => {
 };
 
 // Get all products
-export const getProducts = async (): Promise<ModelProduct[]> => {
+export const getAllProducts = async (): Promise<ModelProduct[]> => {
   const { data, error } = await supabase
     .from('products')
     .select('*')
@@ -47,6 +47,9 @@ export const getProducts = async (): Promise<ModelProduct[]> => {
     in_stock: product.in_stock ?? true
   }));
 };
+
+// Alias getProducts to match existing code
+export const getProducts = getAllProducts;
 
 // Get product by ID
 export const getProductById = async (id: string): Promise<ModelProduct | null> => {

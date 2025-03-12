@@ -1,279 +1,166 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { CheckCircle, MapPin, Star, Store } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
+import { getAllShops, getNearbyShops } from '@/services/shopService';
 import { useAuth } from '@/context/AuthContext';
-import { useLocation as useLocationContext } from '@/context/LocationContext';
-import { useTheme } from '@/context/ThemeContext';
-import { Shop, getAllShops } from '@/services/shopService';
+import { useLocation } from '@/context/LocationContext';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { ShoppingBag, MapPin, Star } from 'lucide-react';
+import { Shop } from '@/types/database';
 
 const SelectShops = () => {
   const [shops, setShops] = useState<Shop[]>([]);
   const [selectedShops, setSelectedShops] = useState<string[]>([]);
-  const [mainShopId, setMainShopId] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [locations, setLocations] = useState<Record<string, Shop[]>>({});
-  
-  const { toast } = useToast();
+  const [mainShop, setMainShop] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const { isLoggedIn, user } = useAuth();
+  const { userLocation } = useLocation();
   const navigate = useNavigate();
-  const { isLoggedIn } = useAuth();
-  const { isLocationEnabled, location, getNearbyShops } = useLocationContext();
-  const { mode } = useTheme();
-  
+
   useEffect(() => {
-    const loadShops = async () => {
-      setIsLoading(true);
+    const fetchShops = async () => {
       try {
-        const allShops = await getAllShops();
-        const nearbyShops = isLocationEnabled ? await getNearbyShops() : [];
-        const nearbyIds = new Set(nearbyShops.map(shop => shop.id));
-        const otherShops = allShops.filter(shop => !nearbyIds.has(shop.id));
+        setLoading(true);
+        let shopData: Shop[] = [];
         
-        const locationMap: Record<string, Shop[]> = {};
-        [...nearbyShops, ...otherShops].forEach(shop => {
-          const location = shop.location || 'Other';
-          if (!locationMap[location]) {
-            locationMap[location] = [];
-          }
-          locationMap[location].push(shop);
-        });
-        
-        setLocations(locationMap);
-        setShops([...nearbyShops, ...otherShops]);
-        
-        const savedShops = localStorage.getItem('selectedShops');
-        if (savedShops) {
-          setSelectedShops(JSON.parse(savedShops));
+        // If we have user location, get nearby shops
+        if (userLocation?.latitude && userLocation?.longitude) {
+          shopData = await getNearbyShops(userLocation.latitude, userLocation.longitude);
+        } else {
+          // Otherwise, just get all shops
+          shopData = await getAllShops();
         }
         
-        const savedMainShop = localStorage.getItem('mainShopId');
-        if (savedMainShop) {
-          setMainShopId(savedMainShop);
-        }
+        setShops(shopData);
       } catch (error) {
-        console.error('Error loading shops:', error);
-        toast({
-          title: "Error",
-          description: "Failed to load shops. Please try again.",
-          variant: "destructive"
-        });
+        console.error('Error fetching shops:', error);
       } finally {
-        setIsLoading(false);
+        setLoading(false);
       }
     };
-    
-    loadShops();
-  }, [isLocationEnabled, getNearbyShops, toast]);
-  
+
+    fetchShops();
+  }, [userLocation]);
+
   const toggleShopSelection = (shopId: string) => {
     setSelectedShops(prev => {
       if (prev.includes(shopId)) {
-        if (mainShopId === shopId) {
-          setMainShopId(null);
+        // If this is the main shop and we're removing it, reset main shop
+        if (mainShop === shopId) {
+          setMainShop(null);
         }
         return prev.filter(id => id !== shopId);
       } else {
+        // If this is the first shop being selected, make it the main shop
         if (prev.length === 0) {
-          setMainShopId(shopId);
+          setMainShop(shopId);
         }
         return [...prev, shopId];
       }
     });
   };
-  
+
   const setAsMainShop = (shopId: string) => {
+    // Make sure the shop is selected
     if (!selectedShops.includes(shopId)) {
       setSelectedShops(prev => [...prev, shopId]);
     }
-    setMainShopId(shopId);
-    
-    toast({
-      title: "Main shop updated",
-      description: "Your main shop has been successfully set.",
-    });
+    setMainShop(shopId);
   };
-  
-  const saveSelections = () => {
+
+  const savePreferences = () => {
+    // Save preferences logic here
+    // For now, just storing in localStorage
+    if (mainShop) {
+      localStorage.setItem('mainShop', mainShop);
+    }
     localStorage.setItem('selectedShops', JSON.stringify(selectedShops));
     
-    if (mainShopId) {
-      localStorage.setItem('mainShopId', mainShopId);
-    } else if (selectedShops.length > 0) {
-      localStorage.setItem('mainShopId', selectedShops[0]);
-    } else {
-      localStorage.removeItem('mainShopId');
-    }
-    
-    toast({
-      title: "Preferences saved",
-      description: "Your selected shops have been saved.",
-    });
-    
+    // Navigate back to home
     navigate('/');
   };
-  
-  if (isLoading) {
+
+  if (loading) {
     return (
-      <div className={`min-h-screen pt-24 pb-20 ${mode === 'dark' ? 'bg-black' : 'bg-white'}`}>
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col items-center justify-center py-10">
-            <h1 className={`text-2xl font-bold mb-8 ${mode === 'dark' ? 'text-white' : 'text-black'}`}>Loading shops...</h1>
-            <div className="flex flex-wrap gap-4 justify-center">
-              {[1, 2, 3, 4, 5, 6].map((i) => (
-                <div key={i} className={`w-24 h-24 rounded-md animate-pulse ${mode === 'dark' ? 'bg-gray-800' : 'bg-gray-100'}`} />
-              ))}
-            </div>
-          </div>
-        </div>
+      <div className="container mx-auto px-4 py-12 flex justify-center">
+        <div>Loading shops...</div>
       </div>
     );
   }
-  
+
   return (
-    <div className={`min-h-screen pt-24 pb-20 ${mode === 'dark' ? 'bg-black' : 'bg-white'}`}>
-      <div className="container mx-auto px-4">
-        <div className="max-w-4xl mx-auto">
-          <header className="mb-8 text-center">
-            <h1 className={`text-2xl font-serif font-bold mb-2 ${mode === 'dark' ? 'text-white' : 'text-black'}`}>Select Your Shops</h1>
-            <p className={`max-w-md mx-auto text-sm ${mode === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-              Choose the shops you want to follow. These will appear on your home screen for quick access.
-            </p>
-          </header>
-          
-          <div className={`rounded-lg p-4 mb-8 ${mode === 'dark' ? 'bg-gray-900' : 'bg-gray-100'}`}>
-            <div className="flex items-center gap-3 mb-3">
-              <Store className={`w-5 h-5 ${mode === 'dark' ? 'text-white' : 'text-black'}`} />
-              <h2 className={`font-medium ${mode === 'dark' ? 'text-white' : 'text-black'}`}>Your Main Shop</h2>
-            </div>
-            
-            {mainShopId ? (
-              <div className={`flex items-center rounded-lg p-3 shadow-sm ${mode === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
-                {shops.find(s => s.id === mainShopId)?.logo_url ? (
-                  <img 
-                    src={shops.find(s => s.id === mainShopId)?.logo_url} 
-                    alt="Main shop" 
-                    className="w-10 h-10 object-cover rounded-full mr-3"
-                  />
-                ) : (
-                  <div className={`w-10 h-10 rounded-full ${mode === 'dark' ? 'bg-gray-700' : 'bg-gray-200'} flex items-center justify-center ${mode === 'dark' ? 'text-white' : 'text-black'} mr-3`}>
-                    {shops.find(s => s.id === mainShopId)?.name.charAt(0) || 'S'}
-                  </div>
-                )}
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-2xl font-bold mb-6">Select Your Favorite Shops</h1>
+      
+      <p className="mb-6 text-gray-600">
+        Choose the shops you want to see products from. You can select multiple shops and set one as your main shop.
+      </p>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+        {shops.map((shop) => (
+          <Card 
+            key={shop.id}
+            className={`cursor-pointer ${
+              selectedShops.includes(shop.id) ? 'border-2 border-green-500' : ''
+            } ${mainShop === shop.id ? 'border-4 border-green-600' : ''}`}
+          >
+            <CardContent className="p-4 flex flex-col h-full">
+              <div className="flex items-center space-x-4 mb-4">
+                <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
+                  {shop.logo_url ? (
+                    <img src={shop.logo_url} alt={shop.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <ShoppingBag className="w-8 h-8 text-gray-400" />
+                  )}
+                </div>
                 <div>
-                  <h3 className={`font-medium ${mode === 'dark' ? 'text-white' : 'text-black'}`}>{shops.find(s => s.id === mainShopId)?.name}</h3>
-                  <p className={`text-xs ${mode === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>{shops.find(s => s.id === mainShopId)?.location || 'Location not specified'}</p>
+                  <h3 className="text-lg font-semibold">{shop.name}</h3>
+                  <div className="flex items-center text-sm text-gray-500">
+                    <MapPin size={14} className="mr-1" />
+                    <span>{shop.location}</span>
+                  </div>
                 </div>
               </div>
-            ) : (
-              <div className={`rounded-lg p-4 text-center ${mode === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
-                <p className={`text-sm ${mode === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>No main shop selected. Select one from the list below.</p>
-              </div>
-            )}
-          </div>
-          
-          {Object.entries(locations).map(([location, locationShops]) => (
-            <div key={location} className="mb-8">
-              <div className="flex items-center gap-2 mb-3">
-                <MapPin className={`w-4 h-4 ${mode === 'dark' ? 'text-white' : 'text-black'}`} />
-                <h2 className={`text-lg font-medium ${mode === 'dark' ? 'text-white' : 'text-black'}`}>{location}</h2>
-              </div>
               
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                {locationShops.map((shop) => (
-                  <motion.div
-                    key={shop.id}
-                    className={`relative border rounded-lg p-4 cursor-pointer transition-all ${
-                      selectedShops.includes(shop.id) 
-                        ? `${mode === 'dark' ? 'border-white bg-gray-800' : 'border-black bg-gray-100'}` 
-                        : `${mode === 'dark' ? 'border-gray-700 hover:border-gray-500' : 'border-gray-200 hover:border-gray-300'}`
-                    }`}
+              <p className="text-sm text-gray-600 mb-4 flex-grow">{shop.description}</p>
+              
+              <div className="flex items-center justify-between mt-auto">
+                <div className="flex items-center">
+                  <Star size={16} className="text-yellow-500 mr-1" />
+                  <span className="text-sm">{shop.rating.toFixed(1)}</span>
+                </div>
+                
+                <div className="flex space-x-2">
+                  <Button 
+                    variant={selectedShops.includes(shop.id) ? "default" : "outline"} 
                     onClick={() => toggleShopSelection(shop.id)}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
                   >
-                    {selectedShops.includes(shop.id) && (
-                      <div className={`absolute top-2 right-2 w-5 h-5 ${mode === 'dark' ? 'text-white' : 'text-black'}`}>
-                        <CheckCircle className="w-full h-full" />
-                      </div>
-                    )}
-                    
-                    {mainShopId === shop.id && (
-                      <div className="absolute top-2 left-2">
-                        <motion.div 
-                          className="w-5 h-5 text-yellow-400"
-                          animate={{
-                            scale: [1, 1.2, 1],
-                          }}
-                          transition={{
-                            duration: 2,
-                            repeat: Infinity,
-                          }}
-                        >
-                          <Star className="w-full h-full fill-current" />
-                        </motion.div>
-                      </div>
-                    )}
-                    
-                    <div className="flex flex-col items-center">
-                      {shop.logo_url ? (
-                        <img 
-                          src={shop.logo_url} 
-                          alt={shop.name} 
-                          className="w-16 h-16 object-cover rounded-full mb-3"
-                        />
-                      ) : (
-                        <div className={`w-16 h-16 rounded-full ${mode === 'dark' ? 'bg-gray-700' : 'bg-gray-200'} flex items-center justify-center ${mode === 'dark' ? 'text-white' : 'text-black'} mb-3`}>
-                          <span className="text-lg font-bold">{shop.name.charAt(0)}</span>
-                        </div>
-                      )}
-                      
-                      <h3 className={`font-medium text-center text-sm ${mode === 'dark' ? 'text-white' : 'text-black'}`}>{shop.name}</h3>
-                      
-                      {selectedShops.includes(shop.id) && mainShopId !== shop.id && (
-                        <button 
-                          className={`mt-3 text-xs px-3 py-1 rounded-full transition-colors ${
-                            mode === 'dark' 
-                              ? 'bg-white text-black hover:bg-gray-200' 
-                              : 'bg-black text-white hover:bg-gray-800'
-                          }`}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setAsMainShop(shop.id);
-                          }}
-                        >
-                          Set as main
-                        </button>
-                      )}
-                    </div>
-                  </motion.div>
-                ))}
+                    {selectedShops.includes(shop.id) ? 'Selected' : 'Select'}
+                  </Button>
+                  
+                  {selectedShops.includes(shop.id) && (
+                    <Button 
+                      variant={mainShop === shop.id ? "default" : "outline"}
+                      onClick={() => setAsMainShop(shop.id)}
+                    >
+                      {mainShop === shop.id ? 'Main Shop' : 'Set as Main'}
+                    </Button>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
-          
-          <div className="mt-10 flex justify-center gap-4">
-            <Button 
-              variant="outline" 
-              onClick={() => navigate('/')}
-              className={mode === 'dark' ? 'border-white text-white hover:bg-gray-800' : 'border-black text-black hover:bg-gray-100'}
-            >
-              Cancel
-            </Button>
-            <Button 
-              onClick={saveSelections}
-              disabled={selectedShops.length === 0}
-              className={`${
-                mode === 'dark' 
-                  ? 'bg-white text-black hover:bg-gray-200' 
-                  : 'bg-black text-white hover:bg-gray-800'
-              }`}
-            >
-              Save Preferences
-            </Button>
-          </div>
-        </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+      
+      <div className="flex justify-end">
+        <Button 
+          disabled={selectedShops.length === 0} 
+          onClick={savePreferences}
+          size="lg"
+        >
+          Save Preferences
+        </Button>
       </div>
     </div>
   );

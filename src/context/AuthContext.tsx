@@ -1,9 +1,8 @@
-
 import { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
-import { DatabaseProfile } from '@/types/database';
+import type { DatabaseProfile } from '@/types/database';
 
 interface User {
   id: string;
@@ -23,25 +22,6 @@ interface User {
   shop_logo?: string;
 }
 
-// Update profile interface
-interface DatabaseProfile {
-  id: string;
-  name: string;
-  email: string;
-  phone?: string;
-  address?: string;
-  city?: string;
-  state?: string;
-  zip?: string;
-  role: string;
-  avatar_url?: string;
-  shop_name?: string;
-  shop_description?: string;
-  shop_category?: string;
-  shop_location?: string;
-  shop_logo?: string;
-}
-
 interface AuthContextProps {
   user: User | null;
   isLoggedIn: boolean;
@@ -50,8 +30,8 @@ interface AuthContextProps {
   login: (email: string, password: string) => Promise<string | undefined>;
   signup: (email: string, password: string, name: string, role: 'shopper' | 'business') => Promise<void>;
   logout: () => Promise<void>;
-  updateUserProfile: (profile: Partial<DatabaseProfile>) => Promise<boolean>;
-  updateBusinessProfile: (profile: Partial<DatabaseProfile>) => Promise<void>;
+  updateUserProfile: (profile: Partial<User>) => Promise<boolean>;
+  updateBusinessProfile: (profile: Partial<User>) => Promise<void>;
   register: (email: string, password: string, name: string, role: 'shopper' | 'business') => Promise<void>;
 }
 
@@ -307,29 +287,32 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
   
-  const updateUserProfile = async (profile: Partial<DatabaseProfile>): Promise<boolean> => {
+  const updateUserProfile = async (profile: Partial<User>): Promise<boolean> => {
     if (!user) return false;
     
     try {
       setIsLoading(true);
       
+      const dbProfile: Partial<DatabaseProfile> = {
+        name: profile.name,
+        phone: profile.phone,
+        address: profile.address,
+        city: profile.city,
+        state: profile.state,
+        zip: profile.zip,
+        avatar_url: profile.avatar_url,
+      };
+      
       const { error } = await supabase
         .from('profiles')
-        .update(profile)
+        .update(dbProfile)
         .eq('id', user.id);
       
       if (error) {
         throw error;
       }
       
-      // Ensure we're updating the user with correct type
-      if (user.role === 'shopper' || user.role === 'business' || user.role === 'admin') {
-        setUser((prev) => prev ? { 
-          ...prev,
-          ...profile,
-          role: prev.role // Maintain the strongly typed role
-        } : null);
-      }
+      setUser(prev => prev ? { ...prev, ...profile } : null);
       
       toast({
         title: "Profile updated",
@@ -349,39 +332,39 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
   
-  const updateBusinessProfile = async (profile: Partial<DatabaseProfile>) => {
-    if (!user || user.role !== 'business') return;
+  const updateBusinessProfile = async (profile: Partial<User>) => {
+    if (!user) return;
+    
+    if (user.role !== 'business') {
+      toast({
+        title: "Access denied",
+        description: "Only business users can update business profiles",
+        variant: "destructive",
+      });
+      return;
+    }
     
     try {
       setIsLoading(true);
       
+      const dbProfile: Partial<DatabaseProfile> = {
+        shop_name: profile.shop_name,
+        shop_description: profile.shop_description,
+        shop_category: profile.shop_category,
+        shop_location: profile.shop_location,
+        shop_logo: profile.shop_logo,
+      };
+      
       const { error } = await supabase
         .from('profiles')
-        .update({
-          shop_name: profile.shop_name,
-          shop_description: profile.shop_description,
-          shop_category: profile.shop_category,
-          shop_location: profile.shop_location,
-          shop_logo: profile.shop_logo,
-        })
+        .update(dbProfile)
         .eq('id', user.id);
       
       if (error) {
         throw error;
       }
       
-      // Ensure we're updating the user with correct type
-      if (user.role === 'shopper' || user.role === 'business' || user.role === 'admin') {
-        setUser((prev) => prev ? { 
-          ...prev,
-          shop_name: profile.shop_name,
-          shop_description: profile.shop_description,
-          shop_category: profile.shop_category,
-          shop_location: profile.shop_location,
-          shop_logo: profile.shop_logo,
-          role: prev.role // Maintain the strongly typed role
-        } : null);
-      }
+      setUser(prev => prev ? { ...prev, ...profile } : null);
       
       toast({
         title: "Business profile updated",

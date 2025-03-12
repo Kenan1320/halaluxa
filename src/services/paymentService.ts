@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { CartItem } from '@/models/cart';
 import { Product } from '@/models/product';
@@ -133,7 +132,10 @@ export const createSellerAccount = async (
       applepay_merchant_id: accountData.applepay_merchant_id || '',
       is_active: true,
       created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
+      is_verified: false,
+      balance: 0,
+      currency: 'USD'
     };
   } catch (error) {
     console.error('Error creating seller account:', error);
@@ -167,7 +169,10 @@ export const getSellerAccount = async (): Promise<SellerAccount | null> => {
       applepay_merchant_id: '',
       is_active: true,
       created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
+      is_verified: false,
+      balance: 0,
+      currency: 'USD'
     };
   } catch (error) {
     console.error('Error fetching seller account:', error);
@@ -201,7 +206,10 @@ export const getAllSellerAccounts = async (): Promise<SellerAccount[]> => {
       applepay_merchant_id: '',
       is_active: true,
       created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
+      is_verified: false,
+      balance: 0,
+      currency: 'USD'
     }];
   } catch (error) {
     console.error('Error fetching seller accounts:', error);
@@ -256,7 +264,10 @@ export const updateSellerAccount = async (
       applepay_merchant_id: accountData.applepay_merchant_id || '',
       is_active: true,
       created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
+      is_verified: false,
+      balance: 0,
+      currency: 'USD'
     };
   } catch (error) {
     console.error('Error updating seller account:', error);

@@ -1,4 +1,3 @@
-
 import { createClient } from '@supabase/supabase-js';
 import { Shop, Product } from '@/types/database';
 import { ShopProduct } from '@/models/shop';
@@ -59,7 +58,7 @@ export const sortShopsByDistance = (
 };
 
 // Convert product to shop product model
-export const convertToShopProduct = (product: Product): ShopProduct => {
+export const convertToModelProduct = (product: Product): ShopProduct => {
   return {
     id: product.id,
     name: product.name,
@@ -78,7 +77,6 @@ export const enhanceShopProducts = async (
   products: Product[],
   shopId: string
 ): Promise<ShopProduct[]> => {
-  // Get shop information
   const { data: shopData, error } = await supabase
     .from('shops')
     .select('name')
@@ -87,15 +85,29 @@ export const enhanceShopProducts = async (
 
   if (error) {
     console.error('Error fetching shop name:', error);
-    return products.map(product => convertToShopProduct(product));
+    return products.map(product => convertToModelProduct(product));
   }
 
-  // Enhance products with shop name
   return products.map(product => {
-    const shopProduct = convertToShopProduct(product);
+    const shopProduct = convertToModelProduct(product);
     if (shopData) {
       shopProduct.sellerName = shopData.name;
     }
     return shopProduct;
   });
+};
+
+// Add getShopProducts function
+export const getShopProducts = async (shopId: string): Promise<Product[]> => {
+  const { data, error } = await supabase
+    .from('products')
+    .select('*')
+    .eq('shop_id', shopId);
+
+  if (error) {
+    console.error('Error fetching shop products:', error);
+    return [];
+  }
+
+  return data || [];
 };
