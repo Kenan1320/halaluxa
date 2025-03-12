@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -37,6 +38,8 @@ const formSchema = z.object({
   images: z.array(z.string()).default([]),
 });
 
+type ProductFormValues = z.infer<typeof formSchema>;
+
 const AddEditProductPage = () => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -44,7 +47,7 @@ const AddEditProductPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [images, setImages] = useState<string[]>([]);
   
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<ProductFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
@@ -60,187 +63,186 @@ const AddEditProductPage = () => {
     setImages(newImages);
   };
 
-  const handleSubmit = async (data: FormData) => {
-  try {
-    setIsSubmitting(true);
-    
-    // Get the main shop if available
-    const mainShop = await getMainShop();
-    const shopId = mainShop?.id || user?.shopName ? user?.id : undefined;
-    
-    if (!shopId) {
+  const handleSubmit = async (data: ProductFormValues) => {
+    try {
+      setIsSubmitting(true);
+      
+      // Get the main shop if available
+      const mainShop = await getMainShop();
+      const shopId = mainShop?.id || (user?.shop_name ? user?.id : undefined);
+      
+      if (!shopId) {
+        toast({
+          title: "Error",
+          description: "Could not determine which shop to add this product to. Please select a main shop first.",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      const productData = {
+        ...data,
+        shop_id: shopId,
+        price: parseFloat(data.price),
+        isHalalCertified: data.isHalalCertified,
+        images: images,
+      };
+      
+      await createProduct(productData);
+      
+      toast({
+        title: "Success",
+        description: "Product created successfully!",
+      });
+      
+      navigate('/dashboard');
+    } catch (error) {
       toast({
         title: "Error",
-        description: "Could not determine which shop to add this product to. Please select a main shop first.",
-        variant: "destructive"
+        description: "Failed to create product. Please try again.",
+        variant: "destructive",
       });
-      return;
+    } finally {
+      setIsSubmitting(false);
     }
-    
-    const productData = {
-      ...data,
-      shopId: shopId,
-      price: parseFloat(data.price),
-      isHalalCertified: data.isHalalCertified === 'true',
-      images: images,
-    };
-    
-    await createProduct(productData);
-    
-    toast({
-      title: "Success",
-      description: "Product created successfully!",
-    });
-    
-    navigate('/dashboard');
-  } catch (error) {
-    toast({
-      title: "Error",
-      description: "Failed to create product. Please try again.",
-      variant: "destructive",
-    });
-  } finally {
-    setIsSubmitting(false);
-  }
-};
+  };
 
-// Define product categories
-const productCategories = [
-  "Food & Groceries",
-  "Fashion",
-  "Beauty & Wellness",
-  "Home & Decor",
-  "Books & Stationery",
-  "Electronics",
-  "Toys & Games",
-  "Health & Fitness",
-  "Other"
-];
+  // Define product categories
+  const productCategories = [
+    "Food & Groceries",
+    "Fashion",
+    "Beauty & Wellness",
+    "Home & Decor",
+    "Books & Stationery",
+    "Electronics",
+    "Toys & Games",
+    "Health & Fitness",
+    "Other"
+  ];
 
-// Fix ImageUploader props by using defaultValue instead of value if necessary
-return (
-  <div className="container mx-auto max-w-5xl px-4 py-8">
-    <h1 className="text-3xl font-bold mb-6">
-      Add New Product
-    </h1>
-    
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Product Name</FormLabel>
-              <FormControl>
-                <Input placeholder="Product Name" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <FormField
-          control={form.control}
-          name="description"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Description</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder="Describe your product"
-                  className="resize-none"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <FormField
-          control={form.control}
-          name="price"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Price</FormLabel>
-              <FormControl>
-                <Input placeholder="Price" type="number" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <FormField
-          control={form.control}
-          name="category"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Category</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+  return (
+    <div className="container mx-auto max-w-5xl px-4 py-8">
+      <h1 className="text-3xl font-bold mb-6">
+        Add New Product
+      </h1>
+      
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Product Name</FormLabel>
                 <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a category" />
-                  </SelectTrigger>
+                  <Input placeholder="Product Name" {...field} />
                 </FormControl>
-                <SelectContent>
-                  {productCategories.map((category) => (
-                    <SelectItem key={category} value={category}>{category}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <FormField
-          control={form.control}
-          name="isHalalCertified"
-          render={({ field }) => (
-            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-              <div className="space-y-0.5">
-                <FormLabel>Halal Certified</FormLabel>
-                <FormDescription>
-                  Is this product Halal certified?
-                </FormDescription>
-              </div>
-              <FormControl>
-                <Switch
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
-              </FormControl>
-            </FormItem>
-          )}
-        />
-        
-        <div className="mb-8">
-          <label className="block text-sm font-medium mb-2">
-            Product Images
-          </label>
-          <ImageUploader 
-            defaultValue={images}
-            onChange={handleImagesChange}
-            maxFiles={5}
+                <FormMessage />
+              </FormItem>
+            )}
           />
-          <p className="text-xs text-gray-500 mt-1">
-            Upload up to 5 product images.
-          </p>
-        </div>
-        
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "Submitting..." : "Submit"}
-        </Button>
-      </form>
-    </Form>
-    
-    <Button variant="ghost" onClick={() => navigate('/dashboard')}>
-      Cancel
-    </Button>
-  </div>
-);
+          
+          <FormField
+            control={form.control}
+            name="description"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Description</FormLabel>
+                <FormControl>
+                  <Textarea
+                    placeholder="Describe your product"
+                    className="resize-none"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <FormField
+            control={form.control}
+            name="price"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Price</FormLabel>
+                <FormControl>
+                  <Input placeholder="Price" type="number" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <FormField
+            control={form.control}
+            name="category"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Category</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a category" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {productCategories.map((category) => (
+                      <SelectItem key={category} value={category}>{category}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <FormField
+            control={form.control}
+            name="isHalalCertified"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                <div className="space-y-0.5">
+                  <FormLabel>Halal Certified</FormLabel>
+                  <FormDescription>
+                    Is this product Halal certified?
+                  </FormDescription>
+                </div>
+                <FormControl>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+          
+          <div className="mb-8">
+            <label className="block text-sm font-medium mb-2">
+              Product Images
+            </label>
+            <ImageUploader 
+              defaultValue={images}
+              onChange={handleImagesChange}
+              maxFiles={5}
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Upload up to 5 product images.
+            </p>
+          </div>
+          
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? "Submitting..." : "Submit"}
+          </Button>
+        </form>
+      </Form>
+      
+      <Button variant="ghost" onClick={() => navigate('/dashboard')}>
+        Cancel
+      </Button>
+    </div>
+  );
 };
 
 export default AddEditProductPage;

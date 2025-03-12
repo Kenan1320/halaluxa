@@ -96,6 +96,7 @@ export interface Product {
   tags?: string[];
   options?: ProductOption[];
   variations?: ProductVariation[];
+  is_halal_certified?: boolean;
 }
 
 export interface ProductOption {

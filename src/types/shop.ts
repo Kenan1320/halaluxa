@@ -41,7 +41,7 @@ export interface ShopDetails {
   latitude?: number | null;
   longitude?: number | null;
   distance?: number | null;
-  // Add missing properties used in ShopHeader
+  // Add properties used in ShopHeader
   address?: string;
   city?: string;
   state?: string;
@@ -49,4 +49,5 @@ export interface ShopDetails {
   phone?: string;
   email?: string;
   website?: string;
+  logo?: string; // Add logo property for compatibility
 }
