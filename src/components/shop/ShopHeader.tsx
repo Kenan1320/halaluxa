@@ -1,6 +1,6 @@
 
 import { useState, useRef, useEffect } from 'react';
-import { ArrowLeft, Heart, Search, MoreHorizontal, Clock, Users, Menu, X, Home, MapPin, Phone, Mail, Globe, Star, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Heart, Search, MoreHorizontal, Clock, Users, Menu, X } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ShopDetails } from '@/types/shop';
 import { cn } from '@/lib/utils';
@@ -18,12 +18,10 @@ export function ShopHeader({ shop }: ShopHeaderProps) {
   const [deliveryMode, setDeliveryMode] = useState<'delivery' | 'pickup'>('delivery');
   const [menuOpen, setMenuOpen] = useState(false);
   const [categoryMenuOpen, setCategoryMenuOpen] = useState(false);
-  const [infoMenuOpen, setInfoMenuOpen] = useState(false);
   const { mode } = useTheme();
   const isDark = mode === 'dark';
   const menuRef = useRef<HTMLDivElement>(null);
   const categoryMenuRef = useRef<HTMLDivElement>(null);
-  const infoMenuRef = useRef<HTMLDivElement>(null);
 
   // Close menus when clicking outside
   useEffect(() => {
@@ -33,9 +31,6 @@ export function ShopHeader({ shop }: ShopHeaderProps) {
       }
       if (categoryMenuRef.current && !categoryMenuRef.current.contains(event.target as Node)) {
         setCategoryMenuOpen(false);
-      }
-      if (infoMenuRef.current && !infoMenuRef.current.contains(event.target as Node)) {
-        setInfoMenuOpen(false);
       }
     };
 
@@ -255,151 +250,7 @@ export function ShopHeader({ shop }: ShopHeaderProps) {
         )}
       </AnimatePresence>
       
-      {/* Shop info menu (Uber style) */}
-      <AnimatePresence>
-        {infoMenuOpen && (
-          <>
-            {/* Backdrop */}
-            <motion.div 
-              className="fixed inset-0 bg-black/60 z-50"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setInfoMenuOpen(false)}
-            />
-            
-            {/* Sidebar */}
-            <motion.div 
-              ref={infoMenuRef}
-              className={`fixed left-0 top-0 h-full w-full md:w-[420px] ${
-                isDark ? 'bg-[#1C2526]' : 'bg-white'
-              } z-50 shadow-xl overflow-y-auto`}
-              initial={{ x: -420 }}
-              animate={{ x: 0 }}
-              exit={{ x: -420 }}
-              transition={{ type: 'spring', damping: 25 }}
-            >
-              <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-800">
-                <button 
-                  onClick={() => setInfoMenuOpen(false)} 
-                  className={`p-2 rounded-full ${isDark ? 'text-white' : 'text-black'}`}
-                >
-                  <X className="h-5 w-5" />
-                </button>
-                <h2 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-black'}`}>
-                  {shop.name}
-                </h2>
-                <div className="w-9"></div> {/* Spacer for alignment */}
-              </div>
-              
-              {/* Shop details */}
-              <div className="p-4">
-                <div className="flex items-center mb-6">
-                  <div className="w-16 h-16 rounded-full overflow-hidden mr-4">
-                    <img 
-                      src={shop.logo || '/placeholder.svg'} 
-                      alt={shop.name}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <div>
-                    <h3 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-black'}`}>
-                      {shop.name}
-                    </h3>
-                    <div className="flex items-center mt-1">
-                      <Star className="w-4 h-4 text-yellow-400 mr-1" />
-                      <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-                        {shop.rating.average} ({shop.rating.count}+ ratings)
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Contact info */}
-                <div className={`rounded-lg p-4 mb-4 ${
-                  isDark ? 'bg-gray-800' : 'bg-gray-50'
-                }`}>
-                  <h4 className={`text-sm font-medium mb-3 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-                    Contact Information
-                  </h4>
-                  
-                  <div className="space-y-3">
-                    <div className="flex items-center">
-                      <MapPin className={`w-5 h-5 mr-3 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
-                      <span className={isDark ? 'text-white' : 'text-black'}>
-                        {shop.address || '123 Main St'}, {shop.city || 'City'}, {shop.state || 'State'} {shop.zip || '12345'}
-                      </span>
-                    </div>
-                    
-                    <div className="flex items-center">
-                      <Phone className={`w-5 h-5 mr-3 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
-                      <span className={isDark ? 'text-white' : 'text-black'}>
-                        {shop.phone || '(555) 123-4567'}
-                      </span>
-                    </div>
-                    
-                    <div className="flex items-center">
-                      <Mail className={`w-5 h-5 mr-3 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
-                      <span className={isDark ? 'text-white' : 'text-black'}>
-                        {shop.email || 'contact@example.com'}
-                      </span>
-                    </div>
-                    
-                    {shop.website && (
-                      <div className="flex items-center">
-                        <Globe className={`w-5 h-5 mr-3 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
-                        <a 
-                          href={shop.website.startsWith('http') ? shop.website : `https://${shop.website}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-primary hover:underline"
-                        >
-                          {shop.website}
-                        </a>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                
-                {/* Business hours */}
-                <div className={`rounded-lg p-4 mb-4 ${
-                  isDark ? 'bg-gray-800' : 'bg-gray-50'
-                }`}>
-                  <h4 className={`text-sm font-medium mb-3 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-                    Business Hours
-                  </h4>
-                  
-                  <div className="space-y-2">
-                    {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map(day => (
-                      <div key={day} className="flex justify-between">
-                        <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>{day}</span>
-                        <span className={`text-sm ${isDark ? 'text-white' : 'text-black'}`}>
-                          {day === 'Sunday' ? 'Closed' : '9:00 AM - 9:00 PM'}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                
-                {/* Shop description */}
-                <div className={`rounded-lg p-4 ${
-                  isDark ? 'bg-gray-800' : 'bg-gray-50'
-                }`}>
-                  <h4 className={`text-sm font-medium mb-3 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-                    About {shop.name}
-                  </h4>
-                  
-                  <p className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-                    {shop.description || `${shop.name} offers a variety of high-quality products and exceptional service. Visit us today or shop online to experience our products firsthand.`}
-                  </p>
-                </div>
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
-      
-      {/* More options menu (Uber-style) */}
+      {/* More options menu (conditionally rendered) */}
       <AnimatePresence>
         {menuOpen && (
           <motion.div 
@@ -413,33 +264,23 @@ export function ShopHeader({ shop }: ShopHeaderProps) {
             transition={{ duration: 0.2 }}
           >
             <ul className="py-2">
-              <li 
-                className={`px-4 py-3 flex items-center gap-3 cursor-pointer transition-colors ${
-                  isDark ? 'hover:bg-gray-700' : 'hover:bg-secondary/50'
-                }`}
-              >
+              <li className={`px-4 py-3 flex items-center gap-3 cursor-pointer transition-colors ${
+                isDark ? 'hover:bg-gray-700' : 'hover:bg-secondary/50'
+              }`}>
                 <Users className="h-5 w-5 text-primary" />
                 <span className={isDark ? 'text-white' : ''}>Start group order</span>
               </li>
-              <li 
-                className={`px-4 py-3 flex items-center gap-3 cursor-pointer transition-colors ${
-                  isDark ? 'hover:bg-gray-700' : 'hover:bg-secondary/50'
-                }`}
-              >
+              <li className={`px-4 py-3 flex items-center gap-3 cursor-pointer transition-colors ${
+                isDark ? 'hover:bg-gray-700' : 'hover:bg-secondary/50'
+              }`}>
                 <Heart className="h-5 w-5 text-primary" />
                 <span className={isDark ? 'text-white' : ''}>Add to favorites</span>
               </li>
-              <li 
-                onClick={() => { setMenuOpen(false); setInfoMenuOpen(true); }}
-                className={`px-4 py-3 flex items-center justify-between cursor-pointer transition-colors border-t ${
-                  isDark ? 'border-gray-700 hover:bg-gray-700' : 'hover:bg-secondary/50 border-gray-200'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <span className="h-5 w-5 flex items-center justify-center text-primary">ℹ️</span>
-                  <span className={isDark ? 'text-white' : ''}>Shop info</span>
-                </div>
-                <ChevronRight className="h-4 w-4 text-gray-400" />
+              <li className={`px-4 py-3 flex items-center gap-3 cursor-pointer transition-colors border-t ${
+                isDark ? 'border-gray-700 hover:bg-gray-700' : 'hover:bg-secondary/50'
+              }`}>
+                <span className="h-5 w-5 flex items-center justify-center text-primary">ℹ️</span>
+                <span className={isDark ? 'text-white' : ''}>Shop info</span>
               </li>
             </ul>
           </motion.div>

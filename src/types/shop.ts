@@ -21,8 +21,8 @@ export interface ShopDetails {
   description: string;
   location: string;
   categories: ShopCategory[];
-  cover_image?: string;
-  logo_url?: string;
+  coverImage?: string;
+  logo?: string;
   deliveryInfo: DeliveryInfo;
   workingHours: {
     open: string;
@@ -34,20 +34,11 @@ export interface ShopDetails {
     count: number;
   };
   // Additional properties needed for compatibility
-  product_count?: number;
-  is_verified?: boolean;
+  productCount?: number;
+  isVerified?: boolean;
   category?: string;
-  owner_id?: string;
+  ownerId?: string;
   latitude?: number | null;
   longitude?: number | null;
   distance?: number | null;
-  // Add properties used in ShopHeader
-  address?: string;
-  city?: string;
-  state?: string;
-  zip?: string;
-  phone?: string;
-  email?: string;
-  website?: string;
-  logo?: string; // Add logo property for compatibility
 }

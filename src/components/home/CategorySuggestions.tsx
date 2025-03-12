@@ -20,16 +20,6 @@ const localCategories = [
     id: 'halal-meat',
     name: 'Halal Meat',
     link: '/browse?category=Halal%20Meat',
-  },
-  {
-    id: 'thobes',
-    name: 'Thobes',
-    link: '/browse?category=Thobes',
-  },
-  {
-    id: 'furniture',
-    name: 'Furniture',
-    link: '/browse?category=Furniture',
   }
 ];
 
@@ -48,16 +38,6 @@ const onlineCategories = [
     id: 'furniture',
     name: 'Furniture',
     link: '/browse?category=Furniture',
-  },
-  {
-    id: 'gifts',
-    name: 'Gifts',
-    link: '/browse?category=Gifts',
-  },
-  {
-    id: 'decorations',
-    name: 'Decorations',
-    link: '/browse?category=Decorations',
   }
 ];
 
@@ -65,14 +45,13 @@ export default function CategorySuggestions() {
   const { mode } = useTheme();
   const [activeTab, setActiveTab] = useState<'nearby' | 'online'>('nearby');
   const categories = activeTab === 'nearby' ? localCategories : onlineCategories;
-  const isDark = mode === 'dark';
 
   return (
-    <div className="py-2">
-      <div className="flex justify-between items-center mb-2">
-        <div className="inline-flex rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 text-sm">
+    <div className="py-4">
+      <div className="flex justify-between items-center mb-4">
+        <div className="inline-flex rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
           <button
-            className={`px-3 py-1 text-sm font-medium ${
+            className={`px-4 py-2 text-sm font-medium ${
               activeTab === 'nearby'
                 ? 'bg-black text-white dark:bg-white dark:text-black'
                 : 'bg-white text-black dark:bg-gray-800 dark:text-white'
@@ -82,7 +61,7 @@ export default function CategorySuggestions() {
             Shop Nearby
           </button>
           <button
-            className={`px-3 py-1 text-sm font-medium ${
+            className={`px-4 py-2 text-sm font-medium ${
               activeTab === 'online'
                 ? 'bg-black text-white dark:bg-white dark:text-black'
                 : 'bg-white text-black dark:bg-gray-800 dark:text-white'
@@ -94,11 +73,11 @@ export default function CategorySuggestions() {
         </div>
       </div>
 
-      <div className="flex overflow-x-auto scroll-smooth scrollbar-hide gap-4 pb-2">
+      <div className="grid grid-cols-3 gap-4">
         {categories.map((category, index) => (
           <motion.div
             key={category.id}
-            className="flex-shrink-0"
+            className="group"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1 }}
@@ -106,20 +85,20 @@ export default function CategorySuggestions() {
           >
             <Link 
               to={category.link}
-              className={`flex flex-col items-center gap-2 p-3 rounded-lg transition-all duration-300 ${
-                isDark ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-100'
-              } shadow-sm`}
-              style={{ minWidth: '70px', minHeight: '70px' }}
+              className={`flex flex-col items-center gap-1 p-3 rounded-lg transition-all duration-300`}
             >
               <div className="w-12 h-12 flex items-center justify-center">
-                {getCategoryIcon(category.name, "w-11 h-11")}
+                {getCategoryIcon(category.name, "w-10 h-10")}
               </div>
+              <span className={`text-xs font-medium text-center mt-1 ${
+                mode === 'dark' ? 'text-white' : 'text-black'
+              }`}>
+                {category.name}
+              </span>
             </Link>
           </motion.div>
         ))}
-        {/* This empty div shows part of the next item to indicate scrollability */}
-        <div className="flex-shrink-0 w-3"></div>
       </div>
     </div>
   );
-};
+}

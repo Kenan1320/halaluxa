@@ -9,9 +9,8 @@ import CategoryScroll from '@/components/home/CategoryScroll';
 import ProductGrid from '@/components/home/ProductGrid';
 import NearbyShops from '@/components/home/NearbyShops';
 import CategorySuggestions from '@/components/home/CategorySuggestions';
-import { motion } from 'framer-motion';
+import { motion, useAnimationControls } from 'framer-motion';
 import { getShopById, subscribeToShops, Shop } from '@/services/shopService';
-import { useTheme } from '@/context/ThemeContext';
 
 const Index = () => {
   const { isLoggedIn, user } = useAuth();
@@ -21,8 +20,6 @@ const Index = () => {
   const [isLoadingShops, setIsLoadingShops] = useState(false);
   const [activeShopIndex, setActiveShopIndex] = useState(0);
   const shopScrollRef = useRef<HTMLDivElement>(null);
-  const { mode } = useTheme();
-  const isDark = mode === 'dark';
   
   // Scroll to top on page load
   useEffect(() => {
@@ -57,13 +54,11 @@ const Index = () => {
     
     // Setup real-time subscription for shops
     const channel = subscribeToShops((shops) => {
-      // Always update the nearby shops list
-      setNearbyShops(shops);
-      
-      // If no selected shops yet, select the top shops by product count
+      // If we received real-time shops and have no selected shops yet,
+      // use the first 5 as the default selection
       if (shops.length > 0 && selectedShops.length === 0) {
         // Sort by product count (popularity) first
-        const sortedShops = [...shops].sort((a, b) => (b.product_count || 0) - (a.product_count || 0));
+        const sortedShops = [...shops].sort((a, b) => (b.productCount || 0) - (a.productCount || 0));
         setSelectedShops(sortedShops.slice(0, 5));
         
         // Also update localStorage
@@ -75,6 +70,7 @@ const Index = () => {
         }
       }
       
+      setNearbyShops(shops);
       setIsLoadingShops(false);
     });
     
@@ -83,20 +79,11 @@ const Index = () => {
       await loadSelectedShops();
       
       try {
-        // Get nearby shops
-        let nearby;
-        if (isLocationEnabled && location) {
-          nearby = await getNearbyShops();
-        } else {
-          // If location is not enabled, just get all shops
-          nearby = await getNearbyShops();
-          // Sort by product count if no location
-          nearby = nearby.sort((a, b) => (b.product_count || 0) - (a.product_count || 0));
-        }
-        
+        // Always get nearby shops based on location
+        const nearby = await getNearbyShops();
         setNearbyShops(nearby);
         
-        // If no selected shops yet, use top shops as default
+        // If no selected shops, use 5 nearby shops as default
         if ((!localStorage.getItem('selectedShops') || JSON.parse(localStorage.getItem('selectedShops') || '[]').length === 0) && nearby.length > 0) {
           setSelectedShops(nearby.slice(0, 5));
           localStorage.setItem('selectedShops', JSON.stringify(nearby.slice(0, 5).map(s => s.id)));
@@ -110,23 +97,11 @@ const Index = () => {
     
     initialLoad();
     
-    // Listen for shop selection changes
-    const handleShopSelectionChange = (event: Event) => {
-      const customEvent = event as CustomEvent;
-      if (customEvent.detail && customEvent.detail.selectedShops) {
-        // Reload the selected shops
-        loadSelectedShops();
-      }
-    };
-    
-    window.addEventListener('shopsSelectionChanged', handleShopSelectionChange);
-    
     // Cleanup subscription on unmount
     return () => {
       channel.unsubscribe();
-      window.removeEventListener('shopsSelectionChanged', handleShopSelectionChange);
     };
-  }, [getNearbyShops, loadSelectedShops, selectedShops.length, isLocationEnabled, location]);
+  }, [getNearbyShops, loadSelectedShops, selectedShops.length]);
 
   // Cycling shop index animation effect with more efficient interval
   useEffect(() => {
@@ -149,8 +124,8 @@ const Index = () => {
 
   return (
     <div className="min-h-screen pt-16 pb-20 bg-white dark:bg-gray-900">
-      {/* Top container with lighter background */}
-      <div className="bg-white dark:bg-gray-800 pt-2 pb-3">
+      {/* Top container with lighter mint background */}
+      <div className="bg-[#E4F5F0] dark:bg-gray-800 pt-2 pb-3">
         <div className="container mx-auto px-4">
           {/* Search bar */}
           <div className="mb-2">
@@ -178,16 +153,16 @@ const Index = () => {
       {/* Main content with white background */}
       <div className="container mx-auto px-4 pt-3 bg-white dark:bg-gray-900">
         {/* Selected/Featured Shops Section - Always visible */}
-        <section className="mt-2 mb-3">
-          <div className="flex justify-between items-center mb-1">
-            <h2 className="text-sm font-medium text-gray-800 dark:text-white">Your Shops</h2>
-            <Link to="/select-shops" className="text-xs text-black dark:text-white opacity-60 hover:opacity-100 transition-opacity">
+        <section className="mt-3 mb-5">
+          <div className="flex justify-between items-center mb-2">
+            <h2 className="text-lg font-semibold text-gray-800 dark:text-white">Your Shops</h2>
+            <Link to="/select-shops" className="text-xs text-[#29866B] dark:text-green-300 hover:underline">
               Edit Selection
             </Link>
           </div>
           
           {/* Shop carousel */}
-          <div ref={shopScrollRef} className="relative h-20 overflow-hidden">
+          <div ref={shopScrollRef} className="relative h-28 overflow-hidden">
             {selectedShops.length > 0 && (
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="w-full h-full flex items-center">
@@ -207,10 +182,10 @@ const Index = () => {
                     {[...selectedShops, ...selectedShops, ...selectedShops].map((shop, index) => (
                       <motion.div
                         key={`${shop.id}-flow1-${index}`}
-                        className="flex flex-col items-center mx-4 relative"
+                        className="flex flex-col items-center mx-6 relative"
                         animate={{
                           scale: activeShopIndex % selectedShops.length === index % selectedShops.length ? 1.15 : 1,
-                          y: activeShopIndex % selectedShops.length === index % selectedShops.length ? -3 : 0,
+                          y: activeShopIndex % selectedShops.length === index % selectedShops.length ? -5 : 0,
                           zIndex: activeShopIndex % selectedShops.length === index % selectedShops.length ? 10 : 1,
                         }}
                         transition={{
@@ -220,20 +195,38 @@ const Index = () => {
                       >
                         <Link to={`/shop/${shop.id}`}>
                           <motion.div 
-                            className={`w-[70px] h-[70px] rounded-lg ${
-                              isDark ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-100'
-                            } shadow-sm flex items-center justify-center overflow-hidden`}
+                            className="w-14 h-14 rounded-full bg-white shadow-sm flex items-center justify-center overflow-hidden"
                             whileHover={{ scale: 1.1, boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}
                             transition={{ type: "spring", stiffness: 400, damping: 10 }}
                           >
-                            {shop.logo_url ? (
-                              <img src={shop.logo_url} alt={shop.name} className="w-12 h-12 object-contain" />
+                            {shop.logo ? (
+                              <img src={shop.logo} alt={shop.name} className="w-10 h-10 object-contain" />
                             ) : (
-                              <div className="w-full h-full flex items-center justify-center bg-[#F9F5EB] text-[#29866B] font-medium">
+                              <div className="w-full h-full flex items-center justify-center bg-[#F9F5EB] text-[#29866B] font-semibold">
                                 {shop.name.charAt(0)}
                               </div>
                             )}
                           </motion.div>
+                          <motion.span 
+                            className="text-xs text-center mt-1 block font-medium tracking-tight"
+                            initial={{ opacity: 0.8 }}
+                            whileHover={{ opacity: 1, scale: 1.05, color: "#29866B" }}
+                            animate={{
+                              y: [0, -2, 0],
+                              color: activeShopIndex % selectedShops.length === index % selectedShops.length 
+                                ? ["#000000", "#29866B", "#000000"] 
+                                : "#000000",
+                              transition: {
+                                duration: 2,
+                                repeat: Infinity,
+                                repeatType: "mirror",
+                                ease: "easeInOut",
+                                delay: index * 0.2 % 1,
+                              }
+                            }}
+                          >
+                            {shop.name.length > 10 ? `${shop.name.substring(0, 10)}...` : shop.name}
+                          </motion.span>
                         </Link>
                       </motion.div>
                     ))}
@@ -254,10 +247,10 @@ const Index = () => {
                     {[...selectedShops, ...selectedShops, ...selectedShops].map((shop, index) => (
                       <motion.div
                         key={`${shop.id}-flow2-${index}`}
-                        className="flex flex-col items-center mx-4 relative"
+                        className="flex flex-col items-center mx-6 relative"
                         animate={{
                           scale: activeShopIndex % selectedShops.length === index % selectedShops.length ? 1.15 : 1,
-                          y: activeShopIndex % selectedShops.length === index % selectedShops.length ? -3 : 0,
+                          y: activeShopIndex % selectedShops.length === index % selectedShops.length ? -5 : 0,
                           zIndex: activeShopIndex % selectedShops.length === index % selectedShops.length ? 10 : 1,
                         }}
                         transition={{
@@ -267,20 +260,38 @@ const Index = () => {
                       >
                         <Link to={`/shop/${shop.id}`}>
                           <motion.div 
-                            className={`w-[70px] h-[70px] rounded-lg ${
-                              isDark ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-100'
-                            } shadow-sm flex items-center justify-center overflow-hidden`}
+                            className="w-14 h-14 rounded-full bg-white shadow-sm flex items-center justify-center overflow-hidden"
                             whileHover={{ scale: 1.1, boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}
                             transition={{ type: "spring", stiffness: 400, damping: 10 }}
                           >
-                            {shop.logo_url ? (
-                              <img src={shop.logo_url} alt={shop.name} className="w-12 h-12 object-contain" />
+                            {shop.logo ? (
+                              <img src={shop.logo} alt={shop.name} className="w-10 h-10 object-contain" />
                             ) : (
-                              <div className="w-full h-full flex items-center justify-center bg-[#F9F5EB] text-[#29866B] font-medium">
+                              <div className="w-full h-full flex items-center justify-center bg-[#F9F5EB] text-[#29866B] font-semibold">
                                 {shop.name.charAt(0)}
                               </div>
                             )}
                           </motion.div>
+                          <motion.span 
+                            className="text-xs text-center mt-1 block font-medium tracking-tight"
+                            initial={{ opacity: 0.8 }}
+                            whileHover={{ opacity: 1, scale: 1.05, color: "#29866B" }}
+                            animate={{
+                              y: [0, -2, 0],
+                              color: activeShopIndex % selectedShops.length === index % selectedShops.length 
+                                ? ["#000000", "#29866B", "#000000"] 
+                                : "#000000",
+                              transition: {
+                                duration: 2,
+                                repeat: Infinity,
+                                repeatType: "mirror",
+                                ease: "easeInOut",
+                                delay: index * 0.2 % 1,
+                              }
+                            }}
+                          >
+                            {shop.name.length > 10 ? `${shop.name.substring(0, 10)}...` : shop.name}
+                          </motion.span>
                         </Link>
                       </motion.div>
                     ))}
@@ -292,19 +303,19 @@ const Index = () => {
         </section>
         
         {/* Category Suggestions - NEW SECTION */}
-        <section className="mt-1 mb-4">
+        <section className="mt-4 mb-6">
           <CategorySuggestions />
         </section>
         
         {/* Nearby Shops Section */}
         <section className="mt-1">
-          <h2 className="text-sm font-medium mb-2 text-gray-800 dark:text-white">Nearby Shops</h2>
+          <h2 className="text-lg font-semibold mb-2 text-gray-800 dark:text-white">Nearby Shops</h2>
           <NearbyShops />
         </section>
         
         {/* Featured Products Section */}
         <section className="mt-4">
-          <h2 className="text-sm font-medium mb-2 text-gray-800 dark:text-white">Featured Products</h2>
+          <h2 className="text-lg font-semibold mb-2 text-gray-800 dark:text-white">Featured Products</h2>
           <ProductGrid />
         </section>
       </div>

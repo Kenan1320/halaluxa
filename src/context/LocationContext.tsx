@@ -15,7 +15,7 @@ interface EnhancedLocation {
 interface LocationContextType {
   isLocationEnabled: boolean;
   enableLocation: () => Promise<boolean>;
-  requestLocation: () => Promise<boolean>; 
+  requestLocation: () => Promise<boolean>; // Added missing function
   location: EnhancedLocation | null;
   getNearbyShops: () => Promise<Shop[]>;
 }
@@ -42,15 +42,17 @@ export const LocationProvider: React.FC<LocationProviderProps> = ({ children }) 
   useEffect(() => {
     // Check if geolocation is available in the browser
     if (!navigator.geolocation) {
-      console.log("Geolocation not supported by this browser");
+      toast({
+        title: "Geolocation not supported",
+        description: "Your browser does not support geolocation features.",
+        variant: "destructive",
+      });
       return;
     }
 
     // Check if location permission was previously granted
     if (localStorage.getItem('locationPermission') === 'granted') {
-      enableLocation().catch(() => {
-        console.log("Could not restore location permission");
-      });
+      enableLocation();
     }
   }, []);
 
@@ -116,20 +118,20 @@ export const LocationProvider: React.FC<LocationProviderProps> = ({ children }) 
         if (error.code === error.PERMISSION_DENIED) {
           toast({
             title: "Location access denied",
-            description: "We'll show you popular shops instead.",
-            variant: "default",
+            description: "Please enable location in your browser settings to see nearby shops.",
+            variant: "destructive",
           });
         } else if (error.code === error.TIMEOUT) {
           toast({
             title: "Location timeout",
-            description: "We'll show you popular shops instead.",
-            variant: "default",
+            description: "Getting your location took too long. Please try again.",
+            variant: "destructive",
           });
         } else {
           toast({
             title: "Location error",
-            description: "We'll show you popular shops instead.",
-            variant: "default",
+            description: "Could not get your location. Please try again.",
+            variant: "destructive",
           });
         }
       }
@@ -145,23 +147,23 @@ export const LocationProvider: React.FC<LocationProviderProps> = ({ children }) 
 
   const getNearbyShops = async (): Promise<Shop[]> => {
     try {
+      if (!isLocationEnabled || !location) {
+        return await getAllShops();
+      }
+
+      const { latitude, longitude } = location.coords;
+      
+      // In a real app, we would call a function that retrieves shops sorted by distance
+      // For now, we'll just get all shops and set a mocked distance
       const shops = await getAllShops();
       
-      if (isLocationEnabled && location) {
-        const { latitude, longitude } = location.coords;
-        
-        // In a real app, we would call a function that retrieves shops sorted by distance
-        // For now, we'll just add a random distance to each shop for demo purposes
-        return shops.map(shop => ({
-          ...shop,
-          distance: Math.random() * 5 // Random distance between 0 and 5 miles
-        })).sort((a, b) => (a.distance || 99) - (b.distance || 99));
-      } else {
-        // If location is not enabled, sort by product count (popularity)
-        return shops.sort((a, b) => (b.productCount || 0) - (a.productCount || 0));
-      }
+      // Add a random distance to each shop for demo purposes
+      return shops.map(shop => ({
+        ...shop,
+        distance: Math.random() * 5 // Random distance between 0 and 5 miles
+      })).sort((a, b) => (a.distance || 99) - (b.distance || 99));
     } catch (error) {
-      console.error('Error getting shops:', error);
+      console.error('Error getting nearby shops:', error);
       return [];
     }
   };
