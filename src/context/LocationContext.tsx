@@ -4,13 +4,15 @@ import { getNearbyShops } from '@/services/shopService';
 import { Shop } from '@/types/database';
 import { useToast } from '@/hooks/use-toast';
 
-// Using a more basic location interface that matches what we need
+// Using a more complete location interface that matches what we need
 export interface EnhancedLocation {
   coords: {
     latitude: number;
     longitude: number;
   };
   timestamp: number;
+  city?: string;
+  state?: string;
 }
 
 interface LocationContextProps {
@@ -55,19 +57,45 @@ export const LocationProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       
       navigator.geolocation.getCurrentPosition(
         (position) => {
+          // Get coordinates
+          const { latitude, longitude } = position.coords;
+          
+          // Create enhanced location object
           const newLocation: EnhancedLocation = {
             coords: {
-              latitude: position.coords.latitude,
-              longitude: position.coords.longitude,
+              latitude,
+              longitude,
             },
             timestamp: position.timestamp,
+            // We'll add city and state later if available
           };
           
-          setLocation(newLocation);
-          setIsLocationEnabled(true);
+          // Try to get city and state using reverse geocoding
+          fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`)
+            .then(response => response.json())
+            .then(data => {
+              if (data && data.address) {
+                // Update location with city and state
+                const updatedLocation: EnhancedLocation = {
+                  ...newLocation,
+                  city: data.address.city || data.address.town || data.address.village || 'Unknown',
+                  state: data.address.state || data.address.region || 'Unknown'
+                };
+                
+                setLocation(updatedLocation);
+                localStorage.setItem('userLocation', JSON.stringify(updatedLocation));
+              } else {
+                setLocation(newLocation);
+                localStorage.setItem('userLocation', JSON.stringify(newLocation));
+              }
+            })
+            .catch(error => {
+              console.error("Error getting location details:", error);
+              setLocation(newLocation);
+              localStorage.setItem('userLocation', JSON.stringify(newLocation));
+            });
           
-          // Save location to localStorage
-          localStorage.setItem('userLocation', JSON.stringify(newLocation));
+          setIsLocationEnabled(true);
           
           toast({
             title: "Location updated",

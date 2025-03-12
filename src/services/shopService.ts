@@ -121,7 +121,7 @@ export const getShopById = async (id: string): Promise<Shop | null> => {
   return data;
 };
 
-// Fix type issues by adding placeholder functions for missing exports
+// Create a new shop
 export const createShop = async (shopData: Omit<Shop, 'id'>): Promise<Shop | null> => {
   const { data, error } = await supabase
     .from('shops')
@@ -155,6 +155,9 @@ export const convertToModelProduct = (dbProduct: any) => {
   // This is a placeholder to fix type errors
   return {
     ...dbProduct,
-    in_stock: true,
+    in_stock: dbProduct.in_stock ?? true,
   };
 };
+
+// Explicitly export Shop type from database module
+export { Shop };

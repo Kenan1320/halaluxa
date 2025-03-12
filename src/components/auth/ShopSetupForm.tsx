@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -14,7 +13,7 @@ interface ShopSetupFormProps {
 }
 
 export default function ShopSetupForm({ onComplete, onSkip }: ShopSetupFormProps) {
-  const { user, updateUser } = useAuth();
+  const { user, updateUserProfile } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
@@ -84,33 +83,43 @@ export default function ShopSetupForm({ onComplete, onSkip }: ShopSetupFormProps
       const shop = await createShop({
         name: shopData.name,
         description: shopData.description,
-        logo_url: logoPreview || undefined, // Use logo_url instead of logo
+        logo_url: logoPreview || undefined,
         category: shopData.category,
         location: shopData.location,
         rating: 0,
         product_count: 0,
         is_verified: false,
-        owner_id: user.id
+        owner_id: user.id,
+        cover_image: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       });
       
       if (shop) {
         // Update user profile with shop info
-        const updates = {
-          shopName: shopData.name,
-          shopDescription: shopData.description,
-          shopCategory: shopData.category,
-          shopLocation: shopData.location,
-          shopLogo: logoPreview
-        };
-        
-        await updateUser(updates);
-        
-        toast({
-          title: "Success",
-          description: "Your shop has been created successfully"
+        const updateResult = await updateUserProfile({
+          shop_name: shopData.name,
+          shop_description: shopData.description,
+          shop_category: shopData.category,
+          shop_location: shopData.location,
+          shop_logo: logoPreview || undefined
         });
         
-        onComplete();
+        if (updateResult) {
+          toast({
+            title: "Success",
+            description: "Your shop has been created successfully"
+          });
+          
+          onComplete();
+        } else {
+          toast({
+            title: "Warning",
+            description: "Shop created but profile not fully updated. Please check your profile settings.",
+            variant: "destructive"
+          });
+          onComplete();
+        }
       } else {
         toast({
           title: "Error",

@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
@@ -27,10 +28,10 @@ interface AuthContextProps {
   isLoggedIn: boolean;
   isLoading: boolean;
   isInitializing: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<string | undefined>;
   signup: (email: string, password: string, name: string, role: 'shopper' | 'business') => Promise<void>;
   logout: () => Promise<void>;
-  updateUserProfile: (profile: Partial<DatabaseProfile>) => Promise<void>;
+  updateUserProfile: (profile: Partial<DatabaseProfile>) => Promise<boolean>;
   updateBusinessProfile: (profile: Partial<DatabaseProfile>) => Promise<void>;
   register: (email: string, password: string, name: string, role: 'shopper' | 'business') => Promise<void>;
 }
@@ -122,7 +123,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
   
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string): Promise<string | undefined> => {
     try {
       setIsLoading(true);
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -141,6 +142,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           description: "Welcome back!",
         });
         navigate('/');
+        return user?.role;
       }
     } catch (error: any) {
       toast({
@@ -151,6 +153,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     } finally {
       setIsLoading(false);
     }
+    return undefined;
   };
   
   const signup = async (email: string, password: string, name: string, role: 'shopper' | 'business') => {
@@ -285,8 +288,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
   
-  const updateUserProfile = async (profile: Partial<DatabaseProfile>) => {
-    if (!user) return;
+  const updateUserProfile = async (profile: Partial<DatabaseProfile>): Promise<boolean> => {
+    if (!user) return false;
     
     try {
       setIsLoading(true);
@@ -300,18 +303,28 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         throw error;
       }
       
-      setUser((prev) => prev ? { ...prev, ...profile } : null);
+      // Ensure we're updating the user with correct type
+      if (user.role === 'shopper' || user.role === 'business' || user.role === 'admin') {
+        setUser((prev) => prev ? { 
+          ...prev,
+          ...profile,
+          role: prev.role // Maintain the strongly typed role
+        } : null);
+      }
       
       toast({
         title: "Profile updated",
         description: "Your profile has been updated successfully",
       });
+      
+      return true;
     } catch (error: any) {
       toast({
         title: "Update failed",
         description: error.message || "An error occurred while updating your profile",
         variant: "destructive",
       });
+      return false;
     } finally {
       setIsLoading(false);
     }
@@ -338,7 +351,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         throw error;
       }
       
-      setUser((prev) => prev ? { ...prev, ...profile } : null);
+      // Ensure we're updating the user with correct type
+      if (user.role === 'shopper' || user.role === 'business' || user.role === 'admin') {
+        setUser((prev) => prev ? { 
+          ...prev,
+          shop_name: profile.shop_name,
+          shop_description: profile.shop_description,
+          shop_category: profile.shop_category,
+          shop_location: profile.shop_location,
+          shop_logo: profile.shop_logo,
+          role: prev.role // Maintain the strongly typed role
+        } : null);
+      }
       
       toast({
         title: "Business profile updated",

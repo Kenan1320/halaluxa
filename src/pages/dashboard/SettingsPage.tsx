@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -14,11 +13,11 @@ const SettingsPage = () => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    shopName: '',
-    shopDescription: '',
-    shopCategory: '',
-    shopLocation: '',
-    shopLogo: ''
+    shop_name: '',
+    shop_description: '',
+    shop_category: '',
+    shop_location: '',
+    shop_logo: ''
   });
   
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
@@ -28,15 +27,15 @@ const SettingsPage = () => {
       setFormData({
         name: user.name || '',
         email: user.email || '',
-        shopName: user.shopName || '',
-        shopDescription: user.shopDescription || '',
-        shopCategory: user.shopCategory || '',
-        shopLocation: user.shopLocation || '',
-        shopLogo: user.shopLogo || ''
+        shop_name: user.shop_name || '',
+        shop_description: user.shop_description || '',
+        shop_category: user.shop_category || '',
+        shop_location: user.shop_location || '',
+        shop_logo: user.shop_logo || ''
       });
       
-      if (user.shopLogo) {
-        setLogoPreview(user.shopLogo);
+      if (user.shop_logo) {
+        setLogoPreview(user.shop_logo);
       }
     }
   }, [user]);
@@ -74,14 +73,14 @@ const SettingsPage = () => {
     reader.onload = (event) => {
       const result = event.target?.result as string;
       setLogoPreview(result);
-      setFormData(prev => ({ ...prev, shopLogo: result }));
+      setFormData(prev => ({ ...prev, shop_logo: result }));
     };
     reader.readAsDataURL(file);
   };
   
   const removeLogo = () => {
     setLogoPreview(null);
-    setFormData(prev => ({ ...prev, shopLogo: '' }));
+    setFormData(prev => ({ ...prev, shop_logo: '' }));
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -92,17 +91,17 @@ const SettingsPage = () => {
     setIsLoading(true);
     
     try {
-      const success = await updateUserProfile({
+      const updateResult = await updateUserProfile({
         name: formData.name,
         email: formData.email,
-        shopName: formData.shopName,
-        shopDescription: formData.shopDescription,
-        shopCategory: formData.shopCategory,
-        shopLocation: formData.shopLocation,
-        shopLogo: formData.shopLogo
+        shop_name: formData.shop_name,
+        shop_description: formData.shop_description,
+        shop_category: formData.shop_category,
+        shop_location: formData.shop_location,
+        shop_logo: formData.shop_logo
       });
       
-      if (success) {
+      if (updateResult) {
         toast({
           title: "Success",
           description: "Shop settings updated successfully",
@@ -236,7 +235,7 @@ const SettingsPage = () => {
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               <div>
-                <label htmlFor="shopName" className="block text-sm font-medium text-haluna-text mb-1">
+                <label htmlFor="shop_name" className="block text-sm font-medium text-haluna-text mb-1">
                   Shop Name
                 </label>
                 <div className="relative">
@@ -245,9 +244,9 @@ const SettingsPage = () => {
                   </div>
                   <input
                     type="text"
-                    id="shopName"
-                    name="shopName"
-                    value={formData.shopName}
+                    id="shop_name"
+                    name="shop_name"
+                    value={formData.shop_name}
                     onChange={handleChange}
                     className="pl-10 w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-haluna-primary focus:border-haluna-primary"
                     required
@@ -256,7 +255,7 @@ const SettingsPage = () => {
               </div>
               
               <div>
-                <label htmlFor="shopCategory" className="block text-sm font-medium text-haluna-text mb-1">
+                <label htmlFor="shop_category" className="block text-sm font-medium text-haluna-text mb-1">
                   Shop Category
                 </label>
                 <div className="relative">
@@ -264,9 +263,9 @@ const SettingsPage = () => {
                     <Tag className="h-5 w-5 text-haluna-text-light" />
                   </div>
                   <select
-                    id="shopCategory"
-                    name="shopCategory"
-                    value={formData.shopCategory}
+                    id="shop_category"
+                    name="shop_category"
+                    value={formData.shop_category}
                     onChange={handleChange}
                     className="pl-10 w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-haluna-primary focus:border-haluna-primary appearance-none"
                     required
@@ -283,7 +282,7 @@ const SettingsPage = () => {
               </div>
               
               <div>
-                <label htmlFor="shopLocation" className="block text-sm font-medium text-haluna-text mb-1">
+                <label htmlFor="shop_location" className="block text-sm font-medium text-haluna-text mb-1">
                   Shop Location
                 </label>
                 <div className="relative">
@@ -292,9 +291,9 @@ const SettingsPage = () => {
                   </div>
                   <input
                     type="text"
-                    id="shopLocation"
-                    name="shopLocation"
-                    value={formData.shopLocation}
+                    id="shop_location"
+                    name="shop_location"
+                    value={formData.shop_location}
                     onChange={handleChange}
                     className="pl-10 w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-haluna-primary focus:border-haluna-primary"
                     placeholder="City, State"
@@ -305,7 +304,7 @@ const SettingsPage = () => {
             </div>
             
             <div className="mb-6">
-              <label htmlFor="shopDescription" className="block text-sm font-medium text-haluna-text mb-1">
+              <label htmlFor="shop_description" className="block text-sm font-medium text-haluna-text mb-1">
                 Shop Description
               </label>
               <div className="relative">
@@ -313,9 +312,9 @@ const SettingsPage = () => {
                   <FileText className="h-5 w-5 text-haluna-text-light" />
                 </div>
                 <textarea
-                  id="shopDescription"
-                  name="shopDescription"
-                  value={formData.shopDescription}
+                  id="shop_description"
+                  name="shop_description"
+                  value={formData.shop_description}
                   onChange={handleChange}
                   className="pl-10 w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-haluna-primary focus:border-haluna-primary"
                   rows={4}
