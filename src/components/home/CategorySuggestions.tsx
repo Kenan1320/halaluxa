@@ -1,57 +1,34 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { useTheme } from '@/context/ThemeContext';
 import { getCategoryIcon } from '../icons/CategoryIcons';
-
-const localCategories = [
-  {
-    id: 'groceries',
-    name: 'Groceries',
-    link: '/browse?category=Groceries',
-  },
-  {
-    id: 'restaurants',
-    name: 'Restaurants',
-    link: '/browse?category=Restaurants',
-  },
-  {
-    id: 'halal-meat',
-    name: 'Halal Meat',
-    link: '/browse?category=Halal%20Meat',
-  }
-];
-
-const onlineCategories = [
-  {
-    id: 'thobes',
-    name: 'Thobes',
-    link: '/browse?category=Thobes',
-  },
-  {
-    id: 'books',
-    name: 'Books',
-    link: '/browse?category=Books',
-  },
-  {
-    id: 'furniture',
-    name: 'Furniture',
-    link: '/browse?category=Furniture',
-  }
-];
+import { productCategories, isNearbyCategoryByDefault } from '@/models/product';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { ChevronRight } from 'lucide-react';
 
 export default function CategorySuggestions() {
   const { mode } = useTheme();
   const [activeTab, setActiveTab] = useState<'nearby' | 'online'>('nearby');
-  const categories = activeTab === 'nearby' ? localCategories : onlineCategories;
+  const isMobile = useIsMobile();
+  const [nearbyCategories, setNearbyCategories] = useState<string[]>([]);
+  const [onlineCategories, setOnlineCategories] = useState<string[]>([]);
+  
+  useEffect(() => {
+    // Filter categories
+    setNearbyCategories(productCategories.filter(isNearbyCategoryByDefault).slice(0, 6));
+    setOnlineCategories(productCategories.filter(cat => !isNearbyCategoryByDefault(cat)).slice(0, 6));
+  }, []);
+  
+  const categories = activeTab === 'nearby' ? nearbyCategories : onlineCategories;
 
   return (
-    <div className="py-4">
-      <div className="flex justify-between items-center mb-4">
-        <div className="inline-flex rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+    <div className="py-2">
+      <div className="flex justify-between items-center mb-3">
+        <div className="inline-flex rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 text-xs">
           <button
-            className={`px-4 py-2 text-sm font-medium ${
+            className={`px-3 py-1.5 text-xs font-medium ${
               activeTab === 'nearby'
                 ? 'bg-black text-white dark:bg-white dark:text-black'
                 : 'bg-white text-black dark:bg-gray-800 dark:text-white'
@@ -61,7 +38,7 @@ export default function CategorySuggestions() {
             Shop Nearby
           </button>
           <button
-            className={`px-4 py-2 text-sm font-medium ${
+            className={`px-3 py-1.5 text-xs font-medium ${
               activeTab === 'online'
                 ? 'bg-black text-white dark:bg-white dark:text-black'
                 : 'bg-white text-black dark:bg-gray-800 dark:text-white'
@@ -71,29 +48,40 @@ export default function CategorySuggestions() {
             Shop Online
           </button>
         </div>
+        
+        <Link 
+          to="/browse" 
+          className="text-[10px] font-medium flex items-center text-black dark:text-white"
+        >
+          See All
+          <ChevronRight className="h-3 w-3 ml-1" />
+        </Link>
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-5 gap-3">
         {categories.map((category, index) => (
           <motion.div
-            key={category.id}
+            key={category}
             className="group"
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
-            whileHover={{ y: -5 }}
+            transition={{ delay: index * 0.05 }}
+            whileHover={{ y: -3 }}
           >
             <Link 
-              to={category.link}
-              className={`flex flex-col items-center gap-1 p-3 rounded-lg transition-all duration-300`}
+              to={`/browse?category=${encodeURIComponent(category)}`}
+              className="flex flex-col items-center gap-1 p-1"
             >
-              <div className="w-12 h-12 flex items-center justify-center">
-                {getCategoryIcon(category.name, "w-10 h-10")}
-              </div>
-              <span className={`text-xs font-medium text-center mt-1 ${
+              <motion.div 
+                className="w-10 h-10 flex items-center justify-center bg-gray-50 dark:bg-gray-800 rounded-full"
+                whileHover={{ scale: 1.1, backgroundColor: mode === 'dark' ? '#2A866A20' : '#E4F5F0' }}
+              >
+                {getCategoryIcon(category, "w-6 h-6")}
+              </motion.div>
+              <span className={`text-[10px] font-medium text-center mt-1 line-clamp-1 ${
                 mode === 'dark' ? 'text-white' : 'text-black'
               }`}>
-                {category.name}
+                {category}
               </span>
             </Link>
           </motion.div>

@@ -1,13 +1,29 @@
 
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { getCategoryIcon } from '../icons/CategoryIcons';
-import { productCategories } from '@/models/product';
+import { productCategories, isNearbyCategoryByDefault } from '@/models/product';
 
-const CategoryScroll = () => {
+interface CategoryScrollProps {
+  filter?: 'nearby' | 'online' | 'all';
+}
+
+const CategoryScroll = ({ filter = 'all' }: CategoryScrollProps) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const [categories, setCategories] = useState<string[]>([]);
+  
+  useEffect(() => {
+    // Filter categories based on the filter prop
+    if (filter === 'all') {
+      setCategories(productCategories);
+    } else if (filter === 'nearby') {
+      setCategories(productCategories.filter(isNearbyCategoryByDefault));
+    } else {
+      setCategories(productCategories.filter(category => !isNearbyCategoryByDefault(category)));
+    }
+  }, [filter]);
   
   useEffect(() => {
     const scrollContainer = scrollRef.current;
@@ -48,12 +64,14 @@ const CategoryScroll = () => {
     
     return () => {
       cancelAnimationFrame(animationId);
-      scrollContainer.removeEventListener('mouseenter', handlePause);
-      scrollContainer.removeEventListener('mouseleave', handleResume);
-      scrollContainer.removeEventListener('touchstart', handlePause);
-      scrollContainer.removeEventListener('touchend', handleResume);
+      if (scrollContainer) {
+        scrollContainer.removeEventListener('mouseenter', handlePause);
+        scrollContainer.removeEventListener('mouseleave', handleResume);
+        scrollContainer.removeEventListener('touchstart', handlePause);
+        scrollContainer.removeEventListener('touchend', handleResume);
+      }
     };
-  }, []);
+  }, [categories]);
   
   const handleCategoryClick = (category: string) => {
     navigate(`/browse?category=${encodeURIComponent(category)}`);
@@ -65,19 +83,19 @@ const CategoryScroll = () => {
         ref={scrollRef}
         className="flex overflow-x-auto scrollbar-hide py-1 space-x-4"
       >
-        {productCategories.map((category, index) => (
+        {categories.map((category, index) => (
           <motion.button
             key={index}
             className="flex-shrink-0 flex flex-col items-center justify-center p-1"
-            style={{ minWidth: '55px' }}
+            style={{ minWidth: '45px' }}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => handleCategoryClick(category)}
           >
-            <div className="h-8 w-8 mb-1 flex items-center justify-center">
-              {getCategoryIcon(category, "h-7 w-7")}
+            <div className="h-7 w-7 mb-1 flex items-center justify-center">
+              {getCategoryIcon(category, "h-6 w-6")}
             </div>
-            <span className="text-black dark:text-white text-xs font-medium text-center line-clamp-1">
+            <span className="text-black dark:text-white text-[10px] font-medium text-center line-clamp-1">
               {category}
             </span>
           </motion.button>
