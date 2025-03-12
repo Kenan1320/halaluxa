@@ -55,6 +55,24 @@ const Navbar = () => {
     };
     
     loadMainShop();
+    
+    // Listen for shop selection changes
+    const handleShopSelectionChange = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      if (customEvent.detail && customEvent.detail.mainShopId) {
+        getShopById(customEvent.detail.mainShopId).then(shop => {
+          setMainShop(shop);
+        });
+      } else {
+        setMainShop(null);
+      }
+    };
+    
+    window.addEventListener('shopsSelectionChanged', handleShopSelectionChange);
+    
+    return () => {
+      window.removeEventListener('shopsSelectionChanged', handleShopSelectionChange);
+    };
   }, [location.pathname]);
   
   const handleMainShopClick = () => {
@@ -62,7 +80,7 @@ const Navbar = () => {
       toast({
         title: "No main shop selected",
         description: "Please go to Select Your Shops to choose your main shop.",
-        variant: "destructive"
+        variant: "default"
       });
       navigate('/select-shops');
       return;
@@ -77,11 +95,8 @@ const Navbar = () => {
 
   return (
     <header 
-      className={`fixed top-0 w-full z-50 transition-all duration-300 
-        ${mode === 'dark' 
-          ? 'bg-[#1C2526] text-white border-b border-gray-800' 
-          : 'bg-[#E4F5F0]'}`}
-      style={{ height: '70px' }}
+      className={`fixed top-0 w-full z-50 transition-all duration-300 ${mode === 'dark' ? 'bg-[#1C2526] text-white border-b border-gray-800' : 'bg-white border-b border-gray-100'}`}
+      style={{ height: '60px' }}
     >
       <div className="container mx-auto px-4 h-full flex justify-between items-center">
         {/* Menu Button */}
@@ -91,22 +106,22 @@ const Navbar = () => {
           aria-label="Toggle menu"
         >
           {mobileMenuOpen ? (
-            <X className="h-6 w-6" />
+            <X className="h-5 w-5" />
           ) : (
-            <Menu className="h-6 w-6" />
+            <Menu className="h-5 w-5" />
           )}
         </button>
         
         {/* Logo - with advanced animation */}
         <div className="flex items-center ml-3 mr-auto">
           <Link to="/" className="flex items-center">
-            <span className={`text-lg font-serif font-bold ${mode === 'dark' ? 'text-white' : 'text-[#2A866A]'}`}>Haluna</span>
+            <span className={`text-lg font-medium ${mode === 'dark' ? 'text-white' : 'text-[#2A866A]'}`}>Haluna</span>
             
             {/* Advanced animated logo design */}
             <div className="relative ml-1">
               {/* Main orange ball */}
               <motion.div 
-                className="w-5 h-5 bg-[#E4875E] rounded-full"
+                className="w-4 h-4 bg-[#E4875E] rounded-full"
                 animate={{
                   scale: [1, 1.1, 1],
                 }}
@@ -135,7 +150,7 @@ const Navbar = () => {
         </div>
         
         {/* Right side buttons */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           {/* Theme Toggle */}
           <ThemeToggle />
           
@@ -150,7 +165,7 @@ const Navbar = () => {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
-            <MapPin className="h-6 w-6" />
+            <MapPin className="h-5 w-5" />
           </motion.button>
           
           {/* Main Shop Button */}
@@ -167,11 +182,11 @@ const Navbar = () => {
             {mainShop ? (
               <>
                 {mainShop.logo ? (
-                  <div className="w-6 h-6 rounded-full overflow-hidden">
+                  <div className="w-5 h-5 rounded-full overflow-hidden border border-current">
                     <img src={mainShop.logo} alt={mainShop.name} className="w-full h-full object-cover" />
                   </div>
                 ) : (
-                  <Store className="h-6 w-6" />
+                  <Store className="h-5 w-5" />
                 )}
                 <motion.div 
                   className="absolute -bottom-1 -right-1 w-2 h-2 bg-[#E4875E] rounded-full"
@@ -186,7 +201,7 @@ const Navbar = () => {
               </>
             ) : (
               <div className="relative">
-                <Store className="h-6 w-6" />
+                <Store className="h-5 w-5" />
                 <motion.div 
                   className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"
                   animate={{
@@ -202,23 +217,6 @@ const Navbar = () => {
             )}
           </motion.button>
           
-          {/* Select Shops Button */}
-          <motion.div
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <Link 
-              to="/select-shops" 
-              className={`p-2 rounded-full ${
-                mode === 'dark' 
-                  ? 'text-white hover:bg-gray-700' 
-                  : 'text-[#2A866A] hover:bg-[#d5efe8]'
-              } transition-colors block`}
-            >
-              <Store className="h-6 w-6" />
-            </Link>
-          </motion.div>
-          
           {/* Cart Button */}
           <motion.div
             whileHover={{ scale: 1.05 }}
@@ -228,7 +226,7 @@ const Navbar = () => {
               to="/cart" 
               className="relative p-2 rounded-lg bg-[#FF7A45] text-white block"
             >
-              <ShoppingCart className="h-6 w-6" />
+              <ShoppingCart className="h-5 w-5" />
               {cart.items.length > 0 && (
                 <span className="absolute -top-2 -right-2 bg-[#2A866A] text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
                   {cart.items.length}
@@ -246,7 +244,7 @@ const Navbar = () => {
               to={isLoggedIn ? (user?.role === 'business' ? '/dashboard' : '/profile') : '/login'}
               className="p-2 rounded-full bg-[#2A866A] text-white block"
             >
-              <User className="h-6 w-6" />
+              <User className="h-5 w-5" />
             </Link>
           </motion.div>
         </div>
@@ -264,17 +262,17 @@ const Navbar = () => {
               <input
                 type="text"
                 placeholder="Search your shop and products"
-                className={`w-full py-2 px-4 pl-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2A866A]/30 ${
+                className={`w-full py-2 px-4 pl-10 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#2A866A]/30 ${
                   mode === 'dark'
                     ? 'bg-gray-800 border border-gray-700 text-white placeholder:text-gray-400'
                     : 'bg-[#F5F5F5] border border-[#E0E0E0]'
                 }`}
               />
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             </div>
           </div>
           
-          <nav className="grid grid-cols-1 gap-3">
+          <nav className="grid grid-cols-1 gap-2">
             <Link
               to="/"
               className={`flex items-center gap-3 p-3 rounded-lg transition ${
@@ -288,7 +286,7 @@ const Navbar = () => {
               }`}
               onClick={() => setMobileMenuOpen(false)}
             >
-              <span>Home</span>
+              <span className="text-sm">Home</span>
             </Link>
             <Link
               to="/shops"
@@ -303,7 +301,7 @@ const Navbar = () => {
               }`}
               onClick={() => setMobileMenuOpen(false)}
             >
-              <span>Shops</span>
+              <span className="text-sm">Shops</span>
             </Link>
             <Link
               to="/browse"
@@ -318,7 +316,7 @@ const Navbar = () => {
               }`}
               onClick={() => setMobileMenuOpen(false)}
             >
-              <span>Browse</span>
+              <span className="text-sm">Browse</span>
             </Link>
             {/* Select Shops link */}
             <Link
@@ -334,7 +332,7 @@ const Navbar = () => {
               }`}
               onClick={() => setMobileMenuOpen(false)}
             >
-              <span>Select Your Shops</span>
+              <span className="text-sm">Select Your Shops</span>
             </Link>
             {user?.role === 'business' && (
               <Link
@@ -350,7 +348,7 @@ const Navbar = () => {
                 }`}
                 onClick={() => setMobileMenuOpen(false)}
               >
-                <span>Seller Dashboard</span>
+                <span className="text-sm">Seller Dashboard</span>
               </Link>
             )}
             <Link
@@ -366,7 +364,7 @@ const Navbar = () => {
               }`}
               onClick={() => setMobileMenuOpen(false)}
             >
-              <span>{isLoggedIn ? 'My Account' : 'Sign In'}</span>
+              <span className="text-sm">{isLoggedIn ? 'My Account' : 'Sign In'}</span>
             </Link>
           </nav>
         </div>

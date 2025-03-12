@@ -64,20 +64,21 @@ const CategoryScroll = () => {
       <div
         ref={scrollRef}
         className="flex overflow-x-auto scrollbar-hide py-1 space-x-4"
+        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
         {productCategories.map((category, index) => (
           <motion.button
             key={index}
             className="flex-shrink-0 flex flex-col items-center justify-center p-1"
-            style={{ minWidth: '55px' }}
+            style={{ minWidth: '50px' }} // Slightly smaller width
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => handleCategoryClick(category)}
           >
-            <div className="h-8 w-8 mb-1 flex items-center justify-center">
-              {getCategoryIcon(category, "h-7 w-7")}
+            <div className="h-7 w-7 mb-1 flex items-center justify-center"> {/* Smaller icon */}
+              {getCategoryIcon(category, "h-6 w-6")} {/* Smaller icon */}
             </div>
-            <span className="text-black dark:text-white text-xs font-medium text-center line-clamp-1">
+            <span className="text-black dark:text-white text-[10px] font-medium text-center line-clamp-1"> {/* Smaller text */}
               {category}
             </span>
           </motion.button>
