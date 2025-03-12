@@ -1,4 +1,3 @@
-
 export interface DatabaseProfile {
   id: string;
   name: string;
@@ -26,18 +25,17 @@ export interface Shop {
   owner_id: string;
   category: string;
   location: string;
-  cover_image?: string;
-  logo_url?: string;
+  logo_url: string | null;
+  cover_image: string | null;
   created_at: string;
   updated_at: string;
   is_verified: boolean;
-  product_count?: number;
-  rating?: number;
+  product_count: number;
+  rating: number;
   latitude?: number;
   longitude?: number;
   distance?: number;
   address?: string;
-  // For product display mode
   display_mode?: 'online' | 'local_pickup' | 'local_delivery';
   pickup_options?: {
     store: boolean;
@@ -56,7 +54,7 @@ export interface Product {
   created_at: string;
   updated_at: string;
   is_halal_certified: boolean;
-  in_stock: boolean; // Required field
+  in_stock: boolean;
   details?: Record<string, any>;
   long_description?: string;
   is_published?: boolean;
@@ -64,7 +62,6 @@ export interface Product {
   seller_id?: string;
   rating?: number;
   shop_name?: string;
-  // Product delivery options
   delivery_mode?: 'online' | 'local_pickup' | 'local_delivery';
   pickup_options?: {
     store: boolean;

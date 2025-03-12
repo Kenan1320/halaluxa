@@ -1,15 +1,13 @@
-
 import { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { DatabaseProfile } from '@/types/database';
 
-// Types
 interface User {
   id: string;
-  name: string;
   email: string;
+  name: string;
   role: 'shopper' | 'business' | 'admin';
   phone?: string;
   address?: string;
@@ -28,24 +26,24 @@ interface AuthContextProps {
   user: User | null;
   isLoggedIn: boolean;
   isLoading: boolean;
+  isInitializing: boolean;
   login: (email: string, password: string) => Promise<void>;
   signup: (email: string, password: string, name: string, role: 'shopper' | 'business') => Promise<void>;
   logout: () => Promise<void>;
-  updateUserProfile: (profile: Partial<User>) => Promise<void>;
-  updateBusinessProfile: (businessProfile: Partial<User>) => Promise<void>;
+  updateUserProfile: (profile: Partial<DatabaseProfile>) => Promise<void>;
+  updateBusinessProfile: (profile: Partial<DatabaseProfile>) => Promise<void>;
+  register: (email: string, password: string, name: string, role: 'shopper' | 'business') => Promise<void>;
 }
 
-// Create context
 const AuthContext = createContext<AuthContextProps | undefined>(undefined);
 
-// Provider component
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isInitializing, setIsInitializing] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Check for existing session on mount
   useEffect(() => {
     const checkSession = async () => {
       try {
@@ -63,12 +61,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         console.error('Error checking session:', error);
       } finally {
         setIsLoading(false);
+        setIsInitializing(false);
       }
     };
     
     checkSession();
     
-    // Subscribe to auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (event === 'SIGNED_IN' && session?.user) {
@@ -84,7 +82,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, []);
   
-  // Fetch and set user profile from database
   const fetchAndSetUserProfile = async (userId: string) => {
     try {
       const { data, error } = await supabase
@@ -125,7 +122,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
   
-  // Login function
   const login = async (email: string, password: string) => {
     try {
       setIsLoading(true);
@@ -157,12 +153,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
   
-  // Signup function
   const signup = async (email: string, password: string, name: string, role: 'shopper' | 'business') => {
     try {
       setIsLoading(true);
       
-      // Create user in Supabase Auth
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -173,7 +167,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
       
       if (data.user) {
-        // Create profile in our database
         const { error: profileError } = await supabase
           .from('profiles')
           .insert([
@@ -213,7 +206,59 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
   
-  // Logout function
+  const register = async (email: string, password: string, name: string, role: 'shopper' | 'business') => {
+    try {
+      setIsLoading(true);
+      
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+      });
+      
+      if (error) {
+        throw error;
+      }
+      
+      if (data.user) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert([
+            {
+              id: data.user.id,
+              name,
+              email,
+              role,
+            },
+          ]);
+        
+        if (profileError) {
+          throw profileError;
+        }
+        
+        await fetchAndSetUserProfile(data.user.id);
+        
+        toast({
+          title: "Registration successful",
+          description: "Your account has been created!",
+        });
+        
+        if (role === 'business') {
+          navigate('/dashboard');
+        } else {
+          navigate('/');
+        }
+      }
+    } catch (error: any) {
+      toast({
+        title: "Registration failed",
+        description: error.message || "An error occurred during registration",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
   const logout = async () => {
     try {
       setIsLoading(true);
@@ -240,8 +285,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
   
-  // Update user profile
-  const updateUserProfile = async (profile: Partial<User>) => {
+  const updateUserProfile = async (profile: Partial<DatabaseProfile>) => {
     if (!user) return;
     
     try {
@@ -256,7 +300,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         throw error;
       }
       
-      // Update local user state
       setUser((prev) => prev ? { ...prev, ...profile } : null);
       
       toast({
@@ -274,8 +317,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
   
-  // Update business profile (shop owner)
-  const updateBusinessProfile = async (businessProfile: Partial<User>) => {
+  const updateBusinessProfile = async (profile: Partial<DatabaseProfile>) => {
     if (!user || user.role !== 'business') return;
     
     try {
@@ -284,11 +326,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const { error } = await supabase
         .from('profiles')
         .update({
-          shop_name: businessProfile.shop_name,
-          shop_description: businessProfile.shop_description,
-          shop_category: businessProfile.shop_category,
-          shop_location: businessProfile.shop_location,
-          shop_logo: businessProfile.shop_logo,
+          shop_name: profile.shop_name,
+          shop_description: profile.shop_description,
+          shop_category: profile.shop_category,
+          shop_location: profile.shop_location,
+          shop_logo: profile.shop_logo,
         })
         .eq('id', user.id);
       
@@ -296,8 +338,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         throw error;
       }
       
-      // Update local user state
-      setUser((prev) => prev ? { ...prev, ...businessProfile } : null);
+      setUser((prev) => prev ? { ...prev, ...profile } : null);
       
       toast({
         title: "Business profile updated",
@@ -320,11 +361,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         user, 
         isLoggedIn: !!user, 
         isLoading, 
+        isInitializing,
         login, 
         signup, 
         logout, 
         updateUserProfile,
         updateBusinessProfile,
+        register,
       }}
     >
       {children}
@@ -332,7 +375,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-// Custom hook for using the auth context
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {

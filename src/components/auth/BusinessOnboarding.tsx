@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
@@ -26,14 +25,12 @@ const BusinessOnboarding = () => {
   const [onboardingStep, setOnboardingStep] = useState(0);
   const [onboardingComplete, setOnboardingComplete] = useState(false);
   
-  // Check if user already has a shop
   useEffect(() => {
-    if (user?.shopName) {
+    if (user?.shop_name) {
       setOnboardingComplete(true);
     }
   }, [user]);
   
-  // If user completes onboarding or skips, redirect them
   useEffect(() => {
     if (onboardingComplete) {
       navigate('/dashboard');
@@ -60,7 +57,6 @@ const BusinessOnboarding = () => {
     return null;
   }
   
-  // Check if user is a business account
   if (user.role !== 'business') {
     return null;
   }
