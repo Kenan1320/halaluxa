@@ -18,14 +18,18 @@ export interface EnhancedLocation {
 interface LocationContextProps {
   isLocationEnabled: boolean;
   location: EnhancedLocation | null;
+  userLocation: EnhancedLocation | null; // Added userLocation
   requestLocation: () => void;
+  getCurrentLocation: () => void; // Added getCurrentLocation
   getNearbyShops: () => Promise<Shop[]>;
 }
 
 const LocationContext = createContext<LocationContextProps>({
   isLocationEnabled: false,
   location: null,
+  userLocation: null, // Added userLocation
   requestLocation: () => {},
+  getCurrentLocation: () => {}, // Added getCurrentLocation
   getNearbyShops: async () => [],
 });
 
@@ -33,6 +37,9 @@ export const LocationProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [isLocationEnabled, setIsLocationEnabled] = useState(false);
   const [location, setLocation] = useState<EnhancedLocation | null>(null);
   const { toast } = useToast();
+
+  // Create userLocation as an alias to location for backward compatibility
+  const userLocation = location;
 
   useEffect(() => {
     // Load saved location from localStorage
@@ -122,6 +129,9 @@ export const LocationProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
 
+  // Add getCurrentLocation as an alias to requestLocation for backward compatibility
+  const getCurrentLocation = requestLocation;
+
   const fetchNearbyShops = async (): Promise<Shop[]> => {
     if (isLocationEnabled && location) {
       try {
@@ -145,7 +155,9 @@ export const LocationProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       value={{
         isLocationEnabled,
         location,
+        userLocation, // Add userLocation
         requestLocation,
+        getCurrentLocation, // Add getCurrentLocation
         getNearbyShops: fetchNearbyShops,
       }}
     >

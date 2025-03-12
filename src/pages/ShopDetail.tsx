@@ -7,8 +7,45 @@ import { useLocation } from '@/context/LocationContext';
 import { ShopHeader } from '@/components/shop/ShopHeader';
 import ShopProductList from '@/components/shop/ShopProductList';
 import { Shop } from '@/types/database';
+import { ShopDetails } from '@/types/shop';
 import { Button } from '@/components/ui/button';
 import { MapPin } from 'lucide-react';
+
+// Helper function to convert Shop to ShopDetails
+const convertToShopDetails = (shop: Shop): ShopDetails => {
+  return {
+    id: shop.id,
+    name: shop.name,
+    description: shop.description,
+    owner_id: shop.owner_id,
+    location: shop.location,
+    categories: [],  // Default empty categories
+    cover_image: shop.cover_image || undefined,
+    logo: shop.logo_url || undefined,
+    deliveryInfo: {
+      isDeliveryAvailable: shop.display_mode === 'local_delivery',
+      isPickupAvailable: shop.display_mode === 'local_pickup',
+      deliveryFee: 0,
+      estimatedTime: '30-45 min',
+      minOrder: 0
+    },
+    workingHours: {
+      open: '9:00 AM',
+      close: '6:00 PM'
+    },
+    isGroupOrderEnabled: false,
+    rating: {
+      average: shop.rating,
+      count: 0
+    },
+    product_count: shop.product_count,
+    is_verified: shop.is_verified,
+    category: shop.category,
+    latitude: shop.latitude || null,
+    longitude: shop.longitude || null,
+    distance: shop.distance || null
+  };
+};
 
 const ShopDetail = () => {
   const { shopId } = useParams<{ shopId: string }>();
@@ -58,9 +95,12 @@ const ShopDetail = () => {
     return <div className="text-center py-16">Shop not found</div>;
   }
   
+  // Convert Shop to ShopDetails for ShopHeader
+  const shopDetails = convertToShopDetails(shop);
+  
   return (
     <div>
-      <ShopHeader shop={shop} />
+      <ShopHeader shop={shopDetails} />
       
       <div className="container mx-auto px-4 py-8">
         <div className="flex flex-col md:flex-row gap-8">

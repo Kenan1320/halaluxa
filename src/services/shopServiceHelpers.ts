@@ -1,3 +1,4 @@
+
 import { createClient } from '@supabase/supabase-js';
 import { Shop, Product } from '@/types/database';
 import { ShopProduct } from '@/models/shop';

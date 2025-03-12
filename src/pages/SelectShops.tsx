@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getAllShops, getNearbyShops } from '@/services/shopService';
@@ -24,8 +25,8 @@ const SelectShops = () => {
         let shopData: Shop[] = [];
         
         // If we have user location, get nearby shops
-        if (userLocation?.latitude && userLocation?.longitude) {
-          shopData = await getNearbyShops(userLocation.latitude, userLocation.longitude);
+        if (userLocation?.coords) {
+          shopData = await getNearbyShops(userLocation.coords.latitude, userLocation.coords.longitude);
         } else {
           // Otherwise, just get all shops
           shopData = await getAllShops();

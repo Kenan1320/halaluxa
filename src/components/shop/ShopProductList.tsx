@@ -20,6 +20,7 @@ export const ShopProductList: React.FC<ShopProductListProps> = ({ shopId }) => {
       try {
         setLoading(true);
         const shopProducts = await getShopProducts(shopId);
+        // Explicitly cast the products to the Product type
         setProducts(shopProducts as Product[]);
       } catch (error) {
         console.error('Error fetching products:', error);
