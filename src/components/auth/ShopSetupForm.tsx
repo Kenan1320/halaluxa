@@ -84,13 +84,13 @@ export default function ShopSetupForm({ onComplete, onSkip }: ShopSetupFormProps
       const shop = await createShop({
         name: shopData.name,
         description: shopData.description,
-        logo: logoPreview || undefined,
+        logo_url: logoPreview || undefined, // Use logo_url instead of logo
         category: shopData.category,
         location: shopData.location,
         rating: 0,
-        productCount: 0,
-        isVerified: false,
-        ownerId: user.id
+        product_count: 0,
+        is_verified: false,
+        owner_id: user.id
       });
       
       if (shop) {

@@ -79,7 +79,7 @@ export const getShopProducts = async (shopId: string): Promise<ShopProduct[]> =>
 };
 
 // Convert database Product to model Product
-export const convertToModelProduct = (product: any): ModelProduct => {
+export const convertToModelProduct = (product: Product): ModelProduct => {
   return {
     id: product.id,
     name: product.name,
@@ -91,7 +91,7 @@ export const convertToModelProduct = (product: any): ModelProduct => {
     isHalalCertified: product.is_halal_certified || false,
     inStock: product.in_stock !== false,
     createdAt: product.created_at,
-    sellerId: product.shop_id, // Map shop_id to sellerId
+    sellerId: product.seller_id || product.shop_id, // Map shop_id to sellerId
     sellerName: product.shop_name || 'Shop Owner',
     rating: product.rating || 0,
     details: product.details || {}

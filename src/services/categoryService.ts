@@ -33,6 +33,9 @@ export const getCategories = async (): Promise<Category[]> => {
   }
 };
 
+// Alias for getCategories to support existing code
+export const listCategories = getCategories;
+
 export const getCategoryById = async (id: string): Promise<Category | null> => {
   try {
     const category = mockCategories.find(cat => cat.id === id);

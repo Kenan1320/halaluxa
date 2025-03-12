@@ -18,7 +18,7 @@ const convertToModelProduct = (product: Product): ModelProduct => {
     createdAt: product.created_at,
     sellerId: product.seller_id || product.shop_id,
     sellerName: '', // This would typically come from a join
-    rating: 0, // Default rating
+    rating: product.rating || 0, // Default rating
     details: product.details || {}
   };
 };
@@ -84,7 +84,7 @@ export const createProduct = async (productData: Partial<Product>): Promise<Prod
   }
 };
 
-export const getProducts = async (): Promise<Product[]> => {
+export const getProducts = async (): Promise<ModelProduct[]> => {
   try {
     const { data, error } = await supabase
       .from('products')
@@ -96,14 +96,14 @@ export const getProducts = async (): Promise<Product[]> => {
       return [];
     }
 
-    return data || [];
+    return (data || []).map(convertToModelProduct);
   } catch (error) {
     console.error('Error in getProducts:', error);
     return [];
   }
 };
 
-export const getProductById = async (id: string): Promise<Product | null> => {
+export const getProductById = async (id: string): Promise<ModelProduct | null> => {
   try {
     const { data, error } = await supabase
       .from('products')
@@ -116,14 +116,14 @@ export const getProductById = async (id: string): Promise<Product | null> => {
       return null;
     }
 
-    return data;
+    return convertToModelProduct(data);
   } catch (error) {
     console.error('Error in getProductById:', error);
     return null;
   }
 };
 
-export const getProductsByShopId = async (shopId: string): Promise<Product[]> => {
+export const getProductsByShopId = async (shopId: string): Promise<ModelProduct[]> => {
   try {
     const { data, error } = await supabase
       .from('products')
@@ -136,14 +136,14 @@ export const getProductsByShopId = async (shopId: string): Promise<Product[]> =>
       return [];
     }
 
-    return data || [];
+    return (data || []).map(convertToModelProduct);
   } catch (error) {
     console.error('Error in getProductsByShopId:', error);
     return [];
   }
 };
 
-export const getProductsByCategory = async (category: string): Promise<Product[]> => {
+export const getProductsByCategory = async (category: string): Promise<ModelProduct[]> => {
   try {
     const { data, error } = await supabase
       .from('products')
@@ -156,14 +156,14 @@ export const getProductsByCategory = async (category: string): Promise<Product[]
       return [];
     }
 
-    return data || [];
+    return (data || []).map(convertToModelProduct);
   } catch (error) {
     console.error('Error in getProductsByCategory:', error);
     return [];
   }
 };
 
-export const updateProduct = async (id: string, updates: Partial<Product>): Promise<Product | null> => {
+export const updateProduct = async (id: string, updates: Partial<Product>): Promise<ModelProduct | null> => {
   try {
     const { data, error } = await supabase
       .from('products')
@@ -177,7 +177,7 @@ export const updateProduct = async (id: string, updates: Partial<Product>): Prom
       return null;
     }
 
-    return data;
+    return convertToModelProduct(data);
   } catch (error) {
     console.error('Error in updateProduct:', error);
     return null;
@@ -203,7 +203,7 @@ export const deleteProduct = async (id: string): Promise<boolean> => {
   }
 };
 
-export const searchProducts = async (query: string): Promise<Product[]> => {
+export const searchProducts = async (query: string): Promise<ModelProduct[]> => {
   try {
     const { data, error } = await supabase
       .from('products')
@@ -216,7 +216,7 @@ export const searchProducts = async (query: string): Promise<Product[]> => {
       return [];
     }
 
-    return data || [];
+    return (data || []).map(convertToModelProduct);
   } catch (error) {
     console.error('Error in searchProducts:', error);
     return [];
