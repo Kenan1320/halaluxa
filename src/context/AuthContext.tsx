@@ -1,7 +1,8 @@
+
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { DatabaseProfile } from '@/types/shop';
+import { DatabaseProfile } from '@/types/database';
 
 // Define the user type
 export interface User {

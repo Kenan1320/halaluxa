@@ -143,12 +143,12 @@ export const createShop = async (shop: Omit<Shop, 'id'>): Promise<Shop | null> =
         description: shop.description,
         location: shop.location,
         category: shop.category,
-        logo_url: shop.logo, // Map to database column
-        cover_image: shop.coverImage, // Map to database column
+        logo_url: shop.logo_url, // Use snake_case for database
+        cover_image: shop.cover_image, // Use snake_case for database
         rating: shop.rating || 0,
-        product_count: shop.productCount || 0,
-        is_verified: shop.isVerified || false,
-        owner_id: shop.ownerId,
+        product_count: shop.product_count || 0,
+        is_verified: shop.is_verified || false,
+        owner_id: shop.owner_id,
         latitude: shop.latitude,
         longitude: shop.longitude
       }])
@@ -176,12 +176,12 @@ export const updateShop = async (id: string, updates: Partial<Shop>): Promise<Sh
     if (updates.description !== undefined) dbUpdates.description = updates.description;
     if (updates.location !== undefined) dbUpdates.location = updates.location;
     if (updates.category !== undefined) dbUpdates.category = updates.category;
-    if (updates.logo !== undefined) dbUpdates.logo_url = updates.logo;
-    if (updates.coverImage !== undefined) dbUpdates.cover_image = updates.coverImage;
+    if (updates.logo_url !== undefined) dbUpdates.logo_url = updates.logo_url;
+    if (updates.cover_image !== undefined) dbUpdates.cover_image = updates.cover_image;
     if (updates.rating !== undefined) dbUpdates.rating = updates.rating;
-    if (updates.productCount !== undefined) dbUpdates.product_count = updates.productCount;
-    if (updates.isVerified !== undefined) dbUpdates.is_verified = updates.isVerified;
-    if (updates.ownerId !== undefined) dbUpdates.owner_id = updates.ownerId;
+    if (updates.product_count !== undefined) dbUpdates.product_count = updates.product_count;
+    if (updates.is_verified !== undefined) dbUpdates.is_verified = updates.is_verified;
+    if (updates.owner_id !== undefined) dbUpdates.owner_id = updates.owner_id;
     if (updates.latitude !== undefined) dbUpdates.latitude = updates.latitude;
     if (updates.longitude !== undefined) dbUpdates.longitude = updates.longitude;
     

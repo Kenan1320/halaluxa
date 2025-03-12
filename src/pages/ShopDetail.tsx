@@ -48,12 +48,12 @@ const ShopDetail: React.FC = () => {
           description: shopData.description,
           location: shopData.location,
           rating: shopData.rating || 0,
-          productCount: shopData.productCount || 0,
-          isVerified: shopData.isVerified || false,
+          productCount: shopData.product_count || 0,
+          isVerified: shopData.is_verified || false,
           category: shopData.category || '',
-          logo: shopData.logo || null,
-          coverImage: shopData.coverImage || null,
-          ownerId: shopData.ownerId || '',
+          logo: shopData.logo_url || null,
+          coverImage: shopData.cover_image || null,
+          ownerId: shopData.owner_id || '',
           latitude: shopData.latitude || null,
           longitude: shopData.longitude || null,
           distance: shopData.distance || null
@@ -103,7 +103,6 @@ const ShopDetail: React.FC = () => {
     );
   }
   
-  // Convert ShopProduct to Product for use with ProductCard
   const convertToProduct = (shopProduct: ShopProduct): Product => {
     return {
       id: shopProduct.id,
@@ -113,7 +112,7 @@ const ShopDetail: React.FC = () => {
       category: shopProduct.category,
       images: shopProduct.images,
       shopId: shop.id,
-      isHalalCertified: true, // Default to true as it's required
+      isHalalCertified: true,
       createdAt: new Date().toISOString(),
       sellerId: shopProduct.sellerId,
       sellerName: shopProduct.sellerName,
@@ -122,7 +121,6 @@ const ShopDetail: React.FC = () => {
     };
   };
   
-  // Create product categories for the shop based on the products
   const shopCategories: ShopCategory[] = [];
   const categoryMap = new Map<string, Product[]>();
   
@@ -142,7 +140,6 @@ const ShopDetail: React.FC = () => {
     });
   });
   
-  // If no products or categories, add some default categories
   if (shopCategories.length === 0) {
     const defaultCategories = ['Popular Items', 'Featured', 'New Arrivals'];
     defaultCategories.forEach((name, index) => {
@@ -154,15 +151,14 @@ const ShopDetail: React.FC = () => {
     });
   }
   
-  // Convert ModelShop to ShopDetails for rendering
   const shopDetails: ShopDetails = {
-    id: shop.id,
-    name: shop.name,
-    description: shop.description,
-    location: shop.location,
+    id: shop?.id || '',
+    name: shop?.name || '',
+    description: shop?.description || '',
+    location: shop?.location || '',
     categories: shopCategories,
-    cover_image: shop.coverImage || undefined,
-    logo: shop.logo || undefined,
+    cover_image: shop?.coverImage || undefined,
+    logo: shop?.logo || undefined,
     deliveryInfo: {
       isDeliveryAvailable: true,
       isPickupAvailable: true,
@@ -176,16 +172,16 @@ const ShopDetail: React.FC = () => {
     },
     isGroupOrderEnabled: true,
     rating: {
-      average: shop.rating,
+      average: shop?.rating || 0,
       count: 25
     },
-    product_count: shop.productCount,
-    is_verified: shop.isVerified,
-    category: shop.category,
-    owner_id: shop.ownerId,
-    latitude: shop.latitude,
-    longitude: shop.longitude,
-    distance: shop.distance
+    product_count: shop?.productCount || 0,
+    is_verified: shop?.isVerified || false,
+    category: shop?.category || '',
+    owner_id: shop?.ownerId || '',
+    latitude: shop?.latitude,
+    longitude: shop?.longitude,
+    distance: shop?.distance
   };
   
   return (
@@ -231,7 +227,6 @@ const ShopDetail: React.FC = () => {
                         if (!isLocationEnabled) {
                           enableLocation().then(success => {
                             if (success) {
-                              // Would typically open maps app with coordinates
                               window.open(`https://maps.google.com/?q=${shop.latitude},${shop.longitude}`, '_blank');
                             }
                           });

@@ -4,7 +4,22 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { useTheme } from '@/context/ThemeContext';
 import { getCategoryIcon } from '../icons/CategoryIcons';
-import { productCategories } from '@/models/product';
+
+// Add productCategories array
+export const productCategories = [
+  'Groceries', 
+  'Restaurants', 
+  'Halal Meat', 
+  'Coffee Shops',
+  'Online Shops', 
+  'Gifts', 
+  'Hoodies', 
+  'Books',
+  'Electronics',
+  'Fashion',
+  'Home',
+  'Toys'
+];
 
 const TabItem = ({ isActive, onClick, icon, children }: {
   isActive: boolean;

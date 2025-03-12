@@ -1,12 +1,74 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Product } from '@/types/database';
+import { Product as ModelProduct } from '@/models/product';
+
+// Convert database product to model product
+const convertToModelProduct = (product: Product): ModelProduct => {
+  return {
+    id: product.id,
+    name: product.name,
+    description: product.description,
+    price: product.price,
+    shopId: product.shop_id,
+    category: product.category,
+    images: product.images || [],
+    isHalalCertified: product.is_halal_certified,
+    inStock: product.in_stock,
+    createdAt: product.created_at,
+    sellerId: product.seller_id || product.shop_id,
+    sellerName: '', // This would typically come from a join
+    rating: 0, // Default rating
+    details: product.details || {}
+  };
+};
+
+// Add getFeaturedProducts function
+export const getFeaturedProducts = async (): Promise<ModelProduct[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .limit(6)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching featured products:', error);
+      return [];
+    }
+
+    // Convert to model products
+    return (data || []).map(convertToModelProduct);
+  } catch (error) {
+    console.error('Error in getFeaturedProducts:', error);
+    return [];
+  }
+};
 
 // Add createProduct function
 export const createProduct = async (productData: Partial<Product>): Promise<Product | null> => {
   try {
+    // Ensure required fields are present
+    if (!productData.name || !productData.description || !productData.price || 
+        !productData.shop_id || !productData.category) {
+      console.error('Missing required fields for product creation');
+      return null;
+    }
+    
     const { data, error } = await supabase
       .from('products')
-      .insert(productData)
+      .insert({
+        name: productData.name,
+        description: productData.description,
+        price: productData.price,
+        shop_id: productData.shop_id,
+        category: productData.category,
+        images: productData.images || [],
+        is_halal_certified: productData.is_halal_certified || false,
+        in_stock: productData.in_stock !== undefined ? productData.in_stock : true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
       .select()
       .single();
     

@@ -19,7 +19,6 @@ export interface DatabaseProfile {
   shop_logo?: string;
 }
 
-// Add Shop type to fix import errors
 export interface Shop {
   id: string;
   name: string;
@@ -28,18 +27,17 @@ export interface Shop {
   category: string;
   location: string;
   cover_image?: string;
-  logo?: string;
+  logo_url?: string;
   created_at: string;
   updated_at: string;
   is_verified: boolean;
   product_count?: number;
-  productCount?: number;
+  rating?: number;
   latitude?: number;
   longitude?: number;
   distance?: number;
 }
 
-// Add Product type to fix import errors
 export interface Product {
   id: string;
   name: string;
@@ -53,14 +51,17 @@ export interface Product {
   is_halal_certified: boolean;
   in_stock: boolean;
   details?: Record<string, any>;
+  long_description?: string;
+  is_published?: boolean;
+  stock?: number;
+  seller_id?: string;
 }
 
-// Add SellerAccount type to fix import errors
 export interface SellerAccount {
   id: string;
   user_id: string;
   account_number: string;
-  routing_number: string;
+  routing_number?: string;
   bank_name: string;
   account_type: string;
   is_verified: boolean;
@@ -68,4 +69,10 @@ export interface SellerAccount {
   updated_at: string;
   balance: number;
   currency: string;
+  shop_id?: string;
+  paypal_email?: string;
+  stripe_account_id?: string;
+  applepay_merchant_id?: string;
+  account_name?: string;
+  is_active?: boolean;
 }

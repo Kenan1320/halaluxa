@@ -40,6 +40,7 @@ const PaymentAccountPage = () => {
         if (account) {
           setAccountDetails(account);
           setAccountType(account.account_type);
+          // Check if these properties exist before setting state
           setAccountName(account.account_name || '');
           setAccountNumber(account.account_number || '');
           setBankName(account.bank_name || '');
@@ -67,15 +68,17 @@ const PaymentAccountPage = () => {
     setIsLoading(true);
     
     try {
+      // Create an object with only the properties that exist in SellerAccount type
       const updatedAccount = await saveSellerAccount({
         ...accountDetails,
         account_type: accountType,
-        account_name: accountName,
         account_number: accountNumber,
         bank_name: bankName,
+        // Use added fields from our updated SellerAccount type
         paypal_email: paypalEmail,
         stripe_account_id: stripeAccountId,
-        applepay_merchant_id: applePayMerchantId
+        applepay_merchant_id: applePayMerchantId,
+        account_name: accountName
       });
       
       if (updatedAccount) {
