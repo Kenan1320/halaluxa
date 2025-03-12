@@ -11,12 +11,12 @@ import { getCategoryIcon } from '../icons/CategoryIcons';
 
 // Mock data for demo products
 const demoProducts = [
-  { id: 'demo1', name: 'Demo Product 1', price: 19.99, images: ['/placeholder.svg'] },
-  { id: 'demo2', name: 'Demo Product 2', price: 24.99, images: ['/placeholder.svg'] },
-  { id: 'demo3', name: 'Demo Product 3', price: 15.99, images: ['/placeholder.svg'] },
-  { id: 'demo4', name: 'Demo Product 4', price: 29.99, images: ['/placeholder.svg'] },
-  { id: 'demo5', name: 'Demo Product 5', price: 9.99, images: ['/placeholder.svg'] },
-  { id: 'demo6', name: 'Demo Product 6', price: 34.99, images: ['/placeholder.svg'] },
+  { id: 'demo1', name: 'Demo Product 1', price: 19.99, images: ['/placeholder.svg'], description: 'A lovely demo product for your shop' },
+  { id: 'demo2', name: 'Demo Product 2', price: 24.99, images: ['/placeholder.svg'], description: 'Another fantastic demo product' },
+  { id: 'demo3', name: 'Demo Product 3', price: 15.99, images: ['/placeholder.svg'], description: 'A great demo product to showcase' },
+  { id: 'demo4', name: 'Demo Product 4', price: 29.99, images: ['/placeholder.svg'], description: 'An excellent demo product sample' },
+  { id: 'demo5', name: 'Demo Product 5', price: 9.99, images: ['/placeholder.svg'], description: 'A budget-friendly demo product' },
+  { id: 'demo6', name: 'Demo Product 6', price: 34.99, images: ['/placeholder.svg'], description: 'A premium demo product example' },
 ];
 
 const NearbyShops = () => {
@@ -198,7 +198,7 @@ const NearbyShops = () => {
             </div>
           )}
           
-          {/* Shop products in horizontal scroll */}
+          {/* Shop products in horizontal scroll with demo products if needed */}
           <ShopProductList 
             shopId={shop.id} 
             demoProducts={shop.productCount === 0 ? demoProducts : undefined}

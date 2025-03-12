@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -74,23 +75,33 @@ const AddEditProductPage = () => {
   useEffect(() => {
     const loadProduct = async () => {
       if (id) {
-        const data = await getProductById(id);
-        if (data) {
-          setProduct(data);
-          
-          form.reset({
-            name: data.name,
-            description: data.description,
-            price: data.price,
-            category: data.category,
-            inStock: data.inStock,
-            isHalalCertified: data.isHalalCertified,
-            images: data.images,
-          });
-        } else {
+        try {
+          const data = await getProductById(id);
+          if (data) {
+            setProduct(data);
+            
+            form.reset({
+              name: data.name,
+              description: data.description,
+              price: data.price,
+              category: data.category,
+              inStock: data.inStock,
+              isHalalCertified: data.isHalalCertified,
+              images: data.images,
+            });
+          } else {
+            toast({
+              title: "Error",
+              description: "Product not found",
+              variant: "destructive",
+            });
+            navigate("/dashboard/products");
+          }
+        } catch (error) {
+          console.error("Error loading product:", error);
           toast({
             title: "Error",
-            description: "Product not found",
+            description: "Failed to load product",
             variant: "destructive",
           });
           navigate("/dashboard/products");

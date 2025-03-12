@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { ShoppingCart, Heart, ChevronRight, ChevronLeft } from 'lucide-react';
@@ -11,9 +12,16 @@ import { useToast } from '@/hooks/use-toast';
 interface ShopProductListProps {
   shopId: string;
   products?: Product[];
+  demoProducts?: {
+    id: string;
+    name: string;
+    price: number;
+    images: string[];
+    description?: string;
+  }[];
 }
 
-const ShopProductList = ({ shopId, products: initialProducts }: ShopProductListProps) => {
+const ShopProductList = ({ shopId, products: initialProducts, demoProducts }: ShopProductListProps) => {
   const [products, setProducts] = useState<Product[]>(initialProducts || []);
   const [isLoading, setIsLoading] = useState(!initialProducts);
   const { addToCart } = useCart();
@@ -98,7 +106,24 @@ const ShopProductList = ({ shopId, products: initialProducts }: ShopProductListP
     );
   }
   
-  if (!products.length) {
+  // Use demo products if no real products are available
+  const displayProducts = products.length ? products : 
+    demoProducts ? demoProducts.map(demo => ({
+      id: demo.id,
+      name: demo.name,
+      price: demo.price,
+      images: demo.images,
+      description: demo.description || "Demo product description",
+      category: "Demo",
+      shopId: shopId,
+      isHalalCertified: true,
+      inStock: true,
+      createdAt: new Date().toISOString(),
+      sellerId: "",
+      sellerName: "",
+    })) : [];
+  
+  if (!displayProducts.length) {
     return (
       <div className="text-center py-6 bg-gray-50 rounded-lg">
         <p className="text-gray-500">No products available from this shop yet</p>
@@ -135,7 +160,7 @@ const ShopProductList = ({ shopId, products: initialProducts }: ShopProductListP
       
       <div className="overflow-x-auto scrollbar-hide -mx-4 px-4" ref={scrollRef} onScroll={handleScroll}>
         <div className="flex gap-4 pb-4">
-          {products.map((product) => (
+          {displayProducts.map((product) => (
             <motion.div 
               key={product.id}
               className={`flex-shrink-0 bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all ${
