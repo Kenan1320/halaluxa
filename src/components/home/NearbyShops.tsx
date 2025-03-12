@@ -100,7 +100,7 @@ const NearbyShops = () => {
         <div className="flex space-x-2 py-1">
           <motion.button
             key="all-category"
-            className={`flex-shrink-0 py-1.5 px-3 rounded-full text-xs font-medium transition-colors ${
+            className={`flex-shrink-0 py-1.5 px-3 rounded-full text-sm font-medium transition-colors ${
               selectedCategory === 'All' 
                 ? 'bg-black text-white dark:bg-white dark:text-black' 
                 : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'
@@ -114,7 +114,7 @@ const NearbyShops = () => {
           {productCategories.slice(0, 8).map((category) => (
             <motion.button
               key={category}
-              className={`flex-shrink-0 py-1.5 px-3 rounded-full text-xs font-medium transition-colors flex items-center gap-1.5 ${
+              className={`flex-shrink-0 py-1.5 px-3 rounded-full text-sm font-medium transition-colors flex items-center gap-1.5 ${
                 selectedCategory === category 
                   ? 'bg-black text-white dark:bg-white dark:text-black' 
                   : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'
@@ -186,9 +186,9 @@ const NearbyShops = () => {
                   <Link
                     key={category}
                     to={`/browse?shopId=${shop.id}&category=${encodeURIComponent(category)}`}
-                    className="flex-shrink-0 py-1 px-2 rounded-full text-[10px] font-medium bg-gray-50 dark:bg-gray-800 flex items-center gap-1"
+                    className="flex-shrink-0 py-1 px-2 rounded-full text-xs font-medium bg-gray-50 dark:bg-gray-800 flex items-center gap-1"
                   >
-                    <div className="w-3 h-3">
+                    <div className="w-4 h-4">
                       {getCategoryIcon(category, "w-full h-full")}
                     </div>
                     {category}
@@ -201,6 +201,7 @@ const NearbyShops = () => {
           {/* Shop products in horizontal scroll with demo products if needed */}
           <ShopProductList 
             shopId={shop.id} 
+            products={[]}
             demoProducts={shop.productCount === 0 ? demoProducts : undefined}
           />
         </div>

@@ -69,9 +69,9 @@ export default function CategorySuggestions() {
   return (
     <div className="py-2">
       <div className="flex justify-between items-center mb-2">
-        <div className="inline-flex rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 text-xs"> {/* Smaller text */}
+        <div className="inline-flex rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 text-sm">
           <button
-            className={`px-3 py-1 text-xs font-medium ${
+            className={`px-3 py-1 text-sm font-medium ${
               activeTab === 'nearby'
                 ? 'bg-black text-white dark:bg-white dark:text-black'
                 : 'bg-white text-black dark:bg-gray-800 dark:text-white'
@@ -81,7 +81,7 @@ export default function CategorySuggestions() {
             Shop Nearby
           </button>
           <button
-            className={`px-3 py-1 text-xs font-medium ${
+            className={`px-3 py-1 text-sm font-medium ${
               activeTab === 'online'
                 ? 'bg-black text-white dark:bg-white dark:text-black'
                 : 'bg-white text-black dark:bg-gray-800 dark:text-white'
@@ -107,10 +107,10 @@ export default function CategorySuggestions() {
               to={category.link}
               className={`flex flex-col items-center gap-1 p-2 rounded-lg transition-all duration-300`}
             >
-              <div className="w-12 h-12 flex items-center justify-center">
-                {getCategoryIcon(category.name, "w-10 h-10")}
+              <div className="w-14 h-14 flex items-center justify-center">
+                {getCategoryIcon(category.name, "w-12 h-12")}
               </div>
-              <span className={`text-xs font-medium text-center mt-1 ${
+              <span className={`text-sm font-medium text-center mt-1 ${
                 mode === 'dark' ? 'text-white' : 'text-black'
               }`}>
                 {category.name}

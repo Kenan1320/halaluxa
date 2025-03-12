@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -74,20 +73,25 @@ const AddEditProductPage = () => {
   
   useEffect(() => {
     const loadProduct = async () => {
-      if (id) {
-        try {
-          const data = await getProductById(id);
-          if (data) {
-            setProduct(data);
+      try {
+        setIsLoading(true);
+        
+        // If we're editing an existing product
+        if (id) {
+          // Make sure to pass both the shopId and productId to the getProduct function
+          const product = await getProductById(id);
+          
+          if (product) {
+            setProduct(product);
             
             form.reset({
-              name: data.name,
-              description: data.description,
-              price: data.price,
-              category: data.category,
-              inStock: data.inStock,
-              isHalalCertified: data.isHalalCertified,
-              images: data.images,
+              name: product.name,
+              description: product.description,
+              price: product.price,
+              category: product.category,
+              inStock: product.inStock,
+              isHalalCertified: product.isHalalCertified,
+              images: product.images,
             });
           } else {
             toast({
@@ -97,15 +101,17 @@ const AddEditProductPage = () => {
             });
             navigate("/dashboard/products");
           }
-        } catch (error) {
-          console.error("Error loading product:", error);
-          toast({
-            title: "Error",
-            description: "Failed to load product",
-            variant: "destructive",
-          });
-          navigate("/dashboard/products");
         }
+      } catch (error) {
+        console.error("Error loading product:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load product",
+          variant: "destructive",
+        });
+        navigate("/dashboard/products");
+      } finally {
+        setIsLoading(false);
       }
     };
     
