@@ -39,7 +39,7 @@ export const mapShopToModel = (shop: Shop): ModelShop => {
     productCount: shop.product_count || 0,
     isVerified: shop.is_verified || false,
     category: shop.category || '',
-    logo: shop.logo_url || null,
+    logo: shop.logo_url || null, // Use logo_url as the source for logo
     coverImage: shop.cover_image || null,
     ownerId: shop.owner_id || '',
     latitude: shop.latitude || null,
@@ -67,9 +67,9 @@ export const getShopProducts = async (shopId: string): Promise<ShopProduct[]> =>
       description: item.description,
       category: item.category,
       images: item.images || [], 
-      sellerId: item.shop_id || '', // Use shop_id as seller_id
-      sellerName: 'Shop Owner',
-      rating: 0,
+      sellerId: item.seller_id || item.shop_id || '', // Use shop_id as seller_id if not available
+      sellerName: item.shop_name || 'Shop Owner',
+      rating: item.rating || 0,
       isHalalCertified: item.is_halal_certified || false
     }));
   } catch (error) {

@@ -1,25 +1,10 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { useTheme } from '@/context/ThemeContext';
 import { getCategoryIcon } from '../icons/CategoryIcons';
-
-// Add productCategories array
-export const productCategories = [
-  'Groceries', 
-  'Restaurants', 
-  'Halal Meat', 
-  'Coffee Shops',
-  'Online Shops', 
-  'Gifts', 
-  'Hoodies', 
-  'Books',
-  'Electronics',
-  'Fashion',
-  'Home',
-  'Toys'
-];
+import { getCategoriesByGroup, Category } from '@/services/categoryService';
 
 const TabItem = ({ isActive, onClick, icon, children }: {
   isActive: boolean;
@@ -29,12 +14,13 @@ const TabItem = ({ isActive, onClick, icon, children }: {
 }) => (
   <button
     onClick={onClick}
-    className={`flex-1 flex items-center justify-center gap-2 py-3 relative font-heading ${
+    className={`flex-1 flex items-center justify-center gap-2 py-3 relative ${
       isActive ? 'text-black dark:text-white font-extrabold' : 'text-gray-500 dark:text-gray-400'
     }`}
+    style={{ fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}
   >
     {icon}
-    <span className="text-xl font-heading font-bold">{children}</span>
+    <span className="text-base font-medium">{children}</span>
     {isActive && (
       <motion.div
         className="absolute bottom-0 left-0 right-0 h-0.5 bg-black dark:bg-white"
@@ -46,30 +32,44 @@ const TabItem = ({ isActive, onClick, icon, children }: {
 );
 
 const CategoryIcon = ({ category, onClick, isSelected }: { 
-  category: string; 
+  category: Category; 
   onClick: () => void;
   isSelected?: boolean;
 }) => (
   <div 
     onClick={onClick}
-    className="flex flex-col items-center space-y-2 min-w-fit cursor-pointer"
+    className="flex flex-col items-center space-y-2 min-w-[80px] cursor-pointer px-1"
   >
-    <div className="w-12 h-12 flex items-center justify-center">
-      {getCategoryIcon(category, `w-8 h-8 ${isSelected ? 'text-[#29866B]' : ''}`)}
+    <div className={`w-12 h-12 flex items-center justify-center rounded-full ${
+      isSelected ? 'bg-[#29866B]/10' : 'bg-gray-100 dark:bg-gray-800'
+    }`}>
+      {getCategoryIcon(category.name, `w-7 h-7 ${isSelected ? 'text-[#29866B]' : 'text-gray-600 dark:text-gray-300'}`)}
     </div>
-    <span className={`text-xs text-gray-600 dark:text-gray-300 whitespace-nowrap ${isSelected ? 'font-bold text-[#29866B] dark:text-[#5bbea7]' : ''}`}>
-      {category}
+    <span className={`text-xs text-center text-gray-600 dark:text-gray-300 whitespace-nowrap ${
+      isSelected ? 'font-bold text-[#29866B] dark:text-[#5bbea7]' : ''
+    }`}>
+      {category.name}
     </span>
   </div>
 );
 
 export default function CategorySuggestions() {
   const { mode } = useTheme();
-  const [activeTab, setActiveTab] = useState('nearby');
+  const [activeTab, setActiveTab] = useState<'nearby' | 'online'>('nearby');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [nearbyCategories, setNearbyCategories] = useState<Category[]>([]);
+  const [onlineCategories, setOnlineCategories] = useState<Category[]>([]);
   
-  const nearbyCategories = ['Groceries', 'Restaurants', 'Halal Meat', 'Coffee Shops'];
-  const onlineCategories = ['Online Shops', 'Gifts', 'Hoodies', 'Books'];
+  useEffect(() => {
+    const loadCategories = async () => {
+      const nearby = await getCategoriesByGroup('nearby');
+      const online = await getCategoriesByGroup('online');
+      setNearbyCategories(nearby);
+      setOnlineCategories(online);
+    };
+    
+    loadCategories();
+  }, []);
   
   return (
     <div className="py-4">
@@ -98,13 +98,13 @@ export default function CategorySuggestions() {
       
       {/* Categories scroll section */}
       <div className="overflow-x-auto scrollbar-none">
-        <div className="flex space-x-6 pb-4 min-w-max px-2">
+        <div className="flex space-x-4 pb-4 min-w-max px-2">
           {(activeTab === 'nearby' ? nearbyCategories : onlineCategories).map((category) => (
             <CategoryIcon 
-              key={category} 
+              key={category.id} 
               category={category}
-              isSelected={selectedCategory === category}
-              onClick={() => setSelectedCategory(selectedCategory === category ? null : category)}
+              isSelected={selectedCategory === category.id}
+              onClick={() => setSelectedCategory(selectedCategory === category.id ? null : category.id)}
             />
           ))}
         </div>

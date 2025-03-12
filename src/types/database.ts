@@ -39,6 +39,12 @@ export interface Shop {
   address?: string;
   // Adding the alias for logo to fix type issues
   logo?: string; // Alias for logo_url to maintain compatibility
+  // For product display mode
+  display_mode?: 'online' | 'local_pickup' | 'local_delivery';
+  pickup_options?: {
+    store: boolean;
+    curbside: boolean;
+  };
 }
 
 export interface Product {
@@ -59,6 +65,13 @@ export interface Product {
   stock?: number;
   seller_id?: string;
   rating?: number;
+  shop_name?: string;
+  // Product delivery options
+  delivery_mode?: 'online' | 'local_pickup' | 'local_delivery';
+  pickup_options?: {
+    store: boolean;
+    curbside: boolean;
+  };
   // Adding aliases to match model properties
   shopId?: string; // Alias for shop_id
   isHalalCertified?: boolean; // Alias for is_halal_certified

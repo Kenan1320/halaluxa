@@ -1,14 +1,14 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, Search, ShoppingCart, User, MapPin, Store, AlertCircle } from 'lucide-react';
+import { Menu, X, Search, ShoppingCart, User, MapPin, Store, AlertCircle, Home, Package, CreditCard, Settings, LogOut, Info, HelpCircle } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 import { useTheme } from '@/context/ThemeContext';
 import { useLocation as useLocationContext } from '@/context/LocationContext';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
 import { getShopById, getMainShop } from '@/services/shopService';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
@@ -22,7 +22,7 @@ const Navbar = () => {
   const isMobile = useIsMobile();
   const location = useLocation();
   const navigate = useNavigate();
-  const { isLoggedIn, user } = useAuth();
+  const { isLoggedIn, user, logout } = useAuth();
   const { cart } = useCart();
   const { isLocationEnabled, requestLocation, location: userLocation } = useLocationContext();
   const { toast } = useToast();
@@ -75,6 +75,17 @@ const Navbar = () => {
     return location.pathname === path;
   };
 
+  const menuItems = [
+    { icon: <Home size={20} />, label: 'Home', path: '/' },
+    { icon: <Store size={20} />, label: 'Shops', path: '/shops' },
+    { icon: <Search size={20} />, label: 'Browse', path: '/browse' },
+    { icon: <Package size={20} />, label: 'Select Your Shops', path: '/select-shops' },
+    ...(user?.role === 'business' ? [{ icon: <CreditCard size={20} />, label: 'Seller Dashboard', path: '/dashboard' }] : []),
+    { icon: <HelpCircle size={20} />, label: 'Help', path: '/help' },
+    { icon: <Info size={20} />, label: 'About', path: '/about' },
+    { icon: <Settings size={20} />, label: 'Settings', path: '/settings' },
+  ];
+
   return (
     <header 
       className={`fixed top-0 w-full z-50 transition-all duration-300 
@@ -84,10 +95,14 @@ const Navbar = () => {
       style={{ height: '70px' }}
     >
       <div className="container mx-auto px-4 h-full flex justify-between items-center">
-        {/* Menu Button */}
+        {/* Menu Button with modern styling */}
         <button
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className={`p-2 ${mode === 'dark' ? 'text-white' : 'text-[#2A866A]'}`}
+          className={`p-2 rounded-full ${
+            mode === 'dark' 
+              ? 'text-white hover:bg-gray-700' 
+              : 'text-[#2A866A] hover:bg-[#d5efe8]'
+          } transition-all duration-200`}
           aria-label="Toggle menu"
         >
           {mobileMenuOpen ? (
@@ -100,7 +115,10 @@ const Navbar = () => {
         {/* Logo - with advanced animation */}
         <div className="flex items-center ml-3 mr-auto">
           <Link to="/" className="flex items-center">
-            <span className={`text-lg font-serif font-bold ${mode === 'dark' ? 'text-white' : 'text-[#2A866A]'}`}>Haluna</span>
+            <span className={`text-lg font-serif font-bold ${mode === 'dark' ? 'text-white' : 'text-[#2A866A]'}`}
+                  style={{ fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}>
+              Haluna
+            </span>
             
             {/* Advanced animated logo design */}
             <div className="relative ml-1">
@@ -153,22 +171,22 @@ const Navbar = () => {
             <MapPin className="h-6 w-6" />
           </motion.button>
           
-          {/* Main Shop Button */}
+          {/* Main Shop Button - Modernized */}
           <motion.button 
             onClick={handleMainShopClick}
             className={`relative p-2 rounded-full ${
               mode === 'dark' 
                 ? 'text-white hover:bg-gray-700' 
                 : 'text-[#2A866A] hover:bg-[#d5efe8]'
-            } transition-colors`}
+            } transition-colors shadow-sm`}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
             {mainShop ? (
               <>
-                {mainShop.logo ? (
-                  <div className="w-6 h-6 rounded-full overflow-hidden">
-                    <img src={mainShop.logo} alt={mainShop.name} className="w-full h-full object-cover" />
+                {mainShop.logo_url ? (
+                  <div className="w-6 h-6 rounded-full overflow-hidden border-2 border-[#2A866A]">
+                    <img src={mainShop.logo_url} alt={mainShop.name} className="w-full h-full object-cover" />
                   </div>
                 ) : (
                   <Store className="h-6 w-6" />
@@ -202,7 +220,7 @@ const Navbar = () => {
             )}
           </motion.button>
           
-          {/* Select Shops Button */}
+          {/* Select Shops Button - Modernized */}
           <motion.div
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -213,38 +231,38 @@ const Navbar = () => {
                 mode === 'dark' 
                   ? 'text-white hover:bg-gray-700' 
                   : 'text-[#2A866A] hover:bg-[#d5efe8]'
-              } transition-colors block`}
+              } transition-colors block shadow-sm`}
             >
               <Store className="h-6 w-6" />
             </Link>
           </motion.div>
           
-          {/* Cart Button */}
+          {/* Cart Button - Modernized */}
           <motion.div
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
             <Link 
               to="/cart" 
-              className="relative p-2 rounded-lg bg-[#FF7A45] text-white block"
+              className="relative p-2 rounded-lg bg-[#FF7A45] text-white block shadow-sm"
             >
               <ShoppingCart className="h-6 w-6" />
               {cart.items.length > 0 && (
-                <span className="absolute -top-2 -right-2 bg-[#2A866A] text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                <span className="absolute -top-2 -right-2 bg-[#2A866A] text-white text-xs rounded-full h-5 w-5 flex items-center justify-center shadow-sm">
                   {cart.items.length}
                 </span>
               )}
             </Link>
           </motion.div>
           
-          {/* User Profile */}
+          {/* User Profile - Modernized */}
           <motion.div
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
             <Link
               to={isLoggedIn ? (user?.role === 'business' ? '/dashboard' : '/profile') : '/login'}
-              className="p-2 rounded-full bg-[#2A866A] text-white block"
+              className="p-2 rounded-full bg-[#2A866A] text-white block shadow-sm"
             >
               <User className="h-6 w-6" />
             </Link>
@@ -252,125 +270,107 @@ const Navbar = () => {
         </div>
       </div>
       
-      {/* Mobile menu */}
-      {mobileMenuOpen && (
-        <div className={`container mx-auto px-4 py-4 ${
-          mode === 'dark' 
-            ? 'bg-[#1C2526] border-t border-gray-800' 
-            : 'bg-white border-t border-gray-100'
-        }`}>
-          <div className="md:hidden mb-4">
-            <div className="relative w-full">
-              <input
-                type="text"
-                placeholder="Search your shop and products"
-                className={`w-full py-2 px-4 pl-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2A866A]/30 ${
-                  mode === 'dark'
-                    ? 'bg-gray-800 border border-gray-700 text-white placeholder:text-gray-400'
-                    : 'bg-[#F5F5F5] border border-[#E0E0E0]'
-                }`}
-              />
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-            </div>
-          </div>
-          
-          <nav className="grid grid-cols-1 gap-3">
-            <Link
-              to="/"
-              className={`flex items-center gap-3 p-3 rounded-lg transition ${
-                mode === 'dark'
-                  ? (isActive('/') 
-                    ? 'bg-[#2A866A]/20 text-white' 
-                    : 'text-gray-300 hover:bg-gray-800')
-                  : (isActive('/') 
-                    ? 'bg-[#E4F5F0] text-[#2A866A]' 
-                    : 'text-gray-700 hover:bg-gray-100')
-              }`}
-              onClick={() => setMobileMenuOpen(false)}
+      {/* Mobile menu - Redesigned to match Amazon mobile menu style */}
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <motion.div 
+            className="fixed inset-0 z-50 bg-black bg-opacity-50"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setMobileMenuOpen(false)}
+          >
+            <motion.div 
+              className={`absolute left-0 top-[70px] bottom-0 w-[280px] p-4 ${
+                mode === 'dark' 
+                  ? 'bg-[#1C2526] text-white border-r border-gray-800' 
+                  : 'bg-white border-r border-gray-100'
+              } overflow-y-auto`}
+              initial={{ x: -280 }}
+              animate={{ x: 0 }}
+              exit={{ x: -280 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              onClick={(e) => e.stopPropagation()}
             >
-              <span>Home</span>
-            </Link>
-            <Link
-              to="/shops"
-              className={`flex items-center gap-3 p-3 rounded-lg transition ${
-                mode === 'dark'
-                  ? (isActive('/shops') 
-                    ? 'bg-[#2A866A]/20 text-white' 
-                    : 'text-gray-300 hover:bg-gray-800')
-                  : (isActive('/shops') 
-                    ? 'bg-[#E4F5F0] text-[#2A866A]' 
-                    : 'text-gray-700 hover:bg-gray-100')
-              }`}
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              <span>Shops</span>
-            </Link>
-            <Link
-              to="/browse"
-              className={`flex items-center gap-3 p-3 rounded-lg transition ${
-                mode === 'dark'
-                  ? (isActive('/browse') 
-                    ? 'bg-[#2A866A]/20 text-white' 
-                    : 'text-gray-300 hover:bg-gray-800')
-                  : (isActive('/browse') 
-                    ? 'bg-[#E4F5F0] text-[#2A866A]' 
-                    : 'text-gray-700 hover:bg-gray-100')
-              }`}
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              <span>Browse</span>
-            </Link>
-            {/* Select Shops link */}
-            <Link
-              to="/select-shops"
-              className={`flex items-center gap-3 p-3 rounded-lg transition ${
-                mode === 'dark'
-                  ? (isActive('/select-shops') 
-                    ? 'bg-[#2A866A]/20 text-white' 
-                    : 'text-gray-300 hover:bg-gray-800')
-                  : (isActive('/select-shops') 
-                    ? 'bg-[#E4F5F0] text-[#2A866A]' 
-                    : 'text-gray-700 hover:bg-gray-100')
-              }`}
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              <span>Select Your Shops</span>
-            </Link>
-            {user?.role === 'business' && (
-              <Link
-                to="/dashboard"
-                className={`flex items-center gap-3 p-3 rounded-lg transition ${
-                  mode === 'dark'
-                    ? (isActive('/dashboard') 
-                      ? 'bg-[#2A866A]/20 text-white' 
-                      : 'text-gray-300 hover:bg-gray-800')
-                    : (isActive('/dashboard') 
-                      ? 'bg-[#E4F5F0] text-[#2A866A]' 
-                      : 'text-gray-700 hover:bg-gray-100')
-                }`}
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <span>Seller Dashboard</span>
-              </Link>
-            )}
-            <Link
-              to={isLoggedIn ? '/profile' : '/login'}
-              className={`flex items-center gap-3 p-3 rounded-lg transition ${
-                mode === 'dark'
-                  ? (isActive('/profile') || isActive('/login') 
-                    ? 'bg-[#2A866A]/20 text-white' 
-                    : 'text-gray-300 hover:bg-gray-800')
-                  : (isActive('/profile') || isActive('/login') 
-                    ? 'bg-[#E4F5F0] text-[#2A866A]' 
-                    : 'text-gray-700 hover:bg-gray-100')
-              }`}
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              <span>{isLoggedIn ? 'My Account' : 'Sign In'}</span>
-            </Link>
-          </nav>
-        </div>
-      )}
+              {/* User info section */}
+              <div className={`p-4 mb-4 rounded-lg ${
+                mode === 'dark' ? 'bg-gray-800' : 'bg-[#E4F5F0]'
+              }`}>
+                <div className="flex items-center gap-3">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                    mode === 'dark' ? 'bg-gray-700' : 'bg-[#2A866A]'
+                  } text-white`}>
+                    {isLoggedIn && user ? user.name.charAt(0).toUpperCase() : <User size={20} />}
+                  </div>
+                  <div>
+                    <p className="font-medium">
+                      {isLoggedIn && user ? user.name : 'Welcome'}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      {isLoggedIn && user ? user.email : 'Sign in for the best experience'}
+                    </p>
+                  </div>
+                </div>
+                
+                {!isLoggedIn && (
+                  <Link 
+                    to="/login"
+                    className="mt-3 block w-full py-2 bg-[#2A866A] text-white text-center rounded-full text-sm font-medium"
+                  >
+                    Sign In
+                  </Link>
+                )}
+              </div>
+              
+              {/* Menu navigation */}
+              <div className="space-y-1">
+                {menuItems.map((item) => (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    className={`flex items-center gap-4 p-3 rounded-lg transition ${
+                      mode === 'dark'
+                        ? (isActive(item.path) 
+                          ? 'bg-[#2A866A]/20 text-white' 
+                          : 'text-gray-300 hover:bg-gray-800')
+                        : (isActive(item.path) 
+                          ? 'bg-[#E4F5F0] text-[#2A866A]' 
+                          : 'text-gray-700 hover:bg-gray-100')
+                    }`}
+                  >
+                    {item.icon}
+                    <span className="text-sm">{item.label}</span>
+                  </Link>
+                ))}
+                
+                {isLoggedIn && (
+                  <button
+                    onClick={() => {
+                      logout();
+                      setMobileMenuOpen(false);
+                    }}
+                    className={`flex items-center gap-4 p-3 rounded-lg transition w-full text-left ${
+                      mode === 'dark'
+                        ? 'text-gray-300 hover:bg-gray-800'
+                        : 'text-gray-700 hover:bg-gray-100'
+                    }`}
+                  >
+                    <LogOut size={20} />
+                    <span className="text-sm">Sign Out</span>
+                  </button>
+                )}
+              </div>
+              
+              {/* App version */}
+              <div className="mt-8 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <p className="text-xs text-gray-500 text-center">
+                  Version 1.0.0
+                </p>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </header>
   );
 };

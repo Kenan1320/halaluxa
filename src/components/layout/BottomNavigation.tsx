@@ -111,18 +111,23 @@ const BottomNavigation = () => {
                     transition={{ duration: 0.2 }}
                   >
                     <div className="relative">
-                      <div className={active 
-                        ? (mode === 'dark' ? 'text-white' : 'text-black')
-                        : (mode === 'dark' ? 'text-gray-500' : 'text-gray-400')
-                      }>
-                        {item.icon}
+                      <div className={`p-1 rounded-full ${active 
+                        ? (mode === 'dark' ? 'bg-gray-800' : 'bg-gray-100') 
+                        : ''
+                      }`}>
+                        <div className={active 
+                          ? (mode === 'dark' ? 'text-white' : 'text-black')
+                          : (mode === 'dark' ? 'text-gray-500' : 'text-gray-400')
+                        }>
+                          {item.icon}
+                        </div>
                       </div>
                       
                       {item.badge && (
                         <motion.span 
                           initial={{ scale: 0 }}
                           animate={{ scale: 1 }}
-                          className="absolute -top-1.5 -right-1.5 flex items-center justify-center w-5 h-5 bg-black dark:bg-white text-white dark:text-black text-[10px] rounded-full"
+                          className="absolute -top-1.5 -right-1.5 flex items-center justify-center w-5 h-5 bg-[#FF7A45] text-white text-[10px] rounded-full shadow-sm"
                         >
                           {item.badge > 9 ? '9+' : item.badge}
                         </motion.span>

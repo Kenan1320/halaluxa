@@ -1,3 +1,4 @@
+
 import { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useLocation } from '@/context/LocationContext';
@@ -10,6 +11,7 @@ import NearbyShops from '@/components/home/NearbyShops';
 import CategorySuggestions from '@/components/home/CategorySuggestions';
 import { motion, useAnimationControls } from 'framer-motion';
 import { getShopById, subscribeToShops, Shop } from '@/services/shopService';
+import { useTheme } from '@/context/ThemeContext';
 
 const Index = () => {
   const { isLoggedIn, user } = useAuth();
@@ -20,6 +22,7 @@ const Index = () => {
   const [activeShopIndex, setActiveShopIndex] = useState(0);
   const shopScrollRef = useRef<HTMLDivElement>(null);
   const [activeTab, setActiveTab] = useState('online');
+  const { mode } = useTheme();
 
   // Scroll to top on page load
   useEffect(() => {
@@ -58,7 +61,7 @@ const Index = () => {
       // use the first 5 as the default selection
       if (shops.length > 0 && selectedShops.length === 0) {
         // Sort by product count (popularity) first
-        const sortedShops = [...shops].sort((a, b) => (b.productCount || 0) - (a.productCount || 0));
+        const sortedShops = [...shops].sort((a, b) => (b.product_count || 0) - (a.product_count || 0));
         setSelectedShops(sortedShops.slice(0, 5));
         
         // Also update localStorage
@@ -122,6 +125,18 @@ const Index = () => {
     return "Good evening";
   }, []);
 
+  // Heading style for section titles
+  const SectionHeading = ({ children }: { children: React.ReactNode }) => (
+    <h2 className={`text-sm font-medium tracking-wide ${
+      mode === 'dark'
+        ? 'text-white bg-gray-800/90 dark:border dark:border-gray-700'
+        : 'text-gray-700 bg-gray-100'
+    } rounded-full px-4 py-1 inline-block`}
+    style={{ fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}>
+      {children}
+    </h2>
+  );
+
   return (
     <div className="min-h-screen pt-16 pb-20 bg-white dark:bg-gray-900">
       {/* Top container with lighter mint background */}
@@ -155,12 +170,10 @@ const Index = () => {
         {/* Selected/Featured Shops Section - Always visible */}
         <section className="mt-3 mb-5">
           <div className="flex justify-between items-center mb-2">
-            <div className="bg-gray-100 rounded-full px-4 py-1">
-              <h2 className="text-lg font-semibold text-gray-800 dark:text-white">Your Shops</h2>
-            </div>
+            <SectionHeading>Your Shops</SectionHeading>
             <Link 
               to="/select-shops" 
-              className="bg-gray-100 hover:bg-gray-200 transition-colors duration-200 rounded-full px-4 py-1 text-sm text-gray-800"
+              className="bg-gray-100 hover:bg-gray-200 transition-colors duration-200 rounded-full px-4 py-1 text-xs text-gray-800 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700 dark:border dark:border-gray-700"
             >
               Edit Selection
             </Link>
@@ -204,8 +217,8 @@ const Index = () => {
                             whileHover={{ scale: 1.1, boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}
                             transition={{ type: "spring", stiffness: 400, damping: 10 }}
                           >
-                            {shop.logo ? (
-                              <img src={shop.logo} alt={shop.name} className="w-10 h-10 object-contain" />
+                            {shop.logo_url ? (
+                              <img src={shop.logo_url} alt={shop.name} className="w-10 h-10 object-contain" />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center bg-[#F9F5EB] text-[#29866B] font-semibold">
                                 {shop.name.charAt(0)}
@@ -269,8 +282,8 @@ const Index = () => {
                             whileHover={{ scale: 1.1, boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}
                             transition={{ type: "spring", stiffness: 400, damping: 10 }}
                           >
-                            {shop.logo ? (
-                              <img src={shop.logo} alt={shop.name} className="w-10 h-10 object-contain" />
+                            {shop.logo_url ? (
+                              <img src={shop.logo_url} alt={shop.name} className="w-10 h-10 object-contain" />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center bg-[#F9F5EB] text-[#29866B] font-semibold">
                                 {shop.name.charAt(0)}
@@ -314,24 +327,16 @@ const Index = () => {
         
         {/* Nearby Shops Section */}
         <section className="mt-1">
-          {activeTab === 'online' ? (
-            <h2 className="text-lg font-semibold mb-2 bg-gray-100 rounded-full px-4 py-1 inline-block text-gray-800 dark:text-white">
-              Shops
-            </h2>
-          ) : (
-            <h2 className="text-lg font-semibold mb-2 bg-gray-100 rounded-full px-4 py-1 inline-block text-gray-800 dark:text-white">
-              Nearby Shops
-            </h2>
-          )}
+          <SectionHeading>
+            {activeTab === 'online' ? 'Shops' : 'Nearby Shops'}
+          </SectionHeading>
           
           <NearbyShops />
         </section>
         
         {/* Featured Products Section */}
         <section className="mt-4">
-          <h2 className="text-lg font-semibold mb-2 bg-gray-100 rounded-full px-4 py-1 inline-block text-gray-800 dark:text-white">
-            Featured Products
-          </h2>
+          <SectionHeading>Featured Products</SectionHeading>
           <ProductGrid />
         </section>
       </div>

@@ -1,5 +1,5 @@
 
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&family=SF+Pro+Display:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -48,41 +48,41 @@
   }
 
   .dark {
-    --background: 0 0% 10%;
+    --background: 210 10% 6%;
     --foreground: 0 0% 95%;
 
-    --card: 0 0% 7%;
+    --card: 210 10% 5%;
     --card-foreground: 0 0% 95%;
 
-    --popover: 0 0% 7%;
+    --popover: 210 10% 5%;
     --popover-foreground: 0 0% 95%;
 
     --primary: 0 0% 100%;
     --primary-foreground: 0 0% 0%;
 
-    --secondary: 0 0% 15%;
+    --secondary: 210 10% 12%;
     --secondary-foreground: 0 0% 98%;
 
-    --muted: 0 0% 15%;
+    --muted: 210 10% 12%;
     --muted-foreground: 0 0% 65%;
 
-    --accent: 0 0% 20%;
+    --accent: 210 10% 15%;
     --accent-foreground: 0 0% 98%;
 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 0 0% 15.9%;
-    --input: 0 0% 15.9%;
+    --border: 210 10% 15%;
+    --input: 210 10% 15%;
     --ring: 0 0% 100%;
     
-    --sidebar-background: 0 0% 8%;
+    --sidebar-background: 210 10% 8%;
     --sidebar-foreground: 0 0% 95.9%;
     --sidebar-primary: 0 0% 100%;
     --sidebar-primary-foreground: 0 0% 0%;
-    --sidebar-accent: 0 0% 15.9%;
+    --sidebar-accent: 210 10% 15.9%;
     --sidebar-accent-foreground: 0 0% 95.9%;
-    --sidebar-border: 0 0% 15.9%;
+    --sidebar-border: 210 10% 15.9%;
     --sidebar-ring: 0 0% 100%;
   }
 }
@@ -113,7 +113,7 @@
 
 @layer components {
   .glass-card {
-    @apply backdrop-blur-md bg-white/70 dark:bg-black/30 border border-white/20 shadow-sm;
+    @apply backdrop-blur-md bg-white/70 dark:bg-[#1C2526]/70 border border-white/20 shadow-sm;
   }
   
   .hover-scale {
@@ -144,7 +144,7 @@
 
 /* Dark mode styling */
 .dark .dark-card {
-  @apply bg-[#121212] border border-gray-800;
+  @apply bg-[#1C2526] border border-gray-800;
 }
 
 .dark .dark-button {
@@ -188,7 +188,7 @@
 }
 
 .uber-card {
-  @apply rounded-xl bg-white dark:bg-gray-800 shadow-sm hover:shadow-md transition-all duration-300;
+  @apply rounded-xl bg-white dark:bg-[#1C2526] shadow-sm hover:shadow-md transition-all duration-300;
 }
 
 .uber-button {
@@ -196,5 +196,23 @@
 }
 
 .uber-input {
-  @apply rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2 focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent;
+  @apply rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#1C2526] px-4 py-2 focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent;
+}
+
+/* SF Pro Display inspired font */
+.sf-pro {
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-feature-settings: 'kern' 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Uber-inspired headings */
+.uber-heading {
+  @apply sf-pro text-base font-semibold tracking-tight;
+}
+
+/* Uber-inspired section headings */
+.section-label {
+  @apply sf-pro text-sm font-medium bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-white rounded-full px-4 py-1 inline-block;
 }
