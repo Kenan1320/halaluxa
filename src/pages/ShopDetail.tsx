@@ -12,7 +12,7 @@ import { ShopHeader } from '@/components/shop/ShopHeader';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { ShoppingBag, Phone, Mail, MapPin, Navigation, Star, Calendar, Clock, Info } from 'lucide-react';
-import { ShopDetails } from '@/types/shop';
+import { ShopDetails, ShopCategory } from '@/types/shop';
 
 const ShopDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -123,29 +123,62 @@ const ShopDetail: React.FC = () => {
     };
   };
   
+  // Create product categories for the shop based on the products
+  const shopCategories: ShopCategory[] = [];
+  const categoryMap = new Map<string, Product[]>();
+  
+  products.forEach(product => {
+    const category = product.category;
+    if (!categoryMap.has(category)) {
+      categoryMap.set(category, []);
+    }
+    categoryMap.get(category)?.push(convertToProduct(product));
+  });
+  
+  categoryMap.forEach((products, name) => {
+    shopCategories.push({
+      id: name.toLowerCase().replace(/\s+/g, '-'),
+      name,
+      products
+    });
+  });
+  
+  // If no products or categories, add some default categories
+  if (shopCategories.length === 0) {
+    const defaultCategories = ['Popular Items', 'Featured', 'New Arrivals'];
+    defaultCategories.forEach((name, index) => {
+      shopCategories.push({
+        id: `default-${index}`,
+        name,
+        products: []
+      });
+    });
+  }
+  
   // Convert ModelShop to ShopDetails for rendering
   const shopDetails: ShopDetails = {
     id: shop.id,
     name: shop.name,
     description: shop.description,
     location: shop.location,
-    categories: [],
+    categories: shopCategories,
     coverImage: shop.coverImage || undefined,
     logo: shop.logo || undefined,
     deliveryInfo: {
       isDeliveryAvailable: true,
       isPickupAvailable: true,
       deliveryFee: 2.99,
-      estimatedTime: '30-45 min'
+      estimatedTime: '30-45 min',
+      minOrder: 10
     },
     workingHours: {
       open: '9:00 AM',
       close: '9:00 PM'
     },
-    isGroupOrderEnabled: false,
+    isGroupOrderEnabled: true,
     rating: {
       average: shop.rating,
-      count: 0
+      count: 25
     },
     productCount: shop.productCount,
     isVerified: shop.isVerified,
@@ -158,7 +191,7 @@ const ShopDetail: React.FC = () => {
   
   return (
     <div className="container mx-auto px-4 py-6">
-      <ShopHeader shop={shop} />
+      <ShopHeader shop={shopDetails} />
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8">
         <div className="lg:col-span-2">

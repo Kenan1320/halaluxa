@@ -3,13 +3,24 @@ import { useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { getCategoryIcon } from '../icons/CategoryIcons';
-import { productCategories } from '@/models/product';
 
-// Convert the categories array to a format with ids
-const categories = productCategories.map((name, index) => ({
-  id: index + 1,
-  name,
-}));
+// Define categories array without the showcase images
+const categories = [
+  { id: 1, name: 'Restaurants' },
+  { id: 2, name: 'Groceries' },
+  { id: 3, name: 'Halal Meat' },
+  { id: 4, name: 'Books' },
+  { id: 5, name: 'Furniture' },
+  { id: 6, name: 'Modest Clothing' },
+  { id: 7, name: 'Hijab' },
+  { id: 8, name: 'Thobes' },
+  { id: 9, name: 'Abaya' },
+  { id: 10, name: 'Gifts' },
+  { id: 11, name: 'Decorations' },
+  { id: 12, name: 'Arabic Language' },
+  { id: 13, name: 'Arabic Calligraphy' },
+  { id: 14, name: 'Online Shops' }
+];
 
 const CategoryScroll = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -69,14 +80,14 @@ const CategoryScroll = () => {
     <div className="relative w-full my-1">
       <div
         ref={scrollRef}
-        className="flex overflow-x-auto scrollbar-hide py-1 space-x-3"
+        className="flex overflow-x-auto scrollbar-hide py-1 space-x-4"
       >
         {categories.map((category) => (
           <motion.button
             key={category.id}
-            className="flex-shrink-0 flex flex-col items-center justify-center bg-white dark:bg-gray-800 rounded-lg shadow-sm p-1 border border-gray-100 dark:border-gray-700"
-            style={{ minWidth: '62px', height: '62px' }}
-            whileHover={{ scale: 1.05, backgroundColor: '#F8F8F8' }}
+            className="flex-shrink-0 flex flex-col items-center justify-center p-1"
+            style={{ minWidth: '55px' }}
+            whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => handleCategoryClick(category.name)}
           >

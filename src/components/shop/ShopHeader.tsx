@@ -1,12 +1,12 @@
 
-import { useState } from 'react';
-import { ArrowLeft, Heart, Search, MoreHorizontal, Clock, Users, Menu } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { ArrowLeft, Heart, Search, MoreHorizontal, Clock, Users, Menu, X } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ShopDetails } from '@/types/shop';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Toggle } from '@/components/ui/toggle';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '@/context/ThemeContext';
 
 interface ShopHeaderProps {
@@ -17,8 +17,39 @@ export function ShopHeader({ shop }: ShopHeaderProps) {
   const navigate = useNavigate();
   const [deliveryMode, setDeliveryMode] = useState<'delivery' | 'pickup'>('delivery');
   const [menuOpen, setMenuOpen] = useState(false);
+  const [categoryMenuOpen, setCategoryMenuOpen] = useState(false);
   const { mode } = useTheme();
   const isDark = mode === 'dark';
+  const menuRef = useRef<HTMLDivElement>(null);
+  const categoryMenuRef = useRef<HTMLDivElement>(null);
+
+  // Close menus when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setMenuOpen(false);
+      }
+      if (categoryMenuRef.current && !categoryMenuRef.current.contains(event.target as Node)) {
+        setCategoryMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  // Sample categories for this shop
+  const shopCategories = shop.categories && shop.categories.length > 0
+    ? shop.categories
+    : [
+        { id: '1', name: 'Popular Items', products: [] },
+        { id: '2', name: 'Appetizers', products: [] },
+        { id: '3', name: 'Main Courses', products: [] },
+        { id: '4', name: 'Desserts', products: [] },
+        { id: '5', name: 'Beverages', products: [] },
+      ];
 
   return (
     <div className={`sticky top-0 z-50 ${isDark ? 'bg-[#1C2526]' : 'bg-background'}`}>
@@ -51,7 +82,12 @@ export function ShopHeader({ shop }: ShopHeaderProps) {
 
         {/* Menu Button for Category Navigation */}
         <div className="absolute left-4 top-1/2 transform -translate-y-1/2">
-          <Button variant="outline" size="icon" className="rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/20" onClick={() => {}}>
+          <Button 
+            variant="outline" 
+            size="icon" 
+            className="rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/20" 
+            onClick={() => setCategoryMenuOpen(!categoryMenuOpen)}
+          >
             <Menu className="h-5 w-5 text-white" />
           </Button>
         </div>
@@ -159,38 +195,97 @@ export function ShopHeader({ shop }: ShopHeaderProps) {
         </div>
       </div>
       
+      {/* Uber-inspired category menu sidebar (conditionally rendered) */}
+      <AnimatePresence>
+        {categoryMenuOpen && (
+          <>
+            {/* Backdrop */}
+            <motion.div 
+              className="fixed inset-0 bg-black/60 z-50"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setCategoryMenuOpen(false)}
+            />
+            
+            {/* Sidebar */}
+            <motion.div 
+              ref={categoryMenuRef}
+              className={`fixed left-0 top-0 h-full w-[280px] ${
+                isDark ? 'bg-[#1C2526]' : 'bg-white'
+              } z-50 shadow-xl overflow-y-auto`}
+              initial={{ x: -280 }}
+              animate={{ x: 0 }}
+              exit={{ x: -280 }}
+              transition={{ type: 'spring', damping: 25 }}
+            >
+              <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-800">
+                <button 
+                  onClick={() => setCategoryMenuOpen(false)} 
+                  className={`p-2 rounded-full ${isDark ? 'text-white' : 'text-black'}`}
+                >
+                  <X className="h-5 w-5" />
+                </button>
+                <h2 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-black'}`}>
+                  Categories
+                </h2>
+                <div className="w-9"></div> {/* Spacer for alignment */}
+              </div>
+              
+              <div className="py-2">
+                {shopCategories.map((category) => (
+                  <motion.a
+                    key={category.id}
+                    href={`#${category.name.toLowerCase().replace(/\s+/g, '-')}`}
+                    className={`block px-6 py-3 ${isDark ? 'text-white hover:bg-gray-800' : 'text-black hover:bg-gray-100'}`}
+                    whileTap={{ backgroundColor: isDark ? '#333' : '#f0f0f0' }}
+                    onClick={() => setCategoryMenuOpen(false)}
+                  >
+                    {category.name}
+                  </motion.a>
+                ))}
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+      
       {/* More options menu (conditionally rendered) */}
-      {menuOpen && (
-        <motion.div 
-          className={`absolute right-0 top-16 shadow-lg rounded-lg overflow-hidden z-50 w-64 ${
-            isDark ? 'bg-gray-800 border border-gray-700' : 'bg-card'
-          }`}
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.2 }}
-        >
-          <ul className="py-2">
-            <li className={`px-4 py-3 flex items-center gap-3 cursor-pointer transition-colors ${
-              isDark ? 'hover:bg-gray-700' : 'hover:bg-secondary/50'
-            }`}>
-              <Users className="h-5 w-5 text-primary" />
-              <span className={isDark ? 'text-white' : ''}>Start group order</span>
-            </li>
-            <li className={`px-4 py-3 flex items-center gap-3 cursor-pointer transition-colors ${
-              isDark ? 'hover:bg-gray-700' : 'hover:bg-secondary/50'
-            }`}>
-              <Heart className="h-5 w-5 text-primary" />
-              <span className={isDark ? 'text-white' : ''}>Add to favorites</span>
-            </li>
-            <li className={`px-4 py-3 flex items-center gap-3 cursor-pointer transition-colors border-t ${
-              isDark ? 'border-gray-700 hover:bg-gray-700' : 'hover:bg-secondary/50'
-            }`}>
-              <span className="h-5 w-5 flex items-center justify-center text-primary">ℹ️</span>
-              <span className={isDark ? 'text-white' : ''}>Shop info</span>
-            </li>
-          </ul>
-        </motion.div>
-      )}
+      <AnimatePresence>
+        {menuOpen && (
+          <motion.div 
+            ref={menuRef}
+            className={`absolute right-0 top-16 shadow-lg rounded-lg overflow-hidden z-50 w-64 ${
+              isDark ? 'bg-gray-800 border border-gray-700' : 'bg-card'
+            }`}
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
+          >
+            <ul className="py-2">
+              <li className={`px-4 py-3 flex items-center gap-3 cursor-pointer transition-colors ${
+                isDark ? 'hover:bg-gray-700' : 'hover:bg-secondary/50'
+              }`}>
+                <Users className="h-5 w-5 text-primary" />
+                <span className={isDark ? 'text-white' : ''}>Start group order</span>
+              </li>
+              <li className={`px-4 py-3 flex items-center gap-3 cursor-pointer transition-colors ${
+                isDark ? 'hover:bg-gray-700' : 'hover:bg-secondary/50'
+              }`}>
+                <Heart className="h-5 w-5 text-primary" />
+                <span className={isDark ? 'text-white' : ''}>Add to favorites</span>
+              </li>
+              <li className={`px-4 py-3 flex items-center gap-3 cursor-pointer transition-colors border-t ${
+                isDark ? 'border-gray-700 hover:bg-gray-700' : 'hover:bg-secondary/50'
+              }`}>
+                <span className="h-5 w-5 flex items-center justify-center text-primary">ℹ️</span>
+                <span className={isDark ? 'text-white' : ''}>Shop info</span>
+              </li>
+            </ul>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

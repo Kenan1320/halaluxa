@@ -17,7 +17,7 @@ const localCategories = [
     link: '/browse?category=Restaurants',
   },
   {
-    id: 'halal-items',
+    id: 'halal-meat',
     name: 'Halal Meat',
     link: '/browse?category=Halal%20Meat',
   }
@@ -25,19 +25,19 @@ const localCategories = [
 
 const onlineCategories = [
   {
-    id: 'online-shops',
-    name: 'Online Shops',
-    link: '/browse?category=Online%20Shops',
-  },
-  {
-    id: 'clothing',
+    id: 'modest-clothing',
     name: 'Modest Clothing',
     link: '/browse?category=Modest%20Clothing',
   },
   {
-    id: 'learning',
+    id: 'books',
     name: 'Books',
     link: '/browse?category=Books',
+  },
+  {
+    id: 'furniture',
+    name: 'Furniture',
+    link: '/browse?category=Furniture',
   }
 ];
 
@@ -85,15 +85,12 @@ export default function CategorySuggestions() {
           >
             <Link 
               to={category.link}
-              className={`flex flex-col items-center gap-2 p-4 rounded-xl transition-all duration-300
-                ${mode === 'dark' 
-                  ? 'bg-gray-800 hover:bg-gray-700 shadow-lg' 
-                  : 'bg-white hover:shadow-md shadow-sm'}`}
+              className={`flex flex-col items-center gap-1 p-3 rounded-lg transition-all duration-300`}
             >
-              <div className="w-12 h-12 rounded-full flex items-center justify-center">
+              <div className="w-12 h-12 flex items-center justify-center">
                 {getCategoryIcon(category.name, "w-10 h-10")}
               </div>
-              <span className={`text-sm font-medium text-center ${
+              <span className={`text-xs font-medium text-center mt-1 ${
                 mode === 'dark' ? 'text-white' : 'text-black'
               }`}>
                 {category.name}

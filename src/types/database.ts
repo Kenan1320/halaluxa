@@ -1,18 +1,17 @@
-
 import { Json } from '@/integrations/supabase/types';
 
 export interface Profile {
-  address: string;
-  avatar_url: string;
-  city: string;
-  created_at: string;
-  email: string;
   id: string;
-  name: string;
-  phone: string;
-  role: string;
-  state: string;
+  created_at: string;
   updated_at: string;
+  name: string;
+  email: string;
+  avatar_url: string;
+  role: string;
+  phone: string;
+  address: string;
+  city: string;
+  state: string;
   zip: string;
   shop_name?: string;
   shop_description?: string;
@@ -26,12 +25,12 @@ export interface Shop {
   name: string;
   description: string;
   location: string;
-  rating?: number;
-  productCount?: number;
-  isVerified?: boolean;
   category?: string;
   logo?: string;
   coverImage?: string;
+  rating?: number;
+  productCount?: number;
+  isVerified?: boolean;
   ownerId?: string;
   latitude?: number | null;
   longitude?: number | null;

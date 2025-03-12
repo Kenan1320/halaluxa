@@ -1,296 +1,271 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { Product } from '@/models/product';
+import type { Json } from '@/integrations/supabase/types';
 
-// Helper function to safely handle JSON conversion
-const safeJsonParse = (data: any): any => {
-  if (typeof data === 'string') {
-    try {
-      return JSON.parse(data);
-    } catch (e) {
-      return {};
-    }
-  }
-  return data || {};
-};
-
-// Custom mapper for Supabase data to our model
-const mapDbProductToModel = (data: any): Product => {
+// Helper function to convert DB columns to Product model
+const convertToProduct = (product: any): Product => {
   return {
-    id: data.id,
-    name: data.name,
-    description: data.description,
-    price: data.price,
-    inStock: data.stock > 0,
-    category: data.category,
-    images: data.images || [],
-    shopId: data.shop_id,
-    isHalalCertified: data.is_halal_certified || false,
-    createdAt: data.created_at,
-    // Additional fields
-    sellerId: data.business_owner_id,
-    sellerName: data.business_owner_name,
-    rating: data.rating,
-    details: safeJsonParse(data.details)
+    id: product.id,
+    name: product.name,
+    description: product.description,
+    price: product.price,
+    category: product.category,
+    images: product.images || [],
+    isHalalCertified: product.is_halal_certified || false,
+    shopId: product.shop_id,
+    createdAt: product.created_at,
+    // Additional properties needed for compatibility
+    sellerId: product.seller_id || '',
+    sellerName: product.seller_name || '',
+    rating: product.rating || 5.0,
+    inStock: true
   };
 };
 
-// Fetch all products
-export async function getProducts(): Promise<Product[]> {
+// Function to get all products
+export const getProducts = async (): Promise<Product[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('products')
+      .select('*');
+
+    if (error) {
+      throw error;
+    }
+
+    return (data || []).map(convertToProduct);
+  } catch (error) {
+    console.error('Error fetching products:', error);
+    return [];
+  }
+};
+
+// Function to get products for a specific shop
+export const getProductsByShop = async (shopId: string): Promise<Product[]> => {
   try {
     const { data, error } = await supabase
       .from('products')
       .select('*')
-      .order('created_at', { ascending: false });
-    
+      .eq('shop_id', shopId);
+
     if (error) {
-      console.error('Error fetching products:', error);
-      return [];
+      throw error;
     }
-    
-    return data.map(mapDbProductToModel);
-  } catch (err) {
-    console.error('Error in getProducts:', err);
+
+    return (data || []).map(convertToProduct);
+  } catch (error) {
+    console.error(`Error fetching products for shop ${shopId}:`, error);
     return [];
   }
-}
+};
 
-// Alias for getAllProducts
-export const getAllProducts = getProducts;
-
-// Fetch a single product by ID
-export async function getProductById(id: string): Promise<Product | undefined> {
+// Function to get a product by ID
+export const getProductById = async (id: string): Promise<Product | null> => {
   try {
     const { data, error } = await supabase
       .from('products')
       .select('*')
       .eq('id', id)
-      .maybeSingle();
-    
-    if (error || !data) {
-      console.error(`Error fetching product with id ${id}:`, error);
-      return undefined;
-    }
-    
-    return mapDbProductToModel(data);
-  } catch (err) {
-    console.error(`Error in getProductById for ${id}:`, err);
-    return undefined;
-  }
-}
+      .single();
 
-// Helper function to prepare product data for database
-const prepareProductForDb = (product: Partial<Product>) => {
-  const dbProduct: Record<string, any> = {
-    name: product.name,
-    description: product.description,
-    price: product.price,
-    stock: product.inStock ? 1 : 0,
-    category: product.category,
-    images: product.images,
-    shop_id: product.shopId,
-    business_owner_id: product.sellerId,
-    business_owner_name: product.sellerName,
-    rating: product.rating,
-    is_halal_certified: product.isHalalCertified
-  };
-  
-  // Handle details separately to avoid infinite recursion
-  if (product.details) {
-    dbProduct.details = JSON.stringify(product.details);
-  } else {
-    dbProduct.details = '{}';
+    if (error) {
+      throw error;
+    }
+
+    return data ? convertToProduct(data) : null;
+  } catch (error) {
+    console.error(`Error fetching product with ID ${id}:`, error);
+    return null;
   }
-  
-  // Only include id if it exists (for updates)
-  if (product.id) {
-    dbProduct.id = product.id;
-  }
-  
-  return dbProduct;
 };
 
-// Add a new product
-export async function addProduct(product: Partial<Product>): Promise<Product | undefined> {
+// Function to add a new product
+export const addProduct = async (product: Partial<Product>): Promise<Product | null> => {
   try {
-    const dbProduct = prepareProductForDb(product);
+    // Map product model to database schema
+    const dbProduct = {
+      name: product.name,
+      description: product.description,
+      price: product.price,
+      category: product.category,
+      images: product.images || [],
+      is_halal_certified: product.isHalalCertified,
+      shop_id: product.shopId,
+      seller_id: product.sellerId,
+      seller_name: product.sellerName,
+      rating: product.rating,
+      // Use a simplified approach for details to avoid excessive type depth
+      details: JSON.stringify({}),
+      is_published: true,
+      long_description: product.description
+    };
+
+    const { data, error } = await supabase
+      .from('products')
+      .insert([dbProduct])
+      .select()
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    return data ? convertToProduct(data) : null;
+  } catch (error) {
+    console.error('Error adding product:', error);
+    return null;
+  }
+};
+
+// Function to update an existing product
+export const updateProduct = async (id: string, updates: Partial<Product>): Promise<Product | null> => {
+  try {
+    // Map product model updates to database schema
+    const dbUpdates: Record<string, any> = {};
+    
+    if (updates.name !== undefined) dbUpdates.name = updates.name;
+    if (updates.description !== undefined) dbUpdates.description = updates.description;
+    if (updates.price !== undefined) dbUpdates.price = updates.price;
+    if (updates.category !== undefined) dbUpdates.category = updates.category;
+    if (updates.images !== undefined) dbUpdates.images = updates.images;
+    if (updates.isHalalCertified !== undefined) dbUpdates.is_halal_certified = updates.isHalalCertified;
+    if (updates.shopId !== undefined) dbUpdates.shop_id = updates.shopId;
     
     const { data, error } = await supabase
       .from('products')
-      .insert(dbProduct)
+      .update(dbUpdates)
+      .eq('id', id)
       .select()
       .single();
-    
-    if (error) {
-      console.error('Error creating product:', error);
-      return undefined;
-    }
-    
-    return mapDbProductToModel(data);
-  } catch (err) {
-    console.error('Error in addProduct:', err);
-    return undefined;
-  }
-}
 
-// Update an existing product
-export async function updateProduct(product: Partial<Product>): Promise<Product | undefined> {
-  try {
-    if (!product.id) {
-      console.error('Cannot update product without id');
-      return undefined;
-    }
-    
-    const dbProduct = prepareProductForDb(product);
-    
-    const { data, error } = await supabase
-      .from('products')
-      .update(dbProduct)
-      .eq('id', product.id)
-      .select()
-      .single();
-    
     if (error) {
-      console.error('Error updating product:', error);
-      return undefined;
+      throw error;
     }
-    
-    return mapDbProductToModel(data);
-  } catch (err) {
-    console.error('Error in updateProduct:', err);
-    return undefined;
-  }
-}
 
-// Delete a product
-export async function deleteProduct(id: string): Promise<boolean> {
+    return data ? convertToProduct(data) : null;
+  } catch (error) {
+    console.error(`Error updating product with ID ${id}:`, error);
+    return null;
+  }
+};
+
+// Function to delete a product
+export const deleteProduct = async (id: string): Promise<boolean> => {
   try {
     const { error } = await supabase
       .from('products')
       .delete()
       .eq('id', id);
-    
+
     if (error) {
-      console.error(`Error deleting product with id ${id}:`, error);
-      return false;
+      throw error;
     }
-    
+
     return true;
-  } catch (err) {
-    console.error(`Error in deleteProduct for ${id}:`, err);
+  } catch (error) {
+    console.error(`Error deleting product with ID ${id}:`, error);
     return false;
   }
-}
+};
 
-// Get featured products (for home page)
-export async function getFeaturedProducts(): Promise<Product[]> {
+// Function to search products by name, description, or category
+export const searchProducts = async (query: string): Promise<Product[]> => {
   try {
     const { data, error } = await supabase
       .from('products')
       .select('*')
-      .eq('is_halal_certified', true)
-      .order('created_at', { ascending: false })
-      .limit(6);
-    
+      .or(`name.ilike.%${query}%,description.ilike.%${query}%,category.ilike.%${query}%`);
+
     if (error) {
-      console.error('Error fetching featured products:', error);
-      return [];
+      throw error;
     }
-    
-    return data.map(mapDbProductToModel);
-  } catch (err) {
-    console.error('Error in getFeaturedProducts:', err);
+
+    return (data || []).map(convertToProduct);
+  } catch (error) {
+    console.error(`Error searching products with query "${query}":`, error);
     return [];
   }
-}
+};
 
-// Get products by category
-export async function getProductsByCategory(category: string): Promise<Product[]> {
+// Function to get featured products
+export const getFeaturedProducts = async (): Promise<Product[]> => {
   try {
     const { data, error } = await supabase
       .from('products')
       .select('*')
-      .eq('category', category)
-      .order('created_at', { ascending: false });
-    
+      .limit(8);
+
     if (error) {
-      console.error(`Error fetching products in category ${category}:`, error);
-      return [];
+      throw error;
     }
-    
-    return data.map(mapDbProductToModel);
-  } catch (err) {
-    console.error(`Error in getProductsByCategory for ${category}:`, err);
+
+    return (data || []).map(convertToProduct);
+  } catch (error) {
+    console.error('Error fetching featured products:', error);
     return [];
   }
-}
+};
 
-// Get products by business owner ID
-export async function getProductsBySeller(sellerId: string): Promise<Product[]> {
+// Function to get products by category
+export const getProductsByCategory = async (category: string): Promise<Product[]> => {
   try {
     const { data, error } = await supabase
       .from('products')
       .select('*')
-      .eq('business_owner_id', sellerId)
-      .order('created_at', { ascending: false });
-    
+      .eq('category', category);
+
     if (error) {
-      console.error(`Error fetching products for business owner ${sellerId}:`, error);
-      return [];
+      throw error;
     }
-    
-    return data.map(mapDbProductToModel);
-  } catch (err) {
-    console.error(`Error in getProductsBySeller for ${sellerId}:`, err);
+
+    return (data || []).map(convertToProduct);
+  } catch (error) {
+    console.error(`Error fetching products with category "${category}":`, error);
     return [];
   }
-}
+};
 
-// Function to provide mock data when needed
-export function getMockProducts(): Product[] {
-  return [
+// Function to mock products (for development only)
+export const mockProducts = async (): Promise<void> => {
+  const products = [
     {
-      id: "1",
-      name: "Halal Beef Burger Patties",
-      description: "Premium grass-fed beef patties, perfect for homemade burgers.",
+      name: 'Organic Halal Chicken',
+      description: 'Free-range, locally sourced halal chicken',
       price: 12.99,
-      inStock: true,
-      category: "Food & Groceries",
-      images: ["/lovable-uploads/0780684a-9c7f-4f32-affc-6f9ea641b814.png"],
-      shopId: "shop1",
-      isHalalCertified: true,
-      createdAt: new Date().toISOString(),
-      sellerId: "seller1",
-      sellerName: "Halal Meats & More",
+      category: 'Halal Meat',
+      images: ['/placeholder.svg'],
+      is_halal_certified: true,
+      shop_id: '1',
+      seller_id: '1',
+      seller_name: 'Halal Farms',
       rating: 4.8,
-      details: {
-        weight: "500g",
-        servings: "4 patties",
-        ingredients: "100% grass-fed beef, salt, black pepper"
-      }
+      details: JSON.stringify({}),
+      is_published: true,
+      long_description: 'Premium, organic, free-range halal chicken raised locally without antibiotics or hormones.'
     },
     {
-      id: "2",
-      name: "Organic Medjool Dates",
-      description: "Sweet and succulent dates imported directly from the Middle East.",
-      price: 9.99,
-      inStock: true,
-      category: "Food & Groceries",
-      images: ["/lovable-uploads/d4ab324c-23f0-4fcc-9069-0afbc77d1c3e.png"],
-      shopId: "shop2",
-      isHalalCertified: true,
-      createdAt: new Date().toISOString(),
-      sellerId: "seller2",
-      sellerName: "Barakah Organics",
+      name: 'Turkish Coffee Set',
+      description: 'Traditional Turkish coffee set with cups',
+      price: 45.99,
+      category: 'Gifts',
+      images: ['/placeholder.svg'],
+      is_halal_certified: true,
+      shop_id: '2',
+      seller_id: '2',
+      seller_name: 'Cultural Treasures',
       rating: 4.9,
-      details: {
-        weight: "250g",
-        origin: "Jordan",
-        ingredients: "100% organic Medjool dates"
-      }
+      details: JSON.stringify({}),
+      is_published: true,
+      long_description: 'Authentic Turkish coffee set with ornate brass pot (cezve) and two porcelain cups with saucers.'
     }
   ];
-}
 
-// Export the Product type to make it available to other modules
-export type { Product };
+  try {
+    for (const product of products) {
+      await supabase.from('products').insert([product]);
+    }
+  } catch (error) {
+    console.error('Error mocking products:', error);
+  }
+};
