@@ -114,39 +114,50 @@ const Navbar = () => {
         {/* Logo - with advanced animation */}
         <div className="flex items-center ml-3 mr-auto">
           <Link to="/" className="flex items-center">
-            <span className={`text-lg font-serif font-bold ${mode === 'dark' ? 'text-white' : 'text-[#2A866A]'}`}
-                  style={{ fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}>
-              Haluna
-            </span>
+            <motion.span 
+              className={`text-lg font-bold ${mode === 'dark' ? 'text-white' : 'text-[#2A866A]'}`}
+              style={{ 
+                fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif",
+                letterSpacing: "0.5px"
+              }}
+              whileHover={{ scale: 1.05 }}
+              transition={{ duration: 0.2 }}
+            >
+              Halvi
+            </motion.span>
             
-            {/* Advanced animated logo design */}
-            <div className="relative ml-1">
-              {/* Main orange ball */}
+            {/* Animated mall icon */}
+            <div className="relative ml-2 flex items-center">
+              {/* Building/mall animation */}
               <motion.div 
-                className="w-5 h-5 bg-[#E4875E] rounded-full"
-                animate={{
-                  scale: [1, 1.1, 1],
-                }}
-                transition={{
-                  duration: 6,
+                className="relative"
+                initial={{ y: 0 }}
+                animate={{ y: [0, -2, 0] }}
+                transition={{ 
+                  duration: 1.5,
                   repeat: Infinity,
-                  repeatType: "reverse"
+                  repeatType: "reverse",
+                  ease: "easeInOut"
                 }}
-              />
-              
-              {/* Orbiting green ball */}
-              <motion.div
-                className={`w-2 h-2 ${mode === 'dark' ? 'bg-[#3AA88C]' : 'bg-[#2A866B]'} rounded-full absolute`}
-                animate={{
-                  x: [2, 1.5, 0, -1.5, -2, -1.5, 0, 1.5, 2],
-                  y: [0, 1.5, 2, 1.5, 0, -1.5, -2, -1.5, 0],
-                }}
-                transition={{
-                  duration: 8,
-                  repeat: Infinity,
-                  ease: "linear"
-                }}
-              />
+              >
+                <Store 
+                  className={`h-5 w-5 ${mode === 'dark' ? 'text-[#3AA88C]' : 'text-[#2A866A]'}`} 
+                />
+                
+                {/* Pulsing effect */}
+                <motion.div
+                  className="absolute -right-1 -top-1 w-2 h-2 bg-[#E4875E] rounded-full"
+                  animate={{
+                    scale: [1, 1.5, 1],
+                    opacity: [0.7, 1, 0.7]
+                  }}
+                  transition={{
+                    duration: 2,
+                    repeat: Infinity,
+                    ease: "easeInOut"
+                  }}
+                />
+              </motion.div>
             </div>
           </Link>
         </div>
@@ -249,7 +260,7 @@ const Navbar = () => {
         </div>
       </div>
       
-      {/* Mobile menu - More compact with just icons for the sleek look */}
+      {/* Mobile menu - Compact with only icons */}
       <AnimatePresence>
         {mobileMenuOpen && (
           <motion.div 
@@ -260,24 +271,24 @@ const Navbar = () => {
             onClick={() => setMobileMenuOpen(false)}
           >
             <motion.div 
-              className={`absolute left-0 top-[70px] py-4 px-2 ${
+              className={`absolute left-0 top-[70px] py-3 px-2 ${
                 mode === 'dark' 
-                  ? 'bg-[#1C2526]/95 text-white border-r border-gray-800 backdrop-blur-sm' 
-                  : 'bg-white/95 border-r border-gray-100 backdrop-blur-sm'
+                  ? 'bg-[#1C2526]/95 text-white border-r border-gray-800 backdrop-blur-md' 
+                  : 'bg-white/95 border-r border-gray-100 backdrop-blur-md'
               } overflow-hidden rounded-r-xl shadow-lg`}
               initial={{ width: 0, opacity: 0 }}
               animate={{ width: "auto", opacity: 1 }}
               exit={{ width: 0, opacity: 0 }}
-              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex flex-col gap-3 items-center">
+              <div className="flex flex-col gap-2.5 items-center">
                 {/* Menu navigation - sleek icon-only buttons */}
                 {menuItems.map((item) => (
                   <Link
                     key={item.path}
                     to={item.path}
-                    className={`flex flex-col items-center justify-center p-3 rounded-full w-12 h-12 transition-colors ${
+                    className={`flex items-center justify-center p-3 rounded-xl w-11 h-11 transition-colors ${
                       mode === 'dark'
                         ? (isActive(item.path) 
                           ? 'bg-[#2A866A] text-white' 
@@ -298,7 +309,7 @@ const Navbar = () => {
                     e.stopPropagation();
                     toggleMode();
                   }}
-                  className={`flex items-center justify-center p-3 rounded-full w-12 h-12 transition-colors ${
+                  className={`flex items-center justify-center p-3 rounded-xl w-11 h-11 transition-colors ${
                     mode === 'dark'
                       ? 'text-gray-300 hover:bg-gray-800' 
                       : 'text-gray-700 hover:bg-gray-100'
@@ -316,7 +327,7 @@ const Navbar = () => {
                       logout();
                       setMobileMenuOpen(false);
                     }}
-                    className={`flex items-center justify-center p-3 rounded-full w-12 h-12 transition-colors ${
+                    className={`flex items-center justify-center p-3 rounded-xl w-11 h-11 transition-colors ${
                       mode === 'dark'
                         ? 'text-gray-300 hover:bg-gray-800'
                         : 'text-gray-700 hover:bg-gray-100'

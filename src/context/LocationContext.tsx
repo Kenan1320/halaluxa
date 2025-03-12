@@ -1,10 +1,10 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { saveLocation, getLocation } from '@/services/locationService';
-import { Shop } from '@/types/database';
 import { getNearbyShops } from '@/services/shopService';
+import { Shop } from '@/types/database';
 import { useToast } from '@/hooks/use-toast';
 
+// Using a more basic location interface that matches what we need
 export interface EnhancedLocation {
   coords: {
     latitude: number;
@@ -33,10 +33,16 @@ export const LocationProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const { toast } = useToast();
 
   useEffect(() => {
-    const savedLocation = getLocation();
-    if (savedLocation) {
-      setLocation(savedLocation);
-      setIsLocationEnabled(true);
+    // Load saved location from localStorage
+    const savedLocationStr = localStorage.getItem('userLocation');
+    if (savedLocationStr) {
+      try {
+        const savedLocation = JSON.parse(savedLocationStr);
+        setLocation(savedLocation);
+        setIsLocationEnabled(true);
+      } catch (error) {
+        console.error('Error parsing saved location:', error);
+      }
     }
   }, []);
 
@@ -59,7 +65,9 @@ export const LocationProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           
           setLocation(newLocation);
           setIsLocationEnabled(true);
-          saveLocation(newLocation);
+          
+          // Save location to localStorage
+          localStorage.setItem('userLocation', JSON.stringify(newLocation));
           
           toast({
             title: "Location updated",

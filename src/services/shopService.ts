@@ -1,7 +1,29 @@
-import supabase from '@/integrations/supabase/client';
+
+import { createClient } from '@supabase/supabase-js';
 import { Shop } from '@/types/database';
-import { getDistance } from '@/services/locationService';
-import { mapShopFromDatabase } from './shopServiceHelpers';
+
+// Create a Supabase client
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+// Helper function to calculate distance between two coordinates (haversine formula)
+const getDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+  const R = 6371; // Radius of the earth in km
+  const dLat = deg2rad(lat2 - lat1);
+  const dLon = deg2rad(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const d = R * c; // Distance in km
+  return d;
+};
+
+const deg2rad = (deg: number): number => {
+  return deg * (Math.PI / 180);
+};
 
 export const getAllShops = async (): Promise<Shop[]> => {
   const { data, error } = await supabase
@@ -97,4 +119,42 @@ export const getShopById = async (id: string): Promise<Shop | null> => {
   }
   
   return data;
+};
+
+// Fix type issues by adding placeholder functions for missing exports
+export const createShop = async (shopData: Omit<Shop, 'id'>): Promise<Shop | null> => {
+  const { data, error } = await supabase
+    .from('shops')
+    .insert(shopData)
+    .select()
+    .single();
+    
+  if (error) {
+    console.error('Error creating shop:', error);
+    return null;
+  }
+  
+  return data;
+};
+
+export const getShopProducts = async (shopId: string) => {
+  const { data, error } = await supabase
+    .from('products')
+    .select('*')
+    .eq('shop_id', shopId);
+    
+  if (error) {
+    console.error('Error fetching shop products:', error);
+    return [];
+  }
+  
+  return data || [];
+};
+
+export const convertToModelProduct = (dbProduct: any) => {
+  // This is a placeholder to fix type errors
+  return {
+    ...dbProduct,
+    in_stock: true,
+  };
 };

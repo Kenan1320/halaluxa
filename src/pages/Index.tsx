@@ -4,15 +4,15 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useTheme } from '@/context/ThemeContext';
 import { useLocation } from '@/context/LocationContext';
-import { getNearbyShops } from '@/services/shopService';
-import { Shop } from '@/models/shop';
+import { getAllShops, getOnlineShops } from '@/services/shopService';
 import CategorySuggestions from '@/components/home/CategorySuggestions';
 import SearchBar from '@/components/home/SearchBar';
 import NearbyShops from '@/components/home/NearbyShops';
+import { Shop } from '@/types/database';
 
 const Index = () => {
   const { mode } = useTheme();
-  const { location } = useLocation();
+  const { location, getNearbyShops } = useLocation();
   const [nearbyShops, setNearbyShops] = useState<Shop[]>([]);
   const [onlineShops, setOnlineShops] = useState<Shop[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -21,15 +21,13 @@ const Index = () => {
     const loadShops = async () => {
       setIsLoading(true);
       try {
-        // Load nearby shops based on location if available
-        if (location && location.coords) {
-          const nearby = await getNearbyShops(location.coords.latitude, location.coords.longitude);
-          setNearbyShops(nearby);
-        } else {
-          // If no location, load shops without location filtering
-          const shops = await getNearbyShops();
-          setNearbyShops(shops);
-        }
+        // Always load shops regardless of location
+        const shops = await getAllShops();
+        setNearbyShops(shops);
+        
+        // Also load online shops
+        const online = await getOnlineShops();
+        setOnlineShops(online);
       } catch (error) {
         console.error("Error loading shops:", error);
       } finally {
@@ -44,7 +42,7 @@ const Index = () => {
     <div className="container mx-auto px-4 py-6 max-w-7xl">
       <div className="space-y-8">
         {/* Hero section */}
-        <section className="text-center mb-10">
+        <section className="text-center mb-8">
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
             Discover and Shop Halal Products
           </h1>
@@ -59,12 +57,14 @@ const Index = () => {
         </section>
 
         {/* Main content */}
-        <div className="space-y-10">
+        <div className="space-y-8">
           {/* Shopping modes section */}
           <section className="mb-2">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-semibold tracking-tight sf-pro">Halvi't Nearby</h2>
-              <Link to="/shops" className="text-sm font-medium text-black dark:text-white hover:underline sf-pro">
+            <div className="flex justify-between items-center mb-5">
+              <h2 className="text-2xl font-bold tracking-tight" style={{ fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}>
+                Halvi't Nearby
+              </h2>
+              <Link to="/shops" className="text-sm font-medium text-black dark:text-white hover:underline" style={{ fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}>
                 View All
               </Link>
             </div>
@@ -73,9 +73,11 @@ const Index = () => {
 
           {/* Online Shopping section */}
           <section className="mb-2">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-semibold tracking-tight sf-pro">Halvi Mall</h2>
-              <Link to="/browse" className="text-sm font-medium text-black dark:text-white hover:underline sf-pro">
+            <div className="flex justify-between items-center mb-5">
+              <h2 className="text-2xl font-bold tracking-tight" style={{ fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}>
+                Halvi Mall
+              </h2>
+              <Link to="/browse" className="text-sm font-medium text-black dark:text-white hover:underline" style={{ fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}>
                 View All
               </Link>
             </div>
@@ -84,9 +86,11 @@ const Index = () => {
 
           {/* Shops section */}
           <section>
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-semibold tracking-tight sf-pro">Featured Shops</h2>
-              <Link to="/shops" className="text-sm font-medium text-black dark:text-white hover:underline sf-pro">
+            <div className="flex justify-between items-center mb-5">
+              <h2 className="text-2xl font-bold tracking-tight" style={{ fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}>
+                Featured Shops
+              </h2>
+              <Link to="/shops" className="text-sm font-medium text-black dark:text-white hover:underline" style={{ fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}>
                 View All
               </Link>
             </div>
