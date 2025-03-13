@@ -60,7 +60,7 @@ export const LocationProvider: React.FC<LocationProviderProps> = ({ children }) 
   const getCityAndState = async (latitude: number, longitude: number): Promise<{city: string, state: string}> => {
     try {
       // This would typically be a reverse geocoding API call
-      // For a more complete implementation, we could use a reverse geocoding service
+      // For a more complete implementation, we could use Mapbox's reverse geocoding API
       // For now, we'll return mock data
       return {
         city: "San Francisco",
@@ -161,8 +161,7 @@ export const LocationProvider: React.FC<LocationProviderProps> = ({ children }) 
       const { latitude, longitude } = location.coords;
       
       // Call the shopService function to get nearby shops
-      const shops = await getShopsNearby(latitude, longitude);
-      return shops;
+      return await getShopsNearby(latitude, longitude);
     } catch (error) {
       console.error('Error getting nearby shops:', error);
       return [];

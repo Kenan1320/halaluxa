@@ -87,14 +87,14 @@ const ShopPreviewCard: React.FC<ShopPreviewCardProps> = ({
                   {shop.category || 'Halal Shop'}
                 </p>
                 
-                {/* Add tags based on available options */}
+                {/* Add tags based on available options - handle properties that might not exist */}
                 <div className="flex flex-wrap gap-1 mt-1">
-                  {shop.delivery_available && (
+                  {shop.hasOwnProperty('delivery_available') && shop.delivery_available && (
                     <Badge variant="outline" className="text-xs border-green-200 bg-green-50 text-green-700 dark:bg-green-900/20 dark:border-green-900 dark:text-green-400">
                       Delivery Available
                     </Badge>
                   )}
-                  {shop.pickup_available && (
+                  {shop.hasOwnProperty('pickup_available') && shop.pickup_available && (
                     <Badge variant="outline" className="text-xs border-blue-200 bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:border-blue-900 dark:text-blue-400">
                       Pickup Available
                     </Badge>
@@ -129,8 +129,8 @@ const ShopPreviewCard: React.FC<ShopPreviewCardProps> = ({
                 <span>Open Now • Closes at 9:00 PM</span>
               </div>
               
-              {/* Add halal certification if available */}
-              {shop.is_halal_certified && (
+              {/* Add halal certification if available - handle property that might not exist */}
+              {shop.hasOwnProperty('is_halal_certified') && shop.is_halal_certified && (
                 <div className="flex items-center text-xs text-green-600 dark:text-green-400">
                   <Check className="h-3 w-3 mr-1 flex-shrink-0" />
                   <span>Halal Certified</span>

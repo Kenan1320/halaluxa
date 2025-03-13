@@ -60,11 +60,15 @@ const MapPage = () => {
   useEffect(() => {
     let filtered = [...shops];
     
-    // Apply type filter first
+    // Apply type filter first, but check if the properties exist before filtering
     if (filterType === 'delivery') {
-      filtered = filtered.filter(shop => shop.delivery_available);
+      filtered = filtered.filter(shop => 
+        shop.hasOwnProperty('delivery_available') ? shop.delivery_available : false
+      );
     } else if (filterType === 'pickup') {
-      filtered = filtered.filter(shop => shop.pickup_available);
+      filtered = filtered.filter(shop => 
+        shop.hasOwnProperty('pickup_available') ? shop.pickup_available : false
+      );
     }
     
     // Then apply search query

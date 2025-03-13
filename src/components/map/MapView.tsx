@@ -6,6 +6,7 @@ import { useTheme } from '@/context/ThemeContext';
 import { useLocation as useRouterLocation } from 'react-router-dom';
 import { useLocation } from '@/context/LocationContext';
 import { calculateDistance } from '@/services/locationService';
+import { mapboxConfig } from '@/lib/utils';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import ShopPreviewCard from '@/components/map/ShopPreviewCard';
@@ -15,8 +16,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronUp, ChevronDown, MapPin, Store, RefreshCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
-// Set Mapbox token from user's provided token
-mapboxgl.accessToken = 'pk.eyJ1Ijoia2VuYW4yNSIsImEiOiJjbTg3czM3bmswaGd0MndvY2I1cjQyaTMwIn0.LXzq8OtO1sCTiuTmtFVZrA';
+// Set Mapbox token from configuration
+mapboxgl.accessToken = mapboxConfig.publicToken;
 
 interface MapViewProps {
   shops: Shop[];
@@ -46,9 +47,7 @@ const MapView: React.FC<MapViewProps> = ({ shops, isLoading }) => {
 
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
-      style: mode === 'dark' ? 
-        'mapbox://styles/mapbox/dark-v11' : 
-        'mapbox://styles/mapbox/light-v11',
+      style: mode === 'dark' ? mapboxConfig.styles.dark : mapboxConfig.styles.light,
       center: userLocation as [number, number],
       zoom: 12,
       pitch: 40,
@@ -192,9 +191,7 @@ const MapView: React.FC<MapViewProps> = ({ shops, isLoading }) => {
     if (!map.current) return;
 
     map.current.setStyle(
-      mode === 'dark' ? 
-        'mapbox://styles/mapbox/dark-v11' : 
-        'mapbox://styles/mapbox/light-v11'
+      mode === 'dark' ? mapboxConfig.styles.dark : mapboxConfig.styles.light
     );
   }, [mode]);
 
