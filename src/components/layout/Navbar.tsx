@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, Search, ShoppingCart, User, MapPin, Store, Home, Package, CreditCard, Settings, LogOut, Info, HelpCircle, Moon, Sun } from 'lucide-react';
+import { Menu, X, Search, ShoppingCart, User, MapPin, Store, AlertCircle, Home, Package, CreditCard, Settings, LogOut, Info, HelpCircle, Moon, Sun } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/context/AuthContext';
@@ -70,6 +70,10 @@ const Navbar = () => {
     navigate(`/shop/${mainShop.id}`);
   };
   
+  const isActive = (path: string) => {
+    return location.pathname === path;
+  };
+
   const menuItems = [
     { icon: <Home size={20} />, label: 'Home', path: '/' },
     { icon: <Store size={20} />, label: 'Shops', path: '/shops' },
@@ -90,7 +94,7 @@ const Navbar = () => {
       style={{ height: '70px' }}
     >
       <div className="container mx-auto px-4 h-full flex justify-between items-center">
-        {/* Menu Button - simplified */}
+        {/* Menu Button - simplified to a dropdown */}
         <button
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           className={`p-2 rounded-full ${
@@ -107,20 +111,17 @@ const Navbar = () => {
           )}
         </button>
         
-        {/* Premium Logo */}
+        {/* Logo - with advanced animation */}
         <div className="flex items-center ml-3 mr-auto">
           <Link to="/" className="flex items-center">
-            <h2 className={`text-lg font-serif font-bold ${mode === 'dark' ? 'text-white' : 'text-[#2A866A]'} tracking-wide`}
-                  style={{ 
-                    fontFamily: "'Playfair Display', serif",
-                    letterSpacing: "0.03em",
-                    fontWeight: 600
-                  }}>
+            <span className={`text-lg font-serif font-bold ${mode === 'dark' ? 'text-white' : 'text-[#2A866A]'}`}
+                  style={{ fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}>
               Halvi
-            </h2>
+            </span>
             
-            {/* Animated logo design */}
+            {/* Advanced animated logo design */}
             <div className="relative ml-1">
+              {/* Main orange ball */}
               <motion.div 
                 className="w-5 h-5 bg-[#E4875E] rounded-full"
                 animate={{
@@ -133,6 +134,7 @@ const Navbar = () => {
                 }}
               />
               
+              {/* Orbiting green ball */}
               <motion.div
                 className={`w-2 h-2 ${mode === 'dark' ? 'bg-[#3AA88C]' : 'bg-[#2A866B]'} rounded-full absolute`}
                 animate={{
@@ -165,7 +167,7 @@ const Navbar = () => {
             <MapPin className="h-6 w-6" />
           </motion.button>
           
-          {/* Main Shop Button - with pulsing animation and no circle */}
+          {/* Main Shop Button - Now with pulsing animation and no circle */}
           <motion.button 
             onClick={handleMainShopClick}
             className="relative p-2"
@@ -234,7 +236,7 @@ const Navbar = () => {
             )}
           </motion.button>
           
-          {/* Cart Button */}
+          {/* Cart Button - Modernized */}
           <motion.div
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -252,7 +254,7 @@ const Navbar = () => {
             </Link>
           </motion.div>
           
-          {/* User Profile */}
+          {/* User Profile - Modernized */}
           <motion.div
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -267,77 +269,126 @@ const Navbar = () => {
         </div>
       </div>
       
-      {/* Simplified mobile menu - minimalist dropdown */}
+      {/* Mobile menu - Simplified dropdown menu */}
       <AnimatePresence>
         {mobileMenuOpen && (
           <motion.div 
-            className={`fixed left-0 top-[70px] z-40 w-full shadow-lg ${
-              mode === 'dark' ? 'bg-[#1C2526]/95' : 'bg-white/95'
-            } backdrop-blur-sm`}
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.3 }}
+            className="fixed inset-0 z-50 bg-black bg-opacity-50"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setMobileMenuOpen(false)}
           >
-            <div className="container mx-auto p-2">
-              {menuItems.map((item) => (
-                <motion.div
-                  key={item.path}
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <Link
-                    to={item.path}
-                    className={`flex items-center gap-3 p-3 rounded-lg mb-1 ${
-                      location.pathname === item.path 
-                        ? (mode === 'dark' ? 'bg-gray-800 text-white' : 'bg-[#E4F5F0] text-[#2A866A]')
-                        : (mode === 'dark' ? 'text-gray-300 hover:bg-gray-800' : 'text-gray-700 hover:bg-gray-100')
-                    }`}
-                    onClick={() => setMobileMenuOpen(false)}
+            <motion.div 
+              className={`absolute left-0 top-[70px] bottom-0 w-[280px] p-4 ${
+                mode === 'dark' 
+                  ? 'bg-[#1C2526] text-white border-r border-gray-800' 
+                  : 'bg-white border-r border-gray-100'
+              } overflow-y-auto`}
+              initial={{ x: -280 }}
+              animate={{ x: 0 }}
+              exit={{ x: -280 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* User info section */}
+              <div className={`p-4 mb-4 rounded-lg ${
+                mode === 'dark' ? 'bg-gray-800' : 'bg-[#E4F5F0]'
+              }`}>
+                <div className="flex items-center gap-3">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                    mode === 'dark' ? 'bg-gray-700' : 'bg-[#2A866A]'
+                  } text-white`}>
+                    {isLoggedIn && user ? user.name.charAt(0).toUpperCase() : <User size={20} />}
+                  </div>
+                  <div>
+                    <p className="font-medium">
+                      {isLoggedIn && user ? user.name : 'Welcome'}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      {isLoggedIn && user ? user.email : 'Sign in for the best experience'}
+                    </p>
+                  </div>
+                </div>
+                
+                {!isLoggedIn && (
+                  <Link 
+                    to="/login"
+                    className="mt-3 block w-full py-2 bg-[#2A866A] text-white text-center rounded-full text-sm font-medium"
                   >
-                    {item.icon}
-                    <span>{item.label}</span>
+                    Sign In
                   </Link>
-                </motion.div>
-              ))}
+                )}
+              </div>
               
-              {/* Theme toggle button */}
-              <motion.button
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.2 }}
+              {/* Theme toggle button in menu */}
+              <button
                 onClick={toggleMode}
-                className={`flex items-center gap-3 p-3 rounded-lg mb-1 w-full ${
-                  mode === 'dark' ? 'text-gray-300 hover:bg-gray-800' : 'text-gray-700 hover:bg-gray-100'
+                className={`flex items-center gap-4 p-3 rounded-lg transition w-full text-left mb-3 ${
+                  mode === 'dark'
+                    ? 'bg-gray-800 text-white' 
+                    : 'bg-gray-100 text-gray-700'
                 }`}
               >
-                {mode === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
-                <span>{mode === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
-              </motion.button>
+                {mode === 'dark' ? (
+                  <>
+                    <Sun size={20} />
+                    <span className="text-sm">Light Mode</span>
+                  </>
+                ) : (
+                  <>
+                    <Moon size={20} />
+                    <span className="text-sm">Dark Mode</span>
+                  </>
+                )}
+              </button>
               
-              {/* Sign out button for logged in users */}
-              {isLoggedIn && (
-                <motion.button
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.2 }}
-                  onClick={() => {
-                    logout();
-                    setMobileMenuOpen(false);
-                  }}
-                  className={`flex items-center gap-3 p-3 rounded-lg mb-1 w-full ${
-                    mode === 'dark' ? 'text-gray-300 hover:bg-gray-800' : 'text-gray-700 hover:bg-gray-100'
-                  }`}
-                >
-                  <LogOut size={20} />
-                  <span>Sign Out</span>
-                </motion.button>
-              )}
-            </div>
+              {/* Menu navigation */}
+              <div className="space-y-1">
+                {menuItems.map((item) => (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    className={`flex items-center gap-4 p-3 rounded-lg transition ${
+                      mode === 'dark'
+                        ? (isActive(item.path) 
+                          ? 'bg-[#2A866A]/20 text-white' 
+                          : 'text-gray-300 hover:bg-gray-800')
+                        : (isActive(item.path) 
+                          ? 'bg-[#E4F5F0] text-[#2A866A]' 
+                          : 'text-gray-700 hover:bg-gray-100')
+                    }`}
+                  >
+                    {item.icon}
+                    <span className="text-sm">{item.label}</span>
+                  </Link>
+                ))}
+                
+                {isLoggedIn && (
+                  <button
+                    onClick={() => {
+                      logout();
+                      setMobileMenuOpen(false);
+                    }}
+                    className={`flex items-center gap-4 p-3 rounded-lg transition w-full text-left ${
+                      mode === 'dark'
+                        ? 'text-gray-300 hover:bg-gray-800'
+                        : 'text-gray-700 hover:bg-gray-100'
+                    }`}
+                  >
+                    <LogOut size={20} />
+                    <span className="text-sm">Sign Out</span>
+                  </button>
+                )}
+              </div>
+              
+              {/* App version */}
+              <div className="mt-8 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <p className="text-xs text-gray-500 text-center">
+                  Version 1.0.0
+                </p>
+              </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
