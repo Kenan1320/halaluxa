@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export interface SplashScreenProps {
   onComplete: () => void;
@@ -34,26 +34,39 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
 
   // Calculate brightness based on stage
   const brightness = stage === 1 ? 0.7 : stage === 2 ? 0.9 : 1;
+  
+  // Logo opacity (fade out during door opening)
+  const logoOpacity = stage === 3 ? 0 : 1;
 
   return (
     <div className="fixed inset-0 bg-black flex flex-col items-center justify-center z-50">
       {/* Logo and tagline container */}
-      <div className="relative flex flex-col items-center">
-        {/* Logo with building icon */}
-        <motion.div 
-          className="relative"
-          style={{ 
-            filter: `brightness(${brightness})`,
-            transition: 'filter 1s ease-in-out'
-          }}
-        >
-          <img 
-            src="/lovable-uploads/131eaa02-e39d-48fa-9815-bf019075b771.png" 
-            alt="Halvi" 
-            className="w-64 h-auto"
-          />
-        </motion.div>
-      </div>
+      <AnimatePresence>
+        {(stage === 1 || stage === 2 || (stage === 3 && logoOpacity > 0)) && (
+          <motion.div 
+            className="relative flex flex-col items-center"
+            initial={{ opacity: 1 }}
+            animate={{ opacity: logoOpacity }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            {/* Logo with building icon */}
+            <motion.div 
+              className="relative"
+              style={{ 
+                filter: `brightness(${brightness})`,
+                transition: 'filter 1s ease-in-out'
+              }}
+            >
+              <img 
+                src="/logo-full-white.svg" 
+                alt="Halvi" 
+                className="w-64 h-auto"
+              />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Animated lines */}
       {stage === 3 && (
@@ -74,19 +87,28 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
             transition={{ duration: 0.4, ease: "easeOut" }}
           />
           
-          {/* Horizontal opening lines */}
+          {/* Left door panel */}
           <motion.div
-            className="absolute bg-white h-full w-0.5 left-1/2"
-            initial={{ scaleX: 0 }}
-            animate={{ scaleX: 100, originX: 0 }}
+            className="absolute bg-black h-full left-0"
+            initial={{ width: '50%' }}
+            animate={{ width: 0 }}
             transition={{ delay: 0.4, duration: 0.5, ease: "easeInOut" }}
+            style={{ 
+              borderRight: '1px solid white',
+              zIndex: 60
+            }}
           />
           
+          {/* Right door panel */}
           <motion.div
-            className="absolute bg-white h-full w-0.5 right-1/2"
-            initial={{ scaleX: 0 }}
-            animate={{ scaleX: 100, originX: 1 }}
+            className="absolute bg-black h-full right-0"
+            initial={{ width: '50%' }}
+            animate={{ width: 0 }}
             transition={{ delay: 0.4, duration: 0.5, ease: "easeInOut" }}
+            style={{ 
+              borderLeft: '1px solid white',
+              zIndex: 60
+            }}
           />
         </>
       )}
