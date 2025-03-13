@@ -15,6 +15,7 @@ import AuthMiddleware from "@/components/auth/AuthMiddleware";
 import Navbar from "@/components/layout/Navbar";
 import BottomNavigation from "@/components/layout/BottomNavigation";
 import Footer from "@/components/layout/Footer";
+import SplashScreen from "@/components/SplashScreen";
 
 // Pages
 import Index from "./pages/Index";
@@ -158,6 +159,12 @@ const AppRoutes = () => {
 };
 
 function App() {
+  const [showSplash, setShowSplash] = useState(true);
+
+  const handleSplashComplete = () => {
+    setShowSplash(false);
+  };
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
@@ -169,7 +176,11 @@ function App() {
               <AuthProvider>
                 <CartProvider>
                   <LocationProvider>
-                    <AppRoutes />
+                    {showSplash ? (
+                      <SplashScreen onComplete={handleSplashComplete} />
+                    ) : (
+                      <AppRoutes />
+                    )}
                   </LocationProvider>
                 </CartProvider>
               </AuthProvider>

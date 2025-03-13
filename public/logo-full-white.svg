@@ -1,0 +1,33 @@
+
+<svg width="300" height="140" viewBox="0 0 300 140" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .halvi-text {
+      font-family: 'Playfair Display', serif;
+      font-size: 100px;
+      font-weight: 700;
+      fill: white;
+    }
+    .tagline {
+      font-family: 'Playfair Display', serif;
+      font-size: 30px;
+      fill: white;
+    }
+    .building {
+      fill: white;
+    }
+  </style>
+  
+  <!-- Main Halvi Text -->
+  <text x="10" y="95" class="halvi-text">Halvi</text>
+  
+  <!-- Building Icon -->
+  <g transform="translate(157, 36) scale(0.3)">
+    <rect x="0" y="0" width="80" height="80" class="building"/>
+    <rect x="10" y="10" width="60" height="60" fill="black"/>
+    <rect x="20" y="20" width="40" height="40" class="building"/>
+    <rect x="30" y="30" width="20" height="50" fill="black"/>
+  </g>
+  
+  <!-- Tagline -->
+  <text x="150" y="125" class="tagline" text-anchor="middle">Your Halal Village</text>
+</svg>
