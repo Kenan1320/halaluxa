@@ -13,8 +13,8 @@ import { supabase } from '@/integrations/supabase/client';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
-// Set Mapbox token - in production this should come from environment variables
-mapboxgl.accessToken = 'pk.eyJ1IjoiaGFsdmlkZXYiLCJhIjoiY2xzOGRlc2QyMDRzbTJwcGJrMG41ZThzNSJ9.WkKwQp19QGHLpgB4XDqDow';
+// Set Mapbox token - use the provided token
+mapboxgl.accessToken = 'pk.eyJ1Ijoia2VuYW4yNSIsImEiOiJjbTg3czM3bmswaGd0MndvY2I1cjQyaTMwIn0.LXzq8OtO1sCTiuTmtFVZrA';
 
 // Order status types
 type OrderStatus = 'received' | 'preparing' | 'ready' | 'on_the_way' | 'completed' | 'canceled';
@@ -61,7 +61,6 @@ const OrderTracking: React.FC = () => {
   const [mapInstance, setMapInstance] = useState<mapboxgl.Map | null>(null);
   const mapContainer = React.useRef<HTMLDivElement>(null);
   const driverMarker = React.useRef<mapboxgl.Marker | null>(null);
-  const routeSource = 'route';
 
   const statusInfo = {
     received: {
@@ -118,7 +117,7 @@ const OrderTracking: React.FC = () => {
   // Format date for display
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return date.toLocaleTimeString([], { hour: '2-digit', minute:'2-digit' });
   };
 
   // Calculate remaining time
@@ -172,38 +171,36 @@ const OrderTracking: React.FC = () => {
         .addTo(map);
 
       // Add route line
-      if (!map.getSource(routeSource)) {
-        map.addSource(routeSource, {
-          type: 'geojson',
-          data: {
-            type: 'Feature',
-            properties: {},
-            geometry: {
-              type: 'LineString',
-              coordinates: [
-                [order.shopLocation.longitude, order.shopLocation.latitude],
-                [order.driverInfo.location.longitude, order.driverInfo.location.latitude],
-                [order.destinationLocation.longitude, order.destinationLocation.latitude]
-              ]
-            }
+      map.addSource('route', {
+        type: 'geojson',
+        data: {
+          type: 'Feature',
+          properties: {},
+          geometry: {
+            type: 'LineString',
+            coordinates: [
+              [order.shopLocation.longitude, order.shopLocation.latitude],
+              [order.driverInfo.location.longitude, order.driverInfo.location.latitude],
+              [order.destinationLocation.longitude, order.destinationLocation.latitude]
+            ]
           }
-        });
+        }
+      });
 
-        map.addLayer({
-          id: 'route',
-          type: 'line',
-          source: routeSource,
-          layout: {
-            'line-join': 'round',
-            'line-cap': 'round'
-          },
-          paint: {
-            'line-color': '#4263EB',
-            'line-width': 5,
-            'line-opacity': 0.75
-          }
-        });
-      }
+      map.addLayer({
+        id: 'route',
+        type: 'line',
+        source: 'route',
+        layout: {
+          'line-join': 'round',
+          'line-cap': 'round'
+        },
+        paint: {
+          'line-color': '#4263EB',
+          'line-width': 5,
+          'line-opacity': 0.75
+        }
+      });
 
       // Fit bounds to show all markers
       const bounds = new mapboxgl.LngLatBounds()
@@ -248,8 +245,9 @@ const OrderTracking: React.FC = () => {
         }
 
         // Update route
-        if (map.getSource(routeSource)) {
-          map.getSource(routeSource).setData({
+        const routeSource = map.getSource('route');
+        if (routeSource && 'setData' in routeSource) {
+          routeSource.setData({
             type: 'Feature',
             properties: {},
             geometry: {

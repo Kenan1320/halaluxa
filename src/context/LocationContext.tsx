@@ -60,6 +60,7 @@ export const LocationProvider: React.FC<LocationProviderProps> = ({ children }) 
   const getCityAndState = async (latitude: number, longitude: number): Promise<{city: string, state: string}> => {
     try {
       // This would typically be a reverse geocoding API call
+      // For a more complete implementation, we could use a reverse geocoding service
       // For now, we'll return mock data
       return {
         city: "San Francisco",
@@ -134,6 +135,12 @@ export const LocationProvider: React.FC<LocationProviderProps> = ({ children }) 
             variant: "destructive",
           });
         }
+      } else {
+        toast({
+          title: "Location error",
+          description: "An unexpected error occurred while getting your location.",
+          variant: "destructive",
+        });
       }
       
       return false;
