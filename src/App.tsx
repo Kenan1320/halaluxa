@@ -35,6 +35,8 @@ import NotFound from "./pages/NotFound";
 import LoginPage from "./pages/auth/LoginPage";
 import SignUpPage from "./pages/auth/SignUpPage";
 import SelectShops from "./pages/SelectShops";
+import MapPage from "./pages/MapPage";
+import OrderTrackingPage from "./pages/OrderTrackingPage";
 
 // Dashboard imports
 import DashboardLayout from "./components/layout/DashboardLayout";
@@ -45,6 +47,7 @@ import OrdersPage from "./pages/dashboard/OrdersPage";
 import CustomersPage from "./pages/dashboard/CustomersPage";
 import SettingsPage from "./pages/dashboard/SettingsPage";
 import PaymentAccountPage from "./pages/dashboard/PaymentAccountPage";
+import LiveDeliveryDashboardPage from "./pages/dashboard/LiveDeliveryDashboardPage";
 import UserProfilePage from "./pages/profile/UserProfilePage";
 
 const queryClient = new QueryClient({
@@ -87,6 +90,8 @@ const AppRoutes = () => {
         <Route path="/shop/:shopId" element={<ShopDetail />} />
         <Route path="/product/:productId" element={<ProductDetail />} />
         <Route path="/select-shops" element={<SelectShops />} />
+        <Route path="/map" element={<MapPage />} />
+        <Route path="/order-tracking" element={<OrderTrackingPage />} />
         
         {/* Protected shopper routes */}
         <Route 
@@ -145,6 +150,7 @@ const AppRoutes = () => {
           <Route path="products/edit/:id" element={<AddEditProductPage />} />
           <Route path="orders" element={<OrdersPage />} />
           <Route path="customers" element={<CustomersPage />} />
+          <Route path="delivery-dashboard" element={<LiveDeliveryDashboardPage />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="payment-account" element={<PaymentAccountPage />} />
         </Route>
