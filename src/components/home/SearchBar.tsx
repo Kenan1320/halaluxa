@@ -34,12 +34,12 @@ const SearchBar = () => {
 
   return (
     <form onSubmit={handleSubmit} className="w-full">
-      <div className={`flex items-center rounded-full ${
+      <div className={`flex items-center rounded-full shadow-md hover:shadow-lg transition-all duration-300 px-6 py-4 ${
         mode === 'dark' 
           ? 'bg-gray-800 text-white border border-gray-700' 
           : 'bg-white text-gray-700 border border-gray-200'
-      } px-5 py-3 shadow-md hover:shadow-lg transition-all duration-300`}>
-        <Search className="w-6 h-6 mr-3 text-gray-400" />
+      }`}>
+        <Search className="w-6 h-6 mr-4 text-gray-400" />
         <div className="relative w-full h-6 overflow-hidden">
           <AnimatePresence mode="wait">
             <motion.input

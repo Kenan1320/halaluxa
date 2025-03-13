@@ -26,7 +26,7 @@ const TabItem = ({ isActive, onClick, icon, children }: {
     >
       {icon}
     </motion.div>
-    <span className="text-base font-semibold">{children}</span>
+    <span className="text-sm font-medium">{children}</span>
     {isActive && (
       <motion.div
         className="absolute bottom-0 left-0 right-0 h-0.5 bg-black dark:bg-white"
@@ -46,12 +46,10 @@ const CategoryIcon = ({ category, onClick, isSelected }: {
     onClick={onClick}
     whileHover={{ scale: 1.05 }}
     whileTap={{ scale: 0.95 }}
-    className="flex flex-col items-center space-y-2 min-w-[80px] cursor-pointer px-1"
+    className="flex flex-col items-center space-y-1 min-w-[70px] cursor-pointer"
   >
     <motion.div 
-      className={`w-16 h-16 flex items-center justify-center ${
-        isSelected ? 'text-[#29866B]' : 'text-gray-600 dark:text-gray-300'
-      }`}
+      className="w-14 h-14 flex items-center justify-center"
       initial={{ rotateX: 0 }}
       whileHover={{ 
         rotateX: 10,
@@ -63,9 +61,9 @@ const CategoryIcon = ({ category, onClick, isSelected }: {
         perspective: "500px" 
       }}
     >
-      {getCategoryIcon(category.name, `w-9 h-9 ${isSelected ? 'text-[#29866B]' : 'text-gray-600 dark:text-gray-300'}`)}
+      {getCategoryIcon(category.name, `w-10 h-10 ${isSelected ? 'text-[#29866B]' : 'text-gray-600 dark:text-gray-300'}`)}
     </motion.div>
-    <span className={`text-xs font-bold text-center text-gray-600 dark:text-gray-300 whitespace-nowrap ${
+    <span className={`text-xs font-bold text-center text-gray-600 dark:text-gray-300 ${
       isSelected ? 'text-[#2A866A] dark:text-[#5bbea7]' : ''
     }`}>
       {category.name}
@@ -96,6 +94,27 @@ const getOrderedCategories = (categories: Category[], mode: 'nearby' | 'online')
   });
 };
 
+// Component to display the custom uploaded icons
+const CustomTabIcon = ({ type }: { type: 'nearby' | 'online' }) => {
+  if (type === 'nearby') {
+    return (
+      <img 
+        src="/lovable-uploads/9c75ca26-bc1a-4718-84bb-67d7f2337b30.png" 
+        alt="Halvi't Nearby" 
+        className="w-6 h-6"
+      />
+    );
+  } else {
+    return (
+      <img 
+        src="/lovable-uploads/0c423741-0711-4e97-8c56-ca4fe31dc6ca.png" 
+        alt="Halvi Mall" 
+        className="w-6 h-6" 
+      />
+    );
+  }
+};
+
 export default function CategorySuggestions() {
   const { mode } = useTheme();
   const [activeTab, setActiveTab] = useState<'nearby' | 'online'>('nearby');
@@ -123,7 +142,7 @@ export default function CategorySuggestions() {
             setActiveTab('nearby');
             setSelectedCategory(null);
           }}
-          icon={getCategoryIcon('Groceries', 'w-6 h-6')}
+          icon={<CustomTabIcon type="nearby" />}
         >
           Halvi't Nearby
         </TabItem>
@@ -133,13 +152,13 @@ export default function CategorySuggestions() {
             setActiveTab('online');
             setSelectedCategory(null);
           }}
-          icon={getCategoryIcon('Online Shops', 'w-6 h-6')}
+          icon={<CustomTabIcon type="online" />}
         >
           Halvi Mall
         </TabItem>
       </div>
       
-      {/* Categories scroll section with divider */}
+      {/* Categories scroll section */}
       <div className="overflow-x-auto scrollbar-none">
         <div className="flex space-x-4 pb-4 min-w-max px-2">
           {getOrderedCategories(
@@ -155,7 +174,9 @@ export default function CategorySuggestions() {
           ))}
         </div>
       </div>
-      <div className="border-b border-[#DADADA] dark:border-gray-700 my-2"></div>
+      
+      {/* Subtle divider */}
+      <div className="border-b border-gray-200 dark:border-gray-700 opacity-40 w-full my-2"></div>
     </div>
   );
 }

@@ -140,10 +140,12 @@
   background-color: #DADADA;
   width: 100%;
   margin: 16px 0;
+  opacity: 0.4;
 }
 
 .dark .section-divider {
   background-color: #374151;
+  opacity: 0.3;
 }
 
 /* Custom checkbox styles */

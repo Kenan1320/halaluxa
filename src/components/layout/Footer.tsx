@@ -10,7 +10,16 @@ const Footer = () => {
           {/* Brand Column */}
           <div className="space-y-4">
             <Link to="/" className="flex items-center">
-              <h2 className="text-haluna-primary text-3xl font-serif">Halvi</h2>
+              <h2 
+                className="text-haluna-primary text-3xl font-serif tracking-wide"
+                style={{
+                  fontFamily: "'Playfair Display', serif",
+                  letterSpacing: "0.03em",
+                  fontWeight: 600
+                }}
+              >
+                Halvi
+              </h2>
               <span className="ml-1 h-3 w-3 rounded-full bg-haluna-accent inline-block mt-1"></span>
             </Link>
             <p className="text-haluna-text-light">

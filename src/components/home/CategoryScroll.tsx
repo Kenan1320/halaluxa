@@ -39,19 +39,17 @@ const CategoryScroll = () => {
   
   return (
     <div className="overflow-x-auto scrollbar-none">
-      <div className="flex space-x-4 pb-1 pt-1">
+      <div className="flex space-x-6 pb-1 pt-1 px-2">
         {categories.map((category) => (
           <Link 
             key={category.id}
             to={`/browse?category=${encodeURIComponent(category.name)}`}
-            className="flex-shrink-0 flex flex-col items-center"
+            className="flex-shrink-0"
           >
             <motion.div
-              className={`w-12 h-12 rounded-full flex items-center justify-center shadow-sm 
-                ${mode === 'dark' ? 'bg-gray-800' : 'bg-white'}`}
+              className="w-12 h-12 flex items-center justify-center"
               whileHover={{ 
-                scale: 1.1, 
-                boxShadow: "0px 4px 8px rgba(0,0,0,0.1)",
+                scale: 1.1,
                 rotateY: 10,
                 rotateX: 10
               }}
@@ -62,12 +60,8 @@ const CategoryScroll = () => {
               whileTap={{ scale: 0.95 }}
               transition={{ type: "spring", stiffness: 400, damping: 17 }}
             >
-              {getCategoryIcon(category.name, `w-7 h-7 ${mode === 'dark' ? 'text-white' : 'text-[#2A866A]'}`)}
+              {getCategoryIcon(category.name, `w-12 h-12 ${mode === 'dark' ? 'text-white' : 'text-[#2A866A]'}`)}
             </motion.div>
-            <span className="text-xs font-bold mt-1 text-center"
-                  style={{ fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}>
-              {category.name}
-            </span>
           </Link>
         ))}
       </div>
