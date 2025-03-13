@@ -138,14 +138,6 @@ export const HoodiesIcon: React.FC<CategoryIconProps> = ({ className }) => (
   />
 );
 
-export const ClothingIcon: React.FC<CategoryIconProps> = ({ className }) => (
-  <img 
-    src="/lovable-uploads/d597732e-d5b7-4dbf-a55e-af6bd21b7920.png" 
-    alt="Clothing" 
-    className={className || "w-6 h-6"}
-  />
-);
-
 // A mapping function to get the right icon based on category name
 export function getCategoryIcon(category: string, className?: string): React.ReactNode {
   const icons: Record<string, React.FC<CategoryIconProps>> = {
@@ -164,7 +156,6 @@ export function getCategoryIcon(category: string, className?: string): React.Rea
     "Muslim Therapists": MuslimTherapistsIcon,
     "Coffee Shops": CoffeeShopsIcon,
     "Hoodies": HoodiesIcon,
-    "Clothing": ClothingIcon,
   };
   
   const IconComponent = icons[category];

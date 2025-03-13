@@ -170,7 +170,7 @@ const Index = () => {
     <Dialog>
       <DialogTrigger asChild>
         <motion.div 
-          className="flex items-center gap-1 cursor-pointer mb-1"
+          className="flex items-center gap-1 cursor-pointer mt-1 mb-2"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.98 }}
         >
@@ -275,10 +275,13 @@ const Index = () => {
       </div>
       
       {/* Main content with white background */}
-      <div className="container mx-auto px-4 pt-4 bg-white dark:bg-gray-900">
-        {/* Selected/Featured Shops Section */}
-        <section className="mt-1 mb-3">
-          <div className="flex justify-between items-center">
+      <div className="container mx-auto px-4 pt-3 bg-white dark:bg-gray-900">
+        {/* Section divider */}
+        <div className="border-b border-[#DADADA] dark:border-gray-700 my-2"></div>
+        
+        {/* Selected/Featured Shops Section - with new modal approach */}
+        <section className="mt-3 mb-5">
+          <div className="flex justify-between items-center mb-2">
             <ShopSelectorModal />
           </div>
           
@@ -315,7 +318,7 @@ const Index = () => {
                       >
                         <Link to={`/shop/${shop.id}`}>
                           <motion.div 
-                            className="w-14 h-14 flex items-center justify-center overflow-hidden"
+                            className="w-14 h-14 rounded-full bg-white shadow-sm flex items-center justify-center overflow-hidden"
                             whileHover={{ scale: 1.1, boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}
                             transition={{ type: "spring", stiffness: 400, damping: 10 }}
                           >
@@ -327,6 +330,26 @@ const Index = () => {
                               </div>
                             )}
                           </motion.div>
+                          <motion.span 
+                            className="text-xs text-center mt-1 block font-medium tracking-tight"
+                            initial={{ opacity: 0.8 }}
+                            whileHover={{ opacity: 1, scale: 1.05, color: "#29866B" }}
+                            animate={{
+                              y: [0, -2, 0],
+                              color: activeShopIndex % selectedShops.length === index % selectedShops.length 
+                                ? ["#000000", "#29866B", "#000000"] 
+                                : "#000000",
+                              transition: {
+                                duration: 2,
+                                repeat: Infinity,
+                                repeatType: "mirror",
+                                ease: "easeInOut",
+                                delay: index * 0.2 % 1,
+                              }
+                            }}
+                          >
+                            {shop.name.length > 10 ? `${shop.name.substring(0, 10)}...` : shop.name}
+                          </motion.span>
                         </Link>
                       </motion.div>
                     ))}
@@ -360,7 +383,7 @@ const Index = () => {
                       >
                         <Link to={`/shop/${shop.id}`}>
                           <motion.div 
-                            className="w-14 h-14 flex items-center justify-center overflow-hidden"
+                            className="w-14 h-14 rounded-full bg-white shadow-sm flex items-center justify-center overflow-hidden"
                             whileHover={{ scale: 1.1, boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}
                             transition={{ type: "spring", stiffness: 400, damping: 10 }}
                           >
@@ -372,6 +395,26 @@ const Index = () => {
                               </div>
                             )}
                           </motion.div>
+                          <motion.span 
+                            className="text-xs text-center mt-1 block font-medium tracking-tight"
+                            initial={{ opacity: 0.8 }}
+                            whileHover={{ opacity: 1, scale: 1.05, color: "#29866B" }}
+                            animate={{
+                              y: [0, -2, 0],
+                              color: activeShopIndex % selectedShops.length === index % selectedShops.length 
+                                ? ["#000000", "#29866B", "#000000"] 
+                                : "#000000",
+                              transition: {
+                                duration: 2,
+                                repeat: Infinity,
+                                repeatType: "mirror",
+                                ease: "easeInOut",
+                                delay: index * 0.2 % 1,
+                              }
+                            }}
+                          >
+                            {shop.name.length > 10 ? `${shop.name.substring(0, 10)}...` : shop.name}
+                          </motion.span>
                         </Link>
                       </motion.div>
                     ))}
@@ -382,16 +425,16 @@ const Index = () => {
           </div>
         </section>
         
-        {/* Section divider - more subtle and full width */}
-        <div className="border-t border-gray-200/40 dark:border-gray-800/40 w-full my-2"></div>
+        {/* Section divider */}
+        <div className="border-b border-[#DADADA] dark:border-gray-700 my-3"></div>
         
-        {/* Category Suggestions - moved closer to flow logos */}
-        <section className="mt-0 mb-4">
+        {/* Category Suggestions */}
+        <section className="mt-3 mb-4">
           <CategorySuggestions />
         </section>
         
-        {/* Section divider - more subtle and full width */}
-        <div className="border-t border-gray-200/40 dark:border-gray-800/40 w-full my-2"></div>
+        {/* Section divider */}
+        <div className="border-b border-[#DADADA] dark:border-gray-700 my-2"></div>
         
         {/* Nearby Shops Section */}
         <section className="mt-4 mb-4">
@@ -407,8 +450,8 @@ const Index = () => {
           <NearbyShops />
         </section>
         
-        {/* Section divider - more subtle and full width */}
-        <div className="border-t border-gray-200/40 dark:border-gray-800/40 w-full my-2"></div>
+        {/* Section divider */}
+        <div className="border-b border-[#DADADA] dark:border-gray-700 my-3"></div>
         
         {/* Featured Products Section */}
         <section className="mt-4 mb-6">

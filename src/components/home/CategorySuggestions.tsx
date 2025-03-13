@@ -20,13 +20,13 @@ const TabItem = ({ isActive, onClick, icon, children }: {
     style={{ fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}
   >
     <motion.div
-      className="w-8 h-8" /* Increased icon size */
+      className="w-6 h-6"
       whileHover={{ scale: 1.1 }}
       whileTap={{ scale: 0.95 }}
     >
       {icon}
     </motion.div>
-    <span className="text-sm font-semibold">{children}</span>
+    <span className="text-base font-semibold">{children}</span>
     {isActive && (
       <motion.div
         className="absolute bottom-0 left-0 right-0 h-0.5 bg-black dark:bg-white"
@@ -46,7 +46,7 @@ const CategoryIcon = ({ category, onClick, isSelected }: {
     onClick={onClick}
     whileHover={{ scale: 1.05 }}
     whileTap={{ scale: 0.95 }}
-    className="flex flex-col items-center space-y-2 min-w-[70px] cursor-pointer px-1"
+    className="flex flex-col items-center space-y-2 min-w-[80px] cursor-pointer px-1"
   >
     <motion.div 
       className={`w-16 h-16 flex items-center justify-center ${
@@ -63,9 +63,9 @@ const CategoryIcon = ({ category, onClick, isSelected }: {
         perspective: "500px" 
       }}
     >
-      {getCategoryIcon(category.name, `w-11 h-11 ${isSelected ? 'text-[#29866B]' : 'text-gray-600 dark:text-gray-300'}`)}
+      {getCategoryIcon(category.name, `w-9 h-9 ${isSelected ? 'text-[#29866B]' : 'text-gray-600 dark:text-gray-300'}`)}
     </motion.div>
-    <span className={`text-xs font-medium text-center text-gray-600 dark:text-gray-300 whitespace-nowrap ${
+    <span className={`text-xs font-bold text-center text-gray-600 dark:text-gray-300 whitespace-nowrap ${
       isSelected ? 'text-[#2A866A] dark:text-[#5bbea7]' : ''
     }`}>
       {category.name}
@@ -114,33 +114,16 @@ export default function CategorySuggestions() {
     loadCategories();
   }, []);
   
-  // Custom icons for the tabs
-  const getNearbyIcon = () => (
-    <img 
-      src="/lovable-uploads/89ad3be3-b680-4a28-9a6b-e050599916e9.png" 
-      alt="Nearby" 
-      className="w-8 h-8" /* Increased icon size */
-    />
-  );
-
-  const getMallIcon = () => (
-    <img 
-      src="/lovable-uploads/15e23db4-7e8d-43bd-b55c-6941efd2e733.png" 
-      alt="Mall" 
-      className="w-8 h-8" /* Increased icon size and updated image */
-    />
-  );
-  
   return (
-    <div className="pt-2 pb-2">
-      <div className="flex border-b border-gray-200 dark:border-gray-800 mb-5">
+    <div className="py-4">
+      <div className="flex border-b border-gray-200 dark:border-gray-800 mb-6">
         <TabItem
           isActive={activeTab === 'nearby'}
           onClick={() => {
             setActiveTab('nearby');
             setSelectedCategory(null);
           }}
-          icon={getNearbyIcon()}
+          icon={getCategoryIcon('Groceries', 'w-6 h-6')}
         >
           Halvi't Nearby
         </TabItem>
@@ -150,13 +133,13 @@ export default function CategorySuggestions() {
             setActiveTab('online');
             setSelectedCategory(null);
           }}
-          icon={getMallIcon()}
+          icon={getCategoryIcon('Online Shops', 'w-6 h-6')}
         >
           Halvi Mall
         </TabItem>
       </div>
       
-      {/* Categories scroll section */}
+      {/* Categories scroll section with divider */}
       <div className="overflow-x-auto scrollbar-none">
         <div className="flex space-x-4 pb-4 min-w-max px-2">
           {getOrderedCategories(
@@ -172,6 +155,7 @@ export default function CategorySuggestions() {
           ))}
         </div>
       </div>
+      <div className="border-b border-[#DADADA] dark:border-gray-700 my-2"></div>
     </div>
   );
 }
