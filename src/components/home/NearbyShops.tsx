@@ -10,7 +10,7 @@ import { Link } from 'react-router-dom';
 const NearbyShops = () => {
   const [shops, setShops] = useState<Shop[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { isLocationEnabled, location, getNearbyShops } = useLocation();
+  const { isLocationEnabled, location } = useLocation();
   const containerRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
@@ -18,8 +18,8 @@ const NearbyShops = () => {
     const loadShops = async () => {
       try {
         setIsLoading(true);
-        // Use getNearbyShops from the LocationContext
-        const nearbyShops = await getNearbyShops();
+        // Use getShops from the shopService
+        const nearbyShops = await getShops();
         setShops(nearbyShops);
       } catch (error) {
         console.error('Error loading nearby shops:', error);
@@ -34,7 +34,7 @@ const NearbyShops = () => {
       // Load anyway for demo purposes
       loadShops();
     }
-  }, [isLocationEnabled, location, getNearbyShops]);
+  }, [isLocationEnabled, location]);
   
   if (isLoading) {
     return (
@@ -68,9 +68,9 @@ const NearbyShops = () => {
                 whileTap={{ scale: 0.95 }}
                 transition={{ type: "spring", stiffness: 400, damping: 10 }}
               >
-                {shop.logo ? (
+                {shop.logo_url ? (
                   <img 
-                    src={shop.logo} 
+                    src={shop.logo_url} 
                     alt={`${shop.name} logo`}
                     className="w-full h-full object-cover"
                   />

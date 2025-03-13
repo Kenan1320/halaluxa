@@ -28,11 +28,12 @@ interface AuthContextProps {
   user: User | null;
   isLoggedIn: boolean;
   isLoading: boolean;
+  isInitializing: boolean;
   login: (email: string, password: string) => Promise<void>;
   signup: (email: string, password: string, name: string, role: 'shopper' | 'business') => Promise<void>;
   logout: () => Promise<void>;
-  updateUserProfile: (profile: Partial<User>) => Promise<void>;
-  updateBusinessProfile: (businessProfile: Partial<User>) => Promise<void>;
+  updateUserProfile: (profile: Partial<User>) => Promise<boolean>;
+  updateBusinessProfile: (businessProfile: Partial<User>) => Promise<boolean>;
 }
 
 // Create context
@@ -42,6 +43,7 @@ const AuthContext = createContext<AuthContextProps | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isInitializing, setIsInitializing] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -50,6 +52,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const checkSession = async () => {
       try {
         setIsLoading(true);
+        setIsInitializing(true);
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
@@ -63,6 +66,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         console.error('Error checking session:', error);
       } finally {
         setIsLoading(false);
+        setIsInitializing(false);
       }
     };
     
@@ -122,6 +126,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       console.error('Error fetching user profile:', error);
     } finally {
       setIsLoading(false);
+      setIsInitializing(false);
     }
   };
   
@@ -242,7 +247,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   
   // Update user profile
   const updateUserProfile = async (profile: Partial<User>) => {
-    if (!user) return;
+    if (!user) return false;
     
     try {
       setIsLoading(true);
@@ -263,12 +268,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         title: "Profile updated",
         description: "Your profile has been updated successfully",
       });
+
+      return true;
     } catch (error: any) {
       toast({
         title: "Update failed",
         description: error.message || "An error occurred while updating your profile",
         variant: "destructive",
       });
+      return false;
     } finally {
       setIsLoading(false);
     }
@@ -276,7 +284,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   
   // Update business profile (shop owner)
   const updateBusinessProfile = async (businessProfile: Partial<User>) => {
-    if (!user || user.role !== 'business') return;
+    if (!user || user.role !== 'business') return false;
     
     try {
       setIsLoading(true);
@@ -303,12 +311,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         title: "Business profile updated",
         description: "Your business profile has been updated successfully",
       });
+
+      return true;
     } catch (error: any) {
       toast({
         title: "Update failed",
         description: error.message || "An error occurred while updating your business profile",
         variant: "destructive",
       });
+      return false;
     } finally {
       setIsLoading(false);
     }
@@ -320,6 +331,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         user, 
         isLoggedIn: !!user, 
         isLoading, 
+        isInitializing,
         login, 
         signup, 
         logout, 

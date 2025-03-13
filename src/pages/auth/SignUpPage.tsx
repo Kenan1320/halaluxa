@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -11,7 +10,7 @@ import { Check } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 const SignUpPage = () => {
-  const { register } = useAuth();
+  const { signup } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   
@@ -60,48 +59,19 @@ const SignUpPage = () => {
     setIsLoading(true);
     
     try {
-      // Sign up with Supabase
-      const { data, error } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-        options: {
-          data: {
-            name: formData.name,
-            role: userType,
-          },
-        },
-      });
+      // Sign up with our auth context
+      await signup(
+        formData.email,
+        formData.password,
+        formData.name,
+        userType
+      );
       
-      if (error) throw error;
-      
-      if (data.user) {
-        setUserId(data.user.id);
-        
-        // Create profile if not already created by trigger
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .upsert({
-            id: data.user.id,
-            email: formData.email,
-            name: formData.name,
-            role: userType,
-          }, { onConflict: 'id' });
-        
-        if (profileError) throw profileError;
-        
-        toast({
-          title: "Account created",
-          description: "Your account has been created successfully",
-        });
-        
-        // If business user, go to shop setup step
-        if (userType === 'business') {
-          setStep(2);
-        } else {
-          // If shopper, go directly to home page
-          navigate('/');
-        }
+      // If business user, go to shop setup step (after signup redirects)
+      if (userType === 'business') {
+        setStep(2);
       }
+      // If shopper, the signup method already redirects to home
     } catch (error: any) {
       console.error('Signup error:', error);
       toast({
@@ -109,7 +79,6 @@ const SignUpPage = () => {
         description: error.message || "Failed to create account",
         variant: "destructive"
       });
-    } finally {
       setIsLoading(false);
     }
   };

@@ -45,6 +45,8 @@ export interface Shop {
   email?: string;
   website?: string;
   distance?: number;
+  // Add logo for compatibility with frontend references
+  logo?: string;
 }
 
 export interface Product {
@@ -163,6 +165,14 @@ export interface DriverInfo {
     color: string;
     license_plate: string;
   };
+}
+
+export interface Coordinates {
+  latitude: number;
+  longitude: number;
+  city?: string;
+  state?: string;
+  country?: string;
 }
 
 export type User = DatabaseProfile;

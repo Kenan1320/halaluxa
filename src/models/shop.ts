@@ -10,11 +10,14 @@ export interface Shop {
   isVerified: boolean;
   category: string;
   logo: string | null;
+  logo_url?: string | null; // For compatibility with database schema
   coverImage: string | null;
   ownerId: string;
   latitude: number | null;
   longitude: number | null;
   distance: number | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface ShopProduct {
@@ -27,6 +30,11 @@ export interface ShopProduct {
   sellerId: string;
   sellerName: string;
   rating: number;
+  shop_id?: string;
+  created_at?: string;
+  updated_at?: string;
+  is_halal_certified?: boolean;
+  in_stock?: boolean;
 }
 
 export interface ShopLocation {
