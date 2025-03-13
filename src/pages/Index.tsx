@@ -5,20 +5,17 @@ import { Helmet } from 'react-helmet';
 import { useToast } from "@/hooks/use-toast"
 
 import Hero from '@/components/home/Hero';
-import CategoryScroll from '@/components/home/CategoryScroll';
+import FlowingCategories from '@/components/home/FlowingCategories';
 import ShopCard from '@/components/shop/ShopCard';
 import { getAllShops } from '@/services/shopService';
 import { Product } from '@/types/database';
 import { getFeaturedProducts } from '@/services/productService';
-import { getCategories } from '@/services/categoryService';
-import FlowingCategories from '@/components/home/FlowingCategories';
 
 const Index = () => {
   const { toast } = useToast()
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
   const [nearbyShops, setNearbyShops] = useState([]);
   const [isLoadingShops, setIsLoadingShops] = useState(true);
-  const [categories, setCategories] = useState([]);
 
   useEffect(() => {
     const loadFeaturedProducts = async () => {
@@ -36,19 +33,6 @@ const Index = () => {
     };
 
     loadFeaturedProducts();
-  }, []);
-
-  useEffect(() => {
-    const loadCategories = async () => {
-      try {
-        const categoriesData = await getCategories();
-        setCategories(categoriesData);
-      } catch (error) {
-        console.error('Error loading categories:', error);
-      }
-    };
-
-    loadCategories();
   }, []);
 
   useEffect(() => {
@@ -82,7 +66,7 @@ const Index = () => {
       <div className="mb-16 pb-16">
         <Hero />
         
-        {/* Updated to use the new FlowingCategories component */}
+        {/* FlowingCategories replaces CategoryScroll */}
         <FlowingCategories />
         
         <div className="container px-4 mx-auto max-w-6xl">

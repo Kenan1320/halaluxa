@@ -164,3 +164,5 @@ export interface DriverInfo {
     license_plate: string;
   };
 }
+
+export type User = DatabaseProfile;

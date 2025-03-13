@@ -21,7 +21,7 @@ const BottomNavigation = () => {
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm border-t border-gray-200 dark:border-gray-800 pb-safe">
-      <nav className="flex justify-around items-center h-14">
+      <nav className="flex justify-around items-center h-12">
         {links.map((link) => {
           const isActive = location.pathname === link.to || 
                           (link.to !== '/' && location.pathname.startsWith(link.to));
@@ -40,27 +40,27 @@ const BottomNavigation = () => {
               {isActive && (
                 <motion.div
                   layoutId="bottomNavIndicator"
-                  className="absolute top-0 left-1/2 transform -translate-x-1/2 w-8 h-0.5 bg-[#2A866A] rounded-b-full"
-                  transition={{ type: "spring", duration: 0.5 }}
+                  className="absolute top-0 left-1/2 transform -translate-x-1/2 w-6 h-0.5 bg-[#2A866A] rounded-b-full"
+                  transition={{ type: "spring", duration: 0.3 }}
                 />
               )}
               
               <div className="relative">
                 <link.icon className={cn(
-                  "h-5 w-5",
+                  "h-4 w-4",
                   isActive 
                     ? "stroke-[#2A866A]" 
                     : "stroke-gray-500 dark:stroke-gray-400"
                 )} />
                 
                 {link.count && link.count > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-3 h-3 flex items-center justify-center text-[9px]">
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-3 h-3 flex items-center justify-center text-[8px]">
                     {link.count > 9 ? '9+' : link.count}
                   </span>
                 )}
               </div>
               
-              <span className="text-[10px] mt-0.5">{link.label}</span>
+              <span className="text-[9px] mt-0.5">{link.label}</span>
             </Link>
           );
         })}

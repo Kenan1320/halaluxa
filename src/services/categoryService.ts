@@ -7,124 +7,132 @@ export interface Category {
   group: string;
   created_at: string;
   icon?: string;
-  slug?: string;
   description?: string;
+  slug?: string;
 }
 
 // Get all categories
 export const getCategories = async (): Promise<Category[]> => {
   try {
+    // Use the appropriate table depending on your database structure
+    // This assumes you have a 'categories' table or view
     const { data, error } = await supabase
-      .from('categories')
-      .select('*')
-      .order('name');
-      
+      .from('product_categories')
+      .select('*');
+
     if (error) {
+      console.error('Error fetching categories:', error);
       throw error;
     }
-    
-    return data || [];
+
+    // Map the results to our Category interface
+    return (data || []).map(item => ({
+      id: item.id,
+      name: item.name,
+      group: item.group || 'general', // Provide a default if not available
+      created_at: item.created_at,
+      icon: item.icon,
+      description: item.description,
+      slug: item.slug
+    }));
   } catch (error) {
-    console.error('Error fetching categories:', error);
-    
-    // Return mock data if there's an error or no data in the database
+    console.error('Error in getCategories:', error);
+    // Return some default categories as fallback
     return [
       { id: '1', name: 'Groceries', group: 'nearby', created_at: new Date().toISOString() },
-      { id: '2', name: 'Online Stores', group: 'online', created_at: new Date().toISOString() },
+      { id: '2', name: 'Online Shops', group: 'online', created_at: new Date().toISOString() },
       { id: '3', name: 'Restaurants', group: 'nearby', created_at: new Date().toISOString() },
       { id: '4', name: 'Coffee Shops', group: 'nearby', created_at: new Date().toISOString() },
-      { id: '5', name: 'Hoodies', group: 'online', created_at: new Date().toISOString() },
-      { id: '6', name: 'Halal Meat', group: 'nearby', created_at: new Date().toISOString() },
-      { id: '7', name: 'Thobes', group: 'online', created_at: new Date().toISOString() },
-      { id: '8', name: 'Abayas', group: 'online', created_at: new Date().toISOString() },
-      { id: '9', name: 'Books', group: 'online', created_at: new Date().toISOString() },
-      { id: '10', name: 'Kids', group: 'online', created_at: new Date().toISOString() },
-      { id: '11', name: 'Gifts', group: 'online', created_at: new Date().toISOString() },
-      { id: '12', name: 'Food Delivery', group: 'online', created_at: new Date().toISOString() }
+      { id: '5', name: 'Clothing', group: 'online', created_at: new Date().toISOString() },
+      { id: '6', name: 'Halal Meat', group: 'nearby', created_at: new Date().toISOString() }
     ];
   }
 };
 
-// Get categories by group
+// Get categories by group (e.g., 'nearby', 'online')
 export const getCategoriesByGroup = async (group: string): Promise<Category[]> => {
   try {
     const { data, error } = await supabase
-      .from('categories')
+      .from('product_categories')
       .select('*')
-      .eq('group', group)
-      .order('name');
-      
+      .eq('group', group);
+
     if (error) {
+      console.error(`Error fetching ${group} categories:`, error);
       throw error;
     }
-    
-    return data || [];
+
+    // Map the results to our Category interface
+    return (data || []).map(item => ({
+      id: item.id,
+      name: item.name,
+      group: item.group || 'general',
+      created_at: item.created_at,
+      icon: item.icon,
+      description: item.description,
+      slug: item.slug
+    }));
   } catch (error) {
-    console.error(`Error fetching categories by group (${group}):`, error);
-    
-    // Filter mock data by group
-    const allCategories = [
-      { id: '1', name: 'Groceries', group: 'nearby', created_at: new Date().toISOString() },
-      { id: '2', name: 'Online Stores', group: 'online', created_at: new Date().toISOString() },
-      { id: '3', name: 'Restaurants', group: 'nearby', created_at: new Date().toISOString() },
-      { id: '4', name: 'Coffee Shops', group: 'nearby', created_at: new Date().toISOString() },
-      { id: '5', name: 'Hoodies', group: 'online', created_at: new Date().toISOString() },
-      { id: '6', name: 'Halal Meat', group: 'nearby', created_at: new Date().toISOString() },
-      { id: '7', name: 'Thobes', group: 'online', created_at: new Date().toISOString() },
-      { id: '8', name: 'Abayas', group: 'online', created_at: new Date().toISOString() },
-      { id: '9', name: 'Books', group: 'online', created_at: new Date().toISOString() },
-      { id: '10', name: 'Kids', group: 'online', created_at: new Date().toISOString() },
-      { id: '11', name: 'Gifts', group: 'online', created_at: new Date().toISOString() },
-      { id: '12', name: 'Food Delivery', group: 'online', created_at: new Date().toISOString() }
-    ];
-    
-    return allCategories.filter(category => category.group === group);
+    console.error(`Error in getCategoriesByGroup(${group}):`, error);
+    // Return empty array as fallback
+    return [];
   }
 };
 
-// Create a new category
+// Create a category
 export const createCategory = async (category: Omit<Category, 'id' | 'created_at'>): Promise<Category | null> => {
   try {
     const { data, error } = await supabase
-      .from('categories')
-      .insert([
-        { 
-          name: category.name,
-          group: category.group,
-          icon: category.icon,
-          slug: category.slug || category.name.toLowerCase().replace(/\s+/g, '-'),
-          description: category.description
-        }
-      ])
+      .from('product_categories')
+      .insert([category])
       .select()
       .single();
-      
+
     if (error) {
+      console.error('Error creating category:', error);
       throw error;
     }
-    
-    return data;
+
+    return {
+      id: data.id,
+      name: data.name,
+      group: data.group || 'general',
+      created_at: data.created_at,
+      icon: data.icon,
+      description: data.description,
+      slug: data.slug
+    };
   } catch (error) {
-    console.error('Error creating category:', error);
+    console.error('Error in createCategory:', error);
     return null;
   }
 };
 
-// Delete a category
-export const deleteCategory = async (id: string): Promise<boolean> => {
+// Get a category by id
+export const getCategoryById = async (id: string): Promise<Category | null> => {
   try {
-    const { error } = await supabase
-      .from('categories')
-      .delete()
-      .eq('id', id);
-      
+    const { data, error } = await supabase
+      .from('product_categories')
+      .select('*')
+      .eq('id', id)
+      .single();
+
     if (error) {
+      console.error(`Error fetching category with id ${id}:`, error);
       throw error;
     }
-    
-    return true;
+
+    return {
+      id: data.id,
+      name: data.name,
+      group: data.group || 'general',
+      created_at: data.created_at,
+      icon: data.icon,
+      description: data.description,
+      slug: data.slug
+    };
   } catch (error) {
-    console.error('Error deleting category:', error);
-    return false;
+    console.error(`Error in getCategoryById(${id}):`, error);
+    return null;
   }
 };

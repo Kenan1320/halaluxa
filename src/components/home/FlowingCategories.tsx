@@ -6,8 +6,9 @@ import { useTheme } from '@/context/ThemeContext';
 import { getCategoryIcon } from '../icons/CategoryIcons';
 import { Category, getCategoriesByGroup, getCategories } from '@/services/categoryService';
 
-// Define our custom order for categories
-const CATEGORY_ORDER = [
+// Define our preferred order for categories - we'll use all categories
+// but prioritize these ones to appear first
+const PRIORITY_CATEGORIES = [
   'Groceries',
   'Online Stores',
   'Restaurants',
@@ -61,7 +62,7 @@ const CategoryItem: React.FC<CategoryItemProps> = ({ category, isHighlighted, on
       onClick={onClick}
     >
       <motion.div 
-        className={`w-16 h-16 rounded-full flex items-center justify-center 
+        className={`w-14 h-14 rounded-full flex items-center justify-center 
           ${mode === 'dark' ? 'bg-gray-800' : 'bg-white'}
           shadow-sm ${isHighlighted ? 'shadow-md bg-[#e4f7f1] dark:bg-[#2A866A]/20' : ''}
           transition-all duration-300`}
@@ -78,7 +79,7 @@ const CategoryItem: React.FC<CategoryItemProps> = ({ category, isHighlighted, on
       >
         {getCategoryIcon(
           category.name, 
-          `w-8 h-8 ${
+          `w-7 h-7 ${
             isHighlighted 
               ? 'text-[#2A866A] dark:text-[#5bbea7]' 
               : mode === 'dark' ? 'text-white' : 'text-gray-700'
@@ -111,25 +112,29 @@ const FlowingCategories: React.FC = () => {
           cat.name === 'Online Shops' ? { ...cat, name: 'Online Stores' } : cat
         );
         
-        // Filter and sort categories according to our predefined order
-        const orderedCategories = CATEGORY_ORDER
-          .map(name => updatedCategories.find(cat => cat.name === name))
-          .filter(Boolean) as Category[];
-        
-        // If we don't have enough categories from our predefined list, add some more
-        if (orderedCategories.length < 6) {
-          const remainingCategories = updatedCategories
-            .filter(cat => !CATEGORY_ORDER.includes(cat.name))
-            .slice(0, 6 - orderedCategories.length);
+        // Sort categories to prioritize our preferred ones first
+        const sortedCategories = [...updatedCategories].sort((a, b) => {
+          const indexA = PRIORITY_CATEGORIES.indexOf(a.name);
+          const indexB = PRIORITY_CATEGORIES.indexOf(b.name);
           
-          orderedCategories.push(...remainingCategories);
-        }
+          // If both are in our priority list, sort by their position in that list
+          if (indexA >= 0 && indexB >= 0) {
+            return indexA - indexB;
+          }
+          
+          // If only one is in our priority list, prioritize it
+          if (indexA >= 0) return -1;
+          if (indexB >= 0) return 1;
+          
+          // If neither is in our priority list, sort alphabetically
+          return a.name.localeCompare(b.name);
+        });
         
-        setCategories(orderedCategories);
+        setCategories(sortedCategories);
         
         // Create a duplicated array for infinite scroll effect
         // We duplicate it multiple times to ensure it's long enough for any screen size
-        setDuplicatedCategories([...orderedCategories, ...orderedCategories, ...orderedCategories]);
+        setDuplicatedCategories([...sortedCategories, ...sortedCategories, ...sortedCategories]);
       } catch (error) {
         console.error('Error loading categories:', error);
         // Fallback categories with all required fields
