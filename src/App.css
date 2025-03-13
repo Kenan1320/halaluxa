@@ -19,15 +19,15 @@
 
 /* Enhanced 3D effects */
 .icon-3d {
-  filter: drop-shadow(2px 4px 6px rgba(0, 0, 0, 0.1));
+  filter: drop-shadow(3px 5px 8px rgba(0, 0, 0, 0.15));
   transform-style: preserve-3d;
   perspective: 1000px;
   transition: transform 0.3s ease, filter 0.3s ease;
 }
 
 .icon-3d:hover {
-  transform: translateY(-2px) rotateX(10deg) rotateY(10deg);
-  filter: drop-shadow(3px 5px 8px rgba(0, 0, 0, 0.15));
+  transform: translateY(-3px) rotateX(15deg) rotateY(15deg);
+  filter: drop-shadow(4px 8px 12px rgba(0, 0, 0, 0.2));
 }
 
 /* Glass morphism effects */
@@ -137,13 +137,13 @@
 /* Section dividers */
 .section-divider {
   height: 1px;
-  background-color: #DADADA;
+  background-color: rgba(218, 218, 218, 0.4);
   width: 100%;
   margin: 16px 0;
 }
 
 .dark .section-divider {
-  background-color: #374151;
+  background-color: rgba(55, 65, 81, 0.4);
 }
 
 /* Custom checkbox styles */
@@ -201,16 +201,17 @@
   box-shadow: 0 0 0 2px rgba(42, 134, 106, 0.2);
 }
 
-/* 3D hover effect for category icons */
+/* Enhanced 3D hover effect for category icons */
 .category-icon-3d {
   transform-style: preserve-3d;
   perspective: 800px;
   transition: transform 0.3s ease;
+  filter: drop-shadow(2px 5px 10px rgba(0, 0, 0, 0.12));
 }
 
 .category-icon-3d:hover {
-  transform: rotateX(10deg) rotateY(10deg) scale(1.05);
-  box-shadow: 2px 5px 15px rgba(0, 0, 0, 0.1);
+  transform: rotateX(15deg) rotateY(15deg) scale(1.08);
+  filter: drop-shadow(3px 8px 15px rgba(0, 0, 0, 0.18));
 }
 
 /* Enhanced modal styles */
@@ -238,4 +239,27 @@
 .modal-content-3d.exiting {
   transform: translateZ(100px) scale(1.05);
   opacity: 0;
+}
+
+/* Premium Halvi branding */
+.halvi-brand {
+  font-family: 'Playfair Display', serif;
+  letter-spacing: 0.5px;
+  text-shadow: 0 0 8px rgba(42,134,106,0.2);
+  transition: all 0.3s ease;
+}
+
+.halvi-brand:hover {
+  transform: scale(1.05);
+  text-shadow: 0 0 12px rgba(42,134,106,0.3);
+}
+
+/* Flowing categories animation */
+.flow-category {
+  transform-style: preserve-3d;
+  transition: transform 0.3s ease;
+}
+
+.flow-category:hover {
+  transform: translateY(-3px) rotateX(10deg) rotateY(10deg) scale(1.08);
 }

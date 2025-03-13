@@ -1,6 +1,7 @@
 
 import { Link } from 'react-router-dom';
 import { Instagram, Twitter, Facebook, Mail, Phone, MapPin } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 const Footer = () => {
   return (
@@ -10,7 +11,17 @@ const Footer = () => {
           {/* Brand Column */}
           <div className="space-y-4">
             <Link to="/" className="flex items-center">
-              <h2 className="text-haluna-primary text-3xl font-serif">Halvi</h2>
+              <motion.h2 
+                className="text-haluna-primary text-3xl font-serif"
+                whileHover={{ scale: 1.05 }}
+                style={{ 
+                  fontFamily: "'Playfair Display', serif",
+                  letterSpacing: "0.5px",
+                  textShadow: "0 0 8px rgba(42,134,106,0.2)"
+                }}
+              >
+                Halvi
+              </motion.h2>
               <span className="ml-1 h-3 w-3 rounded-full bg-haluna-accent inline-block mt-1"></span>
             </Link>
             <p className="text-haluna-text-light">

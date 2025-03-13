@@ -26,7 +26,7 @@ const TabItem = ({ isActive, onClick, icon, children }: {
     >
       {icon}
     </motion.div>
-    <span className="text-base font-semibold">{children}</span>
+    <span className="text-sm font-semibold">{children}</span>
     {isActive && (
       <motion.div
         className="absolute bottom-0 left-0 right-0 h-0.5 bg-black dark:bg-white"
@@ -63,7 +63,7 @@ const CategoryIcon = ({ category, onClick, isSelected }: {
         perspective: "500px" 
       }}
     >
-      {getCategoryIcon(category.name, `w-9 h-9 ${isSelected ? 'text-[#29866B]' : 'text-gray-600 dark:text-gray-300'}`)}
+      {getCategoryIcon(category.name, `w-10 h-10 ${isSelected ? 'text-[#29866B]' : 'text-gray-600 dark:text-gray-300'}`)}
     </motion.div>
     <span className={`text-xs font-bold text-center text-gray-600 dark:text-gray-300 whitespace-nowrap ${
       isSelected ? 'text-[#2A866A] dark:text-[#5bbea7]' : ''
@@ -114,16 +114,33 @@ export default function CategorySuggestions() {
     loadCategories();
   }, []);
   
+  // Custom icons for the tabs
+  const getNearbyIcon = () => (
+    <img 
+      src="/lovable-uploads/89ad3be3-b680-4a28-9a6b-e050599916e9.png" 
+      alt="Nearby" 
+      className="w-7 h-7"
+    />
+  );
+
+  const getMallIcon = () => (
+    <img 
+      src="/lovable-uploads/0c7f89ca-690e-47eb-a401-e16e5f4d2618.png" 
+      alt="Mall" 
+      className="w-7 h-7"
+    />
+  );
+  
   return (
-    <div className="py-4">
-      <div className="flex border-b border-gray-200 dark:border-gray-800 mb-6">
+    <div className="pt-2 pb-2">
+      <div className="flex border-b border-gray-200 dark:border-gray-800 mb-5">
         <TabItem
           isActive={activeTab === 'nearby'}
           onClick={() => {
             setActiveTab('nearby');
             setSelectedCategory(null);
           }}
-          icon={getCategoryIcon('Groceries', 'w-6 h-6')}
+          icon={getNearbyIcon()}
         >
           Halvi't Nearby
         </TabItem>
@@ -133,7 +150,7 @@ export default function CategorySuggestions() {
             setActiveTab('online');
             setSelectedCategory(null);
           }}
-          icon={getCategoryIcon('Online Shops', 'w-6 h-6')}
+          icon={getMallIcon()}
         >
           Halvi Mall
         </TabItem>
@@ -155,7 +172,6 @@ export default function CategorySuggestions() {
           ))}
         </div>
       </div>
-      <div className="border-b border-[#DADADA] dark:border-gray-700 my-2"></div>
     </div>
   );
 }

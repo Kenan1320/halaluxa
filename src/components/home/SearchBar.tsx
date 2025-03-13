@@ -38,7 +38,7 @@ const SearchBar = () => {
         mode === 'dark' 
           ? 'bg-gray-800 text-white border border-gray-700' 
           : 'bg-white text-gray-700 border border-gray-200'
-      } px-5 py-3 shadow-md hover:shadow-lg transition-all duration-300`}>
+      } px-5 py-3.5 shadow-md hover:shadow-lg transition-all duration-300`}>
         <Search className="w-6 h-6 mr-3 text-gray-400" />
         <div className="relative w-full h-6 overflow-hidden">
           <AnimatePresence mode="wait">
