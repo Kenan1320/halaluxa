@@ -1,3 +1,4 @@
+
 export interface DatabaseProfile {
   id: string;
   name: string;
@@ -43,6 +44,7 @@ export interface Shop {
   phone?: string;
   email?: string;
   website?: string;
+  distance?: number;
 }
 
 export interface Product {

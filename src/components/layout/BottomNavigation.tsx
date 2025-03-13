@@ -21,7 +21,7 @@ const BottomNavigation = () => {
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm border-t border-gray-200 dark:border-gray-800 pb-safe">
-      <nav className="flex justify-around items-center h-12">
+      <nav className="flex justify-around items-center h-14">
         {links.map((link) => {
           const isActive = location.pathname === link.to || 
                           (link.to !== '/' && location.pathname.startsWith(link.to));
@@ -47,7 +47,7 @@ const BottomNavigation = () => {
               
               <div className="relative">
                 <link.icon className={cn(
-                  "h-4 w-4 mb-0.5",
+                  "h-5 w-5",
                   isActive 
                     ? "stroke-[#2A866A]" 
                     : "stroke-gray-500 dark:stroke-gray-400"
@@ -60,7 +60,7 @@ const BottomNavigation = () => {
                 )}
               </div>
               
-              <span className="text-[9px]">{link.label}</span>
+              <span className="text-[10px] mt-0.5">{link.label}</span>
             </Link>
           );
         })}

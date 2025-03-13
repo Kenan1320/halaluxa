@@ -4,68 +4,127 @@ import { supabase } from '@/integrations/supabase/client';
 export interface Category {
   id: string;
   name: string;
-  description?: string;
-  icon?: string;
+  group: string;
   created_at: string;
-  group?: 'nearby' | 'online'; // Adding group to categorize for Halvi't Nearby or Halvi Mall
+  icon?: string;
+  slug?: string;
+  description?: string;
 }
 
-// Mock categories data since 'categories' table doesn't appear to exist
-const mockCategories: Category[] = [
-  { id: '1', name: 'Groceries', description: 'Fresh food and groceries', icon: 'grocery', created_at: new Date().toISOString(), group: 'nearby' },
-  { id: '2', name: 'Restaurants', description: 'Restaurants and food delivery', icon: 'restaurant', created_at: new Date().toISOString(), group: 'nearby' },
-  { id: '3', name: 'Halal Meat', description: 'Certified halal meat', icon: 'meat', created_at: new Date().toISOString(), group: 'nearby' },
-  { id: '4', name: 'Coffee Shops', description: 'Coffee and tea shops', icon: 'coffee', created_at: new Date().toISOString(), group: 'nearby' },
-  { id: '5', name: 'Furniture', description: 'Home furniture and decor', icon: 'furniture', created_at: new Date().toISOString(), group: 'nearby' },
-  { id: '6', name: 'Fashion', description: 'Clothing and accessories', icon: 'fashion', created_at: new Date().toISOString(), group: 'online' },
-  { id: '7', name: 'Electronics', description: 'Gadgets and electronics', icon: 'electronics', created_at: new Date().toISOString(), group: 'online' },
-  { id: '8', name: 'Books', description: 'Books and stationery', icon: 'books', created_at: new Date().toISOString(), group: 'online' },
-  { id: '9', name: 'Toys', description: 'Toys and games', icon: 'toys', created_at: new Date().toISOString(), group: 'online' },
-  { id: '10', name: 'Health', description: 'Health and wellness products', icon: 'health', created_at: new Date().toISOString(), group: 'nearby' },
-  { id: '11', name: 'Online Shops', description: 'Online stores', icon: 'shop', created_at: new Date().toISOString(), group: 'online' },
-  { id: '12', name: 'Gifts', description: 'Gift items', icon: 'gift', created_at: new Date().toISOString(), group: 'online' },
-  { id: '13', name: 'Hoodies', description: 'Hoodies and sweatshirts', icon: 'clothing', created_at: new Date().toISOString(), group: 'online' }
-];
-
+// Get all categories
 export const getCategories = async (): Promise<Category[]> => {
   try {
-    // Return mock data since the categories table doesn't exist
-    return mockCategories;
+    const { data, error } = await supabase
+      .from('categories')
+      .select('*')
+      .order('name');
+      
+    if (error) {
+      throw error;
+    }
+    
+    return data || [];
   } catch (error) {
     console.error('Error fetching categories:', error);
-    return [];
+    
+    // Return mock data if there's an error or no data in the database
+    return [
+      { id: '1', name: 'Groceries', group: 'nearby', created_at: new Date().toISOString() },
+      { id: '2', name: 'Online Stores', group: 'online', created_at: new Date().toISOString() },
+      { id: '3', name: 'Restaurants', group: 'nearby', created_at: new Date().toISOString() },
+      { id: '4', name: 'Coffee Shops', group: 'nearby', created_at: new Date().toISOString() },
+      { id: '5', name: 'Hoodies', group: 'online', created_at: new Date().toISOString() },
+      { id: '6', name: 'Halal Meat', group: 'nearby', created_at: new Date().toISOString() },
+      { id: '7', name: 'Thobes', group: 'online', created_at: new Date().toISOString() },
+      { id: '8', name: 'Abayas', group: 'online', created_at: new Date().toISOString() },
+      { id: '9', name: 'Books', group: 'online', created_at: new Date().toISOString() },
+      { id: '10', name: 'Kids', group: 'online', created_at: new Date().toISOString() },
+      { id: '11', name: 'Gifts', group: 'online', created_at: new Date().toISOString() },
+      { id: '12', name: 'Food Delivery', group: 'online', created_at: new Date().toISOString() }
+    ];
   }
 };
 
-// Get categories by group (for Halvi't Nearby or Halvi Mall)
-export const getCategoriesByGroup = async (group: 'nearby' | 'online'): Promise<Category[]> => {
+// Get categories by group
+export const getCategoriesByGroup = async (group: string): Promise<Category[]> => {
   try {
-    return mockCategories.filter(cat => cat.group === group);
+    const { data, error } = await supabase
+      .from('categories')
+      .select('*')
+      .eq('group', group)
+      .order('name');
+      
+    if (error) {
+      throw error;
+    }
+    
+    return data || [];
   } catch (error) {
-    console.error(`Error fetching ${group} categories:`, error);
-    return [];
+    console.error(`Error fetching categories by group (${group}):`, error);
+    
+    // Filter mock data by group
+    const allCategories = [
+      { id: '1', name: 'Groceries', group: 'nearby', created_at: new Date().toISOString() },
+      { id: '2', name: 'Online Stores', group: 'online', created_at: new Date().toISOString() },
+      { id: '3', name: 'Restaurants', group: 'nearby', created_at: new Date().toISOString() },
+      { id: '4', name: 'Coffee Shops', group: 'nearby', created_at: new Date().toISOString() },
+      { id: '5', name: 'Hoodies', group: 'online', created_at: new Date().toISOString() },
+      { id: '6', name: 'Halal Meat', group: 'nearby', created_at: new Date().toISOString() },
+      { id: '7', name: 'Thobes', group: 'online', created_at: new Date().toISOString() },
+      { id: '8', name: 'Abayas', group: 'online', created_at: new Date().toISOString() },
+      { id: '9', name: 'Books', group: 'online', created_at: new Date().toISOString() },
+      { id: '10', name: 'Kids', group: 'online', created_at: new Date().toISOString() },
+      { id: '11', name: 'Gifts', group: 'online', created_at: new Date().toISOString() },
+      { id: '12', name: 'Food Delivery', group: 'online', created_at: new Date().toISOString() }
+    ];
+    
+    return allCategories.filter(category => category.group === group);
   }
 };
 
-// Alias for getCategories to support existing code
-export const listCategories = getCategories;
-
-export const getCategoryById = async (id: string): Promise<Category | null> => {
+// Create a new category
+export const createCategory = async (category: Omit<Category, 'id' | 'created_at'>): Promise<Category | null> => {
   try {
-    const category = mockCategories.find(cat => cat.id === id);
-    return category || null;
+    const { data, error } = await supabase
+      .from('categories')
+      .insert([
+        { 
+          name: category.name,
+          group: category.group,
+          icon: category.icon,
+          slug: category.slug || category.name.toLowerCase().replace(/\s+/g, '-'),
+          description: category.description
+        }
+      ])
+      .select()
+      .single();
+      
+    if (error) {
+      throw error;
+    }
+    
+    return data;
   } catch (error) {
-    console.error('Error in getCategoryById:', error);
+    console.error('Error creating category:', error);
     return null;
   }
 };
 
-// Get category names only for dropdown lists
-export const getCategoryNames = async (): Promise<string[]> => {
+// Delete a category
+export const deleteCategory = async (id: string): Promise<boolean> => {
   try {
-    return mockCategories.map(cat => cat.name);
+    const { error } = await supabase
+      .from('categories')
+      .delete()
+      .eq('id', id);
+      
+    if (error) {
+      throw error;
+    }
+    
+    return true;
   } catch (error) {
-    console.error('Error fetching category names:', error);
-    return [];
+    console.error('Error deleting category:', error);
+    return false;
   }
 };

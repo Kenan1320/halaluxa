@@ -132,15 +132,17 @@ const FlowingCategories: React.FC = () => {
         setDuplicatedCategories([...orderedCategories, ...orderedCategories, ...orderedCategories]);
       } catch (error) {
         console.error('Error loading categories:', error);
-        // Fallback categories
-        setCategories([
-          { id: '1', name: 'Groceries', group: 'nearby' },
-          { id: '2', name: 'Online Stores', group: 'online' },
-          { id: '3', name: 'Restaurants', group: 'nearby' },
-          { id: '4', name: 'Coffee Shops', group: 'nearby' },
-          { id: '5', name: 'Hoodies', group: 'online' },
-          { id: '6', name: 'Halal Meat', group: 'nearby' }
-        ]);
+        // Fallback categories with all required fields
+        const fallbackCategories: Category[] = [
+          { id: '1', name: 'Groceries', group: 'nearby', created_at: new Date().toISOString() },
+          { id: '2', name: 'Online Stores', group: 'online', created_at: new Date().toISOString() },
+          { id: '3', name: 'Restaurants', group: 'nearby', created_at: new Date().toISOString() },
+          { id: '4', name: 'Coffee Shops', group: 'nearby', created_at: new Date().toISOString() },
+          { id: '5', name: 'Hoodies', group: 'online', created_at: new Date().toISOString() },
+          { id: '6', name: 'Halal Meat', group: 'nearby', created_at: new Date().toISOString() }
+        ];
+        setCategories(fallbackCategories);
+        setDuplicatedCategories([...fallbackCategories, ...fallbackCategories, ...fallbackCategories]);
       }
     };
     

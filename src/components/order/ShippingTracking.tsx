@@ -8,7 +8,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ExternalLink, Package, Truck, Calendar, Check, AlertCircle } from 'lucide-react';
 import { formatDate, formatDateTime } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
-import { Order } from '@/types/database';
 import { motion } from 'framer-motion';
 
 interface ShippingTrackingProps {
@@ -32,7 +31,6 @@ interface ShippingEvent {
 const ShippingTracking: React.FC<ShippingTrackingProps> = ({ orderId, initialData }) => {
   const [isLoading, setIsLoading] = useState(!initialData);
   const [trackingData, setTrackingData] = useState(initialData);
-  const [order, setOrder] = useState<Order | null>(null);
 
   // Mock shipping data for demo
   const mockShippingData = {
@@ -74,15 +72,13 @@ const ShippingTracking: React.FC<ShippingTrackingProps> = ({ orderId, initialDat
         setIsLoading(true);
         
         // Get order details from database
-        const { data: orderData, error: orderError } = await supabase
+        const { data, error } = await supabase
           .from('orders')
           .select('*')
           .eq('id', orderId)
           .single();
           
-        if (orderError) throw orderError;
-        
-        setOrder(orderData as Order);
+        if (error) throw error;
         
         // In a real app, we would use the carrier and tracking number to fetch real tracking data
         // For this demo, we'll use mock data with slight randomization
@@ -105,7 +101,8 @@ const ShippingTracking: React.FC<ShippingTrackingProps> = ({ orderId, initialDat
               filter: `id=eq.${orderId}` 
             },
             (payload) => {
-              setOrder(payload.new as Order);
+              // In a real app, we would re-fetch the tracking info here
+              console.log('Order updated:', payload);
             }
           )
           .subscribe();
