@@ -10,25 +10,24 @@ const CategoryScroll = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const { mode } = useTheme();
   
-  // Only display these top categories
-  const topCategoryNames = ['Online Shops', 'Restaurants', 'Groceries', 'Halal Meat', 'Clothing'];
+  // Include these categories in the flowing list
+  const includedCategoryNames = [
+    'Online Shops', 'Restaurants', 'Groceries', 'Halal Meat', 
+    'Clothing', 'Coffee Shops', 'Hoodies', 'Books', 'Thobes', 
+    'Hijab', 'Decorations', 'Abaya', 'Gifts', 'Arabic Calligraphy'
+  ];
   
   useEffect(() => {
     const loadCategories = async () => {
       try {
         const allCategories = await getCategories();
         
-        // Filter to only show the specified top categories
+        // Filter to only show the specified categories with icons
         const filteredCategories = allCategories.filter(cat => 
-          topCategoryNames.includes(cat.name)
+          includedCategoryNames.includes(cat.name)
         );
         
-        // Sort them in the order specified in topCategoryNames
-        const sortedCategories = [...filteredCategories].sort((a, b) => {
-          return topCategoryNames.indexOf(a.name) - topCategoryNames.indexOf(b.name);
-        });
-        
-        setCategories(sortedCategories);
+        setCategories(filteredCategories);
       } catch (error) {
         console.error('Error loading categories:', error);
       }
@@ -47,7 +46,7 @@ const CategoryScroll = () => {
             className="flex-shrink-0"
           >
             <motion.div
-              className="w-12 h-12 flex items-center justify-center"
+              className="w-14 h-14 flex items-center justify-center"
               whileHover={{ 
                 scale: 1.1, 
                 rotateY: 10,
@@ -60,7 +59,7 @@ const CategoryScroll = () => {
               whileTap={{ scale: 0.95 }}
               transition={{ type: "spring", stiffness: 400, damping: 17 }}
             >
-              {getCategoryIcon(category.name, `w-10 h-10 ${mode === 'dark' ? 'text-white' : 'text-[#2A866A]'}`)}
+              {getCategoryIcon(category.name, `w-11 h-11 ${mode === 'dark' ? 'text-white' : 'text-[#2A866A]'}`)}
             </motion.div>
           </Link>
         ))}

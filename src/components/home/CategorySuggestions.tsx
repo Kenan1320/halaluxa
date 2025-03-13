@@ -20,7 +20,7 @@ const TabItem = ({ isActive, onClick, icon, children }: {
     style={{ fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}
   >
     <motion.div
-      className="w-6 h-6"
+      className="w-8 h-8" /* Increased icon size */
       whileHover={{ scale: 1.1 }}
       whileTap={{ scale: 0.95 }}
     >
@@ -46,7 +46,7 @@ const CategoryIcon = ({ category, onClick, isSelected }: {
     onClick={onClick}
     whileHover={{ scale: 1.05 }}
     whileTap={{ scale: 0.95 }}
-    className="flex flex-col items-center space-y-2 min-w-[80px] cursor-pointer px-1"
+    className="flex flex-col items-center space-y-2 min-w-[70px] cursor-pointer px-1"
   >
     <motion.div 
       className={`w-16 h-16 flex items-center justify-center ${
@@ -63,9 +63,9 @@ const CategoryIcon = ({ category, onClick, isSelected }: {
         perspective: "500px" 
       }}
     >
-      {getCategoryIcon(category.name, `w-10 h-10 ${isSelected ? 'text-[#29866B]' : 'text-gray-600 dark:text-gray-300'}`)}
+      {getCategoryIcon(category.name, `w-11 h-11 ${isSelected ? 'text-[#29866B]' : 'text-gray-600 dark:text-gray-300'}`)}
     </motion.div>
-    <span className={`text-xs font-bold text-center text-gray-600 dark:text-gray-300 whitespace-nowrap ${
+    <span className={`text-xs font-medium text-center text-gray-600 dark:text-gray-300 whitespace-nowrap ${
       isSelected ? 'text-[#2A866A] dark:text-[#5bbea7]' : ''
     }`}>
       {category.name}
@@ -119,15 +119,15 @@ export default function CategorySuggestions() {
     <img 
       src="/lovable-uploads/89ad3be3-b680-4a28-9a6b-e050599916e9.png" 
       alt="Nearby" 
-      className="w-7 h-7"
+      className="w-8 h-8" /* Increased icon size */
     />
   );
 
   const getMallIcon = () => (
     <img 
-      src="/lovable-uploads/0c7f89ca-690e-47eb-a401-e16e5f4d2618.png" 
+      src="/lovable-uploads/15e23db4-7e8d-43bd-b55c-6941efd2e733.png" 
       alt="Mall" 
-      className="w-7 h-7"
+      className="w-8 h-8" /* Increased icon size and updated image */
     />
   );
   
@@ -156,7 +156,7 @@ export default function CategorySuggestions() {
         </TabItem>
       </div>
       
-      {/* Categories scroll section with divider */}
+      {/* Categories scroll section */}
       <div className="overflow-x-auto scrollbar-none">
         <div className="flex space-x-4 pb-4 min-w-max px-2">
           {getOrderedCategories(
