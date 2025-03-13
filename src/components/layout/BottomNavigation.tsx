@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Store, Search, ShoppingBag, UserCircle2 } from 'lucide-react';
+import { LayoutDashboard, Store, Search, ShoppingBag, UserCircle2, Map } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
@@ -46,6 +46,12 @@ const BottomNavigation = () => {
       icon: <Store className="h-6 w-6" />,
       path: '/shops',
       match: ['/shops', '/shop', '/shop/']
+    },
+    {
+      label: 'Map',
+      icon: <Map className="h-6 w-6" />,
+      path: '/map',
+      match: ['/map', '/order-tracking']
     },
     {
       label: 'Search',

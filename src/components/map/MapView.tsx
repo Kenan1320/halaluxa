@@ -1,319 +1,324 @@
 
 import React, { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Shop } from '@/types/database';
+import { useTheme } from '@/context/ThemeContext';
+import { useLocation as useRouterLocation } from 'react-router-dom';
+import { useLocation } from '@/context/LocationContext';
+import { calculateDistance } from '@/services/locationService';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { useTheme } from '@/context/ThemeContext';
-import { Shop } from '@/types/database';
-import { useLocation } from '@/context/LocationContext';
+import ShopPreviewCard from '@/components/map/ShopPreviewCard';
 import { Button } from '@/components/ui/button';
-import { Search, MapPin, Store, X } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Link } from 'react-router-dom';
-import ShopPreviewCard from './ShopPreviewCard';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { motion } from 'framer-motion';
+import { ChevronUp, ChevronDown } from 'lucide-react';
 
-// Mapbox access token
-mapboxgl.accessToken = 'pk.eyJ1IjoiaGFsdmktbWFwIiwiYSI6ImNsczJicnlmZDFjZ2oyamx0dXJwbmdidzcifQ.3mj5Q-SExIbNmKzDnFSZjQ';
+// Set Mapbox token - in production this should come from environment variables
+mapboxgl.accessToken = 'pk.eyJ1IjoiaGFsdmlkZXYiLCJhIjoiY2xzOGRlc2QyMDRzbTJwcGJrMG41ZThzNSJ9.WkKwQp19QGHLpgB4XDqDow';
 
 interface MapViewProps {
-  shops?: Shop[];
-  isLoading?: boolean;
+  shops: Shop[];
+  isLoading: boolean;
 }
 
-const MapView: React.FC<MapViewProps> = ({ shops = [], isLoading = false }) => {
-  const { mode } = useTheme();
-  const mapContainer = useRef<HTMLDivElement>(null);
+const MapView: React.FC<MapViewProps> = ({ shops, isLoading }) => {
+  const mapContainer = useRef<HTMLDivElement | null>(null);
   const map = useRef<mapboxgl.Map | null>(null);
-  const markers = useRef<mapboxgl.Marker[]>([]);
-  const { isLocationEnabled, enableLocation, location } = useLocation();
+  const markersRef = useRef<{ [key: string]: mapboxgl.Marker }>({});
   const [selectedShop, setSelectedShop] = useState<Shop | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filteredShops, setFilteredShops] = useState<Shop[]>(shops);
-  const [mapLoaded, setMapLoaded] = useState(false);
-  const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
-  
-  // Define available categories
-  const categories = ['Restaurant', 'Grocery', 'Meat Shop', 'Bakery', 'Cafe'];
-  
-  // Filter shops based on search query and category
-  useEffect(() => {
-    let filtered = shops;
-    
-    if (searchQuery) {
-      filtered = filtered.filter(shop => 
-        shop.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        shop.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        shop.category.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
-    
-    if (categoryFilter) {
-      filtered = filtered.filter(shop => 
-        shop.category.toLowerCase() === categoryFilter.toLowerCase()
-      );
-    }
-    
-    setFilteredShops(filtered);
-  }, [searchQuery, shops, categoryFilter]);
+  const [showShopList, setShowShopList] = useState(true);
+  const { mode } = useTheme();
+  const { location } = useLocation();
+  const navigate = useNavigate();
+  const routerLocation = useRouterLocation();
 
   // Initialize map
   useEffect(() => {
-    if (map.current || !mapContainer.current) return;
-    
+    if (!mapContainer.current || map.current) return;
+
+    // Create map with default center or user location
+    const userLocation = location?.coords ? 
+      [location.coords.longitude, location.coords.latitude] : 
+      [-74.006, 40.7128]; // Default NYC
+
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
-      style: mode === 'dark' 
-        ? 'mapbox://styles/mapbox/dark-v11' 
-        : 'mapbox://styles/mapbox/light-v11',
-      center: location ? [location.coords.longitude, location.coords.latitude] : [-74.5, 40],
-      zoom: 11,
+      style: mode === 'dark' ? 
+        'mapbox://styles/mapbox/dark-v11' : 
+        'mapbox://styles/mapbox/light-v11',
+      center: userLocation,
+      zoom: 12
     });
 
-    map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
-    map.current.addControl(new mapboxgl.GeolocateControl({
-      positionOptions: {
-        enableHighAccuracy: true
-      },
-      trackUserLocation: true,
-      showUserHeading: true
-    }));
+    // Add navigation controls
+    map.current.addControl(
+      new mapboxgl.NavigationControl({
+        visualizePitch: true,
+        showCompass: true
+      }),
+      'top-right'
+    );
 
-    map.current.on('load', () => {
-      setMapLoaded(true);
-    });
+    // Add user location marker if available
+    if (location?.coords) {
+      new mapboxgl.Marker({ color: '#FF7A45' })
+        .setLngLat([location.coords.longitude, location.coords.latitude])
+        .addTo(map.current)
+        .setPopup(new mapboxgl.Popup({ offset: 25 }).setText('Your Location'));
+    }
 
+    // Clean up on unmount
     return () => {
-      markers.current.forEach(marker => marker.remove());
-      markers.current = [];
-      map.current?.remove();
-      map.current = null;
+      if (map.current) {
+        map.current.remove();
+        map.current = null;
+      }
     };
+  }, [location, mode]);
+
+  // Update map style when theme changes
+  useEffect(() => {
+    if (!map.current) return;
+
+    map.current.setStyle(
+      mode === 'dark' ? 
+        'mapbox://styles/mapbox/dark-v11' : 
+        'mapbox://styles/mapbox/light-v11'
+    );
   }, [mode]);
 
-  // Update map when location changes
+  // Add shop markers to map
   useEffect(() => {
-    if (!map.current || !location) return;
-    
-    map.current.flyTo({
-      center: [location.coords.longitude, location.coords.latitude],
-      zoom: 13,
-      essential: true
-    });
-  }, [location]);
+    if (!map.current || isLoading || shops.length === 0) return;
 
-  // Add markers for shops
-  useEffect(() => {
-    if (!map.current || !mapLoaded) return;
-    
-    // Clear existing markers
-    markers.current.forEach(marker => marker.remove());
-    markers.current = [];
+    // Remove existing markers
+    Object.values(markersRef.current).forEach(marker => marker.remove());
+    markersRef.current = {};
 
-    // Add markers for filtered shops
-    filteredShops.forEach(shop => {
+    // Create bounds to fit all markers
+    const bounds = new mapboxgl.LngLatBounds();
+
+    // Add markers for each shop
+    shops.forEach(shop => {
+      // Skip if no coordinates
       if (!shop.latitude || !shop.longitude) return;
-      
-      // Create marker element
-      const el = document.createElement('div');
-      el.className = 'shop-marker';
-      el.innerHTML = `<div class="w-8 h-8 bg-white dark:bg-gray-800 rounded-full shadow-lg flex items-center justify-center transform hover:scale-110 transition-transform cursor-pointer">
-        <div class="w-6 h-6 bg-[#2A866A] rounded-full flex items-center justify-center">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-          </svg>
-        </div>
-      </div>`;
 
-      // Add marker to map
-      const marker = new mapboxgl.Marker(el)
+      // Create popup
+      const popup = new mapboxgl.Popup({ offset: 25 })
+        .setHTML(`
+          <div class="p-2">
+            <h3 class="font-medium">${shop.name}</h3>
+            <p class="text-xs text-gray-500">${shop.category || 'Shop'}</p>
+          </div>
+        `);
+
+      // Create marker
+      const marker = new mapboxgl.Marker({ 
+        color: '#2A866A'
+      })
         .setLngLat([shop.longitude, shop.latitude])
+        .setPopup(popup)
         .addTo(map.current!);
-      
-      // Add click event listener
-      el.addEventListener('click', () => {
+
+      // Add marker to refs
+      markersRef.current[shop.id] = marker;
+
+      // Add marker to bounds
+      bounds.extend([shop.longitude, shop.latitude]);
+
+      // Add click event to marker
+      marker.getElement().addEventListener('click', () => {
         setSelectedShop(shop);
-        
-        // Fly to shop location
-        map.current?.flyTo({
-          center: [shop.longitude, shop.latitude],
-          zoom: 15,
-          essential: true
-        });
       });
-      
-      markers.current.push(marker);
     });
-  }, [filteredShops, mapLoaded, mode]);
 
-  // Handle request location
-  const handleRequestLocation = async () => {
-    if (!isLocationEnabled) {
-      await enableLocation();
+    // Fit map to bounds if we have markers
+    if (!bounds.isEmpty()) {
+      map.current.fitBounds(bounds, {
+        padding: { top: 120, bottom: 200, left: 50, right: 50 },
+        maxZoom: 15
+      });
     }
+  }, [shops, isLoading, map.current]);
+
+  // Calculate shop distances
+  const shopsWithDistance = shops.map(shop => {
+    let distance = null;
+    
+    if (location?.coords && shop.latitude && shop.longitude) {
+      distance = calculateDistance(
+        location.coords.latitude,
+        location.coords.longitude,
+        shop.latitude,
+        shop.longitude
+      );
+    }
+    
+    return {
+      ...shop,
+      distance: distance
+    };
+  })
+  .sort((a, b) => {
+    // Sort by distance if available, otherwise by name
+    if (a.distance !== null && b.distance !== null) {
+      return a.distance - b.distance;
+    }
+    return a.name.localeCompare(b.name);
+  });
+
+  // Format distance
+  const formatDistance = (distance: number | null) => {
+    if (distance === null) return 'Unknown distance';
+    
+    if (distance < 1) {
+      // Convert to meters
+      const meters = Math.round(distance * 1000);
+      return `${meters} m`;
+    }
+    
+    return `${distance.toFixed(1)} km`;
   };
 
-  // Handle category filter
-  const handleCategoryFilter = (category: string) => {
-    setCategoryFilter(categoryFilter === category ? null : category);
+  // Handle shop card click
+  const handleShopClick = (shop: Shop) => {
+    if (!map.current) return;
+    
+    // Center map on shop
+    map.current.flyTo({
+      center: [shop.longitude, shop.latitude],
+      zoom: 15,
+      duration: 1000
+    });
+    
+    // Open marker popup
+    const marker = markersRef.current[shop.id];
+    if (marker) {
+      marker.togglePopup();
+    }
+    
+    // Set selected shop
+    setSelectedShop(shop);
   };
 
-  // Close shop preview
-  const closeShopPreview = () => {
-    setSelectedShop(null);
+  // Navigate to shop detail page
+  const goToShopDetail = (shopId: string) => {
+    navigate(`/shop/${shopId}`);
   };
 
   return (
-    <div className="relative w-full h-screen">
-      {/* Map container */}
-      <div ref={mapContainer} className="absolute inset-0" />
+    <div className="relative h-[calc(100vh-120px)]">
+      <div ref={mapContainer} className="w-full h-full" />
       
-      {/* Search panel */}
-      <div className="absolute top-4 left-0 right-0 mx-auto max-w-md px-4 z-10">
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-3">
-          <div className="relative">
-            <Input
-              type="text"
-              placeholder="Search stores, products, categories..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-4 py-2 w-full bg-gray-100 dark:bg-gray-700"
-            />
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-            {searchQuery && (
-              <button 
-                onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
-              >
-                <X className="h-4 w-4" />
-              </button>
+      {/* Shop list overlay */}
+      <div className="absolute bottom-0 left-0 right-0 z-10">
+        <motion.div
+          initial={{ y: 0 }}
+          animate={{ y: showShopList ? 0 : 260 }}
+          transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+          className={`rounded-t-xl shadow-lg ${mode === 'dark' ? 'bg-gray-900' : 'bg-white'}`}
+        >
+          <div 
+            className="flex justify-center p-2 cursor-pointer"
+            onClick={() => setShowShopList(!showShopList)}
+          >
+            {showShopList ? (
+              <ChevronDown className="h-6 w-6 text-gray-400" />
+            ) : (
+              <ChevronUp className="h-6 w-6 text-gray-400" />
             )}
           </div>
           
-          {/* Category filters */}
-          <div className="flex gap-2 mt-3 overflow-x-auto pb-2 scrollbar-hide">
-            {categories.map((category) => (
-              <Button
-                key={category}
-                variant={categoryFilter === category ? "default" : "outline"}
-                size="sm"
-                onClick={() => handleCategoryFilter(category)}
-                className={`whitespace-nowrap ${
-                  categoryFilter === category 
-                    ? "bg-[#2A866A] hover:bg-[#1f6e55]" 
-                    : ""
-                }`}
-              >
-                {category}
-              </Button>
-            ))}
+          <div className="p-4">
+            <h2 className="text-lg font-bold mb-4">
+              Nearby Halal Stores
+              {location?.city && (
+                <span className="ml-1 font-normal text-sm text-gray-500">
+                  in {location.city}
+                </span>
+              )}
+            </h2>
+            
+            <ScrollArea className="h-[240px] pr-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {shopsWithDistance.map(shop => (
+                  <div 
+                    key={shop.id}
+                    className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                      selectedShop?.id === shop.id 
+                        ? (mode === 'dark' ? 'border-white bg-gray-800' : 'border-black bg-gray-100')
+                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                    }`}
+                    onClick={() => handleShopClick(shop)}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div 
+                        className="w-12 h-12 bg-gray-100 dark:bg-gray-800 rounded-md overflow-hidden flex-shrink-0"
+                        style={{ 
+                          backgroundImage: shop.logo_url ? `url(${shop.logo_url})` : 'none',
+                          backgroundSize: 'cover',
+                          backgroundPosition: 'center'
+                        }}
+                      />
+                      
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-medium truncate">{shop.name}</h3>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-1 truncate">
+                          {shop.category || 'Shop'} • {shop.location || 'Location not available'}
+                        </p>
+                        
+                        <div className="flex justify-between items-center">
+                          {shop.distance !== null ? (
+                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                              {formatDistance(shop.distance)}
+                            </span>
+                          ) : (
+                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                              Distance unknown
+                            </span>
+                          )}
+                          
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-7 px-2 text-xs"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              goToShopDetail(shop.id);
+                            }}
+                          >
+                            Visit
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                
+                {shopsWithDistance.length === 0 && (
+                  <div className="col-span-2 py-8 text-center">
+                    <p className="text-gray-500 dark:text-gray-400">
+                      No halal shops found in this area.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </ScrollArea>
           </div>
-        </div>
+        </motion.div>
       </div>
       
-      {/* Location request banner */}
-      {!isLocationEnabled && (
-        <div className="absolute top-24 left-0 right-0 mx-auto max-w-md px-4 z-10">
-          <motion.div 
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-white dark:bg-gray-800 border border-amber-300 dark:border-amber-600 rounded-lg shadow-lg p-3 flex items-center"
-          >
-            <MapPin className="h-5 w-5 text-amber-500 mr-2 flex-shrink-0" />
-            <p className="text-sm flex-grow">Enable location services to find shops near you</p>
-            <Button 
-              size="sm" 
-              onClick={handleRequestLocation}
-              className="bg-amber-500 hover:bg-amber-600 text-white ml-2"
-            >
-              Enable
-            </Button>
-          </motion.div>
+      {/* Selected shop card */}
+      {selectedShop && (
+        <div className="absolute top-4 left-0 right-0 flex justify-center px-4 z-10">
+          <ShopPreviewCard 
+            shop={selectedShop} 
+            onClose={() => setSelectedShop(null)}
+            onViewShop={() => goToShopDetail(selectedShop.id)}
+          />
         </div>
       )}
-      
-      {/* Bottom panel with nearby shops */}
-      <div className="absolute bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 shadow-lg rounded-t-2xl p-4 z-10">
-        <div className="flex justify-between items-center mb-3">
-          <h2 className="font-bold text-lg">Nearby Shops</h2>
-          <Link to="/shops" className="text-[#2A866A] text-sm font-medium">
-            See All
-          </Link>
-        </div>
-        
-        {isLoading ? (
-          <div className="flex space-x-4 overflow-x-auto pb-2">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="w-40 h-24 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse flex-shrink-0" />
-            ))}
-          </div>
-        ) : filteredShops.length > 0 ? (
-          <div className="flex space-x-4 overflow-x-auto pb-2 scrollbar-hide">
-            {filteredShops.slice(0, 10).map((shop) => (
-              <div
-                key={shop.id}
-                onClick={() => setSelectedShop(shop)}
-                className="w-40 flex-shrink-0 cursor-pointer"
-              >
-                <div className="h-24 bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden relative">
-                  {shop.cover_image ? (
-                    <img 
-                      src={shop.cover_image} 
-                      alt={shop.name} 
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <Store className="h-8 w-8 text-gray-400" />
-                    </div>
-                  )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-2">
-                    <span className="text-white text-xs font-medium truncate w-full">
-                      {shop.name}
-                    </span>
-                  </div>
-                </div>
-                <div className="mt-1">
-                  <div className="flex items-center">
-                    <div className="w-2 h-2 rounded-full bg-green-500 mr-1" />
-                    <span className="text-xs text-gray-600 dark:text-gray-400">
-                      {shop.distance ? `${shop.distance.toFixed(1)} mi` : 'Nearby'}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="py-6 text-center">
-            <Store className="h-10 w-10 text-gray-400 mx-auto mb-2" />
-            <p className="text-gray-500 dark:text-gray-400">No shops found in this area</p>
-            <Button 
-              variant="outline" 
-              className="mt-2"
-              onClick={() => {
-                setCategoryFilter(null);
-                setSearchQuery('');
-              }}
-            >
-              Clear filters
-            </Button>
-          </div>
-        )}
-      </div>
-      
-      {/* Selected shop preview */}
-      <AnimatePresence>
-        {selectedShop && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            className="absolute top-1/4 left-0 right-0 mx-auto max-w-sm px-4 z-20"
-          >
-            <ShopPreviewCard shop={selectedShop} onClose={closeShopPreview} />
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 };

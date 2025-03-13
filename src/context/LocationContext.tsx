@@ -1,7 +1,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { getAllShops } from '@/services/shopService';
+import { getAllShops, getNearbyShops as getShopsNearby } from '@/services/shopService';
 import { Shop } from '@/types/database';
 
 // Extended GeolocationPosition type with city and state
@@ -15,7 +15,7 @@ interface EnhancedLocation {
 interface LocationContextType {
   isLocationEnabled: boolean;
   enableLocation: () => Promise<boolean>;
-  requestLocation: () => Promise<boolean>; // Added missing function
+  requestLocation: () => Promise<boolean>;
   location: EnhancedLocation | null;
   getNearbyShops: () => Promise<Shop[]>;
 }
@@ -153,15 +153,9 @@ export const LocationProvider: React.FC<LocationProviderProps> = ({ children }) 
 
       const { latitude, longitude } = location.coords;
       
-      // In a real app, we would call a function that retrieves shops sorted by distance
-      // For now, we'll just get all shops and set a mocked distance
-      const shops = await getAllShops();
-      
-      // Add a random distance to each shop for demo purposes
-      return shops.map(shop => ({
-        ...shop,
-        distance: Math.random() * 5 // Random distance between 0 and 5 miles
-      })).sort((a, b) => (a.distance || 99) - (b.distance || 99));
+      // Call the shopService function to get nearby shops
+      const shops = await getShopsNearby(latitude, longitude);
+      return shops;
     } catch (error) {
       console.error('Error getting nearby shops:', error);
       return [];

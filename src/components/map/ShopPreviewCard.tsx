@@ -1,112 +1,126 @@
 
 import React from 'react';
-import { Shop } from '@/types/database';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { X, Star, Navigation, Clock, ShoppingBag } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Badge } from '@/components/ui/badge';
+import { Shop } from '@/types/database';
+import { X, Star, Clock, MapPin, ExternalLink } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 
 interface ShopPreviewCardProps {
   shop: Shop;
   onClose: () => void;
+  onViewShop: () => void;
 }
 
-const ShopPreviewCard: React.FC<ShopPreviewCardProps> = ({ shop, onClose }) => {
-  // Determine if shop has delivery or is pickup only
-  const hasDelivery = shop.display_mode === 'local_delivery' || shop.display_mode === 'online';
-  const hasPickup = shop.display_mode === 'local_pickup' || 
-                   (shop.pickup_options && (shop.pickup_options.store || shop.pickup_options.curbside));
+const ShopPreviewCard: React.FC<ShopPreviewCardProps> = ({ 
+  shop, 
+  onClose,
+  onViewShop
+}) => {
+  const navigate = useNavigate();
+
+  const handleOrderClick = () => {
+    navigate(`/shop/${shop.id}`);
+  };
 
   return (
     <motion.div
-      layoutId={`shop-card-${shop.id}`}
-      transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      className="w-full max-w-md"
     >
-      <Card className="overflow-hidden shadow-lg border-0">
-        <div className="relative h-40 overflow-hidden">
-          {shop.cover_image ? (
-            <img 
-              src={shop.cover_image} 
-              alt={shop.name} 
-              className="w-full h-full object-cover" 
-            />
-          ) : (
-            <div className="w-full h-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-              <ShoppingBag className="h-12 w-12 text-gray-400" />
-            </div>
-          )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
-          
-          <button 
-            onClick={onClose} 
-            className="absolute top-2 right-2 w-8 h-8 bg-black/40 hover:bg-black/60 rounded-full flex items-center justify-center text-white transition-colors"
+      <Card className="shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div className="relative">
+          {/* Header/Cover Image */}
+          <div 
+            className="h-24 bg-gradient-to-r from-green-600 to-emerald-500 relative"
+            style={{ 
+              backgroundImage: shop.cover_image ? `url(${shop.cover_image})` : 'none',
+              backgroundSize: 'cover',
+              backgroundPosition: 'center'
+            }}
           >
-            <X className="h-4 w-4" />
-          </button>
+            {/* Close button */}
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="absolute top-2 right-2 h-8 w-8 bg-black/20 hover:bg-black/40 text-white rounded-full"
+              onClick={onClose}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+            
+            {/* Shop logo */}
+            <div 
+              className="absolute -bottom-8 left-4 w-16 h-16 rounded-full border-4 border-white dark:border-gray-800 bg-white dark:bg-gray-800 overflow-hidden"
+              style={{ 
+                backgroundImage: shop.logo_url ? `url(${shop.logo_url})` : 'none',
+                backgroundSize: 'cover',
+                backgroundPosition: 'center'
+              }}
+            />
+          </div>
           
-          <div className="absolute bottom-0 left-0 p-4 text-white">
-            <h3 className="text-lg font-bold">{shop.name}</h3>
-            <div className="flex items-center mt-1">
-              <div className="flex items-center mr-3">
-                <Star className="h-3 w-3 text-yellow-400 mr-1" />
-                <span className="text-xs">{shop.rating || 'New'}</span>
+          {/* Body */}
+          <div className="pt-10 px-4 pb-4">
+            <div className="flex justify-between items-start mb-2">
+              <div>
+                <h3 className="font-bold text-lg">{shop.name}</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  {shop.category || 'Halal Shop'}
+                </p>
               </div>
-              <div className="flex items-center mr-3">
-                <Clock className="h-3 w-3 text-gray-300 mr-1" />
-                <span className="text-xs">Open</span>
-              </div>
-              {shop.distance && (
-                <div className="flex items-center">
-                  <Navigation className="h-3 w-3 text-gray-300 mr-1" />
-                  <span className="text-xs">{shop.distance.toFixed(1)} mi</span>
+              
+              {shop.rating && (
+                <Badge variant="outline" className="flex items-center gap-1 border-yellow-400 text-yellow-600 dark:text-yellow-400">
+                  <Star className="h-3 w-3 fill-current" />
+                  {shop.rating.toFixed(1)}
+                </Badge>
+              )}
+            </div>
+            
+            {shop.description && (
+              <p className="text-sm text-gray-600 dark:text-gray-300 mb-3 line-clamp-2">
+                {shop.description}
+              </p>
+            )}
+            
+            <div className="space-y-1 mb-4">
+              {shop.location && (
+                <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
+                  <MapPin className="h-3 w-3 mr-1" />
+                  <span className="truncate">{shop.location}</span>
                 </div>
               )}
+              
+              <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
+                <Clock className="h-3 w-3 mr-1" />
+                <span>Open Now • Closes at 9:00 PM</span>
+              </div>
+            </div>
+            
+            <div className="flex gap-2">
+              <Button 
+                className="flex-1 bg-[#2A866A] hover:bg-[#1f6e55] text-white"
+                onClick={handleOrderClick}
+              >
+                Order Now
+              </Button>
+              
+              <Button 
+                variant="outline" 
+                className="flex items-center gap-1"
+                onClick={onViewShop}
+              >
+                <ExternalLink className="h-4 w-4" />
+                View Shop
+              </Button>
             </div>
           </div>
         </div>
-        
-        <CardContent className="p-4">
-          <div className="flex flex-col space-y-3">
-            <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
-              {shop.description || `A ${shop.category} offering halal products and services`}
-            </p>
-            
-            <div className="flex flex-wrap gap-2">
-              <div className="bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400 text-xs px-2 py-1 rounded-full">
-                {shop.category || 'Halal Shop'}
-              </div>
-              {hasDelivery && (
-                <div className="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400 text-xs px-2 py-1 rounded-full">
-                  Delivery
-                </div>
-              )}
-              {hasPickup && (
-                <div className="bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-400 text-xs px-2 py-1 rounded-full">
-                  Pickup
-                </div>
-              )}
-              {shop.is_verified && (
-                <div className="bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-400 text-xs px-2 py-1 rounded-full">
-                  Verified
-                </div>
-              )}
-            </div>
-            
-            <div className="flex space-x-2 pt-1">
-              <Link to={`/shop/${shop.id}`} className="flex-grow">
-                <Button className="w-full bg-[#2A866A] hover:bg-[#1f6e55]">
-                  Order Now
-                </Button>
-              </Link>
-              <Link to={`/order-tracking?shop=${shop.id}`} className="flex-shrink-0">
-                <Button variant="outline" className="border-[#2A866A] text-[#2A866A] hover:bg-[#2A866A]/10">
-                  Track Orders
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </CardContent>
       </Card>
     </motion.div>
   );
