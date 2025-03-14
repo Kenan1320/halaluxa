@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { getShops } from '@/services/shopService';
+import { getNearbyShops } from '@/services/shopService';
 import { useLocation } from '@/context/LocationContext';
 import ShopCard from '@/components/shop/ShopCard';
 import ShopProductList from '@/components/shop/ShopProductList';
@@ -11,7 +11,7 @@ import { Shop } from '@/models/shop';
 const NearbyShops = () => {
   const [shops, setShops] = useState<Shop[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { isLocationEnabled, location, getNearbyShops } = useLocation();
+  const { isLocationEnabled, location, getNearbyShops: getContextNearbyShops } = useLocation();
   const containerRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
@@ -19,11 +19,26 @@ const NearbyShops = () => {
     const loadShops = async () => {
       try {
         setIsLoading(true);
-        // Use getNearbyShops from the LocationContext
-        const nearbyShops = await getNearbyShops();
-        if (Array.isArray(nearbyShops)) {
-          setShops(nearbyShops as Shop[]);
+        
+        // Try to use the context method if available
+        if (typeof getContextNearbyShops === 'function') {
+          const nearbyShops = await getContextNearbyShops();
+          if (Array.isArray(nearbyShops)) {
+            setShops(nearbyShops);
+            setIsLoading(false);
+            return;
+          }
         }
+        
+        // Fallback to direct service call
+        let nearbyShops: Shop[] = [];
+        if (isLocationEnabled && location) {
+          nearbyShops = await getNearbyShops(location.latitude, location.longitude);
+        } else {
+          nearbyShops = await getNearbyShops();
+        }
+        
+        setShops(nearbyShops);
       } catch (error) {
         console.error('Error loading nearby shops:', error);
       } finally {
@@ -31,13 +46,8 @@ const NearbyShops = () => {
       }
     };
     
-    if (isLocationEnabled && location) {
-      loadShops();
-    } else {
-      // Load anyway for demo purposes
-      loadShops();
-    }
-  }, [isLocationEnabled, location, getNearbyShops]);
+    loadShops();
+  }, [isLocationEnabled, location, getContextNearbyShops]);
   
   if (isLoading) {
     return (
@@ -60,7 +70,7 @@ const NearbyShops = () => {
   
   return (
     <div className="space-y-8">
-      {shops.map((shop, index) => (
+      {shops.map((shop) => (
         <div key={shop.id} className="mb-8">
           {/* Shop header with name and logo - now animated and clickable */}
           <div className="flex items-center justify-between mb-4">

@@ -1,13 +1,14 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { getShopProducts } from '@/services/shopService';
 import { ShopProduct } from '@/models/product';
 import ProductCard from '@/components/shop/ProductCard';
 import { motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { UUID } from '@/models/types';
 
 interface ShopProductListProps {
-  shopId: string;
+  shopId: UUID;
   products?: ShopProduct[];
 }
 
@@ -18,7 +19,7 @@ const ShopProductList = ({ shopId, products: initialProducts }: ShopProductListP
   const [showLeftControl, setShowLeftControl] = useState(false);
   const [showRightControl, setShowRightControl] = useState(true);
   
-  const containerRef = React.useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
     if (initialProducts) {
@@ -116,7 +117,7 @@ const ShopProductList = ({ shopId, products: initialProducts }: ShopProductListP
           <div key={product.id} className="flex-shrink-0">
             <ProductCard 
               product={product}
-              size="small"
+              className="w-36 md:w-48"
             />
           </div>
         ))}

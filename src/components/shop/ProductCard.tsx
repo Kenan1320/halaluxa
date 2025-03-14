@@ -74,7 +74,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className }) => {
                 Halal Certified
               </span>
             )}
-            {!product.inStock && (
+            {product.inStock === false && (
               <span className="px-2 py-1 text-xs font-medium bg-red-100 dark:bg-red-900/80 text-red-800 dark:text-red-100 rounded-md backdrop-blur-sm">
                 Out of Stock
               </span>
@@ -107,16 +107,18 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className }) => {
           
           {/* Seller name and add to cart */}
           <div className="flex items-center justify-between">
-            <span className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[120px]">
-              {product.sellerName || "Halvi Seller"}
-            </span>
+            {'sellerName' in product && (
+              <span className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[120px]">
+                {product.sellerName || "Halvi Seller"}
+              </span>
+            )}
             
             <button
               onClick={handleAddToCart}
-              disabled={!product.inStock}
+              disabled={product.inStock === false}
               className={cn(
                 "p-2 rounded-lg text-white transition-colors",
-                product.inStock 
+                product.inStock !== false 
                   ? "bg-gray-900 hover:bg-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600" 
                   : "bg-gray-300 dark:bg-gray-700 cursor-not-allowed opacity-60"
               )}
