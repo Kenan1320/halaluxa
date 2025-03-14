@@ -21,7 +21,9 @@ const NearbyShops = () => {
         setIsLoading(true);
         // Use getNearbyShops from the LocationContext
         const nearbyShops = await getNearbyShops();
-        setShops(nearbyShops);
+        if (Array.isArray(nearbyShops)) {
+          setShops(nearbyShops as Shop[]);
+        }
       } catch (error) {
         console.error('Error loading nearby shops:', error);
       } finally {

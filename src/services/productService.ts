@@ -1,18 +1,21 @@
 
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabaseClient';
 import { Product } from '@/models/product';
-import { convertToModelProduct } from '@/services/shopService';
 
-// Get products with limit and offset for pagination
-export const getProducts = async (limit = 20, offset = 0, category?: string): Promise<Product[]> => {
+export const getProducts = async (limit?: number, offset?: number, category?: string) => {
   try {
-    let query = supabase
-      .from('products')
-      .select('*')
-      .range(offset, offset + limit - 1);
+    let query = supabase.from('products').select('*');
     
     if (category) {
       query = query.eq('category', category);
+    }
+    
+    if (limit) {
+      query = query.limit(limit);
+    }
+    
+    if (offset) {
+      query = query.range(offset, offset + (limit || 10) - 1);
     }
     
     const { data, error } = await query;
@@ -22,132 +25,125 @@ export const getProducts = async (limit = 20, offset = 0, category?: string): Pr
       return [];
     }
     
-    return data.map(convertToModelProduct);
+    return data.map(product => ({
+      id: product.id,
+      name: product.name,
+      description: product.description,
+      price: product.price,
+      images: product.images || [],
+      category: product.category,
+      shopId: product.shop_id,
+      stock: product.stock || 0,
+      createdAt: product.created_at,
+      updatedAt: product.updated_at
+    }));
   } catch (error) {
-    console.error('Error fetching products:', error);
+    console.error('Unexpected error fetching products:', error);
     return [];
   }
 };
 
-// Function for getting featured products
-export const getFeaturedProducts = async (limit = 8): Promise<Product[]> => {
-  try {
-    // In a real application, you might have a 'featured' flag or sort by popularity
-    // Here we're just getting the first few products
-    const { data, error } = await supabase
-      .from('products')
-      .select('*')
-      .limit(limit);
-    
-    if (error) {
-      console.error('Error fetching featured products:', error);
-      return [];
-    }
-    
-    return data.map(convertToModelProduct);
-  } catch (error) {
-    console.error('Error fetching featured products:', error);
-    return [];
-  }
-};
-
-// Get product by ID
-export const getProductById = async (id: string): Promise<Product | null> => {
+export const getProductById = async (id: string) => {
   try {
     const { data, error } = await supabase
       .from('products')
       .select('*')
       .eq('id', id)
       .single();
-    
+      
     if (error) {
-      console.error('Error fetching product by ID:', error);
+      console.error('Error fetching product:', error);
       return null;
     }
     
-    return convertToModelProduct(data);
+    return {
+      id: data.id,
+      name: data.name,
+      description: data.description,
+      price: data.price,
+      images: data.images || [],
+      category: data.category,
+      shopId: data.shop_id,
+      stock: data.stock || 0,
+      createdAt: data.created_at,
+      updatedAt: data.updated_at
+    };
   } catch (error) {
-    console.error('Error fetching product by ID:', error);
+    console.error('Unexpected error fetching product:', error);
     return null;
   }
 };
 
-// Create a new product
-export const createProduct = async (product: Partial<Product>): Promise<Product | null> => {
+export const createProduct = async (product: Partial<Product>) => {
   try {
-    // Convert from our model Product to database format
-    const dbProduct = {
-      name: product.name,
-      description: product.description,
-      price: product.price,
-      images: product.images,
-      category: product.category,
-      shop_id: product.shopId,
-      stock: product.quantity || 0,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    };
-    
     const { data, error } = await supabase
       .from('products')
-      .insert([dbProduct])
-      .select()
-      .single();
-    
+      .insert([
+        {
+          name: product.name,
+          description: product.description,
+          price: product.price,
+          images: product.images,
+          category: product.category,
+          shop_id: product.shopId,
+          stock: product.stock || 0,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }
+      ])
+      .select();
+      
     if (error) {
       console.error('Error creating product:', error);
       return null;
     }
     
-    return convertToModelProduct(data);
+    return data[0];
   } catch (error) {
-    console.error('Error creating product:', error);
+    console.error('Unexpected error creating product:', error);
     return null;
   }
 };
 
-// Update an existing product
-export const updateProduct = async (id: string, product: Partial<Product>): Promise<Product | null> => {
+export const updateProduct = async (id: string, product: Partial<Product>) => {
   try {
-    // Convert from our model Product to database format
-    const dbProduct: any = {};
+    const updateData: any = {
+      updated_at: new Date().toISOString()
+    };
     
-    if (product.name) dbProduct.name = product.name;
-    if (product.description) dbProduct.description = product.description;
-    if (product.price !== undefined) dbProduct.price = product.price;
-    if (product.images) dbProduct.images = product.images;
-    if (product.category) dbProduct.category = product.category;
-    if (product.quantity !== undefined) dbProduct.stock = product.quantity;
-    
-    dbProduct.updated_at = new Date().toISOString();
+    if (product.name !== undefined) updateData.name = product.name;
+    if (product.description !== undefined) updateData.description = product.description;
+    if (product.price !== undefined) updateData.price = product.price;
+    if (product.images !== undefined) updateData.images = product.images;
+    if (product.category !== undefined) updateData.category = product.category;
+    if (product.shopId !== undefined) updateData.shop_id = product.shopId;
+    if (product.stock !== undefined) updateData.stock = product.stock;
     
     const { data, error } = await supabase
       .from('products')
-      .update(dbProduct)
+      .update(updateData)
       .eq('id', id)
-      .select()
-      .single();
-    
+      .select();
+      
     if (error) {
       console.error('Error updating product:', error);
       return null;
     }
     
-    return convertToModelProduct(data);
+    return data[0];
   } catch (error) {
-    console.error('Error updating product:', error);
+    console.error('Unexpected error updating product:', error);
     return null;
   }
 };
 
-// Delete a product
-export const deleteProduct = async (id: string): Promise<boolean> => {
+export const deleteProduct = async (id: string) => {
   try {
     const { error } = await supabase
       .from('products')
       .delete()
       .eq('id', id);
-    
+      
     if (error) {
       console.error('Error deleting product:', error);
       return false;
@@ -155,49 +151,9 @@ export const deleteProduct = async (id: string): Promise<boolean> => {
     
     return true;
   } catch (error) {
-    console.error('Error deleting product:', error);
+    console.error('Unexpected error deleting product:', error);
     return false;
   }
 };
 
-// Search products by name or description
-export const searchProducts = async (query: string, limit = 20): Promise<Product[]> => {
-  try {
-    const { data, error } = await supabase
-      .from('products')
-      .select('*')
-      .or(`name.ilike.%${query}%,description.ilike.%${query}%`)
-      .limit(limit);
-    
-    if (error) {
-      console.error('Error searching products:', error);
-      return [];
-    }
-    
-    return data.map(convertToModelProduct);
-  } catch (error) {
-    console.error('Error searching products:', error);
-    return [];
-  }
-};
-
-// Get products by shop ID
-export const getProductsByShopId = async (shopId: string, limit = 50): Promise<Product[]> => {
-  try {
-    const { data, error } = await supabase
-      .from('products')
-      .select('*')
-      .eq('shop_id', shopId)
-      .limit(limit);
-    
-    if (error) {
-      console.error('Error fetching products by shop ID:', error);
-      return [];
-    }
-    
-    return data.map(convertToModelProduct);
-  } catch (error) {
-    console.error('Error fetching products by shop ID:', error);
-    return [];
-  }
-};
+export const queryFunction = () => getProducts();

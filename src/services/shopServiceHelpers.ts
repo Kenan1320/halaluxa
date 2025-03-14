@@ -1,126 +1,92 @@
 
-import { Shop, ShopProduct } from '@/models/shop';
-import { Product } from '@/models/product';
-import { Json } from '@/types/supabase';
+import { Shop as DBShop } from '@/types/database';
+import { Shop as ModelShop } from '@/models/shop';
+import { Product, ShopProduct } from '@/models/product';
 
-export interface DbShop {
-  id: string;
-  name: string;
-  description: string;
-  location: string;
-  owner_id: string;
-  category: string;
-  is_verified: boolean;
-  logo_url: string | null;
-  cover_image: string | null;
-  created_at: string;
-  updated_at: string;
-  rating: number;
-  product_count: number | null;
-  latitude: number | null;
-  longitude: number | null;
-  address: string;
-  distance?: number | null;
-}
+export const adaptDbProductToShopProduct = (dbProduct: any): ShopProduct => {
+  return {
+    id: dbProduct.id,
+    name: dbProduct.name,
+    description: dbProduct.description,
+    price: dbProduct.price,
+    images: dbProduct.images || [],
+    category: dbProduct.category,
+    shopId: dbProduct.shop_id,
+    stock: dbProduct.stock,
+    createdAt: dbProduct.created_at,
+    updatedAt: dbProduct.updated_at,
+    rating: dbProduct.rating || 0,
+    featured: dbProduct.featured || false,
+    reviewCount: dbProduct.review_count || 0,
+    distance: 0 // Default value
+  };
+};
 
-export interface DbProduct {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  shop_id: string;
-  category: string;
-  images: string[];
-  created_at: string;
-  updated_at: string;
-  is_halal_certified: boolean;
-  in_stock: boolean;
-  seller_id?: string | null;
-  shop_name?: string | null;
-  details?: Json;
-  long_description?: string;
-  is_published: boolean;
-  stock?: number;
-  rating?: number;
-}
-
-/**
- * Converts database Shop object to Shop model
- */
-export const adaptDbShopToShop = (dbShop: DbShop): Shop => {
+export const adaptDbShopToModelShop = (dbShop: DBShop): ModelShop => {
   return {
     id: dbShop.id,
     name: dbShop.name,
     description: dbShop.description,
+    logo: dbShop.logo_url,
+    category: dbShop.category,
     location: dbShop.location,
     rating: dbShop.rating || 0,
     productCount: dbShop.product_count || 0,
-    isVerified: dbShop.is_verified,
-    category: dbShop.category,
-    logo: dbShop.logo_url,
-    coverImage: dbShop.cover_image,
+    isVerified: dbShop.is_verified || false,
     ownerId: dbShop.owner_id,
     latitude: dbShop.latitude,
     longitude: dbShop.longitude,
-    distance: dbShop.distance || null
+    coverImage: dbShop.cover_image,
+    distance: 0, // Default value
+    deliveryAvailable: dbShop.delivery_available,
+    pickupAvailable: dbShop.pickup_available,
+    isHalalCertified: dbShop.is_halal_certified
   };
 };
 
-/**
- * Converts database Product to ShopProduct model
- */
-export const adaptDbProductToShopProduct = (dbProduct: DbProduct): ShopProduct => {
+export const adaptModelShopToDBShop = (modelShop: ModelShop): Partial<DBShop> => {
   return {
-    id: dbProduct.id,
-    name: dbProduct.name,
-    price: dbProduct.price,
-    description: dbProduct.description,
-    category: dbProduct.category,
-    images: dbProduct.images,
-    sellerId: dbProduct.seller_id || '',
-    sellerName: dbProduct.shop_name || '',
-    rating: dbProduct.rating || 5,
-    isHalalCertified: dbProduct.is_halal_certified,
-    inStock: dbProduct.in_stock
+    id: modelShop.id,
+    name: modelShop.name,
+    description: modelShop.description,
+    logo_url: modelShop.logo,
+    category: modelShop.category,
+    location: modelShop.location,
+    rating: modelShop.rating,
+    product_count: modelShop.productCount,
+    is_verified: modelShop.isVerified,
+    owner_id: modelShop.ownerId,
+    latitude: modelShop.latitude,
+    longitude: modelShop.longitude,
+    cover_image: modelShop.coverImage,
+    delivery_available: modelShop.deliveryAvailable,
+    pickup_available: modelShop.pickupAvailable,
+    is_halal_certified: modelShop.isHalalCertified
   };
 };
 
-/**
- * Converts database Product to Product model
- */
-export const adaptDbProductToProduct = (dbProduct: DbProduct): Product => {
+// Helper function for when we need to display a product with shop details
+export const enrichProductWithShopDetails = (product: Product, shop: ModelShop): ShopProduct => {
   return {
-    id: dbProduct.id,
-    name: dbProduct.name,
-    description: dbProduct.description,
-    price: dbProduct.price,
-    images: dbProduct.images,
-    category: dbProduct.category,
-    shopId: dbProduct.shop_id,
-    isHalalCertified: dbProduct.is_halal_certified,
-    inStock: dbProduct.in_stock,
-    createdAt: dbProduct.created_at,
-    sellerId: dbProduct.seller_id || undefined,
-    sellerName: dbProduct.shop_name || undefined,
-    rating: dbProduct.rating,
-    details: dbProduct.details as any
+    ...product,
+    shopId: shop.id,
+    shopName: shop.name,
+    shopLogo: shop.logo,
+    distance: 0 // Default value
   };
 };
 
-export const convertShopProductsToProducts = (shopProducts: ShopProduct[]): Product[] => {
-  return shopProducts.map(shopProduct => ({
-    id: shopProduct.id,
-    name: shopProduct.name,
-    description: shopProduct.description,
-    price: shopProduct.price,
-    images: shopProduct.images,
-    category: shopProduct.category,
-    shopId: shopProduct.id, // Missing shopId in ShopProduct model
-    isHalalCertified: shopProduct.isHalalCertified,
-    inStock: shopProduct.inStock,
-    createdAt: new Date().toISOString(),
-    sellerId: shopProduct.sellerId,
-    sellerName: shopProduct.sellerName,
-    rating: shopProduct.rating
-  }));
+// Fix the getShopProducts function that was referenced
+export const getShopProducts = async (shopId: string): Promise<ShopProduct[]> => {
+  try {
+    const response = await fetch(`/api/shops/${shopId}/products`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch shop products');
+    }
+    const products = await response.json();
+    return products.map(adaptDbProductToShopProduct);
+  } catch (error) {
+    console.error('Error fetching shop products:', error);
+    return [];
+  }
 };
