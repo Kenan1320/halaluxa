@@ -1,125 +1,130 @@
-
-import { useState, useEffect, useRef } from 'react';
-import { motion } from 'framer-motion';
-import { getNearbyShops } from '@/services/shopService';
-import { useLocation } from '@/context/LocationContext';
-import ShopCard from '@/components/shop/ShopCard';
-import ShopProductList from '@/components/shop/ShopProductList';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Shop } from '@/models/shop';
+import { Star, MapPin, CheckCircle } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { useTheme } from '@/context/ThemeContext';
+import { getShops, Shop } from '@/services/shopService';
+import { useLocation } from '@/context/LocationContext';
 
 const NearbyShops = () => {
   const [shops, setShops] = useState<Shop[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const { isLocationEnabled, location, getNearbyShops: getContextNearbyShops } = useLocation();
-  const containerRef = useRef<HTMLDivElement>(null);
+  const [loading, setLoading] = useState(true);
+  const { mode } = useTheme();
+  const { location, isLocationEnabled } = useLocation();
   
   useEffect(() => {
-    // Initial load of shops
     const loadShops = async () => {
+      setLoading(true);
       try {
-        setIsLoading(true);
-        
-        // Try to use the context method if available
-        if (typeof getContextNearbyShops === 'function') {
-          const nearbyShops = await getContextNearbyShops();
-          if (Array.isArray(nearbyShops)) {
-            setShops(nearbyShops);
-            setIsLoading(false);
-            return;
-          }
-        }
-        
-        // Fallback to direct service call
         let nearbyShops: Shop[] = [];
-        if (isLocationEnabled && location) {
-          nearbyShops = await getNearbyShops(location.latitude, location.longitude);
+        
+        // If location is enabled, get nearby shops
+        if (isLocationEnabled && location && location.latitude && location.longitude) {
+          // Get all shops and calculate distance client-side
+          const allShops = await getShops();
+          nearbyShops = allShops
+            .filter(shop => shop.latitude && shop.longitude)
+            .sort((a, b) => {
+              if (!a.distance) return 1;
+              if (!b.distance) return -1;
+              return a.distance - b.distance;
+            })
+            .slice(0, 10);
         } else {
-          nearbyShops = await getNearbyShops();
+          // Otherwise just get all shops
+          nearbyShops = await getShops();
         }
         
         setShops(nearbyShops);
       } catch (error) {
-        console.error('Error loading nearby shops:', error);
+        console.error('Error loading shops:', error);
       } finally {
-        setIsLoading(false);
+        setLoading(false);
       }
     };
     
     loadShops();
-  }, [isLocationEnabled, location, getContextNearbyShops]);
+  }, [isLocationEnabled, location]);
   
-  if (isLoading) {
+  if (loading) {
     return (
-      <div className="overflow-hidden rounded-lg">
-        <div className="flex overflow-x-auto gap-4 pb-4 scrollbar-hide">
-          {[1, 2, 3, 4].map((i) => (
-            <div 
-              key={i} 
-              className="flex-shrink-0 w-64 h-56 bg-gray-100 rounded-lg animate-pulse"
-            />
-          ))}
-        </div>
+      <div className="py-4 flex justify-center">
+        <div className="w-10 h-10 border-4 border-gray-300 dark:border-gray-700 border-t-haluna-primary rounded-full animate-spin"></div>
       </div>
     );
   }
   
-  if (!shops.length) {
-    return null;
+  if (shops.length === 0) {
+    return (
+      <div className="py-6 text-center">
+        <p className="text-gray-500 dark:text-gray-400">No shops found nearby</p>
+      </div>
+    );
   }
   
   return (
-    <div className="space-y-8">
-      {shops.map((shop) => (
-        <div key={shop.id} className="mb-8">
-          {/* Shop header with name and logo - now animated and clickable */}
-          <div className="flex items-center justify-between mb-4">
-            <Link to={`/shop/${shop.id}`} className="group flex items-center gap-3">
-              <motion.div 
-                className="w-10 h-10 rounded-full overflow-hidden bg-white shadow-sm flex items-center justify-center"
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.95 }}
-                transition={{ type: "spring", stiffness: 400, damping: 10 }}
+    <div className="mt-4 overflow-x-auto scrollbar-none">
+      <div className="flex space-x-4 pb-2">
+        {shops.map((shop) => (
+          <motion.div
+            key={shop.id}
+            className={`flex-shrink-0 rounded-xl shadow-sm overflow-hidden w-40 md:w-48 border ${
+              mode === 'dark'
+                ? 'border-gray-800 bg-gray-900'
+                : 'border-gray-200 bg-white'
+            }`}
+            whileHover={{
+              y: -5,
+              boxShadow: '0 10px 20px rgba(0,0,0,0.1)',
+              transition: { duration: 0.2 }
+            }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <Link to={`/shop/${shop.id}`} className="block relative">
+              <div 
+                className="h-24 bg-gray-100 dark:bg-gray-800 flex items-center justify-center"
               >
-                {shop.logo ? (
+                {shop.logo_url || shop.logo ? (
                   <img 
-                    src={shop.logo} 
-                    alt={`${shop.name} logo`}
+                    src={shop.logo_url || shop.logo} 
+                    alt={shop.name} 
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <div className="w-full h-full bg-haluna-primary-light flex items-center justify-center">
-                    <span className="text-xs font-medium text-haluna-primary">
-                      {shop.name.substring(0, 2).toUpperCase()}
-                    </span>
+                  <span className="text-2xl font-bold text-haluna-primary">{shop.name.charAt(0)}</span>
+                )}
+              </div>
+              
+              <div className="p-3">
+                <div className="flex justify-between items-start">
+                  <h3 className="font-bold text-sm line-clamp-1">{shop.name}</h3>
+                  {(shop.isHalalCertified || shop.is_halal_certified) && (
+                    <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0 ml-1" />
+                  )}
+                </div>
+                
+                <div className="flex items-center mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  <Star className="h-3 w-3 text-yellow-500 mr-1" />
+                  <span>{shop.rating.toFixed(1)}</span>
+                  
+                  <span className="mx-1">•</span>
+                  
+                  <span className="line-clamp-1">{shop.category}</span>
+                </div>
+                
+                {(shop.distance || shop.distance === 0) && (
+                  <div className="flex items-center mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    <MapPin className="h-3 w-3 mr-1" />
+                    <span>{shop.distance < 1 ? `${(shop.distance * 1000).toFixed(0)}m` : `${shop.distance.toFixed(1)} km`}</span>
                   </div>
                 )}
-              </motion.div>
-              <motion.h3 
-                className="text-base font-medium relative"
-                whileHover={{ color: "#2A866A" }}
-              >
-                {shop.name}
-                <motion.span
-                  className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#2A866A]"
-                  initial={{ width: 0 }}
-                  whileHover={{ width: "100%" }}
-                  transition={{ duration: 0.3 }}
-                />
-              </motion.h3>
+              </div>
             </Link>
-            <Link 
-              to={`/shop/${shop.id}`} 
-              className="text-xs font-medium text-[#29866B] hover:underline transition-colors duration-300"
-            >
-              View all
-            </Link>
-          </div>
-          
-          {/* Shop products in horizontal scroll */}
-          <ShopProductList shopId={shop.id} />
-        </div>
-      ))}
+          </motion.div>
+        ))}
+      </div>
     </div>
   );
 };

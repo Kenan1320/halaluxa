@@ -1,107 +1,93 @@
-import { Shop as DBShop } from '@/types/database';
-import { Shop as ModelShop } from '@/models/shop';
-import { Product, ShopProduct } from '@/models/product';
-import { UUID } from '@/models/types';
 
-export const adaptDbProductToShopProduct = (dbProduct: any): ShopProduct => {
-  return {
-    id: dbProduct.id,
-    name: dbProduct.name,
-    description: dbProduct.description || '',
-    price: dbProduct.price || 0,
-    images: dbProduct.images || [],
-    category: dbProduct.category || '',
-    shopId: dbProduct.shop_id,
-    stock: dbProduct.stock || 0,
-    isHalalCertified: dbProduct.is_halal_certified || false,
-    inStock: dbProduct.in_stock !== undefined ? dbProduct.in_stock : true,
-    createdAt: dbProduct.created_at,
-    updatedAt: dbProduct.updated_at,
-    rating: dbProduct.rating || 0,
-    reviewCount: dbProduct.review_count || 0,
-    featured: dbProduct.featured || false,
-    sellerId: dbProduct.seller_id,
-    sellerName: dbProduct.seller_name || dbProduct.shop_name,
-    shopName: dbProduct.shop_name,
-    shopLogo: dbProduct.shop_logo,
-    distance: dbProduct.distance || 0
-  };
-};
+import { Shop } from '@/models/shop';
 
-export const adaptDbShopToModelShop = (dbShop: DBShop): ModelShop => {
-  return {
-    id: dbShop.id,
-    name: dbShop.name,
-    description: dbShop.description,
-    logo: dbShop.logo_url,
-    category: dbShop.category,
-    location: dbShop.location,
-    rating: dbShop.rating || 0,
-    productCount: dbShop.product_count || 0,
-    isVerified: dbShop.is_verified || false,
-    ownerId: dbShop.owner_id,
-    latitude: dbShop.latitude,
-    longitude: dbShop.longitude,
-    coverImage: dbShop.cover_image,
-    distance: dbShop.distance || 0,
-    deliveryAvailable: dbShop.delivery_available,
-    pickupAvailable: dbShop.pickup_available,
-    isHalalCertified: dbShop.is_halal_certified,
-    createdAt: dbShop.created_at,
-    updatedAt: dbShop.updated_at,
-    address: dbShop.address,
-    displayMode: dbShop.display_mode
-  };
-};
+export interface ShopFilterOptions {
+  minRating?: number;
+  maxDistance?: number;
+  categories?: string[];
+  isHalalCertified?: boolean;
+  deliveryAvailable?: boolean;
+  pickupAvailable?: boolean;
+  search?: string;
+  sortBy?: 'distance' | 'rating' | 'name';
+  sortDirection?: 'asc' | 'desc';
+}
 
-export const adaptModelShopToDBShop = (modelShop: ModelShop): Partial<DBShop> => {
-  return {
-    id: modelShop.id,
-    name: modelShop.name,
-    description: modelShop.description,
-    logo_url: modelShop.logo,
-    category: modelShop.category,
-    location: modelShop.location,
-    rating: modelShop.rating,
-    product_count: modelShop.productCount,
-    is_verified: modelShop.isVerified,
-    owner_id: modelShop.ownerId,
-    latitude: modelShop.latitude,
-    longitude: modelShop.longitude,
-    cover_image: modelShop.coverImage,
-    delivery_available: modelShop.deliveryAvailable,
-    pickup_available: modelShop.pickupAvailable,
-    is_halal_certified: modelShop.isHalalCertified,
-    created_at: modelShop.createdAt,
-    updated_at: modelShop.updatedAt,
-    address: modelShop.address,
-    display_mode: modelShop.displayMode
-  };
-};
-
-// Helper function for when we need to display a product with shop details
-export const enrichProductWithShopDetails = (product: Product, shop: ModelShop): ShopProduct => {
-  return {
-    ...product,
-    shopId: shop.id,
-    shopName: shop.name,
-    shopLogo: shop.logo,
-    distance: 0
-  };
-};
-
-// Get shop products - this is now redundant as we have the function in shopService.ts
-// Keeping for backward compatibility
-export const getShopProducts = async (shopId: UUID): Promise<ShopProduct[]> => {
-  try {
-    const response = await fetch(`/api/shops/${shopId}/products`);
-    if (!response.ok) {
-      throw new Error('Failed to fetch shop products');
-    }
-    const products = await response.json();
-    return products.map(adaptDbProductToShopProduct);
-  } catch (error) {
-    console.error('Error fetching shop products:', error);
-    return [];
+/**
+ * Filter and sort shops based on provided options
+ */
+export const filterShops = (shops: Shop[], options: ShopFilterOptions): Shop[] => {
+  let filteredShops = [...shops];
+  
+  // Filter by minimum rating
+  if (options.minRating !== undefined) {
+    filteredShops = filteredShops.filter(shop => shop.rating >= options.minRating!);
   }
+  
+  // Filter by maximum distance
+  if (options.maxDistance !== undefined) {
+    filteredShops = filteredShops.filter(shop => 
+      shop.distance !== null && shop.distance <= options.maxDistance!
+    );
+  }
+  
+  // Filter by categories
+  if (options.categories && options.categories.length > 0) {
+    filteredShops = filteredShops.filter(shop => 
+      options.categories!.includes(shop.category)
+    );
+  }
+  
+  // Filter by halal certification
+  if (options.isHalalCertified !== undefined) {
+    filteredShops = filteredShops.filter(shop => 
+      shop.isHalalCertified === options.isHalalCertified ||
+      shop.is_halal_certified === options.isHalalCertified
+    );
+  }
+  
+  // Filter by delivery availability
+  if (options.deliveryAvailable !== undefined) {
+    filteredShops = filteredShops.filter(shop => 
+      shop.deliveryAvailable === options.deliveryAvailable ||
+      shop.delivery_available === options.deliveryAvailable
+    );
+  }
+  
+  // Filter by pickup availability
+  if (options.pickupAvailable !== undefined) {
+    filteredShops = filteredShops.filter(shop => 
+      shop.pickupAvailable === options.pickupAvailable ||
+      shop.pickup_available === options.pickupAvailable
+    );
+  }
+  
+  // Filter by search term (name or description)
+  if (options.search) {
+    const searchLower = options.search.toLowerCase();
+    filteredShops = filteredShops.filter(shop => 
+      shop.name.toLowerCase().includes(searchLower) || 
+      shop.description.toLowerCase().includes(searchLower)
+    );
+  }
+  
+  // Sort shops
+  if (options.sortBy) {
+    filteredShops.sort((a, b) => {
+      const direction = options.sortDirection === 'desc' ? -1 : 1;
+      
+      switch (options.sortBy) {
+        case 'distance':
+          return direction * ((a.distance || Infinity) - (b.distance || Infinity));
+        case 'rating':
+          return direction * (a.rating - b.rating);
+        case 'name':
+          return direction * a.name.localeCompare(b.name);
+        default:
+          return 0;
+      }
+    });
+  }
+  
+  return filteredShops;
 };

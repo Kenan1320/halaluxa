@@ -1,203 +1,171 @@
 
-import { supabase } from '@/lib/supabaseClient';
-import { UUID } from '@/models/types';
+import { supabase } from '@/integrations/supabase/client';
 
-export interface SellerAccount {
-  id: UUID;
-  userId: UUID;
-  shopId: UUID;
-  accountType: string;
-  accountName: string;
-  accountNumber: string;
-  bankName: string;
-  paypalEmail: string | null;
-  stripeAccountId: string | null;
-  applePayMerchantId: string | null;
-  isActive: boolean;
-  isVerified: boolean;
-  balance: number;
-  currency: string;
+export interface PaymentMethod {
+  id: string;
+  userId: string;
+  type: 'card' | 'bank_account' | 'paypal';
+  provider: string;
+  last4?: string;
+  expMonth?: number;
+  expYear?: number;
+  brand?: string;
+  isDefault: boolean;
   createdAt: string;
-  updatedAt: string;
 }
 
-// Adapter functions
-export const adaptDbSellerAccountToModel = (dbAccount: any): SellerAccount => {
-  return {
-    id: dbAccount.id,
-    userId: dbAccount.user_id,
-    shopId: dbAccount.shop_id,
-    accountType: dbAccount.account_type,
-    accountName: dbAccount.account_name,
-    accountNumber: dbAccount.account_number,
-    bankName: dbAccount.bank_name,
-    paypalEmail: dbAccount.paypal_email,
-    stripeAccountId: dbAccount.stripe_account_id,
-    applePayMerchantId: dbAccount.applepay_merchant_id,
-    isActive: dbAccount.is_active || false,
-    isVerified: dbAccount.is_verified || false,
-    balance: dbAccount.balance || 0,
-    currency: dbAccount.currency || 'USD',
-    createdAt: dbAccount.created_at,
-    updatedAt: dbAccount.updated_at
-  };
-};
-
-export const adaptModelSellerAccountToDb = (account: SellerAccount): any => {
-  return {
-    id: account.id,
-    user_id: account.userId,
-    shop_id: account.shopId,
-    account_type: account.accountType,
-    account_name: account.accountName,
-    account_number: account.accountNumber,
-    bank_name: account.bankName,
-    paypal_email: account.paypalEmail,
-    stripe_account_id: account.stripeAccountId,
-    applepay_merchant_id: account.applePayMerchantId,
-    is_active: account.isActive,
-    is_verified: account.isVerified,
-    balance: account.balance,
-    currency: account.currency,
-    created_at: account.createdAt,
-    updated_at: account.updatedAt
-  };
-};
-
-export const getSellerAccounts = async (userId: UUID): Promise<SellerAccount[]> => {
+export const getPaymentMethods = async (userId: string): Promise<PaymentMethod[]> => {
   try {
     const { data, error } = await supabase
-      .from('seller_accounts')
+      .from('payment_methods')
       .select('*')
-      .eq('user_id', userId);
-      
-    if (error) {
-      console.error('Error getting seller accounts:', error);
-      return [];
-    }
+      .eq('user_id', userId)
+      .order('is_default', { ascending: false });
     
-    return data.map(adaptDbSellerAccountToModel);
+    if (error) throw error;
+    
+    return (data || []).map(method => ({
+      id: method.id,
+      userId: method.user_id,
+      type: method.type,
+      provider: method.provider,
+      last4: method.last4,
+      expMonth: method.exp_month,
+      expYear: method.exp_year,
+      brand: method.brand,
+      isDefault: method.is_default,
+      createdAt: method.created_at
+    }));
   } catch (error) {
-    console.error('Failed to get seller accounts:', error);
+    console.error('Error getting payment methods:', error);
     return [];
   }
 };
 
-export const createSellerAccount = async (
-  userId: UUID,
-  shopId: UUID,
-  accountInfo: {
-    accountType: string;
-    accountName: string;
-    accountNumber: string;
-    bankName: string;
-    paypalEmail?: string;
-    stripeAccountId?: string;
-    applePayMerchantId?: string;
-  }
-): Promise<SellerAccount | null> => {
+export const addPaymentMethod = async (
+  userId: string,
+  paymentDetails: Omit<PaymentMethod, 'id' | 'userId' | 'createdAt' | 'isDefault'>
+): Promise<PaymentMethod | null> => {
   try {
-    const { data, error } = await supabase
-      .from('seller_accounts')
-      .insert([
-        {
-          user_id: userId,
-          shop_id: shopId,
-          account_type: accountInfo.accountType,
-          account_name: accountInfo.accountName,
-          account_number: accountInfo.accountNumber,
-          bank_name: accountInfo.bankName,
-          paypal_email: accountInfo.paypalEmail || null,
-          stripe_account_id: accountInfo.stripeAccountId || null,
-          applepay_merchant_id: accountInfo.applePayMerchantId || null,
-          is_active: true,
-          is_verified: false,
-          balance: 0,
-          currency: 'USD',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        }
-      ])
-      .select();
-      
-    if (error) {
-      console.error('Error creating seller account:', error);
-      return null;
-    }
+    // First, check if this will be the first payment method
+    const { data: existingMethods } = await supabase
+      .from('payment_methods')
+      .select('id')
+      .eq('user_id', userId);
     
-    return adaptDbSellerAccountToModel(data[0]);
-  } catch (error) {
-    console.error('Failed to create seller account:', error);
-    return null;
-  }
-};
-
-export const updateSellerAccount = async (
-  accountId: UUID, 
-  updates: Partial<SellerAccount>
-): Promise<SellerAccount | null> => {
-  try {
-    // Convert to database format
-    const dbUpdates: any = {};
-    
-    if (updates.accountType) dbUpdates.account_type = updates.accountType;
-    if (updates.accountName) dbUpdates.account_name = updates.accountName;
-    if (updates.accountNumber) dbUpdates.account_number = updates.accountNumber;
-    if (updates.bankName) dbUpdates.bank_name = updates.bankName;
-    if (updates.paypalEmail !== undefined) dbUpdates.paypal_email = updates.paypalEmail;
-    if (updates.stripeAccountId !== undefined) dbUpdates.stripe_account_id = updates.stripeAccountId;
-    if (updates.applePayMerchantId !== undefined) dbUpdates.applepay_merchant_id = updates.applePayMerchantId;
-    if (updates.isActive !== undefined) dbUpdates.is_active = updates.isActive;
-    
-    dbUpdates.updated_at = new Date().toISOString();
+    const isDefault = !existingMethods || existingMethods.length === 0;
     
     const { data, error } = await supabase
-      .from('seller_accounts')
-      .update(dbUpdates)
-      .eq('id', accountId)
+      .from('payment_methods')
+      .insert([{
+        id: crypto.randomUUID(),
+        user_id: userId,
+        type: paymentDetails.type,
+        provider: paymentDetails.provider,
+        last4: paymentDetails.last4,
+        exp_month: paymentDetails.expMonth,
+        exp_year: paymentDetails.expYear,
+        brand: paymentDetails.brand,
+        is_default: isDefault,
+        created_at: new Date().toISOString()
+      }])
       .select()
       .single();
-      
-    if (error) {
-      console.error('Error updating seller account:', error);
-      return null;
-    }
     
-    return adaptDbSellerAccountToModel(data);
+    if (error) throw error;
+    
+    return data ? {
+      id: data.id,
+      userId: data.user_id,
+      type: data.type,
+      provider: data.provider,
+      last4: data.last4,
+      expMonth: data.exp_month,
+      expYear: data.exp_year,
+      brand: data.brand,
+      isDefault: data.is_default,
+      createdAt: data.created_at
+    } : null;
   } catch (error) {
-    console.error('Failed to update seller account:', error);
+    console.error('Error adding payment method:', error);
     return null;
   }
 };
 
-export const deleteSellerAccount = async (accountId: UUID): Promise<boolean> => {
+export const setDefaultPaymentMethod = async (userId: string, paymentMethodId: string): Promise<boolean> => {
   try {
+    // First, set all payment methods to non-default
+    await supabase
+      .from('payment_methods')
+      .update({ is_default: false })
+      .eq('user_id', userId);
+    
+    // Then set the selected one to default
     const { error } = await supabase
-      .from('seller_accounts')
-      .delete()
-      .eq('id', accountId);
-      
-    if (error) {
-      console.error('Error deleting seller account:', error);
-      return false;
-    }
+      .from('payment_methods')
+      .update({ is_default: true })
+      .eq('id', paymentMethodId)
+      .eq('user_id', userId);
+    
+    if (error) throw error;
     
     return true;
   } catch (error) {
-    console.error('Failed to delete seller account:', error);
+    console.error('Error setting default payment method:', error);
     return false;
   }
 };
 
-export const formatPaymentMethod = (type: string) => {
-  const formattedTypes: Record<string, string> = {
-    'bank_transfer': 'Bank Transfer',
-    'paypal': 'PayPal',
-    'stripe': 'Stripe',
-    'applepay': 'Apple Pay',
-    'credit_card': 'Credit Card',
-    'debit_card': 'Debit Card'
-  };
-  
-  return formattedTypes[type] || type;
+export const deletePaymentMethod = async (userId: string, paymentMethodId: string): Promise<boolean> => {
+  try {
+    // First, check if this is the default payment method
+    const { data: method, error: fetchError } = await supabase
+      .from('payment_methods')
+      .select('is_default')
+      .eq('id', paymentMethodId)
+      .eq('user_id', userId)
+      .single();
+    
+    if (fetchError) throw fetchError;
+    
+    // Delete the payment method
+    const { error: deleteError } = await supabase
+      .from('payment_methods')
+      .delete()
+      .eq('id', paymentMethodId)
+      .eq('user_id', userId);
+    
+    if (deleteError) throw deleteError;
+    
+    // If it was the default, set a new default if available
+    if (method && method.is_default) {
+      const { data: otherMethods, error: otherError } = await supabase
+        .from('payment_methods')
+        .select('id')
+        .eq('user_id', userId)
+        .limit(1);
+      
+      if (otherError) throw otherError;
+      
+      if (otherMethods && otherMethods.length > 0) {
+        await setDefaultPaymentMethod(userId, otherMethods[0].id);
+      }
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error deleting payment method:', error);
+    return false;
+  }
+};
+
+export const formatPaymentMethod = (method: PaymentMethod): string => {
+  if (method.type === 'card') {
+    return `${method.brand} •••• ${method.last4} (Expires ${method.expMonth}/${method.expYear})`;
+  } else if (method.type === 'bank_account') {
+    return `Bank Account •••• ${method.last4}`;
+  } else if (method.type === 'paypal') {
+    return 'PayPal';
+  }
+  return 'Unknown Payment Method';
 };

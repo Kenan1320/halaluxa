@@ -1,5 +1,5 @@
 
-import { UUID, Timestamp, Coordinates, Rating } from './types';
+import { UUID, Timestamp, Coordinates, Rating, DBShop } from './types';
 
 // Shop model interfaces
 export interface Shop {
@@ -24,6 +24,39 @@ export interface Shop {
   updatedAt?: Timestamp;
   address?: string;
   displayMode?: 'online' | 'local_pickup' | 'local_delivery';
+  // Legacy properties for compatibility
+  logo_url?: string | null;
+  product_count?: number;
+  is_verified?: boolean;
+  cover_image?: string | null;
+  owner_id?: UUID;
+  delivery_available?: boolean;
+  pickup_available?: boolean;
+  is_halal_certified?: boolean;
+  created_at?: string;
+  updated_at?: string;
+  display_mode?: 'online' | 'local_pickup' | 'local_delivery';
+}
+
+export interface ShopProduct {
+  id: UUID;
+  name: string;
+  description: string;
+  price: number;
+  images: string[];
+  category: string;
+  shopId: UUID;
+  shopName?: string;
+  shopLogo?: string;
+  distance?: number;
+  stock?: number;
+  isHalalCertified: boolean;
+  inStock?: boolean;
+  createdAt: Timestamp;
+  updatedAt?: Timestamp;
+  rating?: number;
+  reviewCount?: number;
+  featured?: boolean;
 }
 
 export interface ShopLocation extends Coordinates {
@@ -48,7 +81,7 @@ export interface ShopDisplaySettings {
 }
 
 // Utility functions for type conversion
-export const adaptDbShopToModelShop = (dbShop: any): Shop => {
+export const adaptDbShopToModelShop = (dbShop: DBShop): Shop => {
   return {
     id: dbShop.id,
     name: dbShop.name,
@@ -70,32 +103,45 @@ export const adaptDbShopToModelShop = (dbShop: any): Shop => {
     createdAt: dbShop.created_at,
     updatedAt: dbShop.updated_at,
     address: dbShop.address,
-    displayMode: dbShop.display_mode || 'online'
+    displayMode: dbShop.display_mode || 'online',
+    // Legacy properties
+    logo_url: dbShop.logo_url,
+    product_count: dbShop.product_count,
+    is_verified: dbShop.is_verified,
+    cover_image: dbShop.cover_image,
+    owner_id: dbShop.owner_id,
+    delivery_available: dbShop.delivery_available,
+    pickup_available: dbShop.pickup_available,
+    is_halal_certified: dbShop.is_halal_certified,
+    created_at: dbShop.created_at,
+    updated_at: dbShop.updated_at,
+    display_mode: dbShop.display_mode
   };
 };
 
-export const adaptModelShopToDBShop = (modelShop: Shop): any => {
+export const adaptModelShopToDBShop = (modelShop: Shop): DBShop => {
   return {
     id: modelShop.id,
     name: modelShop.name,
     description: modelShop.description,
-    logo_url: modelShop.logo,
+    logo_url: modelShop.logo || modelShop.logo_url,
     category: modelShop.category,
     location: modelShop.location,
     rating: modelShop.rating,
-    product_count: modelShop.productCount,
-    is_verified: modelShop.isVerified,
-    owner_id: modelShop.ownerId,
+    product_count: modelShop.productCount || modelShop.product_count || 0,
+    is_verified: modelShop.isVerified || modelShop.is_verified || false,
+    owner_id: modelShop.ownerId || modelShop.owner_id || '',
     latitude: modelShop.latitude,
     longitude: modelShop.longitude,
-    cover_image: modelShop.coverImage,
-    delivery_available: modelShop.deliveryAvailable,
-    pickup_available: modelShop.pickupAvailable,
-    is_halal_certified: modelShop.isHalalCertified,
-    created_at: modelShop.createdAt,
-    updated_at: modelShop.updatedAt,
+    cover_image: modelShop.coverImage || modelShop.cover_image,
+    delivery_available: modelShop.deliveryAvailable || modelShop.delivery_available,
+    pickup_available: modelShop.pickupAvailable || modelShop.pickup_available,
+    is_halal_certified: modelShop.isHalalCertified || modelShop.is_halal_certified,
+    created_at: modelShop.createdAt || modelShop.created_at,
+    updated_at: modelShop.updatedAt || modelShop.updated_at,
     address: modelShop.address,
-    display_mode: modelShop.displayMode
+    display_mode: modelShop.displayMode || modelShop.display_mode,
+    distance: modelShop.distance
   };
 };
 
