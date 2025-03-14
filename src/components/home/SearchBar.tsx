@@ -21,7 +21,7 @@ const SearchBar = () => {
       <div className={`flex items-center rounded-full ${
         mode === 'dark' 
           ? 'bg-gray-800 text-white border border-gray-700' 
-          : 'bg-white text-gray-700 border border-gray-200'
+          : 'bg-white/90 text-gray-700 border border-white/30'
       } px-4 py-2 shadow-sm`}>
         <Search className="w-5 h-5 mr-2 text-gray-400" />
         <input
@@ -30,7 +30,7 @@ const SearchBar = () => {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           className={`w-full outline-none ${
-            mode === 'dark' ? 'bg-gray-800 text-white' : 'bg-white'
+            mode === 'dark' ? 'bg-gray-800 text-white' : 'bg-transparent'
           } text-sm font-medium`}
           style={{ fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}
         />

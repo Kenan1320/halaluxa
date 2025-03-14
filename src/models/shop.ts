@@ -1,53 +1,50 @@
 
-// Shop model interfaces
 export interface Shop {
   id: string;
   name: string;
   description: string;
   location: string;
-  rating: number;
-  productCount: number;
-  isVerified: boolean;
   category: string;
-  logo: string | null;
-  coverImage: string | null;
-  ownerId: string;
-  latitude: number | null;
-  longitude: number | null;
-  distance: number | null;
+  logo_url: string;
+  cover_image?: string;
+  owner_id: string;
+  rating: number;
+  product_count: number;
+  is_verified: boolean;
+  latitude?: number;
+  longitude?: number;
+  created_at: string;
+  updated_at: string;
+  distance?: number;
 }
 
 export interface ShopProduct {
   id: string;
   name: string;
-  price: number;
   description: string;
-  category: string; 
+  price: number;
+  category: string;
   images: string[];
-  sellerId: string;
-  sellerName: string;
-  rating: number;
-}
-
-export interface ShopLocation {
-  latitude: number;
-  longitude: number;
-  address?: string;
-  city?: string;
-  state?: string;
-  zipCode?: string;
-  country?: string;
-}
-
-export interface ShopDisplaySettings {
-  id: string;
-  shopId: string;
-  primaryColor: string | null;
-  secondaryColor: string | null;
-  fontFamily: string | null;
-  showRatings: boolean;
-  showProductCount: boolean;
-  featuredProducts: string[] | null;
-  bannerMessage: string | null;
+  shop_id: string;
+  is_halal_certified: boolean;
+  in_stock: boolean;
   created_at: string;
+  updated_at: string;
+}
+
+export type Rating = {
+  total: number;
+  count: number;
+  average: number;
+};
+
+export interface ReviewWithUser {
+  id: string;
+  shop_id: string;
+  user_id: string;
+  rating: number;
+  comment: string;
+  created_at: string;
+  user_name: string;
+  user_avatar?: string;
 }

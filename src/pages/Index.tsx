@@ -11,6 +11,7 @@ import CategorySuggestions from '@/components/home/CategorySuggestions';
 import { motion, useAnimationControls } from 'framer-motion';
 import { getShopById, subscribeToShops, getShops, Shop } from '@/services/shopService';
 import { useTheme } from '@/context/ThemeContext';
+import { normalizeShop } from '@/lib/utils';
 
 const Index = () => {
   const { isLoggedIn, user } = useAuth();
@@ -149,8 +150,8 @@ const Index = () => {
 
   return (
     <div className="min-h-screen pt-16 pb-20 bg-white dark:bg-gray-900">
-      {/* Top container with lighter mint background */}
-      <div className="bg-[#E4F5F0] dark:bg-gray-800 pt-2 pb-3">
+      {/* Top container with deep night blue background instead of mint */}
+      <div className="deep-night-blue-gradient text-white pt-2 pb-3">
         <div className="container mx-auto px-4">
           {/* Search bar */}
           <div className="mb-2">
@@ -163,12 +164,12 @@ const Index = () => {
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            <h2 className="text-xs font-medium text-[#2A866A] dark:text-green-300">
+            <h2 className="text-xs font-medium text-white/90">
               {greeting}, {isLoggedIn && user ? user.name : 'Guest'}
             </h2>
           </motion.div>
           
-          {/* Category scroll inside mint background */}
+          {/* Category scroll inside blue gradient background */}
           <div className="mt-1">
             <CategoryScroll />
           </div>

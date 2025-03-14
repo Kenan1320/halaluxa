@@ -1,3 +1,4 @@
+
 export interface ProductDetails {
   weight?: string;
   servings?: string;
@@ -13,14 +14,15 @@ export interface Product {
   price: number;
   images: string[];
   category: string;
-  shopId: string;
-  isHalalCertified: boolean;
-  inStock?: boolean;
-  createdAt: string;
-  sellerId?: string;
-  sellerName?: string;
-  rating?: number;
+  shop_id: string;
+  is_halal_certified: boolean;
+  in_stock: boolean;
+  created_at: string;
+  updated_at: string;
   details?: ProductDetails;
+  seller_id?: string;
+  seller_name?: string;
+  rating?: number;
 }
 
 export const productCategories = [

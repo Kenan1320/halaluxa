@@ -1,85 +1,59 @@
 
-import { supabase } from '@/integrations/supabase/client';
-import { Shop, Product } from '@/types/database';
-import { Shop as ModelShop, ShopProduct } from '@/models/shop';
-import { Product as ModelProduct } from '@/models/product';
+import { supabase } from '../integrations/supabase/client';
+import { Shop, ShopProduct } from '../models/shop';
+import { Product } from '../models/product';
 
-// Mock implementation for setupDatabaseTables
-export const setupDatabaseTables = async (): Promise<void> => {
-  console.log('Setting up database tables (mock)');
-  return Promise.resolve();
-};
-
-// Mock implementation for getShops
-export const getShops = async (): Promise<ModelShop[]> => {
-  try {
-    const { data: shops, error } = await supabase
-      .from('shops')
-      .select('*');
-
-    if (error) {
-      throw error;
-    }
-
-    return (shops || []).map(mapShopToModel);
-  } catch (error) {
-    console.error('Error fetching shops:', error);
-    return [];
-  }
-};
-
-// Convert database Shop to model Shop
-export const mapShopToModel = (shop: Shop): ModelShop => {
+/**
+ * Convert database shop object to front-end model
+ */
+export const dbShopToModel = (shop: any): Shop => {
   return {
     id: shop.id,
     name: shop.name,
     description: shop.description,
     location: shop.location,
+    category: shop.category,
+    logo_url: shop.logo_url,
+    cover_image: shop.cover_image,
+    owner_id: shop.owner_id || '',
     rating: shop.rating || 0,
-    productCount: shop.product_count || 0,
-    isVerified: shop.is_verified || false,
-    category: shop.category || '',
-    logo: shop.logo_url || null, // Use logo_url as the source for logo
-    coverImage: shop.cover_image || null,
-    ownerId: shop.owner_id || '',
-    latitude: shop.latitude || null,
-    longitude: shop.longitude || null,
-    distance: shop.distance || null
+    product_count: shop.product_count || 0,
+    is_verified: shop.is_verified || false,
+    latitude: shop.latitude,
+    longitude: shop.longitude,
+    created_at: shop.created_at,
+    updated_at: shop.updated_at,
+    distance: shop.distance
   };
 };
 
-// Mock implementation for getShopProducts
-export const getShopProducts = async (shopId: string): Promise<ShopProduct[]> => {
-  try {
-    const { data: products, error } = await supabase
-      .from('products')
-      .select('*')
-      .eq('shop_id', shopId);
-
-    if (error) {
-      throw error;
-    }
-
-    return (products || []).map(item => ({
-      id: item.id,
-      name: item.name,
-      price: item.price,
-      description: item.description,
-      category: item.category,
-      images: item.images || [], 
-      sellerId: item.seller_id || item.shop_id || '', // Use shop_id as seller_id if not available
-      sellerName: item.shop_name || 'Shop Owner',
-      rating: item.rating || 0,
-      isHalalCertified: item.is_halal_certified || false
-    }));
-  } catch (error) {
-    console.error(`Error fetching products for shop with ID ${shopId}:`, error);
-    return [];
-  }
+/**
+ * Convert front-end shop model to database format
+ */
+export const modelShopToDB = (shop: Shop): any => {
+  return {
+    id: shop.id,
+    name: shop.name,
+    description: shop.description,
+    location: shop.location,
+    category: shop.category,
+    logo_url: shop.logo_url,
+    cover_image: shop.cover_image,
+    owner_id: shop.owner_id,
+    rating: shop.rating,
+    product_count: shop.product_count,
+    is_verified: shop.is_verified,
+    latitude: shop.latitude,
+    longitude: shop.longitude,
+    created_at: shop.created_at,
+    updated_at: shop.updated_at
+  };
 };
 
-// Convert database Product to model Product
-export const convertToModelProduct = (product: Product): ModelProduct => {
+/**
+ * Convert database product to front-end model
+ */
+export const dbProductToModel = (product: any): Product => {
   return {
     id: product.id,
     name: product.name,
@@ -87,19 +61,68 @@ export const convertToModelProduct = (product: Product): ModelProduct => {
     price: product.price,
     images: product.images || [],
     category: product.category,
-    shopId: product.shop_id,
-    isHalalCertified: product.is_halal_certified || false,
-    inStock: product.in_stock !== false,
-    createdAt: product.created_at,
-    sellerId: product.seller_id || product.shop_id, // Map shop_id to sellerId
-    sellerName: product.shop_name || 'Shop Owner',
-    rating: product.rating || 0,
-    details: product.details || {}
+    shop_id: product.shop_id,
+    is_halal_certified: product.is_halal_certified,
+    in_stock: product.is_published !== undefined ? product.is_published : true,
+    created_at: product.created_at,
+    updated_at: product.updated_at,
+    details: product.details,
+    seller_id: product.seller_id || product.shop?.owner_id,
+    seller_name: product.seller_name || product.shop?.name
   };
 };
 
-// Mock implementation for uploadProductImage
-export const uploadProductImage = async (file: File): Promise<string> => {
-  console.log('Uploading product image (mock):', file.name);
-  return Promise.resolve(`https://via.placeholder.com/300?text=${file.name}`);
+/**
+ * Convert shop product to regular product model
+ */
+export const shopProductToProduct = (product: ShopProduct): Product => {
+  return {
+    id: product.id,
+    name: product.name,
+    description: product.description,
+    price: product.price,
+    images: product.images,
+    category: product.category,
+    shop_id: product.shop_id,
+    is_halal_certified: product.is_halal_certified,
+    in_stock: product.in_stock,
+    created_at: product.created_at,
+    updated_at: product.updated_at
+  };
+};
+
+/**
+ * Filter shops based on search criteria
+ */
+export const filterShops = (shops: Shop[], searchTerm: string, category?: string): Shop[] => {
+  if (!searchTerm && !category) return shops;
+  
+  return shops.filter(shop => {
+    const matchesSearch = !searchTerm || 
+      shop.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      shop.description.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesCategory = !category || shop.category.toLowerCase() === category.toLowerCase();
+    
+    return matchesSearch && matchesCategory;
+  });
+};
+
+/**
+ * Sort shops by distance, rating, or name
+ */
+export const sortShops = (shops: Shop[], sortBy: 'distance' | 'rating' | 'name' = 'distance'): Shop[] => {
+  return [...shops].sort((a, b) => {
+    if (sortBy === 'distance') {
+      // If distance is available, sort by it, otherwise, fall back to rating
+      if (a.distance !== undefined && b.distance !== undefined) {
+        return a.distance - b.distance;
+      }
+      return b.rating - a.rating;
+    } else if (sortBy === 'rating') {
+      return b.rating - a.rating;
+    } else {
+      return a.name.localeCompare(b.name);
+    }
+  });
 };

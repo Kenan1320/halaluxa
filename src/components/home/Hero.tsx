@@ -35,7 +35,7 @@ const Hero = () => {
   };
   
   return (
-    <section className="pt-28 pb-20 md:pt-36 md:pb-28 bg-gradient-to-b from-haluna-primary-light to-white overflow-hidden">
+    <section className="pt-28 pb-20 md:pt-36 md:pb-28 deep-night-blue-gradient-vertical text-white overflow-hidden">
       <div className="container mx-auto px-4">
         <div className="mb-12 text-center md:text-left md:max-w-3xl">
           {isLoggedIn && user && (
@@ -49,13 +49,13 @@ const Hero = () => {
             </motion.p>
           )}
           
-          <span className="inline-block px-4 py-1 rounded-full bg-haluna-accent text-haluna-text text-sm font-medium mb-4 animate-fade-in">
+          <span className="inline-block px-4 py-1 rounded-full bg-white/20 text-white text-sm font-medium mb-4 animate-fade-in">
             Shop Muslim Businesses
           </span>
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif font-bold leading-tight mb-6 animate-fade-in animate-delay-100">
-            Find your <span className="text-haluna-primary">Local Shop</span> & Beyond
+            Find your <span className="text-white">Local Shop</span> & Beyond
           </h1>
-          <p className="text-haluna-text-light text-lg md:text-xl mb-8 max-w-2xl mx-auto md:mx-0 animate-fade-in animate-delay-200">
+          <p className="text-white/80 text-lg md:text-xl mb-8 max-w-2xl mx-auto md:mx-0 animate-fade-in animate-delay-200">
             Connect with authentic Muslim businesses and discover ethically sourced products that align with your values.
           </p>
           
@@ -76,7 +76,7 @@ const Hero = () => {
               />
               <button
                 type="submit"
-                className="bg-haluna-primary text-white px-6 py-4 hover:bg-haluna-primary-dark transition-colors"
+                className="bg-[#183080] text-white px-6 py-4 hover:bg-[#0F1B44] transition-colors"
               >
                 <Search className="h-5 w-5" />
               </button>
@@ -91,7 +91,7 @@ const Hero = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.3 }}
             >
-              <div className="inline-flex items-center justify-center gap-2 text-haluna-primary bg-haluna-primary-light/50 py-2 px-4 rounded-full">
+              <div className="inline-flex items-center justify-center gap-2 text-white bg-white/10 py-2 px-4 rounded-full">
                 <MapPin className="h-4 w-4" />
                 <span>
                   Showing shops near {location?.city || 'your location'}
@@ -110,7 +110,8 @@ const Hero = () => {
             <Button 
               to="/shops" 
               size="lg" 
-              className="flex items-center"
+              variant="default"
+              className="flex items-center bg-white text-[#0F1B44] hover:bg-white/90"
             >
               <Store className="mr-2 h-5 w-5" />
               Browse Shops
@@ -118,12 +119,12 @@ const Hero = () => {
             
             {!isLoggedIn && (
               <>
-                <Button to="/signup" variant="outline" size="lg" className="flex items-center">
+                <Button to="/signup" variant="outline" size="lg" className="flex items-center border-white text-white hover:bg-white/10">
                   <UserPlus className="mr-2 h-5 w-5" />
                   Sign Up
                 </Button>
                 
-                <Button to="/login" variant="ghost" size="lg" className="flex items-center">
+                <Button to="/login" variant="ghost" size="lg" className="flex items-center text-white hover:bg-white/10">
                   <LogIn className="mr-2 h-5 w-5" />
                   Log In
                 </Button>
@@ -134,7 +135,7 @@ const Hero = () => {
         
         {/* Featured Shops */}
         <div className="mt-16">
-          <h2 className="text-2xl font-serif font-bold mb-6">Featured Shops</h2>
+          <h2 className="text-2xl font-serif font-bold mb-6 text-white">Featured Shops</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
             {featuredShops.length > 0 ? (
               featuredShops.map((shop) => (
@@ -148,13 +149,13 @@ const Hero = () => {
                   <Button
                     to={`/shop/${shop.id}`}
                     variant="ghost"
-                    className="w-full h-auto p-4 flex flex-col items-center gap-3 rounded-lg hover:bg-gray-50"
+                    className="w-full h-auto p-4 flex flex-col items-center gap-3 rounded-lg hover:bg-white/10 text-white"
                   >
-                    <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
+                    <div className="w-16 h-16 rounded-full overflow-hidden bg-white/10 flex items-center justify-center">
                       {shop.logo ? (
                         <img src={shop.logo} alt={shop.name} className="w-full h-full object-cover" />
                       ) : (
-                        <Store className="h-8 w-8 text-haluna-text-light" />
+                        <Store className="h-8 w-8 text-white/70" />
                       )}
                     </div>
                     <span className="text-sm font-medium text-center line-clamp-2">{shop.name}</span>
@@ -163,9 +164,9 @@ const Hero = () => {
               ))
             ) : (
               Array(6).fill(0).map((_, i) => (
-                <div key={i} className="bg-white rounded-lg p-4 flex flex-col items-center gap-3 animate-pulse">
-                  <div className="w-16 h-16 rounded-full bg-gray-200"></div>
-                  <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                <div key={i} className="bg-white/10 rounded-lg p-4 flex flex-col items-center gap-3 animate-pulse">
+                  <div className="w-16 h-16 rounded-full bg-white/20"></div>
+                  <div className="h-4 bg-white/20 rounded w-3/4"></div>
                 </div>
               ))
             )}
@@ -174,7 +175,7 @@ const Hero = () => {
         
         {/* Popular Categories */}
         <div className="mt-16">
-          <h2 className="text-2xl font-serif font-bold mb-6">Browse Categories</h2>
+          <h2 className="text-2xl font-serif font-bold mb-6 text-white">Browse Categories</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
             {['Groceries', 'Clothing', 'Home Essentials', 'Beauty', 'Electronics', 'Health', 'Books', 'Toys'].map((category, index) => (
               <motion.div
@@ -187,7 +188,7 @@ const Hero = () => {
                 <Button
                   to={`/browse?category=${category}`}
                   variant="outline"
-                  className="w-full h-20 flex items-center justify-center bg-white hover:bg-gray-50 text-haluna-text hover:text-haluna-primary border-gray-200"
+                  className="w-full h-20 flex items-center justify-center bg-white/10 hover:bg-white/20 text-white border-white/20"
                 >
                   <span className="text-md font-medium">{category}</span>
                 </Button>

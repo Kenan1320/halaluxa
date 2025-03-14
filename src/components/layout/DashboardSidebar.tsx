@@ -1,4 +1,3 @@
-
 import { NavLink } from 'react-router-dom';
 import { 
   LayoutDashboard, Package, ShoppingBag, Users, Settings, 
@@ -27,8 +26,8 @@ const SidebarLink = ({ to, icon, children, end = false, onClick }: SidebarLinkPr
     className={({ isActive }) => cn(
       'flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200',
       isActive 
-        ? 'bg-haluna-primary text-white shadow-sm' 
-        : 'text-haluna-text hover:bg-haluna-primary-light hover:text-haluna-primary'
+        ? 'deep-night-blue-gradient text-white shadow-sm' 
+        : 'text-haluna-text hover:bg-[#0F1B44]/10 hover:text-[#0F1B44]'
     )}
   >
     {icon}
@@ -46,7 +45,6 @@ const DashboardSidebar = () => {
   
   const isMobile = useIsMobile();
   
-  // Close sidebar when route changes on mobile
   useEffect(() => {
     return () => {
       if (isMobile) {
@@ -55,7 +53,6 @@ const DashboardSidebar = () => {
     };
   }, [isMobile]);
   
-  // Save view mode preference
   useEffect(() => {
     localStorage.setItem('dashboardViewMode', viewMode);
   }, [viewMode]);
@@ -70,7 +67,6 @@ const DashboardSidebar = () => {
     }
   };
   
-  // Mobile sidebar trigger button that stays fixed on screen
   const MobileSidebarTrigger = () => (
     <Button
       variant="outline" 
@@ -82,7 +78,6 @@ const DashboardSidebar = () => {
     </Button>
   );
   
-  // Actual sidebar content
   const SidebarContent = () => (
     <aside className={cn(
       "bg-white border-r shadow-sm overflow-y-auto transition-all duration-300 ease-in-out",
@@ -95,7 +90,7 @@ const DashboardSidebar = () => {
       <div className="p-4 border-b flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="flex items-center">
-            <span className="text-xl font-serif font-bold text-haluna-primary">Haluna</span>
+            <span className="text-xl font-serif font-bold text-[#0F1B44]">Haluna</span>
             <div className="relative ml-1">
               <div className="w-5 h-5 bg-gradient-to-br from-orange-300 to-orange-400 rounded-full shadow-sm"></div>
               <div className="absolute top-1/4 left-1/4 w-1/2 h-1/2 bg-white rounded-full opacity-30"></div>
@@ -109,7 +104,7 @@ const DashboardSidebar = () => {
             size="icon" 
             onClick={toggleViewMode}
             title={viewMode === 'mobile' ? "Switch to desktop view" : "Switch to mobile view"}
-            className="text-haluna-text-light hover:text-haluna-primary"
+            className="text-haluna-text-light hover:text-[#0F1B44]"
           >
             {viewMode === 'mobile' 
               ? <Monitor className="h-4 w-4" /> 
@@ -148,7 +143,7 @@ const DashboardSidebar = () => {
           <CollapsibleTrigger asChild>
             <Button 
               variant="ghost" 
-              className="w-full justify-between text-haluna-text hover:bg-haluna-primary-light hover:text-haluna-primary px-3 py-2 h-auto"
+              className="w-full justify-between text-haluna-text hover:bg-[#0F1B44]/10 hover:text-[#0F1B44] px-3 py-2 h-auto"
             >
               <div className="flex items-center gap-3">
                 <Package className="h-5 w-5" />
@@ -204,7 +199,7 @@ const DashboardSidebar = () => {
           <CollapsibleTrigger asChild>
             <Button 
               variant="ghost" 
-              className="w-full justify-between text-haluna-text hover:bg-haluna-primary-light hover:text-haluna-primary px-3 py-2 h-auto"
+              className="w-full justify-between text-haluna-text hover:bg-[#0F1B44]/10 hover:text-[#0F1B44] px-3 py-2 h-auto"
             >
               <div className="flex items-center gap-3">
                 <BarChart className="h-5 w-5" />
@@ -268,7 +263,6 @@ const DashboardSidebar = () => {
       <MobileSidebarTrigger />
       <SidebarContent />
       
-      {/* Overlay for mobile sidebar */}
       {isMobile && isMobileSidebarOpen && (
         <div 
           className="fixed inset-0 bg-black/30 z-40 md:hidden"

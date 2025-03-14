@@ -124,13 +124,18 @@
     text-wrap: balance;
   }
   
-  /* Deep night blue gradients for header */
+  /* Deep night blue gradients for header and UI elements */
   .deep-night-blue-gradient {
     @apply bg-gradient-to-r from-[#0F1B44] via-[#132054] to-[#183080];
   }
   
   .deep-night-blue-gradient-vertical {
     @apply bg-gradient-to-b from-[#0F1B44] via-[#132054] to-[#183080];
+  }
+
+  /* Replacing mint accents with deep blue */
+  .mint-accent {
+    @apply bg-gradient-to-r from-[#0F1B44] via-[#132054] to-[#183080];
   }
 }
 

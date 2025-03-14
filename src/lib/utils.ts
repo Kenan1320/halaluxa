@@ -54,4 +54,3 @@ export function normalizeShop(shop: any): any {
     distance: shop.distance || null,
   };
 }
-

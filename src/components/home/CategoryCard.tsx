@@ -11,19 +11,24 @@ interface CategoryCardProps {
 }
 
 const CategoryCard = ({ title, description, imageSrc, backgroundColor, link }: CategoryCardProps) => {
+  // Replace the mint or green color with deep blue if specified
+  const bgColor = backgroundColor.includes('haluna-primary') || 
+                  backgroundColor.includes('primary-light') ? 
+                  'deep-night-blue-gradient' : backgroundColor;
+  
   return (
     <div 
-      className={`rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow h-full ${backgroundColor}`}
+      className={`rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow h-full ${bgColor}`}
     >
       <div className="p-8 flex flex-col h-full">
         <div className="mb-6">
-          <h3 className="text-2xl md:text-3xl font-serif font-medium mb-3">{title}</h3>
-          <p className="text-haluna-text-light">{description}</p>
+          <h3 className="text-2xl md:text-3xl font-serif font-medium mb-3 text-white">{title}</h3>
+          <p className="text-white/80">{description}</p>
         </div>
         
         <Link 
           to={link} 
-          className="mt-auto inline-flex items-center text-haluna-primary font-medium group"
+          className="mt-auto inline-flex items-center text-white font-medium group"
         >
           Browse Collection{' '}
           <ArrowRight size={16} className="ml-2 transition-transform group-hover:translate-x-1" />
