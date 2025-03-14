@@ -212,6 +212,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  // Aliases for updateProfile to match different naming conventions used in the app
+  const updateUser = updateProfile;
+  const updateUserProfile = updateProfile;
+  
+  // Alias for signup to match different naming conventions
+  const register = signup;
+
   const value: AuthContextType = {
     isLoggedIn,
     isLoading,
@@ -219,7 +226,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     login,
     signup,
     logout,
-    updateProfile
+    updateProfile,
+    updateUser,
+    register,
+    updateUserProfile
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

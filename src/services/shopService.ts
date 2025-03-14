@@ -1,7 +1,23 @@
 
-import { supabase } from '@/lib/supabaseClient';
-import { Shop, ShopProduct } from '@/models/shop';
-import { adaptDbShopToShop, adaptDbProductToShopProduct, DbShop } from './shopServiceHelpers';
+import { supabase } from '@/lib/supabase';
+import { Product } from '@/models/product';
+import { Shop } from '@/models/shop';
+
+export interface ShopProduct {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  images: string[];
+  category: string;
+  shop_id: string;
+  stock: number;
+  isHalalCertified?: boolean;
+  inStock?: boolean;
+  rating?: number;
+  created_at?: string;
+  updated_at?: string;
+}
 
 export const getShopById = async (shopId: string): Promise<Shop | null> => {
   try {
@@ -16,7 +32,7 @@ export const getShopById = async (shopId: string): Promise<Shop | null> => {
       return null;
     }
 
-    return adaptDbShopToShop(shop as DbShop);
+    return adaptShopToModel(shop);
   } catch (error) {
     console.error("Unexpected error fetching shop:", error);
     return null;
@@ -34,12 +50,15 @@ export const getShops = async (): Promise<Shop[]> => {
       return [];
     }
 
-    return shops.map(shop => adaptDbShopToShop(shop as DbShop));
+    return shops.map(adaptShopToModel);
   } catch (error) {
     console.error("Unexpected error fetching shops:", error);
     return [];
   }
 };
+
+// Alias for getShops to maintain compatibility
+export const getAllShops = getShops;
 
 export const getShopsByCategory = async (category: string): Promise<Shop[]> => {
   try {
@@ -53,7 +72,7 @@ export const getShopsByCategory = async (category: string): Promise<Shop[]> => {
       return [];
     }
 
-    return shops.map(shop => adaptDbShopToShop(shop as DbShop));
+    return shops.map(adaptShopToModel);
   } catch (error) {
     console.error("Unexpected error fetching shops by category:", error);
     return [];
@@ -62,7 +81,6 @@ export const getShopsByCategory = async (category: string): Promise<Shop[]> => {
 
 export const getFeaturedShops = async (): Promise<Shop[]> => {
   try {
-    // This is a placeholder - replace with your actual logic
     const { data: shops, error } = await supabase
       .from('shops')
       .select('*')
@@ -73,14 +91,14 @@ export const getFeaturedShops = async (): Promise<Shop[]> => {
       return [];
     }
 
-    return shops.map(shop => adaptDbShopToShop(shop as DbShop));
+    return shops.map(adaptShopToModel);
   } catch (error) {
     console.error("Unexpected error fetching featured shops:", error);
     return [];
   }
 };
 
-export const getNearbyShops = async (latitude: number, longitude: number, distance = 10): Promise<Shop[]> => {
+export const getNearbyShops = async (latitude?: number, longitude?: number, distance = 10): Promise<Shop[]> => {
   try {
     // This is a simplified example. You'll need to adapt it to your database setup.
     const { data: shops, error } = await supabase
@@ -92,6 +110,10 @@ export const getNearbyShops = async (latitude: number, longitude: number, distan
       return [];
     }
 
+    if (!latitude || !longitude) {
+      return shops.map(adaptShopToModel);
+    }
+
     // Filter shops based on distance
     const nearbyShops = shops.filter((shop) => {
       if (shop.latitude && shop.longitude) {
@@ -101,7 +123,7 @@ export const getNearbyShops = async (latitude: number, longitude: number, distan
       return false;
     });
 
-    return nearbyShops.map(shop => adaptDbShopToShop(shop as DbShop));
+    return nearbyShops.map(adaptShopToModel);
   } catch (error) {
     console.error("Unexpected error fetching nearby shops:", error);
     return [];
@@ -109,11 +131,12 @@ export const getNearbyShops = async (latitude: number, longitude: number, distan
 };
 
 // Function to calculate distance between two coordinates in kilometers
-function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
+function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371; // Radius of the earth in km
   const dLat = deg2rad(lat2 - lat1);
   const dLon = deg2rad(lon2 - lon1);
-  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
     Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
     Math.sin(dLon / 2) * Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
@@ -121,11 +144,11 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
   return distance;
 }
 
-function deg2rad(deg: number) {
+function deg2rad(deg: number): number {
   return deg * (Math.PI / 180);
 }
 
-export const getShopProducts = async (shopId: string): Promise<ShopProduct[]> => {
+export const getShopProducts = async (shopId: string): Promise<Product[]> => {
   try {
     const { data: products, error } = await supabase
       .from('products')
@@ -137,23 +160,49 @@ export const getShopProducts = async (shopId: string): Promise<ShopProduct[]> =>
       return [];
     }
 
-    return products.map(product => adaptDbProductToShopProduct(product));
+    return products.map(convertToModelProduct);
   } catch (error) {
     console.error("Unexpected error fetching shop products:", error);
     return [];
   }
 };
 
-export interface Review {
-  id: string;
-  userId: string;
-  shopId: string;
-  rating: number;
-  review: string;
-  createdAt: string;
+// Convert DB product to our Model product
+export const convertToModelProduct = (dbProduct: ShopProduct): Product => {
+  return {
+    id: dbProduct.id,
+    name: dbProduct.name,
+    description: dbProduct.description,
+    price: dbProduct.price,
+    images: dbProduct.images || [],
+    category: dbProduct.category,
+    shopId: dbProduct.shop_id,
+    quantity: dbProduct.stock || 0,
+    rating: dbProduct.rating || 0,
+    isHalalCertified: dbProduct.isHalalCertified || false,
+  };
+};
+
+// Adapt DB shop to our model Shop
+function adaptShopToModel(dbShop: any): Shop {
+  return {
+    id: dbShop.id,
+    name: dbShop.name,
+    description: dbShop.description || '',
+    logo: dbShop.logo_url || '',
+    category: dbShop.category || '',
+    location: dbShop.location || '',
+    rating: dbShop.rating || 0,
+    productCount: dbShop.product_count || 0,
+    isVerified: dbShop.is_verified || false,
+    ownerId: dbShop.owner_id || '',
+    latitude: dbShop.latitude || 0,
+    longitude: dbShop.longitude || 0,
+    coverImage: dbShop.cover_image || '',
+  };
 }
 
-export const getShopReviews = async (shopId: string): Promise<Review[]> => {
+export const getShopReviews = async (shopId: string) => {
   try {
     // Implement the API call or database query
     // This is a mock implementation
@@ -182,61 +231,48 @@ export const getShopReviews = async (shopId: string): Promise<Review[]> => {
   }
 };
 
-export interface ShopFilterOptions {
-  category?: string;
-  rating?: number;
-  location?: {
-    latitude: number;
-    longitude: number;
-  };
-  distance?: number;
-  isHalalCertified?: boolean;
-  search?: string;
-}
-
-export const getShopsByFilter = async (options: ShopFilterOptions): Promise<Shop[]> => {
+export const getShopsByFilter = async (options: any) => {
   try {
     // Implement the API call or database query
     // This is a mock implementation
     let shops = await getShops();
-
+    
     // Apply filters
     if (options.category) {
       shops = shops.filter((shop) => shop.category === options.category);
     }
-
+    
     if (options.rating) {
       shops = shops.filter((shop) => shop.rating >= options.rating);
     }
-
+    
     if (options.distance && options.location) {
       shops = shops.filter((shop) => {
         if (shop.latitude && shop.longitude) {
           const shopDistance = calculateDistance(
-            options.location!.latitude,
-            options.location!.longitude,
-            shop.latitude,
+            options.location.latitude, 
+            options.location.longitude, 
+            shop.latitude, 
             shop.longitude
           );
-          return shopDistance <= options.distance!;
+          return shopDistance <= options.distance;
         }
         return false;
       });
     }
-
+    
     if (options.isHalalCertified) {
-      // Assuming there is a field is_halal_certified in the shop object
+      // Assuming there is a field isVerified which corresponds to halal certification
       shops = shops.filter((shop) => shop.isVerified === true);
     }
-
+    
     if (options.search) {
-      shops = shops.filter(
-        (shop) =>
-          shop.name.toLowerCase().includes(options.search!.toLowerCase()) ||
-          shop.description.toLowerCase().includes(options.search!.toLowerCase())
+      shops = shops.filter((shop) => 
+        shop.name.toLowerCase().includes(options.search.toLowerCase()) || 
+        shop.description.toLowerCase().includes(options.search.toLowerCase())
       );
     }
-
+    
     return shops;
   } catch (error) {
     console.error('Error fetching shops by filter:', error);
@@ -244,8 +280,7 @@ export const getShopsByFilter = async (options: ShopFilterOptions): Promise<Shop
   }
 };
 
-// Add the missing function for updating user shop preferences
-export const updateUserShopPreference = async (userId: string, shopId: string, isFavorite: boolean): Promise<boolean> => {
+export const updateUserShopPreference = async (userId: string, shopId: string, isFavorite: boolean) => {
   try {
     // Implement the API call or database update
     // This is a mock implementation
@@ -270,36 +305,33 @@ export const getShopsByOwnerId = async (ownerId: string): Promise<Shop[]> => {
       return [];
     }
 
-    return data.map(shop => adaptDbShopToShop(shop as DbShop));
+    return data.map(adaptShopToModel);
   } catch (error) {
     console.error("Unexpected error fetching shops by owner ID:", error);
     return [];
   }
 };
 
-export const createShop = async (shopData: Partial<Shop>): Promise<Shop | null> => {
+// Create shop 
+export const createShop = async (shopData: any) => {
   try {
-    // Convert from our Shop model to DB format
-    const dbShopData = {
-      name: shopData.name,
-      description: shopData.description,
-      location: shopData.location,
-      owner_id: shopData.ownerId,
-      category: shopData.category,
-      is_verified: shopData.isVerified || false,
-      logo_url: shopData.logo || null,
-      cover_image: shopData.coverImage || null,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      rating: shopData.rating || 0,
-      product_count: shopData.productCount || 0,
-      latitude: shopData.latitude || null,
-      longitude: shopData.longitude || null
-    };
-
     const { data, error } = await supabase
       .from('shops')
-      .insert([dbShopData])
+      .insert([
+        {
+          name: shopData.name,
+          description: shopData.description,
+          logo_url: shopData.logo_url,
+          category: shopData.category,
+          location: shopData.location,
+          rating: shopData.rating || 0,
+          product_count: shopData.product_count || 0,
+          is_verified: shopData.is_verified || false,
+          owner_id: shopData.owner_id,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }
+      ])
       .select()
       .single();
 
@@ -308,36 +340,19 @@ export const createShop = async (shopData: Partial<Shop>): Promise<Shop | null> 
       return null;
     }
 
-    return adaptDbShopToShop(data as DbShop);
+    return adaptShopToModel(data);
   } catch (error) {
     console.error("Unexpected error creating shop:", error);
     return null;
   }
 };
 
-// Subscribe to real-time changes for shops
+// Set up real-time subscription for shops
 export const subscribeToShops = (callback: (shops: Shop[]) => void) => {
-  const subscription = supabase
-    .channel('shops-channel')
-    .on(
-      'postgres_changes',
-      { event: '*', schema: 'public', table: 'shops' },
-      (payload) => {
-        // When there's a change, fetch all shops
-        getShops().then(shops => {
-          callback(shops);
-        });
-      }
-    )
+  return supabase
+    .channel('shops')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'shops' }, (payload) => {
+      getShops().then(callback);
+    })
     .subscribe();
-
-  return subscription;
-};
-
-// Get the main shop from localStorage
-export const getMainShop = async (): Promise<Shop | null> => {
-  const mainShopId = localStorage.getItem('mainShopId');
-  if (!mainShopId) return null;
-  
-  return await getShopById(mainShopId);
 };

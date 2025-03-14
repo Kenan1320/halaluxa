@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { createShop } from '@/services/shopService';
 import { Store, MapPin, Tag, FileText, Upload, X } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
 
 interface ShopSetupFormProps {
   onComplete: () => void;
@@ -84,7 +84,7 @@ export default function ShopSetupForm({ onComplete, onSkip }: ShopSetupFormProps
       const shop = await createShop({
         name: shopData.name,
         description: shopData.description,
-        logo_url: logoPreview || undefined, // Use logo_url instead of logo
+        logo_url: logoPreview, // Using logo_url property
         category: shopData.category,
         location: shopData.location,
         rating: 0,

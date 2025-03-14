@@ -45,4 +45,7 @@ export interface AuthContextType {
   signup: (email: string, password: string, name: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   updateProfile: (data: Partial<User>) => Promise<{ success: boolean; error?: string }>;
+  updateUser: (data: Partial<User>) => Promise<{ success: boolean; error?: string }>;
+  register: (email: string, password: string, name: string) => Promise<{ success: boolean; error?: string }>;
+  updateUserProfile: (data: Partial<User>) => Promise<{ success: boolean; error?: string }>;
 }

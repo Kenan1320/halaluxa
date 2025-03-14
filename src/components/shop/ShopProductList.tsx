@@ -1,8 +1,10 @@
+
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { ShoppingCart, Heart, ChevronRight, ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { getShopProducts, convertToModelProduct } from '@/services/shopService';
+import { getShopProducts } from '@/services/shopService';
+import { getProductsByShopId } from '@/services/productService';
 import { Product } from '@/models/product';
 import { useCart } from '@/context/CartContext';
 import { Link } from 'react-router-dom';
@@ -33,11 +35,17 @@ const ShopProductList = ({ shopId, products: initialProducts }: ShopProductListP
     const loadProducts = async () => {
       try {
         setIsLoading(true);
-        const shopProducts = await getShopProducts(shopId);
-        const modelProducts = shopProducts.map(convertToModelProduct);
-        setProducts(modelProducts);
+        // Use getProductsByShopId from productService instead
+        const shopProducts = await getProductsByShopId(shopId);
+        
+        if (shopProducts && Array.isArray(shopProducts)) {
+          setProducts(shopProducts);
+        } else {
+          setProducts([]);
+        }
       } catch (error) {
         console.error('Error loading shop products:', error);
+        setProducts([]);
       } finally {
         setIsLoading(false);
       }

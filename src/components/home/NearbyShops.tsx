@@ -1,11 +1,12 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { getShops, Shop, getShopProducts, convertToModelProduct } from '@/services/shopService';
+import { getShops } from '@/services/shopService';
 import { useLocation } from '@/context/LocationContext';
 import ShopCard from '@/components/shop/ShopCard';
 import ShopProductList from '@/components/shop/ShopProductList';
 import { Link } from 'react-router-dom';
+import { Shop } from '@/models/shop';
 
 const NearbyShops = () => {
   const [shops, setShops] = useState<Shop[]>([]);

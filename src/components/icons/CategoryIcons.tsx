@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Store, ShoppingBag, Book, Shirt, Coffee, Gift, Utensils, FileText, Mosque, Home, CircleUser, Scissors, Briefcase, Leaf, Sparkles } from 'lucide-react';
+import { Store, ShoppingBag, Book, Shirt, Coffee, Gift, Utensils, FileText, Home, CircleUser, Scissors, Briefcase, Leaf, Sparkles } from 'lucide-react';
 
 export const getCategoryIcon = (category: string, className?: string) => {
   switch (category.toLowerCase()) {
@@ -34,6 +34,8 @@ export const getCategoryIcon = (category: string, className?: string) => {
       return <Coffee className={className} />;
     case 'hoodies':
       return <Shirt className={className} />;
+    case 'islamic center':
+      return <Home className={className} />; // Replacing Mosque with Home
     default:
       return <Store className={className} />;
   }
