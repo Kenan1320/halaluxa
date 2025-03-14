@@ -1,153 +1,99 @@
 
-import { memo } from 'react';
-import { motion } from 'framer-motion';
-import { Store } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import React from 'react';
 import { Link } from 'react-router-dom';
-import { useTheme } from '@/context/ThemeContext';
+import { Star, MapPin, CircleCheck } from 'lucide-react';
+import { Shop } from '@/models/shop';
+import { motion } from 'framer-motion';
+import { cn } from '@/lib/utils';
 
 interface ShopCardProps {
-  shop: any;
-  index: number;
-  featured?: boolean;
-  minimal?: boolean;
+  shop: Shop;
+  className?: string;
 }
 
-// Using memo to prevent unnecessary re-renders
-const ShopCard = memo(({ shop, index, featured = false, minimal = false }: ShopCardProps) => {
-  const { mode } = useTheme();
-  const isDark = mode === 'dark';
-  
-  if (minimal) {
-    return (
-      <motion.div 
-        className={`rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow
-          ${isDark ? 'bg-[#1C2526] border border-gray-800' : 'bg-white'}`}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, delay: index * 0.1 }}
-      >
-        <div className={`h-32 relative flex items-center justify-center 
-          ${isDark ? 'bg-[#1C2526]' : 'bg-white'}`}>
-          {shop.logo ? (
-            <img 
-              src={shop.logo} 
-              alt={`${shop.name} logo`} 
-              className="max-h-20 max-w-[80%] object-contain"
-              loading="lazy"
-            />
-          ) : (
-            <div className={`flex items-center justify-center h-full w-full
-              ${isDark ? 'bg-[#2A866A]/10' : 'bg-haluna-primary-light'}`}>
-              <Store className="h-12 w-12 text-haluna-primary" />
-            </div>
-          )}
-        </div>
-        
-        <div className="p-4 text-center">
-          <h3 className={`text-lg font-medium mb-2 ${isDark ? 'text-white' : ''}`}>{shop.name}</h3>
-          
-          <Link to={`/shop/${shop.id}`}>
-            <Button 
-              className="w-full text-sm"
-              size="sm"
-            >
-              Visit Shop
-            </Button>
-          </Link>
-        </div>
-      </motion.div>
-    );
-  }
-  
+const ShopCard: React.FC<ShopCardProps> = ({ shop, className }) => {
   return (
     <motion.div 
-      className={`rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow ${
-        isDark ? 'bg-[#1C2526] border border-gray-800' : 'bg-white'
-      } ${featured ? 'lg:flex' : ''}`}
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, delay: index * 0.1 }}
+      className={cn(
+        "bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-sm group",
+        className
+      )}
       whileHover={{ y: -5 }}
+      transition={{ duration: 0.3 }}
     >
-      <div className={`${featured ? 'lg:w-2/5 h-48 lg:h-auto' : 'h-48'} relative`}>
-        {shop.coverImage ? (
-          <img 
-            src={shop.coverImage} 
-            alt={shop.name} 
-            className="w-full h-full object-cover"
-            loading="lazy"
-          />
-        ) : shop.logo ? (
-          <div className={`w-full h-full flex items-center justify-center p-4
-            ${isDark ? 'bg-[#2A866A]/10' : 'bg-haluna-primary-light'}`}>
+      <Link to={`/shop/${shop.id}`}>
+        <div className="aspect-[3/2] overflow-hidden relative">
+          {shop.coverImage ? (
             <img 
-              src={shop.logo} 
-              alt={`${shop.name} logo`} 
-              className="max-h-full max-w-full object-contain"
-              loading="lazy"
+              src={shop.coverImage} 
+              alt={shop.name} 
+              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
             />
-          </div>
-        ) : (
-          <div className={`w-full h-full flex items-center justify-center
-            ${isDark ? 'bg-[#2A866A]/10' : 'bg-haluna-primary-light'}`}>
-            <Store className="h-12 w-12 text-haluna-primary" />
-          </div>
-        )}
-        {shop.isVerified && (
-          <div className={`absolute top-4 right-4 px-2 py-1 rounded-full text-xs font-medium shadow-sm
-            ${isDark ? 'bg-gray-800/80 text-white' : 'bg-white/80'}`}>
-            Verified
-          </div>
-        )}
-      </div>
-      
-      <div className={`p-6 ${featured ? 'lg:w-3/5' : ''}`}>
-        <div className="flex items-center justify-between mb-2">
-          <h3 className={`text-xl font-medium ${isDark ? 'text-white' : ''}`}>{shop.name}</h3>
-          <div className="flex items-center text-yellow-500">
-            <span className={`ml-1 text-sm ${isDark ? 'text-yellow-400' : ''}`}>{shop.rating}</span>
-          </div>
-        </div>
-        
-        <p className={`mb-4 ${featured ? 'line-clamp-3' : 'line-clamp-2'}
-          ${isDark ? 'text-gray-300' : 'text-haluna-text-light'}`}>
-          {shop.description}
-        </p>
-        
-        <div className="flex items-center justify-between mb-4">
-          <span className={`text-sm px-3 py-1 rounded-full
-            ${isDark ? 'bg-gray-800 text-gray-300' : 'bg-gray-100'}`}>
-            {shop.category}
-          </span>
-          
-          <div className={`flex items-center text-sm 
-            ${isDark ? 'text-gray-400' : 'text-haluna-text-light'}`}>
-            {shop.location}
-          </div>
-        </div>
-        
-        <div className={`flex items-center justify-between text-sm mb-4
-          ${isDark ? 'text-gray-400' : 'text-haluna-text-light'}`}>
-          <span>{shop.productCount} Products</span>
-          
-          {shop.distance && (
-            <span className="font-medium text-haluna-primary">
-              {shop.distance.toFixed(1)} miles away
-            </span>
+          ) : (
+            <div className="w-full h-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+              <span className="text-gray-400 dark:text-gray-500">No cover image</span>
+            </div>
           )}
+          
+          {/* Shop logo */}
+          <div className="absolute bottom-0 left-0 w-full p-3 bg-gradient-to-t from-black/60 to-transparent">
+            <div className="flex items-center">
+              <div className="w-14 h-14 rounded-xl overflow-hidden border-2 border-white bg-white dark:bg-gray-800">
+                {shop.logo ? (
+                  <img 
+                    src={shop.logo} 
+                    alt={`${shop.name} logo`} 
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                    <span className="text-gray-400 dark:text-gray-500 text-xl font-bold">
+                      {shop.name.charAt(0)}
+                    </span>
+                  </div>
+                )}
+              </div>
+              <div className="ml-3">
+                <h3 className="font-semibold text-white text-lg line-clamp-1">{shop.name}</h3>
+                <div className="flex items-center">
+                  <Star className="h-3 w-3 text-yellow-400 fill-current" />
+                  <span className="text-xs text-white ml-1 mr-2">
+                    {shop.rating.toFixed(1)}
+                  </span>
+                  {shop.isVerified && (
+                    <div className="flex items-center text-xs text-white">
+                      <CircleCheck className="h-3 w-3 text-green-400 mr-1" />
+                      <span>Verified</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
         
-        <Link to={`/shop/${shop.id}`}>
-          <Button className="w-full flex items-center justify-center">
-            Visit Shop
-          </Button>
-        </Link>
-      </div>
+        <div className="p-3">
+          <div className="flex items-center text-xs text-gray-500 dark:text-gray-400 mb-2">
+            <MapPin className="h-3 w-3 mr-1" />
+            <span className="line-clamp-1">{shop.location}</span>
+          </div>
+          
+          <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2 mb-3">
+            {shop.description}
+          </p>
+          
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium text-gray-600 dark:text-gray-300">
+              {shop.productCount} Products
+            </span>
+            <span className="text-xs font-medium px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded-full text-gray-600 dark:text-gray-300">
+              {shop.category}
+            </span>
+          </div>
+        </div>
+      </Link>
     </motion.div>
   );
-});
-
-ShopCard.displayName = 'ShopCard';
+};
 
 export default ShopCard;

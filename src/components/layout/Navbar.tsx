@@ -12,6 +12,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
 import { getShopById, getMainShop } from '@/services/shopService';
 import { Shop } from '@/types/database';
+import { Button } from '@/components/ui/button';
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -87,20 +88,25 @@ const Navbar = () => {
 
   return (
     <header 
-      className={`fixed top-0 w-full z-50 transition-all duration-300 
-        ${mode === 'dark' 
-          ? 'bg-[#1C2526] text-white border-b border-gray-800' 
-          : 'bg-[#E4F5F0]'}`}
+      className={`fixed top-0 w-full z-50 transition-all duration-300 ${
+        isScrolled 
+          ? (mode === 'dark' 
+              ? 'bg-[#1C2526] shadow-md' 
+              : 'bg-white shadow-md')
+          : (mode === 'dark' 
+              ? 'bg-[#1C2526]' 
+              : 'bg-[#F9F9F9]')
+      }`}
       style={{ height: '70px' }}
     >
       <div className="container mx-auto px-4 h-full flex justify-between items-center">
-        {/* Menu Button - simplified to a dropdown */}
+        {/* Menu Button - modern clean design */}
         <button
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           className={`p-2 rounded-full ${
             mode === 'dark' 
               ? 'text-white hover:bg-gray-700' 
-              : 'text-[#2A866A] hover:bg-[#d5efe8]'
+              : 'text-gray-700 hover:bg-gray-100'
           } transition-all duration-200`}
           aria-label="Toggle menu"
         >
@@ -111,43 +117,12 @@ const Navbar = () => {
           )}
         </button>
         
-        {/* Logo - with advanced animation */}
+        {/* Logo */}
         <div className="flex items-center ml-3 mr-auto">
           <Link to="/" className="flex items-center">
-            <span className={`text-lg font-serif font-bold ${mode === 'dark' ? 'text-white' : 'text-[#2A866A]'}`}
-                  style={{ fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}>
+            <span className={`text-lg font-bold ${mode === 'dark' ? 'text-white' : 'text-gray-800'}`}>
               Halvi
             </span>
-            
-            {/* Advanced animated logo design */}
-            <div className="relative ml-1">
-              {/* Main orange ball */}
-              <motion.div 
-                className="w-5 h-5 bg-[#E4875E] rounded-full"
-                animate={{
-                  scale: [1, 1.1, 1],
-                }}
-                transition={{
-                  duration: 6,
-                  repeat: Infinity,
-                  repeatType: "reverse"
-                }}
-              />
-              
-              {/* Orbiting green ball */}
-              <motion.div
-                className={`w-2 h-2 ${mode === 'dark' ? 'bg-[#3AA88C]' : 'bg-[#2A866B]'} rounded-full absolute`}
-                animate={{
-                  x: [2, 1.5, 0, -1.5, -2, -1.5, 0, 1.5, 2],
-                  y: [0, 1.5, 2, 1.5, 0, -1.5, -2, -1.5, 0],
-                }}
-                transition={{
-                  duration: 8,
-                  repeat: Infinity,
-                  ease: "linear"
-                }}
-              />
-            </div>
           </Link>
         </div>
         
@@ -155,11 +130,11 @@ const Navbar = () => {
         <div className="flex items-center gap-3">
           {/* Location Button */}
           <motion.button 
-            onClick={requestLocation}
+            onClick={() => requestLocation()}
             className={`p-2 rounded-full ${
               mode === 'dark' 
                 ? 'text-white hover:bg-gray-700' 
-                : 'text-[#2A866A] hover:bg-[#d5efe8]'
+                : 'text-gray-700 hover:bg-gray-100'
             } transition-colors`}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -167,7 +142,7 @@ const Navbar = () => {
             <MapPin className="h-6 w-6" />
           </motion.button>
           
-          {/* Main Shop Button - Now with pulsing animation and no circle */}
+          {/* Main Shop Button */}
           <motion.button 
             onClick={handleMainShopClick}
             className="relative p-2"
@@ -191,7 +166,7 @@ const Navbar = () => {
                       repeat: Infinity,
                       repeatType: "loop"
                     }}
-                    className="w-7 h-7 overflow-hidden"
+                    className="w-7 h-7 overflow-hidden rounded-full"
                   >
                     <img src={mainShop.logo_url} alt={mainShop.name} className="w-full h-full object-cover" />
                   </motion.div>
@@ -210,17 +185,17 @@ const Navbar = () => {
                       repeat: Infinity,
                       repeatType: "loop"
                     }}
-                    className={`h-7 w-7 flex items-center justify-center ${
-                      mode === 'dark' ? 'text-white' : 'text-[#2A866A]'
+                    className={`h-7 w-7 flex items-center justify-center rounded-full ${
+                      mode === 'dark' ? 'bg-gray-700 text-white' : 'bg-gray-200 text-gray-700'
                     }`}
                   >
-                    <Store className="h-7 w-7" />
+                    <Store className="h-5 w-5" />
                   </motion.div>
                 )}
               </>
             ) : (
               <div className="relative">
-                <Store className="h-7 w-7 text-gray-400" />
+                <Store className={`h-7 w-7 ${mode === 'dark' ? 'text-gray-400' : 'text-gray-500'}`} />
                 <motion.div 
                   className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"
                   animate={{
@@ -236,32 +211,42 @@ const Navbar = () => {
             )}
           </motion.button>
           
-          {/* Cart Button - Modernized */}
+          {/* Cart Button */}
           <motion.div
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
+            className="z-10"
           >
             <Link 
               to="/cart" 
-              className="relative p-2 rounded-lg bg-[#FF7A45] text-white block shadow-sm"
+              className={`relative p-2 rounded-full flex items-center justify-center ${
+                mode === 'dark' 
+                  ? 'bg-gray-700 text-white' 
+                  : 'bg-gray-100 text-gray-700'
+              }`}
             >
               <ShoppingCart className="h-6 w-6" />
               {cart.items.length > 0 && (
-                <span className="absolute -top-2 -right-2 bg-[#2A866A] text-white text-xs rounded-full h-5 w-5 flex items-center justify-center shadow-sm">
+                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
                   {cart.items.length}
                 </span>
               )}
             </Link>
           </motion.div>
           
-          {/* User Profile - Modernized */}
+          {/* User Profile */}
           <motion.div
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
+            className="z-10"
           >
             <Link
               to={isLoggedIn ? (user?.role === 'business' ? '/dashboard' : '/profile') : '/login'}
-              className="p-2 rounded-full bg-[#2A866A] text-white block shadow-sm"
+              className={`p-2 rounded-full flex items-center justify-center ${
+                mode === 'dark' 
+                  ? 'bg-gray-700 text-white' 
+                  : 'bg-gray-100 text-gray-700'
+              }`}
             >
               <User className="h-6 w-6" />
             </Link>
@@ -269,7 +254,7 @@ const Navbar = () => {
         </div>
       </div>
       
-      {/* Mobile menu - Simplified dropdown menu */}
+      {/* Mobile menu */}
       <AnimatePresence>
         {mobileMenuOpen && (
           <motion.div 
@@ -293,12 +278,12 @@ const Navbar = () => {
             >
               {/* User info section */}
               <div className={`p-4 mb-4 rounded-lg ${
-                mode === 'dark' ? 'bg-gray-800' : 'bg-[#E4F5F0]'
+                mode === 'dark' ? 'bg-gray-800' : 'bg-gray-100'
               }`}>
                 <div className="flex items-center gap-3">
                   <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                    mode === 'dark' ? 'bg-gray-700' : 'bg-[#2A866A]'
-                  } text-white`}>
+                    mode === 'dark' ? 'bg-gray-700' : 'bg-gray-200'
+                  } text-center`}>
                     {isLoggedIn && user ? user.name.charAt(0).toUpperCase() : <User size={20} />}
                   </div>
                   <div>
@@ -314,7 +299,7 @@ const Navbar = () => {
                 {!isLoggedIn && (
                   <Link 
                     to="/login"
-                    className="mt-3 block w-full py-2 bg-[#2A866A] text-white text-center rounded-full text-sm font-medium"
+                    className="mt-3 block w-full py-2 bg-gray-800 dark:bg-gray-700 text-white text-center rounded-lg text-sm font-medium"
                   >
                     Sign In
                   </Link>
@@ -352,10 +337,10 @@ const Navbar = () => {
                     className={`flex items-center gap-4 p-3 rounded-lg transition ${
                       mode === 'dark'
                         ? (isActive(item.path) 
-                          ? 'bg-[#2A866A]/20 text-white' 
+                          ? 'bg-gray-800 text-white' 
                           : 'text-gray-300 hover:bg-gray-800')
                         : (isActive(item.path) 
-                          ? 'bg-[#E4F5F0] text-[#2A866A]' 
+                          ? 'bg-gray-100 text-gray-800' 
                           : 'text-gray-700 hover:bg-gray-100')
                     }`}
                   >

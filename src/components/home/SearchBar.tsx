@@ -1,65 +1,58 @@
 
-import { useState, useEffect } from 'react';
-import { Search } from 'lucide-react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Search } from 'lucide-react';
 import { useTheme } from '@/context/ThemeContext';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 
-const SearchBar = () => {
+interface SearchBarProps {
+  placeholder?: string;
+  className?: string;
+  onSearch?: (query: string) => void;
+}
+
+const SearchBar: React.FC<SearchBarProps> = ({ 
+  placeholder = "Search products, shops, and more...",
+  className = "",
+  onSearch 
+}) => {
   const [query, setQuery] = useState('');
-  const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const navigate = useNavigate();
   const { mode } = useTheme();
-
-  const placeholders = [
-    "Search The Hal Village with Halvi",
-    "From Local Finds to Global Treasures!",
-    "Your Halal Village, All in One Place"
-  ];
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setPlaceholderIndex(prevIndex => (prevIndex + 1) % placeholders.length);
-    }, 8000);
-
-    return () => clearInterval(interval);
-  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (query.trim()) {
-      navigate(`/search?q=${encodeURIComponent(query)}`);
+      if (onSearch) {
+        onSearch(query);
+      } else {
+        navigate(`/search?q=${encodeURIComponent(query)}`);
+      }
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="w-full">
-      <div className={`flex items-center rounded-full ${
-        mode === 'dark' 
-          ? 'bg-gray-800 text-white border border-gray-700' 
-          : 'bg-white text-gray-700 border border-gray-200'
-      } px-5 py-3 shadow-md hover:shadow-lg transition-all duration-300`}>
-        <Search className="w-6 h-6 mr-3 text-gray-400" />
-        <div className="relative w-full h-6 overflow-hidden">
-          <AnimatePresence mode="wait">
-            <motion.input
-              key={placeholderIndex}
-              type="text"
-              placeholder={placeholders[placeholderIndex]}
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              className={`w-full outline-none ${
-                mode === 'dark' ? 'bg-gray-800 text-white' : 'bg-white'
-              } text-base font-medium`}
-              style={{ fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.3 }}
-            />
-          </AnimatePresence>
-        </div>
-      </div>
+    <form onSubmit={handleSubmit} className={`w-full ${className}`}>
+      <motion.div 
+        className={`flex items-center rounded-xl ${
+          mode === 'dark' 
+            ? 'bg-gray-800 border border-gray-700' 
+            : 'bg-gray-100 border border-gray-200'
+        } px-4 py-3`}
+        whileHover={{ scale: 1.01 }}
+        transition={{ duration: 0.2 }}
+      >
+        <Search className="h-5 w-5 text-gray-400 mr-3" />
+        <input
+          type="text"
+          placeholder={placeholder}
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          className={`w-full outline-none text-sm ${
+            mode === 'dark' ? 'bg-gray-800 text-white placeholder:text-gray-500' : 'bg-gray-100 text-gray-800 placeholder:text-gray-500'
+          }`}
+        />
+      </motion.div>
     </form>
   );
 };

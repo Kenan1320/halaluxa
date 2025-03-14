@@ -17,6 +17,32 @@ export function formatCurrency(amount: number): string {
 }
 
 /**
+ * Format a date as MM/DD/YYYY
+ */
+export function formatDate(date: string | Date): string {
+  const d = new Date(date);
+  return d.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+}
+
+/**
+ * Format a date with time as MM/DD/YYYY HH:MM AM/PM
+ */
+export function formatDateTime(date: string | Date): string {
+  const d = new Date(date);
+  return d.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+}
+
+/**
  * Mapbox configuration
  */
 export const mapboxConfig = {
