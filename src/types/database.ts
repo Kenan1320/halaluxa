@@ -43,6 +43,12 @@ export interface Shop {
     store: boolean;
     curbside: boolean;
   };
+  // Frontend aliases
+  logo?: string;
+  coverImage?: string;
+  ownerId?: string;
+  productCount?: number;
+  isVerified?: boolean;
 }
 
 export interface Product {

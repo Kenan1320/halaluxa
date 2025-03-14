@@ -14,9 +14,11 @@ export function Toaster() {
 
   // Filter out unwanted toasts - specifically location-related ones
   const filteredToasts = toasts.filter(toast => {
-    // Filter out all location-related toasts
-    if (toast.title?.toLowerCase().includes('location') || 
-        toast.description?.toLowerCase().includes('location')) {
+    // Safely check if title or description includes location (handling non-string values)
+    const titleString = typeof toast.title === 'string' ? toast.title.toLowerCase() : '';
+    const descriptionString = typeof toast.description === 'string' ? toast.description.toLowerCase() : '';
+    
+    if (titleString.includes('location') || descriptionString.includes('location')) {
       return false;
     }
     return true;

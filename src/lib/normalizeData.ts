@@ -59,6 +59,9 @@ export const normalizeProduct = (product: any): Product => {
     seller_id: product.seller_id || product.sellerId,
     seller_name: product.seller_name || product.sellerName,
     rating: product.rating,
+    long_description: product.long_description,
+    is_published: product.is_published,
+    stock: product.stock,
     // Frontend aliases
     shopId: product.shop_id || product.shopId,
     isHalalCertified: product.is_halal_certified || product.isHalalCertified,

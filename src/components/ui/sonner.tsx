@@ -7,6 +7,18 @@ type ToasterProps = React.ComponentProps<typeof Sonner>
 const Toaster = ({ ...props }: ToasterProps) => {
   const { theme = "system" } = useTheme()
 
+  // Filter function to hide location-related toasts
+  const filterToast = (toast: any) => {
+    const titleString = typeof toast.title === 'string' ? toast.title.toLowerCase() : '';
+    const descriptionString = typeof toast.description === 'string' ? toast.description.toLowerCase() : '';
+    
+    // Hide location-related toasts
+    if (titleString.includes('location') || descriptionString.includes('location')) {
+      return false;
+    }
+    return true;
+  };
+
   return (
     <Sonner
       theme={theme as ToasterProps["theme"]}
@@ -28,6 +40,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
       expand={false}
       // Disable all toasts by setting duration very low
       duration={1}
+      filter={filterToast}
       {...props}
     />
   )

@@ -31,6 +31,9 @@ export interface Product {
   updatedAt?: string; // Alias for updated_at
   sellerId?: string; // Alias for seller_id
   sellerName?: string; // Alias for seller_name
+  long_description?: string;
+  is_published?: boolean;
+  stock?: number;
 }
 
 export const productCategories = [

@@ -10,13 +10,10 @@ interface CategoryCardProps {
   link: string;
 }
 
-const CategoryCard = ({ title, description, imageSrc, backgroundColor, link }: CategoryCardProps) => {
-  // Always use deep night blue gradient regardless of the input background color
-  const bgColor = 'deep-night-blue-gradient';
-  
+const CategoryCard = ({ title, description, imageSrc, link }: CategoryCardProps) => {
   return (
     <div 
-      className={`rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow h-full ${bgColor}`}
+      className="rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow h-full bg-gradient-to-br from-[#0F1B44] to-[#152554]"
     >
       <div className="p-8 flex flex-col h-full">
         <div className="mb-6">

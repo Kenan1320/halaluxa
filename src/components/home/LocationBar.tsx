@@ -13,7 +13,7 @@ const LocationBar = () => {
   const handleLocationClick = () => {
     if (!isLocationEnabled) {
       logger.info('User requesting location silently');
-      requestLocation();
+      requestLocation(false); // Pass false to prevent toast notification
     } else {
       setIsEditing(true);
     }
@@ -56,7 +56,7 @@ const LocationBar = () => {
                 <span className="text-gray-800 font-medium">
                   {location?.city ? `${location.city}, ${location.state}` : 'Enable location'}
                 </span>
-                <ChevronDown className="h-3 w-3 text-[#183080] ml-1" />
+                <ChevronDown className="h-3 w-3 text-[#0F1B44] ml-1" />
               </div>
             )}
           </div>

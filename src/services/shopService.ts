@@ -7,7 +7,7 @@ import {
   getShopProducts,
   convertToModelProduct,
   uploadProductImage,
-  mapShopToModel
+  dbShopToModel
 } from './shopServiceHelpers';
 
 // Export types and helper functions from shopServiceHelpers
@@ -18,7 +18,7 @@ export {
   getShopProducts,
   convertToModelProduct,
   uploadProductImage,
-  mapShopToModel
+  dbShopToModel
 };
 
 // Function to subscribe to real-time updates for shops
