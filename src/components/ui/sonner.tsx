@@ -1,6 +1,7 @@
 
 import { useTheme } from "next-themes"
 import { Toaster as Sonner } from "sonner"
+import { ReactNode } from "react"
 
 type ToasterProps = React.ComponentProps<typeof Sonner>
 
@@ -12,6 +13,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
     // We need to check if toast properties are defined
     if (!toast) return false;
     
+    // Convert toast title and description to lowercase strings if they're strings
     const titleString = typeof toast.title === 'string' ? toast.title.toLowerCase() : '';
     const descriptionString = typeof toast.description === 'string' ? toast.description.toLowerCase() : '';
     

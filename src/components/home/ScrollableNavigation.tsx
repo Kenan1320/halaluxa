@@ -222,12 +222,12 @@ const ScrollableNavigation = () => {
         </div>
       )}
       
-      {/* Style for hiding scrollbar */}
-      <style jsx>{`
-        .hide-scrollbar::-webkit-scrollbar {
+      {/* Fix style tag syntax - remove jsx prop */}
+      <style>
+        {`.hide-scrollbar::-webkit-scrollbar {
           display: none;
-        }
-      `}</style>
+        }`}
+      </style>
     </div>
   );
 };

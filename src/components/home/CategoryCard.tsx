@@ -13,7 +13,7 @@ interface CategoryCardProps {
 const CategoryCard = ({ title, description, imageSrc, link }: CategoryCardProps) => {
   return (
     <div 
-      className="rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow h-full bg-gradient-to-br from-[#0F1B44] to-[#183080]"
+      className="rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow h-full deep-night-blue-gradient"
     >
       <div className="p-8 flex flex-col h-full">
         <div className="mb-6">

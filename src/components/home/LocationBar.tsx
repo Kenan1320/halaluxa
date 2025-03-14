@@ -13,7 +13,7 @@ const LocationBar = () => {
   const handleLocationClick = () => {
     if (!isLocationEnabled) {
       logger.info('User requesting location silently');
-      requestLocation(false); // Pass false to prevent toast notification
+      requestLocation(); // Remove the false parameter as it's not expected
     } else {
       setIsEditing(true);
     }

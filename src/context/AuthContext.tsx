@@ -298,7 +298,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       setIsLoading(true);
       
-      // Only extract the shop-related fields
+      // Extract only the shop-related fields and ensure they're valid profile fields
       const shopUpdate = {
         shop_name: businessProfile.shop_name,
         shop_description: businessProfile.shop_description,
@@ -359,9 +359,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         throw error;
       }
       
-      // Update local user state with snake_case keys
-      setUser((prev) => prev ? { 
-        ...prev, 
+      // Update local user state with snake_case keys to match our User interface
+      setUser(prev => prev ? {
+        ...prev,
         shop_name: updates.shopName,
         shop_description: updates.shopDescription,
         shop_category: updates.shopCategory,
@@ -373,12 +373,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         title: "Profile updated",
         description: "Your profile has been updated successfully",
       });
+      
+      return true;
     } catch (error: any) {
       toast({
         title: "Update failed",
         description: error.message || "An error occurred while updating your profile",
         variant: "destructive",
       });
+      return false;
     } finally {
       setIsLoading(false);
     }

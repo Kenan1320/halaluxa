@@ -24,7 +24,10 @@ export interface Product {
   seller_name?: string;
   rating?: number;
   stock?: number;
-  // Properties used in frontend but mapped from database fields
+  long_description?: string;
+  is_published?: boolean;
+  
+  // Frontend aliases for database fields (camelCase versions)
   shopId?: string; // Alias for shop_id
   isHalalCertified?: boolean; // Alias for is_halal_certified
   inStock?: boolean; // Alias for in_stock
@@ -32,8 +35,6 @@ export interface Product {
   updatedAt?: string; // Alias for updated_at
   sellerId?: string; // Alias for seller_id
   sellerName?: string; // Alias for seller_name
-  long_description?: string;
-  is_published?: boolean;
 }
 
 export const productCategories = [
