@@ -5,6 +5,15 @@ import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { DatabaseProfile } from '@/types/database';
 
+// Define extended DatabaseProfile that includes shop properties
+interface ExtendedDatabaseProfile extends DatabaseProfile {
+  shop_name?: string;
+  shop_description?: string;
+  shop_category?: string;
+  shop_location?: string;
+  shop_logo?: string;
+}
+
 // Types
 interface User {
   id: string;
@@ -28,13 +37,13 @@ interface AuthContextProps {
   user: User | null;
   isLoggedIn: boolean;
   isLoading: boolean;
-  isInitializing: boolean; // Add this property for AuthMiddleware
+  isInitializing: boolean;
   login: (email: string, password: string) => Promise<void>;
   signup: (email: string, password: string, name: string, role: 'shopper' | 'business') => Promise<void>;
   logout: () => Promise<void>;
   updateUserProfile: (profile: Partial<User>) => Promise<void>;
   updateBusinessProfile: (businessProfile: Partial<User>) => Promise<void>;
-  updateUser: (updates: any) => Promise<void>; // Add this for ShopSetupForm
+  updateUser: (updates: any) => Promise<void>;
 }
 
 // Create context
@@ -44,7 +53,7 @@ const AuthContext = createContext<AuthContextProps | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isInitializing, setIsInitializing] = useState(true); // Add initialization state
+  const [isInitializing, setIsInitializing] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -53,7 +62,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const checkSession = async () => {
       try {
         setIsLoading(true);
-        setIsInitializing(true); // Set initializing state
+        setIsInitializing(true);
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
@@ -67,7 +76,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         console.error('Error checking session:', error);
       } finally {
         setIsLoading(false);
-        setIsInitializing(false); // Clear initializing state
+        setIsInitializing(false);
       }
     };
     
@@ -103,22 +112,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
       
       if (data) {
+        const dbProfile = data as ExtendedDatabaseProfile;
+        
         const userProfile: User = {
-          id: data.id,
-          name: data.name,
-          email: data.email,
-          role: data.role as 'shopper' | 'business' | 'admin',
-          phone: data.phone,
-          address: data.address,
-          city: data.city,
-          state: data.state,
-          zip: data.zip,
-          avatar_url: data.avatar_url,
-          shop_name: data.shop_name,
-          shop_description: data.shop_description,
-          shop_category: data.shop_category,
-          shop_location: data.shop_location,
-          shop_logo: data.shop_logo,
+          id: dbProfile.id,
+          name: dbProfile.name,
+          email: dbProfile.email,
+          role: dbProfile.role as 'shopper' | 'business' | 'admin',
+          phone: dbProfile.phone,
+          address: dbProfile.address,
+          city: dbProfile.city,
+          state: dbProfile.state,
+          zip: dbProfile.zip,
+          avatar_url: dbProfile.avatar_url,
+          shop_name: dbProfile.shop_name,
+          shop_description: dbProfile.shop_description,
+          shop_category: dbProfile.shop_category,
+          shop_location: dbProfile.shop_location,
+          shop_logo: dbProfile.shop_logo,
         };
         
         setUser(userProfile);
@@ -127,7 +138,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       console.error('Error fetching user profile:', error);
     } finally {
       setIsLoading(false);
-      setIsInitializing(false); // Clear initializing state
+      setIsInitializing(false);
     }
   };
   
@@ -287,15 +298,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       setIsLoading(true);
       
+      // Only extract the shop-related fields
+      const shopUpdate = {
+        shop_name: businessProfile.shop_name,
+        shop_description: businessProfile.shop_description,
+        shop_category: businessProfile.shop_category,
+        shop_location: businessProfile.shop_location,
+        shop_logo: businessProfile.shop_logo,
+      };
+      
       const { error } = await supabase
         .from('profiles')
-        .update({
-          shop_name: businessProfile.shop_name,
-          shop_description: businessProfile.shop_description,
-          shop_category: businessProfile.shop_category,
-          shop_location: businessProfile.shop_location,
-          shop_logo: businessProfile.shop_logo,
-        })
+        .update(shopUpdate)
         .eq('id', user.id);
       
       if (error) {
@@ -359,15 +373,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         title: "Profile updated",
         description: "Your profile has been updated successfully",
       });
-      
-      return true;
     } catch (error: any) {
       toast({
         title: "Update failed",
         description: error.message || "An error occurred while updating your profile",
         variant: "destructive",
       });
-      return false;
     } finally {
       setIsLoading(false);
     }

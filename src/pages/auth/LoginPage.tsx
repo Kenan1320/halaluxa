@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
@@ -55,42 +54,10 @@ const LoginPage = () => {
     setLoading(true);
     
     try {
-      // Attempt to login and get the user's actual role from the database
-      const role = await login(formData.email, formData.password);
+      // Attempt to login
+      await login(formData.email, formData.password);
       
-      if (role) {
-        console.log('Login successful with role:', role);
-        console.log('User selected type:', userType);
-        
-        // Check if the role matches the selected type
-        if ((role === 'shopper' && userType === 'business') || (role === 'business' && userType === 'shopper')) {
-          toast({
-            title: "Account Type Mismatch",
-            description: `The account for ${formData.email} is registered as a ${role}, not as a ${userType}. Please select the correct account type.`,
-            variant: "destructive",
-          });
-          setLoading(false);
-          return;
-        }
-        
-        toast({
-          title: "Success",
-          description: "Logged in successfully",
-        });
-        
-        // Navigate to the appropriate destination based on role
-        if (role === 'business') {
-          navigate('/dashboard');
-        } else {
-          navigate(from === '/' ? '/shop' : from);
-        }
-      } else {
-        toast({
-          title: "Error",
-          description: "Invalid email or password",
-          variant: "destructive",
-        });
-      }
+      // The auth context will handle redirects after login
     } catch (error) {
       toast({
         title: "Error",
@@ -160,7 +127,7 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-haluna-primary-light to-white flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-b from-deep-night-blue to-white flex items-center justify-center p-4">
       <motion.div 
         className="max-w-md w-full bg-white rounded-2xl shadow-lg p-6 md:p-8 overflow-hidden"
         initial="hidden"

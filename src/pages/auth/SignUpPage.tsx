@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -11,7 +10,7 @@ import { Check } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 const SignUpPage = () => {
-  const { register } = useAuth();
+  const { signup } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   
@@ -60,48 +59,7 @@ const SignUpPage = () => {
     setIsLoading(true);
     
     try {
-      // Sign up with Supabase
-      const { data, error } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-        options: {
-          data: {
-            name: formData.name,
-            role: userType,
-          },
-        },
-      });
-      
-      if (error) throw error;
-      
-      if (data.user) {
-        setUserId(data.user.id);
-        
-        // Create profile if not already created by trigger
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .upsert({
-            id: data.user.id,
-            email: formData.email,
-            name: formData.name,
-            role: userType,
-          }, { onConflict: 'id' });
-        
-        if (profileError) throw profileError;
-        
-        toast({
-          title: "Account created",
-          description: "Your account has been created successfully",
-        });
-        
-        // If business user, go to shop setup step
-        if (userType === 'business') {
-          setStep(2);
-        } else {
-          // If shopper, go directly to home page
-          navigate('/');
-        }
-      }
+      await signup(formData.email, formData.password, formData.name, userType);
     } catch (error: any) {
       console.error('Signup error:', error);
       toast({
@@ -130,7 +88,6 @@ const SignUpPage = () => {
     navigate('/dashboard');
   };
   
-  // Render shop setup form if on step 2
   if (step === 2) {
     return (
       <div className="min-h-screen pt-24 pb-20 bg-white">

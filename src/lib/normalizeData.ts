@@ -1,5 +1,6 @@
 
-import { Shop, Product } from '@/models/shop';
+import { Shop } from '@/models/shop';
+import { Product } from '@/models/product';
 
 /**
  * Normalizes shop data to ensure it has consistent property names
@@ -49,7 +50,7 @@ export const normalizeProduct = (product: any): Product => {
     category: product.category,
     shop_id: product.shop_id || product.shopId,
     is_halal_certified: product.is_halal_certified || product.isHalalCertified,
-    in_stock: product.in_stock || product.inStock,
+    in_stock: product.in_stock ?? product.inStock ?? true,
     created_at: product.created_at || product.createdAt,
     updated_at: product.updated_at || product.updatedAt,
     details: product.details || {},
@@ -59,7 +60,7 @@ export const normalizeProduct = (product: any): Product => {
     // Frontend aliases
     shopId: product.shop_id || product.shopId,
     isHalalCertified: product.is_halal_certified || product.isHalalCertified,
-    inStock: product.in_stock || product.inStock,
+    inStock: product.in_stock ?? product.inStock ?? true,
     createdAt: product.created_at || product.createdAt,
     updatedAt: product.updated_at || product.updatedAt,
     sellerId: product.seller_id || product.sellerId,
