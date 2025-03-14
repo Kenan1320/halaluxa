@@ -23,7 +23,7 @@ const convertToModelProduct = (product: Product): ModelProduct => {
     updatedAt: product.updated_at,
     seller_id: product.seller_id || product.shop_id,
     sellerId: product.seller_id || product.shop_id,
-    sellerName: '', // This would typically come from a join
+    sellerName: product.shop_name || '', // This would typically come from a join
     rating: product.rating || 0, // Default rating
     details: product.details || {}
   };
@@ -50,7 +50,7 @@ export const getFeaturedProducts = async (): Promise<ModelProduct[]> => {
     }));
 
     // Convert to model products
-    return productsWithInStock.map(convertToModelProduct);
+    return productsWithInStock.map(product => convertToModelProduct(product as Product));
   } catch (error) {
     console.error('Error in getFeaturedProducts:', error);
     return [];
@@ -67,20 +67,15 @@ export const createProduct = async (productData: Partial<Product>): Promise<Prod
       return null;
     }
     
+    // Ensure in_stock is set
+    const dataWithInStock = {
+      ...productData,
+      in_stock: productData.in_stock !== undefined ? productData.in_stock : true
+    };
+    
     const { data, error } = await supabase
       .from('products')
-      .insert({
-        name: productData.name,
-        description: productData.description,
-        price: productData.price,
-        shop_id: productData.shop_id,
-        category: productData.category,
-        images: productData.images || [],
-        is_halal_certified: productData.is_halal_certified || false,
-        in_stock: productData.in_stock !== undefined ? productData.in_stock : true,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      })
+      .insert(dataWithInStock)
       .select()
       .single();
     
@@ -89,7 +84,7 @@ export const createProduct = async (productData: Partial<Product>): Promise<Prod
       return null;
     }
     
-    return data;
+    return data as Product;
   } catch (error) {
     console.error('Error in createProduct:', error);
     return null;
@@ -114,7 +109,7 @@ export const getProducts = async (): Promise<ModelProduct[]> => {
       in_stock: product.in_stock !== undefined ? product.in_stock : true
     }));
 
-    return productsWithInStock.map(convertToModelProduct);
+    return productsWithInStock.map(product => convertToModelProduct(product as Product));
   } catch (error) {
     console.error('Error in getProducts:', error);
     return [];
@@ -140,7 +135,7 @@ export const getProductById = async (id: string): Promise<ModelProduct | null> =
       in_stock: data.in_stock !== undefined ? data.in_stock : true
     };
 
-    return convertToModelProduct(productWithInStock);
+    return convertToModelProduct(productWithInStock as Product);
   } catch (error) {
     console.error('Error in getProductById:', error);
     return null;
@@ -166,7 +161,7 @@ export const getProductsByShopId = async (shopId: string): Promise<ModelProduct[
       in_stock: product.in_stock !== undefined ? product.in_stock : true
     }));
 
-    return productsWithInStock.map(convertToModelProduct);
+    return productsWithInStock.map(product => convertToModelProduct(product as Product));
   } catch (error) {
     console.error('Error in getProductsByShopId:', error);
     return [];
@@ -192,7 +187,7 @@ export const getProductsByCategory = async (category: string): Promise<ModelProd
       in_stock: product.in_stock !== undefined ? product.in_stock : true
     }));
 
-    return productsWithInStock.map(convertToModelProduct);
+    return productsWithInStock.map(product => convertToModelProduct(product as Product));
   } catch (error) {
     console.error('Error in getProductsByCategory:', error);
     return [];
@@ -201,9 +196,14 @@ export const getProductsByCategory = async (category: string): Promise<ModelProd
 
 export const updateProduct = async (id: string, updates: Partial<Product>): Promise<ModelProduct | null> => {
   try {
+    // Ensure in_stock is set if it's being updated
+    const updatesWithInStock = updates.in_stock !== undefined 
+      ? updates 
+      : { ...updates, in_stock: true };
+    
     const { data, error } = await supabase
       .from('products')
-      .update(updates)
+      .update(updatesWithInStock)
       .eq('id', id)
       .select()
       .single();
@@ -213,7 +213,7 @@ export const updateProduct = async (id: string, updates: Partial<Product>): Prom
       return null;
     }
 
-    return convertToModelProduct(data);
+    return convertToModelProduct(data as Product);
   } catch (error) {
     console.error('Error in updateProduct:', error);
     return null;
@@ -258,7 +258,7 @@ export const searchProducts = async (query: string): Promise<ModelProduct[]> => 
       in_stock: product.in_stock !== undefined ? product.in_stock : true
     }));
 
-    return productsWithInStock.map(convertToModelProduct);
+    return productsWithInStock.map(product => convertToModelProduct(product as Product));
   } catch (error) {
     console.error('Error in searchProducts:', error);
     return [];

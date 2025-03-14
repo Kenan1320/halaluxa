@@ -12,6 +12,7 @@ export interface DatabaseProfile {
   avatar_url: string;
   created_at: string;
   updated_at: string;
+  // Shop-related fields
   shop_name?: string;
   shop_description?: string;
   shop_category?: string;

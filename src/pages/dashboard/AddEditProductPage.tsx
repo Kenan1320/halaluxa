@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useForm, SubmitHandler, Controller } from 'react-hook-form';
@@ -82,7 +81,7 @@ const AddEditProductPage: React.FC = () => {
         
         // If categoryList returns Category objects, extract just the names
         if (Array.isArray(categoryList) && categoryList.length > 0 && typeof categoryList[0] === 'object') {
-          // Convert Category objects to strings
+          // Extract only the names from the category objects
           const categoryNames = (categoryList as Category[]).map(cat => cat.name);
           setCategories(categoryNames);
         } else {
@@ -149,8 +148,7 @@ const AddEditProductPage: React.FC = () => {
     fetchProduct();
   }, [id, navigate, toast, form]);
 
-  const handleSubmit: SubmitHandler<ProductFormData> = async (data, e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const handleSubmit: SubmitHandler<ProductFormData> = async (data) => {
     setLoading(true);
 
     try {
@@ -158,6 +156,9 @@ const AddEditProductPage: React.FC = () => {
         ...data,
         price: parseFloat(data.price.toString()),
         images: [data.images],
+        // Convert to snake_case for the API
+        is_halal_certified: data.isHalalCertified,
+        in_stock: data.inStock
       };
 
       if (id) {
