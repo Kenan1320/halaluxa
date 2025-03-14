@@ -137,6 +137,19 @@
   .mint-accent {
     @apply bg-gradient-to-r from-[#0F1B44] via-[#132054] to-[#183080];
   }
+  
+  /* Adding more variations for buttons and hover states */
+  .btn-deep-night {
+    @apply bg-gradient-to-r from-[#0F1B44] via-[#132054] to-[#183080] text-white hover:opacity-90;
+  }
+  
+  .hover-deep-night {
+    @apply hover:bg-gradient-to-r hover:from-[#0F1B44] hover:via-[#132054] hover:to-[#183080] hover:text-white;
+  }
+  
+  .border-deep-night {
+    @apply border border-[#132054];
+  }
 }
 
 /* Animations */

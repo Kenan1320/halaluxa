@@ -1,128 +1,74 @@
 
-import { supabase } from '../integrations/supabase/client';
-import { Shop, ShopProduct } from '../models/shop';
-import { Product } from '../models/product';
+import { supabase } from '@/integrations/supabase/client';
+import { Shop, ShopProduct } from '@/models/shop';
+import { Product } from '@/models/product';
+import { normalizeShop, normalizeProduct } from '@/lib/normalizeData';
 
-/**
- * Convert database shop object to front-end model
- */
+export const setupDatabaseTables = async () => {
+  // This function would normally set up database tables
+  // But we're just providing a mock for type consistency
+  console.log('Setting up database tables');
+  return true;
+};
+
 export const dbShopToModel = (shop: any): Shop => {
-  return {
-    id: shop.id,
-    name: shop.name,
-    description: shop.description,
-    location: shop.location,
-    category: shop.category,
-    logo_url: shop.logo_url,
-    cover_image: shop.cover_image,
-    owner_id: shop.owner_id || '',
-    rating: shop.rating || 0,
-    product_count: shop.product_count || 0,
-    is_verified: shop.is_verified || false,
-    latitude: shop.latitude,
-    longitude: shop.longitude,
-    created_at: shop.created_at,
-    updated_at: shop.updated_at,
-    distance: shop.distance
-  };
+  return normalizeShop(shop);
 };
 
-/**
- * Convert front-end shop model to database format
- */
-export const modelShopToDB = (shop: Shop): any => {
-  return {
-    id: shop.id,
-    name: shop.name,
-    description: shop.description,
-    location: shop.location,
-    category: shop.category,
-    logo_url: shop.logo_url,
-    cover_image: shop.cover_image,
-    owner_id: shop.owner_id,
-    rating: shop.rating,
-    product_count: shop.product_count,
-    is_verified: shop.is_verified,
-    latitude: shop.latitude,
-    longitude: shop.longitude,
-    created_at: shop.created_at,
-    updated_at: shop.updated_at
-  };
+export const convertToModelProduct = (product: any): Product => {
+  return normalizeProduct(product);
 };
 
-/**
- * Convert database product to front-end model
- */
-export const dbProductToModel = (product: any): Product => {
-  return {
-    id: product.id,
-    name: product.name,
-    description: product.description,
-    price: product.price,
-    images: product.images || [],
-    category: product.category,
-    shop_id: product.shop_id,
-    is_halal_certified: product.is_halal_certified,
-    in_stock: product.is_published !== undefined ? product.is_published : true,
-    created_at: product.created_at,
-    updated_at: product.updated_at,
-    details: product.details,
-    seller_id: product.seller_id || product.shop?.owner_id,
-    seller_name: product.seller_name || product.shop?.name
-  };
-};
-
-/**
- * Convert shop product to regular product model
- */
-export const shopProductToProduct = (product: ShopProduct): Product => {
-  return {
-    id: product.id,
-    name: product.name,
-    description: product.description,
-    price: product.price,
-    images: product.images,
-    category: product.category,
-    shop_id: product.shop_id,
-    is_halal_certified: product.is_halal_certified,
-    in_stock: product.in_stock,
-    created_at: product.created_at,
-    updated_at: product.updated_at
-  };
-};
-
-/**
- * Filter shops based on search criteria
- */
-export const filterShops = (shops: Shop[], searchTerm: string, category?: string): Shop[] => {
-  if (!searchTerm && !category) return shops;
-  
-  return shops.filter(shop => {
-    const matchesSearch = !searchTerm || 
-      shop.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-      shop.description.toLowerCase().includes(searchTerm.toLowerCase());
+export const getShops = async (): Promise<Shop[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('shops')
+      .select('*');
+      
+    if (error) throw error;
     
-    const matchesCategory = !category || shop.category.toLowerCase() === category.toLowerCase();
-    
-    return matchesSearch && matchesCategory;
-  });
+    return data?.map(shop => normalizeShop(shop)) || [];
+  } catch (error) {
+    console.error('Error getting shops:', error);
+    return [];
+  }
 };
 
-/**
- * Sort shops by distance, rating, or name
- */
-export const sortShops = (shops: Shop[], sortBy: 'distance' | 'rating' | 'name' = 'distance'): Shop[] => {
-  return [...shops].sort((a, b) => {
-    if (sortBy === 'distance') {
-      // If distance is available, sort by it, otherwise, fall back to rating
-      if (a.distance !== undefined && b.distance !== undefined) {
-        return a.distance - b.distance;
-      }
-      return b.rating - a.rating;
-    } else if (sortBy === 'rating') {
-      return b.rating - a.rating;
-    } else {
-      return a.name.localeCompare(b.name);
-    }
-  });
+export const getShopProducts = async (shopId: string): Promise<ShopProduct[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .eq('shop_id', shopId);
+      
+    if (error) throw error;
+    
+    return data?.map(product => normalizeProduct(product) as ShopProduct) || [];
+  } catch (error) {
+    console.error('Error getting shop products:', error);
+    return [];
+  }
+};
+
+export const uploadProductImage = async (file: File): Promise<string | null> => {
+  try {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+    const filePath = `product-images/${fileName}`;
+    
+    const { error: uploadError } = await supabase.storage
+      .from('products')
+      .upload(filePath, file);
+      
+    if (uploadError) throw uploadError;
+    
+    const { data } = supabase.storage
+      .from('products')
+      .getPublicUrl(filePath);
+      
+    return data?.publicUrl || null;
+  } catch (error) {
+    console.error('Error uploading product image:', error);
+    return null;
+  }
 };

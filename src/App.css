@@ -74,12 +74,12 @@
 }
 
 .store-location:hover {
-  background-color: rgba(42, 134, 106, 0.05);
+  background-color: rgba(15, 27, 68, 0.05);
 }
 
 .store-location-active {
-  border-color: #2A866A;
-  background-color: rgba(42, 134, 106, 0.1);
+  border-color: #0F1B44;
+  background-color: rgba(15, 27, 68, 0.1);
 }
 
 /* Custom checkbox styles */
@@ -88,7 +88,7 @@
   display: block;
   width: 20px;
   height: 20px;
-  border: 2px solid #2A866A;
+  border: 2px solid #0F1B44;
   border-radius: 4px;
   cursor: pointer;
 }
@@ -106,7 +106,7 @@
 }
 
 .custom-checkbox.checked {
-  background-color: #2A866A;
+  background-color: #0F1B44;
 }
 
 /* Credit card input styling */
@@ -115,6 +115,6 @@
 }
 
 .card-input:focus {
-  border-color: #2A866A;
-  box-shadow: 0 0 0 2px rgba(42, 134, 106, 0.2);
+  border-color: #0F1B44;
+  box-shadow: 0 0 0 2px rgba(15, 27, 68, 0.2);
 }

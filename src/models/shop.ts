@@ -39,6 +39,14 @@ export interface ShopProduct {
   seller_id?: string;
   seller_name?: string;
   rating?: number;
+  // Frontend aliases
+  shopId?: string; // Alias for shop_id
+  isHalalCertified?: boolean; // Alias for is_halal_certified
+  inStock?: boolean; // Alias for in_stock
+  sellerId?: string; // Alias for seller_id
+  sellerName?: string; // Alias for seller_name
+  createdAt?: string; // Alias for created_at
+  updatedAt?: string; // Alias for updated_at
 }
 
 export type Rating = {

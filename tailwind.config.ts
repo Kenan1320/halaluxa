@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -53,9 +54,9 @@ export default {
           foreground: 'hsl(var(--card-foreground))'
         },
         haluna: {
-          primary: '#2A866A',
-          'primary-light': '#e6f2ef',
-          'primary-dark': '#1e5c4a',
+          primary: '#0F1B44', // Changed from #2A866A to deep night blue
+          'primary-light': '#E6EBF4', // Changed from #e6f2ef
+          'primary-dark': '#091230', // Changed from #1e5c4a
           secondary: '#F9F5EB',
           accent: '#F7C59F',
           'accent-dark': '#e9a97e',
@@ -64,6 +65,11 @@ export default {
           cream: '#FFF8EB',
           beige: '#F6E6C8',
           sage: '#D4E2D4',
+          deepblue: {
+            light: '#183080',
+            medium: '#132054',
+            dark: '#0F1B44'
+          }
         },
         sidebar: {
           DEFAULT: 'hsl(var(--sidebar-background))',
