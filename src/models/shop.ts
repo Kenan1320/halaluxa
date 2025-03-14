@@ -16,12 +16,12 @@ export interface Shop {
   longitude: number | null;
   distance: number | null;
   
-  // Database compatibility fields
-  logo_url?: string | null;
-  cover_image?: string | null;
-  owner_id?: string;
-  product_count?: number;
-  is_verified?: boolean;
+  // Database compatibility fields - these are required properties
+  logo_url: string | null;
+  cover_image: string | null;
+  owner_id: string;
+  product_count: number;
+  is_verified: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -33,16 +33,16 @@ export interface ShopProduct {
   price: number;
   category: string;
   images: string[];
-  shop_id?: string;
-  shopId?: string;
-  created_at?: string;
-  updated_at?: string;
-  is_halal_certified?: boolean;
-  isHalalCertified?: boolean;
-  in_stock?: boolean;
-  inStock?: boolean;
-  sellerId?: string;
-  seller_id?: string;
+  shop_id: string;
+  shopId: string;
+  created_at: string;
+  updated_at: string;
+  is_halal_certified: boolean;
+  isHalalCertified: boolean;
+  in_stock: boolean;
+  inStock: boolean;
+  sellerId: string;
+  seller_id: string;
   sellerName?: string;
   shop_name?: string;
   rating?: number;
@@ -88,10 +88,10 @@ export const adaptToModelProduct = (product: any): ShopProduct => {
     isHalalCertified: product.is_halal_certified,
     in_stock: product.in_stock ?? true,
     inStock: product.in_stock ?? true,
-    sellerId: product.seller_id,
-    seller_id: product.seller_id,
-    sellerName: product.seller_name || product.shop_name,
-    shop_name: product.shop_name,
+    sellerId: product.seller_id || product.sellerId || '',
+    seller_id: product.seller_id || product.sellerId || '',
+    sellerName: product.sellerName || product.shop_name || '',
+    shop_name: product.shop_name || product.sellerName || '',
     rating: product.rating || 0
   };
 };

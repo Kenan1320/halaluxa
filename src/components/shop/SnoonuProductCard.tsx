@@ -2,108 +2,128 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ShoppingCart, Star, ShoppingBag } from 'lucide-react';
-import { useCart } from '@/context/CartContext';
+import { Heart, Star } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { useCart } from '@/context/CartContext';
 import { ShopProduct } from '@/models/shop';
-import { Product } from '@/models/product';
 
 interface SnoonuProductCardProps {
-  product: ShopProduct | Product;
+  product: ShopProduct;
   isPromo?: boolean;
+  onQuickView?: (product: ShopProduct) => void;
 }
 
 const SnoonuProductCard: React.FC<SnoonuProductCardProps> = ({ 
   product, 
-  isPromo = false 
+  isPromo = false,
+  onQuickView 
 }) => {
-  const { addToCart } = useCart();
   const { toast } = useToast();
-  
+  const { addToCart } = useCart();
+
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     
-    // Standardize product structure to match Product type
-    const productToAdd: Product = {
+    addToCart({
       id: product.id,
       name: product.name,
-      description: product.description,
       price: product.price,
-      images: product.images || [],
-      category: product.category,
-      shopId: (product as Product).shopId || (product as ShopProduct).shop_id || '',
-      isHalalCertified: (product as Product).isHalalCertified || (product as ShopProduct).is_halal_certified || false,
-      inStock: (product as Product).inStock || (product as ShopProduct).in_stock !== false,
-      createdAt: (product as Product).createdAt || (product as ShopProduct).created_at || new Date().toISOString(),
-      sellerId: (product as Product).sellerId || (product as ShopProduct).sellerId,
-      sellerName: (product as Product).sellerName || (product as ShopProduct).sellerName,
-      rating: product.rating || 0,
-      // Ensure compatibility fields exist
-      shop_id: (product as Product).shopId || (product as ShopProduct).shop_id || '',
-      created_at: (product as Product).createdAt || (product as ShopProduct).created_at || new Date().toISOString(),
-      is_halal_certified: (product as Product).isHalalCertified || (product as ShopProduct).is_halal_certified || false,
-      in_stock: (product as Product).inStock || (product as ShopProduct).in_stock !== false
-    };
-    
-    addToCart(productToAdd, 1);
+      image: product.images && product.images.length > 0 ? product.images[0] : '/placeholder.svg',
+      quantity: 1,
+      shopId: product.shopId || product.shop_id || '',
+      sellerId: product.sellerId || '',
+      sellerName: product.sellerName || product.shop_name || 'Shop',
+    });
     
     toast({
       title: "Added to cart",
-      description: `${product.name} has been added to your cart.`,
+      description: `${product.name} has been added to your cart`,
     });
   };
   
-  const hasHalalCertification = 
-    'isHalalCertified' in product ? product.isHalalCertified : 
-    'is_halal_certified' in product ? product.is_halal_certified : false;
-  
+  const handleQuickView = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (onQuickView) {
+      onQuickView(product);
+    }
+  };
+
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
       whileHover={{ y: -5 }}
-      className="rounded-xl overflow-hidden bg-white shadow-sm relative"
+      className="bg-white rounded-xl overflow-hidden shadow-sm h-full relative"
     >
-      {isPromo && (
-        <div className="absolute top-2 right-2 bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full z-10">
-          Promo
-        </div>
-      )}
-      
-      {hasHalalCertification && (
-        <div className="absolute top-2 left-2 bg-green-600 text-white text-xs font-bold px-3 py-1 rounded-full z-10">
-          Halal
-        </div>
-      )}
-      
-      <Link to={`/product/${product.id}`}>
-        <div className="h-36 overflow-hidden">
-          <img 
-            src={product.images && product.images.length > 0 ? product.images[0] : '/placeholder-product.png'} 
+      <Link to={`/product/${product.id}`} className="block h-full">
+        {/* Product Image */}
+        <div className="aspect-square relative overflow-hidden">
+          <img
+            src={product.images && product.images.length > 0 ? product.images[0] : '/placeholder.svg'}
             alt={product.name}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
           />
+          
+          {/* Promo Badge */}
+          {isPromo && (
+            <div className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full">
+              Sale
+            </div>
+          )}
+          
+          {/* Halal Badge if applicable */}
+          {product.isHalalCertified && (
+            <div className="absolute top-2 right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full">
+              Halal
+            </div>
+          )}
+          
+          {/* Quick view button */}
+          {onQuickView && (
+            <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300 bg-black bg-opacity-20">
+              <Button 
+                variant="secondary" 
+                size="sm" 
+                className="text-xs"
+                onClick={handleQuickView}
+              >
+                Quick View
+              </Button>
+            </div>
+          )}
         </div>
         
+        {/* Product Info */}
         <div className="p-3">
-          <h3 className="font-medium text-sm line-clamp-2 min-h-[2.5rem]">
-            {product.name}
-          </h3>
+          <h3 className="font-medium text-sm mb-1 line-clamp-2">{product.name}</h3>
           
-          <div className="flex items-center justify-between mt-2">
-            <span className="font-bold text-lg text-red-600">
-              {product.price.toFixed(2)} QR
-            </span>
+          <div className="flex justify-between items-center mb-2">
+            <span className="font-bold text-lg">{product.price.toFixed(2)} QR</span>
             
-            <button
-              onClick={handleAddToCart}
-              className="bg-white border border-gray-200 text-black px-4 py-2 rounded-full font-medium hover:bg-gray-50 transition"
-            >
-              Add
-            </button>
+            {/* Rating if available */}
+            {product.rating && (
+              <div className="flex items-center">
+                <Star size={12} className="text-yellow-400 fill-yellow-400 mr-1" />
+                <span className="text-xs">{product.rating}</span>
+              </div>
+            )}
           </div>
+          
+          {/* Shop name */}
+          <div className="text-xs text-gray-500 mb-3 truncate">
+            {product.sellerName || product.shop_name || 'Shop'}
+          </div>
+          
+          {/* Add to cart button */}
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="w-full text-xs py-1"
+            onClick={handleAddToCart}
+          >
+            Add to Cart
+          </Button>
         </div>
       </Link>
     </motion.div>

@@ -70,7 +70,7 @@ const FlowingCategories = () => {
   
   return (
     <motion.div
-      className="grid grid-cols-3 sm:grid-cols-6 gap-4 py-6"
+      className="grid grid-cols-3 sm:grid-cols-6 gap-4 py-4 bg-white rounded-xl shadow-sm p-4"
       variants={containerVariants}
       initial="hidden"
       animate="visible"
@@ -86,10 +86,10 @@ const FlowingCategories = () => {
           <Link to={`/browse?category=${encodeURIComponent(category.name)}`} className="w-full">
             <div 
               className={`w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-2 shadow-sm ${
-                mode === 'dark' ? 'bg-gray-800' : 'bg-white'
+                mode === 'dark' ? 'bg-gray-800' : 'bg-[#F8F9FB]'
               }`}
             >
-              {getCategoryIcon(category.name, `w-8 h-8 ${mode === 'dark' ? 'text-gray-200' : 'text-gray-700'}`)}
+              {getCategoryIcon(category.name, `w-8 h-8 ${mode === 'dark' ? 'text-gray-200' : 'text-[#29866B]'}`)}
             </div>
             <span className="text-xs font-medium block">
               {category.name}
@@ -102,38 +102,38 @@ const FlowingCategories = () => {
       {categories.length === 0 && (
         <>
           <motion.div variants={itemVariants}>
-            <div className={`w-16 h-16 rounded-full ${mode === 'dark' ? 'bg-gray-800' : 'bg-white'} mx-auto flex items-center justify-center mb-2`}>
-              {getCategoryIcon('Groceries', `w-8 h-8 ${mode === 'dark' ? 'text-gray-200' : 'text-gray-700'}`)}
+            <div className={`w-16 h-16 rounded-full ${mode === 'dark' ? 'bg-gray-800' : 'bg-[#F8F9FB]'} mx-auto flex items-center justify-center mb-2`}>
+              {getCategoryIcon('Groceries', `w-8 h-8 ${mode === 'dark' ? 'text-gray-200' : 'text-[#29866B]'}`)}
             </div>
             <span className="text-xs font-medium block text-center">Groceries</span>
           </motion.div>
           <motion.div variants={itemVariants}>
-            <div className={`w-16 h-16 rounded-full ${mode === 'dark' ? 'bg-gray-800' : 'bg-white'} mx-auto flex items-center justify-center mb-2`}>
-              {getCategoryIcon('Restaurants', `w-8 h-8 ${mode === 'dark' ? 'text-gray-200' : 'text-gray-700'}`)}
+            <div className={`w-16 h-16 rounded-full ${mode === 'dark' ? 'bg-gray-800' : 'bg-[#F8F9FB]'} mx-auto flex items-center justify-center mb-2`}>
+              {getCategoryIcon('Restaurants', `w-8 h-8 ${mode === 'dark' ? 'text-gray-200' : 'text-[#29866B]'}`)}
             </div>
             <span className="text-xs font-medium block text-center">Restaurants</span>
           </motion.div>
           <motion.div variants={itemVariants}>
-            <div className={`w-16 h-16 rounded-full ${mode === 'dark' ? 'bg-gray-800' : 'bg-white'} mx-auto flex items-center justify-center mb-2`}>
-              {getCategoryIcon('Halal Meat', `w-8 h-8 ${mode === 'dark' ? 'text-gray-200' : 'text-gray-700'}`)}
+            <div className={`w-16 h-16 rounded-full ${mode === 'dark' ? 'bg-gray-800' : 'bg-[#F8F9FB]'} mx-auto flex items-center justify-center mb-2`}>
+              {getCategoryIcon('Halal Meat', `w-8 h-8 ${mode === 'dark' ? 'text-gray-200' : 'text-[#29866B]'}`)}
             </div>
             <span className="text-xs font-medium block text-center">Halal Meat</span>
           </motion.div>
           <motion.div variants={itemVariants}>
-            <div className={`w-16 h-16 rounded-full ${mode === 'dark' ? 'bg-gray-800' : 'bg-white'} mx-auto flex items-center justify-center mb-2`}>
-              {getCategoryIcon('Coffee Shops', `w-8 h-8 ${mode === 'dark' ? 'text-gray-200' : 'text-gray-700'}`)}
+            <div className={`w-16 h-16 rounded-full ${mode === 'dark' ? 'bg-gray-800' : 'bg-[#F8F9FB]'} mx-auto flex items-center justify-center mb-2`}>
+              {getCategoryIcon('Coffee Shops', `w-8 h-8 ${mode === 'dark' ? 'text-gray-200' : 'text-[#29866B]'}`)}
             </div>
             <span className="text-xs font-medium block text-center">Coffee Shops</span>
           </motion.div>
           <motion.div variants={itemVariants}>
-            <div className={`w-16 h-16 rounded-full ${mode === 'dark' ? 'bg-gray-800' : 'bg-white'} mx-auto flex items-center justify-center mb-2`}>
-              {getCategoryIcon('Books', `w-8 h-8 ${mode === 'dark' ? 'text-gray-200' : 'text-gray-700'}`)}
+            <div className={`w-16 h-16 rounded-full ${mode === 'dark' ? 'bg-gray-800' : 'bg-[#F8F9FB]'} mx-auto flex items-center justify-center mb-2`}>
+              {getCategoryIcon('Books', `w-8 h-8 ${mode === 'dark' ? 'text-gray-200' : 'text-[#29866B]'}`)}
             </div>
             <span className="text-xs font-medium block text-center">Books</span>
           </motion.div>
           <motion.div variants={itemVariants}>
-            <div className={`w-16 h-16 rounded-full ${mode === 'dark' ? 'bg-gray-800' : 'bg-white'} mx-auto flex items-center justify-center mb-2`}>
-              {getCategoryIcon('Thobes', `w-8 h-8 ${mode === 'dark' ? 'text-gray-200' : 'text-gray-700'}`)}
+            <div className={`w-16 h-16 rounded-full ${mode === 'dark' ? 'bg-gray-800' : 'bg-[#F8F9FB]'} mx-auto flex items-center justify-center mb-2`}>
+              {getCategoryIcon('Thobes', `w-8 h-8 ${mode === 'dark' ? 'text-gray-200' : 'text-[#29866B]'}`)}
             </div>
             <span className="text-xs font-medium block text-center">Thobes</span>
           </motion.div>

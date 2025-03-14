@@ -39,7 +39,7 @@ const CategoryScroll = () => {
   
   return (
     <div className="overflow-x-auto scrollbar-none">
-      <div className="flex space-x-4 pb-1 pt-1">
+      <div className="flex space-x-6 pb-2 pt-1">
         {categories.map((category) => (
           <Link 
             key={category.id}
@@ -47,7 +47,7 @@ const CategoryScroll = () => {
             className="flex-shrink-0 flex flex-col items-center"
           >
             <motion.div
-              className={`w-12 h-12 rounded-full flex items-center justify-center shadow-sm 
+              className={`w-14 h-14 rounded-full flex items-center justify-center shadow-sm 
                 ${mode === 'dark' ? 'bg-gray-800' : 'bg-white'}`}
               whileHover={{ 
                 scale: 1.1, 

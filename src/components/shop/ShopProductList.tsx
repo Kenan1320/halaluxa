@@ -8,7 +8,7 @@ import SnoonuProductCard from './SnoonuProductCard';
 import { getShopProducts } from '@/services/shopService';
 import { ShopProduct } from '@/models/shop';
 
-interface ShopProductListProps {
+export interface ShopProductListProps {
   shopId?: string;
   products?: ShopProduct[];
 }
