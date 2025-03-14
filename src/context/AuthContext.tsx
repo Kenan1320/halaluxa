@@ -28,11 +28,13 @@ interface AuthContextProps {
   user: User | null;
   isLoggedIn: boolean;
   isLoading: boolean;
+  isInitializing: boolean; // Add this property for AuthMiddleware
   login: (email: string, password: string) => Promise<void>;
   signup: (email: string, password: string, name: string, role: 'shopper' | 'business') => Promise<void>;
   logout: () => Promise<void>;
   updateUserProfile: (profile: Partial<User>) => Promise<void>;
   updateBusinessProfile: (businessProfile: Partial<User>) => Promise<void>;
+  updateUser: (updates: any) => Promise<void>; // Add this for ShopSetupForm
 }
 
 // Create context
@@ -42,6 +44,7 @@ const AuthContext = createContext<AuthContextProps | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isInitializing, setIsInitializing] = useState(true); // Add initialization state
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -50,6 +53,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const checkSession = async () => {
       try {
         setIsLoading(true);
+        setIsInitializing(true); // Set initializing state
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
@@ -63,6 +67,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         console.error('Error checking session:', error);
       } finally {
         setIsLoading(false);
+        setIsInitializing(false); // Clear initializing state
       }
     };
     
@@ -122,6 +127,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       console.error('Error fetching user profile:', error);
     } finally {
       setIsLoading(false);
+      setIsInitializing(false); // Clear initializing state
     }
   };
   
@@ -313,18 +319,73 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setIsLoading(false);
     }
   };
+
+  // Update user - general purpose update function for ShopSetupForm
+  const updateUser = async (updates: any) => {
+    if (!user) return;
+    
+    try {
+      setIsLoading(true);
+      
+      // Map the camelCase keys to snake_case for the database
+      const dbUpdates = {
+        shop_name: updates.shopName,
+        shop_description: updates.shopDescription,
+        shop_category: updates.shopCategory,
+        shop_location: updates.shopLocation,
+        shop_logo: updates.shopLogo,
+      };
+      
+      const { error } = await supabase
+        .from('profiles')
+        .update(dbUpdates)
+        .eq('id', user.id);
+      
+      if (error) {
+        throw error;
+      }
+      
+      // Update local user state with snake_case keys
+      setUser((prev) => prev ? { 
+        ...prev, 
+        shop_name: updates.shopName,
+        shop_description: updates.shopDescription,
+        shop_category: updates.shopCategory,
+        shop_location: updates.shopLocation,
+        shop_logo: updates.shopLogo,
+      } : null);
+      
+      toast({
+        title: "Profile updated",
+        description: "Your profile has been updated successfully",
+      });
+      
+      return true;
+    } catch (error: any) {
+      toast({
+        title: "Update failed",
+        description: error.message || "An error occurred while updating your profile",
+        variant: "destructive",
+      });
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
   
   return (
     <AuthContext.Provider 
       value={{ 
         user, 
         isLoggedIn: !!user, 
-        isLoading, 
+        isLoading,
+        isInitializing,
         login, 
         signup, 
         logout, 
         updateUserProfile,
         updateBusinessProfile,
+        updateUser,
       }}
     >
       {children}

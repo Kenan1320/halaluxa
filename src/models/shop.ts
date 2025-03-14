@@ -16,6 +16,12 @@ export interface Shop {
   created_at: string;
   updated_at: string;
   distance?: number;
+  // Frontend aliases
+  logo?: string; // Alias for logo_url
+  coverImage?: string; // Alias for cover_image
+  ownerId?: string; // Alias for owner_id
+  productCount?: number; // Alias for product_count
+  isVerified?: boolean; // Alias for is_verified
 }
 
 export interface ShopProduct {
@@ -30,6 +36,9 @@ export interface ShopProduct {
   in_stock: boolean;
   created_at: string;
   updated_at: string;
+  seller_id?: string;
+  seller_name?: string;
+  rating?: number;
 }
 
 export type Rating = {

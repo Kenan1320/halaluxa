@@ -40,7 +40,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
               {formatCurrency(product.price)}
             </span>
             
-            {product.isHalalCertified && (
+            {product.is_halal_certified && (
               <span className="text-xs px-2 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full">
                 Halal
               </span>

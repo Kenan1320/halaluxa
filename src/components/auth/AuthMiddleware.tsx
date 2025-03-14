@@ -16,7 +16,7 @@ const AuthMiddleware = ({ children }: AuthMiddlewareProps) => {
 
   // Determine if business user needs onboarding
   useEffect(() => {
-    if (!isInitializing && isLoggedIn && user?.role === 'business' && !user?.shopName) {
+    if (!isInitializing && isLoggedIn && user?.role === 'business' && !user?.shop_name) {
       // If they don't have a shop name set, they need onboarding
       setNeedsOnboarding(true);
     } else {

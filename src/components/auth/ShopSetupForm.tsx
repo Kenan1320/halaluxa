@@ -80,17 +80,20 @@ export default function ShopSetupForm({ onComplete, onSkip }: ShopSetupFormProps
     setIsLoading(true);
     
     try {
-      // Create the shop
+      // Create the shop with required fields including created_at and updated_at
+      const now = new Date().toISOString();
       const shop = await createShop({
         name: shopData.name,
         description: shopData.description,
-        logo_url: logoPreview || undefined, // Use logo_url instead of logo
+        logo_url: logoPreview || undefined,
         category: shopData.category,
         location: shopData.location,
         rating: 0,
         product_count: 0,
         is_verified: false,
-        owner_id: user.id
+        owner_id: user.id,
+        created_at: now,
+        updated_at: now
       });
       
       if (shop) {
