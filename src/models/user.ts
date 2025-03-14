@@ -1,5 +1,5 @@
 
-import { UUID, Timestamp } from './types';
+import { UUID, Timestamp, UserProfile } from './types';
 
 export type UserRole = 'shopper' | 'business' | 'admin';
 
@@ -23,26 +23,6 @@ export interface User {
   updatedAt?: Timestamp;
 }
 
-export interface UserProfile {
-  id: UUID;
-  name: string;
-  email: string;
-  phone: string;
-  address: string;
-  city: string;
-  state: string;
-  zip: string;
-  role: UserRole;
-  avatar_url: string;
-  created_at: Timestamp;
-  updated_at: Timestamp;
-  shop_name?: string;
-  shop_description?: string;
-  shop_category?: string;
-  shop_location?: string;
-  shop_logo?: string;
-}
-
 export interface AuthContextType {
   isLoggedIn: boolean;
   isLoading: boolean;
@@ -57,12 +37,12 @@ export interface AuthContextType {
 }
 
 // Adapter functions
-export const adaptDbUserProfileToUser = (dbProfile: any): User => {
+export const adaptDbUserProfileToUser = (dbProfile: UserProfile): User => {
   return {
     id: dbProfile.id,
     email: dbProfile.email || '',
     name: dbProfile.name || '',
-    role: dbProfile.role || 'shopper',
+    role: (dbProfile.role as UserRole) || 'shopper',
     avatar: dbProfile.avatar_url || '',
     phone: dbProfile.phone || '',
     address: dbProfile.address || '',
@@ -79,8 +59,8 @@ export const adaptDbUserProfileToUser = (dbProfile: any): User => {
   };
 };
 
-export const adaptUserToDbProfile = (user: Partial<User>): any => {
-  const dbUser: any = {};
+export const adaptUserToDbProfile = (user: Partial<User>): Partial<UserProfile> => {
+  const dbUser: Partial<UserProfile> = {};
   
   if (user.name !== undefined) dbUser.name = user.name;
   if (user.email !== undefined) dbUser.email = user.email;

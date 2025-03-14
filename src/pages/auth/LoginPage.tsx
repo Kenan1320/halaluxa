@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
@@ -55,18 +54,14 @@ const LoginPage = () => {
     setLoading(true);
     
     try {
-      // Attempt to login and get the user's actual role from the database
-      const role = await login(formData.email, formData.password);
+      // Attempt to login
+      const result = await login(formData.email, formData.password);
       
-      if (role) {
-        console.log('Login successful with role:', role);
-        console.log('User selected type:', userType);
-        
-        // Check if the role matches the selected type
-        if ((role === 'shopper' && userType === 'business') || (role === 'business' && userType === 'shopper')) {
+      if (result.success) {
+        if (user?.role && userType && user.role !== userType) {
           toast({
             title: "Account Type Mismatch",
-            description: `The account for ${formData.email} is registered as a ${role}, not as a ${userType}. Please select the correct account type.`,
+            description: `The account for ${formData.email} is registered as a ${user.role}, not as a ${userType}. Please select the correct account type.`,
             variant: "destructive",
           });
           setLoading(false);
@@ -79,7 +74,7 @@ const LoginPage = () => {
         });
         
         // Navigate to the appropriate destination based on role
-        if (role === 'business') {
+        if (user?.role === 'business') {
           navigate('/dashboard');
         } else {
           navigate(from === '/' ? '/shop' : from);
@@ -87,7 +82,7 @@ const LoginPage = () => {
       } else {
         toast({
           title: "Error",
-          description: "Invalid email or password",
+          description: result.error || "Invalid email or password",
           variant: "destructive",
         });
       }

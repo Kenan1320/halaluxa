@@ -3,8 +3,9 @@ import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { getFeaturedProducts } from '@/services/shopService';
 import ProductCard from '@/components/shop/ProductCard';
-import { Product } from '@/models/product';
+import { Product, adaptDatabaseProductToProduct } from '@/models/product';
 import { useTheme } from '@/context/ThemeContext';
+import { DBProduct } from '@/models/types';
 
 const FeaturedProducts = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -20,20 +21,24 @@ const FeaturedProducts = () => {
         
         // Convert database products to our frontend model
         if (result && Array.isArray(result)) {
-          const formattedProducts = result.map(item => ({
-            id: item.id,
-            name: item.name,
-            description: item.description || '',
-            price: item.price || 0,
-            images: item.images || [],
-            category: item.category || '',
-            shopId: item.shop_id,
-            isHalalCertified: item.is_halal_certified || false,
-            inStock: item.in_stock !== undefined ? item.in_stock : true,
-            createdAt: item.created_at,
-            sellerName: item.shops?.name || '',
-            shopLogo: item.shops?.logo_url || ''
-          }));
+          const formattedProducts = result.map(item => {
+            // Handle potential missing properties
+            const product: DBProduct = {
+              id: item.id,
+              name: item.name,
+              description: item.description || '',
+              price: item.price || 0,
+              images: item.images || [],
+              category: item.category || '',
+              shop_id: item.shop_id,
+              in_stock: item.in_stock !== undefined ? item.in_stock : true,
+              is_halal_certified: item.is_halal_certified || false,
+              created_at: item.created_at,
+              shops: item.shops
+            };
+            
+            return adaptDatabaseProductToProduct(product);
+          });
           
           setProducts(formattedProducts);
         }

@@ -1,154 +1,99 @@
 
-import supabase from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase/client';
 import { UUID } from '@/models/types';
+import { PaymentMethod } from '@/services/paymentMethodService';
+import { SellerAccount } from '@/models/types';
 
-// Payment method types
-export interface PaymentMethod {
-  id: UUID;
-  user_id: UUID;
-  type: string;
-  provider: string;
-  last4: string;
-  exp_month: number;
-  exp_year: number;
-  brand: string;
-  is_default: boolean;
-  created_at: string; 
-}
-
-// Formats a payment method for display
-export const formatPaymentMethod = (method: PaymentMethod): string => {
-  if (!method) return 'No payment method';
-  
-  return `${method.brand} •••• ${method.last4} - Expires ${method.exp_month}/${method.exp_year}`;
-};
-
-// Get all payment methods for a user
-export const getUserPaymentMethods = async (userId: UUID): Promise<PaymentMethod[]> => {
-  try {
-    // This should be replaced with the actual table name for payment methods
-    const { data, error } = await supabase
-      .from('shop_payment_methods')
-      .select('*')
-      .eq('user_id', userId);
-
-    if (error) {
-      console.error('Error fetching payment methods:', error);
-      return [];
-    }
-
-    return (data || []) as PaymentMethod[];
-  } catch (error) {
-    console.error('Error in getUserPaymentMethods:', error);
-    return [];
-  }
-};
-
-// Get default payment method for a user
-export const getDefaultPaymentMethod = async (userId: UUID): Promise<PaymentMethod | null> => {
+// Function to get a seller account by user ID
+export const getSellerAccount = async (userId: UUID): Promise<SellerAccount | null> => {
   try {
     const { data, error } = await supabase
-      .from('shop_payment_methods')
+      .from('seller_accounts')
       .select('*')
       .eq('user_id', userId)
-      .eq('is_default', true)
       .single();
-
-    if (error) {
-      console.error('Error fetching default payment method:', error);
-      return null;
-    }
-
-    return data as PaymentMethod;
+    
+    if (error) throw error;
+    
+    return data;
   } catch (error) {
-    console.error('Error in getDefaultPaymentMethod:', error);
+    console.error('Error getting seller account:', error);
     return null;
   }
 };
 
-// Add a new payment method
-export const addPaymentMethod = async (
-  userId: UUID,
-  paymentDetails: Omit<PaymentMethod, 'id' | 'user_id' | 'created_at'>
-): Promise<PaymentMethod | null> => {
+// Function to save or update a seller account
+export const saveSellerAccount = async (
+  account: Omit<SellerAccount, 'id' | 'created_at' | 'updated_at'>
+): Promise<SellerAccount | null> => {
   try {
-    const { data, error } = await supabase
-      .from('shop_payment_methods')
-      .insert({
-        user_id: userId,
-        ...paymentDetails
-      })
-      .select()
+    // Check if account already exists
+    const { data: existingAccount } = await supabase
+      .from('seller_accounts')
+      .select('id')
+      .eq('user_id', account.user_id)
       .single();
-
-    if (error) {
-      console.error('Error adding payment method:', error);
-      return null;
+    
+    if (existingAccount) {
+      // Update existing account
+      const { data, error } = await supabase
+        .from('seller_accounts')
+        .update({
+          ...account,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', existingAccount.id)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    } else {
+      // Create new account
+      const { data, error } = await supabase
+        .from('seller_accounts')
+        .insert([{
+          ...account,
+          id: crypto.randomUUID(),
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }])
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
     }
-
-    return data as PaymentMethod;
   } catch (error) {
-    console.error('Error in addPaymentMethod:', error);
+    console.error('Error saving seller account:', error);
     return null;
   }
 };
 
-// Set a payment method as default
-export const setDefaultPaymentMethod = async (
-  userId: UUID,
-  paymentMethodId: UUID
-): Promise<boolean> => {
-  try {
-    // First, unset all default payment methods for this user
-    const { error: updateError } = await supabase
-      .from('shop_payment_methods')
-      .update({ is_default: false })
-      .eq('user_id', userId);
-
-    if (updateError) {
-      console.error('Error updating payment methods:', updateError);
-      return false;
-    }
-
-    // Then set the selected payment method as default
-    const { error } = await supabase
-      .from('shop_payment_methods')
-      .update({ is_default: true })
-      .eq('id', paymentMethodId)
-      .eq('user_id', userId);
-
-    if (error) {
-      console.error('Error setting default payment method:', error);
-      return false;
-    }
-
-    return true;
-  } catch (error) {
-    console.error('Error in setDefaultPaymentMethod:', error);
-    return false;
-  }
+// Function to process a payment (stub)
+export const processPayment = async (
+  amount: number, 
+  currency: string, 
+  paymentMethodId: string,
+  orderId: string
+): Promise<{ success: boolean, transactionId?: string, error?: string }> => {
+  // This would connect to a payment gateway in a real application
+  // For now, we'll simulate a successful payment
+  return {
+    success: true,
+    transactionId: `tx_${Math.random().toString(36).substring(2, 10)}`
+  };
 };
 
-// Delete a payment method
-export const deletePaymentMethod = async (
-  userId: UUID,
-  paymentMethodId: UUID
-): Promise<boolean> => {
-  try {
-    const { error } = await supabase
-      .from('shop_payment_methods')
-      .delete()
-      .eq('id', paymentMethodId)
-      .eq('user_id', userId);
-
-    if (error) {
-      console.error('Error deleting payment method:', error);
-      return false;
-    }
-
-    return true;
-  } catch (error) {
-    console.error('Error in deletePaymentMethod:', error);
-    return false;
-  }
+// Function to convert SellerAccount to PaymentMethod for compatibility
+export const convertSellerAccountToPaymentMethod = (account: SellerAccount): PaymentMethod => {
+  return {
+    id: account.id,
+    userId: account.user_id,
+    type: account.account_type as any,
+    provider: account.bank_name,
+    last4: account.account_number.slice(-4),
+    isDefault: true,
+    createdAt: account.created_at
+  };
 };

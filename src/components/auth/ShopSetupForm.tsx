@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -80,17 +79,32 @@ export default function ShopSetupForm({ onComplete, onSkip }: ShopSetupFormProps
     setIsLoading(true);
     
     try {
-      // Create the shop
+      // Create the shop with all required fields
       const shop = await createShop({
         name: shopData.name,
         description: shopData.description,
-        logo_url: logoPreview, // Using logo_url property
+        logo: logoPreview,
+        logo_url: logoPreview,
         category: shopData.category,
         location: shopData.location,
         rating: 0,
+        productCount: 0,
         product_count: 0,
+        isVerified: false,
         is_verified: false,
-        owner_id: user.id
+        ownerId: user.id,
+        owner_id: user.id,
+        latitude: null,
+        longitude: null,
+        distance: null,
+        deliveryAvailable: false,
+        delivery_available: false,
+        pickupAvailable: false,
+        pickup_available: false,
+        isHalalCertified: false,
+        is_halal_certified: false,
+        coverImage: null,
+        cover_image: null
       });
       
       if (shop) {

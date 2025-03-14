@@ -24,7 +24,7 @@ export const adaptDbShopToShop = (dbShop: DBShop): Shop => {
     ownerId: dbShop.owner_id,
     latitude: dbShop.latitude,
     longitude: dbShop.longitude, 
-    distance: dbShop.distance,
+    distance: dbShop.distance || null,
     deliveryAvailable: dbShop.delivery_available,
     pickupAvailable: dbShop.pickup_available,
     isHalalCertified: dbShop.is_halal_certified,
@@ -39,7 +39,9 @@ export const adaptDbShopToShop = (dbShop: DBShop): Shop => {
     delivery_available: dbShop.delivery_available,
     pickup_available: dbShop.pickup_available,
     is_halal_certified: dbShop.is_halal_certified,
-    display_mode: dbShop.display_mode
+    display_mode: dbShop.display_mode,
+    created_at: dbShop.created_at,
+    updated_at: dbShop.updated_at
   };
 };
 
@@ -66,7 +68,9 @@ export const adaptShopToDbShop = (shop: Shop): DBShop => {
     is_halal_certified: shop.isHalalCertified || shop.is_halal_certified,
     address: shop.address,
     display_mode: shop.displayMode || shop.display_mode,
-    distance: shop.distance
+    distance: shop.distance,
+    created_at: shop.createdAt || shop.created_at,
+    updated_at: shop.updatedAt || shop.updated_at
   };
 };
 
@@ -95,6 +99,21 @@ export const adaptDbProductToShopProduct = (dbProduct: any, shopDetails?: any): 
     shopId: dbProduct.shop_id,
     shopName: shopDetails?.name || dbProduct.shop_name || '',
     shopLogo: shopDetails?.logo_url || dbProduct.shop_logo || '',
-    distance: shopDetails?.distance || dbProduct.distance || null
+    distance: shopDetails?.distance || dbProduct.distance || null,
+    sellerId: dbProduct.seller_id,
+    sellerName: dbProduct.seller_name || ''
+  };
+};
+
+// Create a helper function to create consistent ShopProduct instances
+export const createShopProduct = (product: Product, shopDetails?: Partial<Shop>): ShopProduct => {
+  return {
+    ...product,
+    shopId: product.shopId || product.shop_id || '',
+    shopName: shopDetails?.name || '',
+    shopLogo: shopDetails?.logo || shopDetails?.logo_url || '',
+    distance: shopDetails?.distance || null,
+    sellerId: product.sellerId || product.seller_id,
+    sellerName: product.sellerName || product.seller_name || ''
   };
 };

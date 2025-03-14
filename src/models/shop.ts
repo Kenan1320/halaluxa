@@ -57,6 +57,10 @@ export interface ShopProduct {
   rating?: number;
   reviewCount?: number;
   featured?: boolean;
+  // Added missing properties
+  sellerId?: UUID;
+  sellerName?: string;
+  deliveryMode?: 'online' | 'local_pickup' | 'local_delivery';
 }
 
 export interface ShopLocation extends Coordinates {

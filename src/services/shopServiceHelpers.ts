@@ -1,79 +1,121 @@
 
-import { supabase } from '@/lib/supabaseClient';
-import { DBShop, UUID } from '@/models/types';
-import { Product } from '@/models/product';
+import { supabase } from '@/lib/supabase';
+import { Shop } from '@/models/shop';
+import { Product, adaptDatabaseProductToProduct } from '@/models/product';
+import { adaptDbShopToShop } from './modelAdapterService';
+import { UUID } from '@/models/types';
 
-// Get all products for a specific shop
+// Helper function to filter shops
+export const filterShops = (shops: Shop[], filters: any) => {
+  let filteredShops = [...shops];
+  
+  if (filters?.category) {
+    filteredShops = filteredShops.filter(shop => 
+      shop.category === filters.category
+    );
+  }
+  
+  if (filters?.search) {
+    const searchQuery = filters.search.toLowerCase();
+    filteredShops = filteredShops.filter(shop => 
+      shop.name.toLowerCase().includes(searchQuery) || 
+      shop.description.toLowerCase().includes(searchQuery)
+    );
+  }
+  
+  if (filters?.deliveryOnly) {
+    filteredShops = filteredShops.filter(shop => 
+      shop.deliveryAvailable || shop.delivery_available
+    );
+  }
+  
+  if (filters?.pickupOnly) {
+    filteredShops = filteredShops.filter(shop => 
+      shop.pickupAvailable || shop.pickup_available
+    );
+  }
+  
+  if (filters?.isHalalCertified) {
+    filteredShops = filteredShops.filter(shop => 
+      shop.isHalalCertified || shop.is_halal_certified
+    );
+  }
+  
+  if (filters?.maxDistance && filters?.userLat && filters?.userLng) {
+    // This would require a distance calculation function
+    // For now we'll use the pre-calculated distance
+    filteredShops = filteredShops.filter(shop => 
+      shop.distance !== null && shop.distance <= filters.maxDistance
+    );
+  }
+  
+  if (filters?.sort === 'nearest') {
+    filteredShops.sort((a, b) => {
+      const distA = a.distance || Infinity;
+      const distB = b.distance || Infinity;
+      return distA - distB;
+    });
+  } else if (filters?.sort === 'rating') {
+    filteredShops.sort((a, b) => {
+      const ratingA = typeof a.rating === 'object' ? a.rating.average : a.rating || 0;
+      const ratingB = typeof b.rating === 'object' ? b.rating.average : b.rating || 0;
+      return ratingB - ratingA;
+    });
+  }
+  
+  return filteredShops;
+};
+
+// Function to get products for a specific shop
 export const getShopProducts = async (shopId: UUID): Promise<Product[]> => {
   try {
     const { data, error } = await supabase
       .from('products')
       .select('*')
       .eq('shop_id', shopId);
-
-    if (error) {
-      console.error('Error fetching shop products:', error);
-      return [];
-    }
-
-    return (data || []) as Product[];
+    
+    if (error) throw error;
+    
+    return (data || []).map(adaptDatabaseProductToProduct);
   } catch (error) {
-    console.error('Error in getShopProducts:', error);
+    console.error(`Error fetching products for shop ${shopId}:`, error);
     return [];
   }
 };
 
-// Get featured products for a shop
-export const getFeaturedShopProducts = async (shopId: UUID, limit = 8): Promise<Product[]> => {
+// Function to get a mock array of categories (temporary solution)
+export const listCategories = async (): Promise<string[]> => {
+  // This is a fallback in case the database call fails
+  const defaultCategories = [
+    "Food & Groceries",
+    "Fashion",
+    "Beauty & Wellness",
+    "Home & Decor",
+    "Books & Stationery",
+    "Electronics",
+    "Toys & Games",
+    "Health & Fitness",
+    "Islamic Goods",
+    "Halal Meat",
+    "Clothing",
+    "Services",
+    "Other"
+  ];
+  
   try {
+    // Try to get categories from database
     const { data, error } = await supabase
       .from('products')
-      .select('*')
-      .eq('shop_id', shopId)
-      .order('created_at', { ascending: false })
-      .limit(limit);
-
-    if (error) {
-      console.error('Error fetching featured shop products:', error);
-      return [];
-    }
-
-    return (data || []) as Product[];
+      .select('category')
+      .limit(100);
+    
+    if (error) return defaultCategories;
+    
+    // Extract unique categories
+    const categories = [...new Set(data.map(item => item.category))];
+    return categories.length > 0 ? categories : defaultCategories;
   } catch (error) {
-    console.error('Error in getFeaturedShopProducts:', error);
-    return [];
+    console.error('Error fetching categories:', error);
+    return defaultCategories;
   }
-};
-
-// Convert DB shop to frontend shop model
-export const convertDBShopToShop = (dbShop: DBShop) => {
-  return {
-    id: dbShop.id,
-    name: dbShop.name,
-    description: dbShop.description,
-    category: dbShop.category,
-    location: dbShop.location,
-    rating: dbShop.rating,
-    productCount: dbShop.product_count,
-    isVerified: dbShop.is_verified,
-    logo: dbShop.logo_url,
-    coverImage: dbShop.cover_image,
-    ownerId: dbShop.owner_id,
-    latitude: dbShop.latitude,
-    longitude: dbShop.longitude,
-    distance: dbShop.distance,
-    address: dbShop.address,
-    deliveryAvailable: dbShop.delivery_available,
-    pickupAvailable: dbShop.pickup_available,
-    isHalalCertified: dbShop.is_halal_certified,
-    displayMode: dbShop.display_mode,
-    logo_url: dbShop.logo_url, // For backwards compatibility
-    cover_image: dbShop.cover_image, // For backwards compatibility
-    product_count: dbShop.product_count, // For backwards compatibility
-    is_verified: dbShop.is_verified, // For backwards compatibility
-    owner_id: dbShop.owner_id, // For backwards compatibility
-    delivery_available: dbShop.delivery_available, // For backwards compatibility
-    pickup_available: dbShop.pickup_available, // For backwards compatibility
-    is_halal_certified: dbShop.is_halal_certified // For backwards compatibility
-  };
 };
