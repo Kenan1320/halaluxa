@@ -1,119 +1,89 @@
 
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { ChevronRight, ChevronLeft } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import SnoonuProductCard from './SnoonuProductCard';
-import { getShopProducts } from '@/services/shopService';
+import React, { useEffect, useState } from 'react';
 import { ShopProduct } from '@/models/shop';
+import SnoonuProductCard from '@/components/shop/SnoonuProductCard';
+import { getShopProducts } from '@/services/shopService';
 
-export interface ShopProductListProps {
-  shopId?: string;
+interface ShopProductListProps {
   products?: ShopProduct[];
+  shopId?: string;
+  shopName?: string; // Optional prop for displaying the shop name
 }
 
-const ShopProductList: React.FC<ShopProductListProps> = ({ shopId, products: initialProducts }) => {
-  const [products, setProducts] = useState<ShopProduct[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const navigate = useNavigate();
-  const scrollContainerRef = React.useRef<HTMLDivElement>(null);
+const ShopProductList: React.FC<ShopProductListProps> = ({ products: propProducts, shopId, shopName }) => {
+  const [products, setProducts] = useState<ShopProduct[]>(propProducts || []);
+  const [loading, setLoading] = useState<boolean>(!propProducts && !!shopId);
+  const [error, setError] = useState<string | null>(null);
 
+  // Fetch products if shopId is provided but not products
   useEffect(() => {
-    const loadProducts = async () => {
-      if (initialProducts && initialProducts.length > 0) {
-        setProducts(initialProducts);
-        setIsLoading(false);
-        return;
-      }
+    if (shopId && !propProducts) {
+      const fetchProducts = async () => {
+        try {
+          setLoading(true);
+          const fetchedProducts = await getShopProducts(shopId);
+          setProducts(fetchedProducts);
+          setLoading(false);
+        } catch (err) {
+          console.error('Error fetching shop products:', err);
+          setError('Failed to load products');
+          setLoading(false);
+        }
+      };
 
-      if (!shopId) {
-        setIsLoading(false);
-        return;
-      }
-
-      try {
-        const shopProducts = await getShopProducts(shopId);
-        setProducts(shopProducts);
-      } catch (error) {
-        console.error('Error loading shop products:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadProducts();
-  }, [shopId, initialProducts]);
-
-  const scroll = (direction: 'left' | 'right') => {
-    if (scrollContainerRef.current) {
-      const { current } = scrollContainerRef;
-      const scrollAmount = 300;
-      
-      if (direction === 'left') {
-        current.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
-      } else {
-        current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
-      }
+      fetchProducts();
     }
-  };
+  }, [shopId, propProducts]);
 
-  if (isLoading) {
+  if (loading) {
     return (
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="bg-white rounded-lg p-4 h-48 animate-pulse">
-            <div className="w-full h-24 bg-gray-200 rounded-lg mb-2"></div>
-            <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-            <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+      <div className="w-full py-8">
+        <div className="container mx-auto px-4">
+          <div className="text-center">
+            <div className="animate-spin h-10 w-10 border-t-2 border-haluna-primary rounded-full mx-auto"></div>
+            <p className="mt-2 text-haluna-text-light">Loading products...</p>
           </div>
-        ))}
+        </div>
       </div>
     );
   }
 
-  if (products.length === 0) {
+  if (error) {
     return (
-      <div className="text-center py-6 bg-gray-50 rounded-lg">
-        <p className="text-gray-500">No products available from this shop yet.</p>
+      <div className="w-full py-8">
+        <div className="container mx-auto px-4">
+          <div className="text-center text-red-500">
+            <p>{error}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!products || products.length === 0) {
+    return (
+      <div className="w-full py-8">
+        <div className="container mx-auto px-4">
+          <div className="text-center">
+            <p className="text-haluna-text-light">No products found</p>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="relative group">
-      <div 
-        ref={scrollContainerRef}
-        className="flex space-x-4 overflow-x-auto scrollbar-none pb-4 snap-x"
-      >
-        {products.map((product) => (
-          <div key={product.id} className="flex-none w-40 md:w-48 snap-start">
-            <SnoonuProductCard product={product} />
-          </div>
-        ))}
+    <div className="w-full py-4">
+      <div className="container mx-auto px-4">
+        {shopName && (
+          <h2 className="text-2xl font-semibold mb-4">{shopName}</h2>
+        )}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {products.map((product) => (
+            <SnoonuProductCard key={product.id} product={product} />
+          ))}
+        </div>
       </div>
-      
-      {products.length > 3 && (
-        <>
-          <Button 
-            variant="outline" 
-            size="icon" 
-            className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-1/2 bg-white shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
-            onClick={() => scroll('left')}
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          
-          <Button 
-            variant="outline" 
-            size="icon" 
-            className="absolute right-0 top-1/2 transform -translate-y-1/2 translate-x-1/2 bg-white shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
-            onClick={() => scroll('right')}
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </>
-      )}
     </div>
   );
 };

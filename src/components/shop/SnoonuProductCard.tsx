@@ -1,132 +1,77 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Heart, Star } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
-import { useCart } from '@/context/CartContext';
 import { ShopProduct } from '@/models/shop';
+import { formatCurrency } from '@/lib/utils';
 
 interface SnoonuProductCardProps {
   product: ShopProduct;
   isPromo?: boolean;
-  onQuickView?: (product: ShopProduct) => void;
 }
 
-const SnoonuProductCard: React.FC<SnoonuProductCardProps> = ({ 
-  product, 
-  isPromo = false,
-  onQuickView 
-}) => {
-  const { toast } = useToast();
-  const { addToCart } = useCart();
-
-  const handleAddToCart = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    addToCart({
-      id: product.id,
-      name: product.name,
-      price: product.price,
-      image: product.images && product.images.length > 0 ? product.images[0] : '/placeholder.svg',
-      quantity: 1,
-      shopId: product.shopId || product.shop_id || '',
-      sellerId: product.sellerId || '',
-      sellerName: product.sellerName || product.shop_name || 'Shop',
-    });
-    
-    toast({
-      title: "Added to cart",
-      description: `${product.name} has been added to your cart`,
-    });
-  };
-  
-  const handleQuickView = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (onQuickView) {
-      onQuickView(product);
-    }
-  };
+const SnoonuProductCard: React.FC<SnoonuProductCardProps> = ({ product, isPromo = false }) => {
+  // Get the first image or use a placeholder
+  const productImage = product.images && product.images.length > 0 
+    ? product.images[0] 
+    : 'https://via.placeholder.com/300x300';
 
   return (
-    <motion.div
-      whileHover={{ y: -5 }}
-      className="bg-white rounded-xl overflow-hidden shadow-sm h-full relative"
+    <Link 
+      to={`/product/${product.id}`} 
+      className="block group"
     >
-      <Link to={`/product/${product.id}`} className="block h-full">
-        {/* Product Image */}
-        <div className="aspect-square relative overflow-hidden">
-          <img
-            src={product.images && product.images.length > 0 ? product.images[0] : '/placeholder.svg'}
-            alt={product.name}
-            className="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
+      <div className="relative overflow-hidden bg-white rounded-2xl shadow-sm border border-gray-100 transition-all duration-300 h-full hover:shadow-md">
+        {/* Image Container */}
+        <div className="relative pt-[100%] overflow-hidden bg-gray-50">
+          <img 
+            src={productImage} 
+            alt={product.name} 
+            className="absolute top-0 left-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
           
           {/* Promo Badge */}
           {isPromo && (
-            <div className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full">
-              Sale
+            <div className="absolute top-2 left-2 bg-red-500 text-white text-xs font-medium px-2 py-1 rounded-full">
+              Promo
             </div>
           )}
           
-          {/* Halal Badge if applicable */}
+          {/* Halal Badge */}
           {product.isHalalCertified && (
-            <div className="absolute top-2 right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full">
+            <div className="absolute top-2 right-2 bg-green-500 text-white text-xs font-medium px-2 py-1 rounded-full">
               Halal
-            </div>
-          )}
-          
-          {/* Quick view button */}
-          {onQuickView && (
-            <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300 bg-black bg-opacity-20">
-              <Button 
-                variant="secondary" 
-                size="sm" 
-                className="text-xs"
-                onClick={handleQuickView}
-              >
-                Quick View
-              </Button>
             </div>
           )}
         </div>
         
-        {/* Product Info */}
+        {/* Content */}
         <div className="p-3">
-          <h3 className="font-medium text-sm mb-1 line-clamp-2">{product.name}</h3>
+          <h3 className="font-semibold text-sm line-clamp-2 mb-1 text-gray-800 group-hover:text-haluna-primary transition-colors">
+            {product.name}
+          </h3>
           
-          <div className="flex justify-between items-center mb-2">
-            <span className="font-bold text-lg">{product.price.toFixed(2)} QR</span>
+          <div className="flex justify-between items-end">
+            <div>
+              <p className="text-sm font-bold text-haluna-primary">
+                {formatCurrency(product.price)}
+              </p>
+              {product.sellerId && (
+                <p className="text-xs text-gray-500 mt-1">
+                  {product.sellerName || 'Shop'}
+                </p>
+              )}
+            </div>
             
-            {/* Rating if available */}
-            {product.rating && (
+            {product.rating > 0 && (
               <div className="flex items-center">
-                <Star size={12} className="text-yellow-400 fill-yellow-400 mr-1" />
-                <span className="text-xs">{product.rating}</span>
+                <span className="text-yellow-500 mr-1">★</span>
+                <span className="text-xs text-gray-600">{product.rating.toFixed(1)}</span>
               </div>
             )}
           </div>
-          
-          {/* Shop name */}
-          <div className="text-xs text-gray-500 mb-3 truncate">
-            {product.sellerName || product.shop_name || 'Shop'}
-          </div>
-          
-          {/* Add to cart button */}
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="w-full text-xs py-1"
-            onClick={handleAddToCart}
-          >
-            Add to Cart
-          </Button>
         </div>
-      </Link>
-    </motion.div>
+      </div>
+    </Link>
   );
 };
 

@@ -1,130 +1,85 @@
-import React, { useState, useEffect, useCallback } from 'react';
+
+import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { MapPin, Phone, Globe, Heart, Star } from 'lucide-react';
-import { motion } from 'framer-motion';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { getShopById, updateUserShopPreference } from '@/services/shopService';
-import { getProductsByShopId } from '@/services/productService';
-import { Shop } from '@/types/database';
+import { getShopById, getShopProducts, getShopReviews, updateUserShopPreference } from '@/services/shopService';
+import { Shop, ShopProduct } from '@/models/shop';
+import ShopHeader from '@/components/shop/ShopHeader';
 import ShopProductList from '@/components/shop/ShopProductList';
-import AddReviewForm from '@/components/shop/AddReviewForm';
 import ReviewList from '@/components/shop/ReviewList';
+import AddReviewForm from '@/components/shop/AddReviewForm';
 import MapComponent from '@/components/MapComponent';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { MapPin, Phone, Mail, Clock, Globe, CheckCircle, ShoppingBag, Star, Heart } from 'lucide-react';
 
 const ShopDetail = () => {
-  const { id } = useParams<{ id: string }>();
-  const [shop, setShop] = useState<Shop | null>(null);
-  const [shopProducts, setShopProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [isFavorite, setIsFavorite] = useState(false);
-  const [updatingFavorite, setUpdatingFavorite] = useState(false);
+  const { shopId } = useParams();
   const { user, isLoggedIn } = useAuth();
   const { toast } = useToast();
-  const [reviews, setReviews] = useState([
-    {
-      id: '1',
-      userId: 'user-1',
-      username: 'John Doe',
-      rating: 5,
-      comment: 'Great shop! Highly recommended.',
-      createdAt: new Date().toISOString(),
-    },
-    {
-      id: '2',
-      userId: 'user-2',
-      username: 'Jane Smith',
-      rating: 4,
-      comment: 'Good products and service.',
-      createdAt: new Date().toISOString(),
-    },
-  ]);
   
-  const enableLocation = useCallback(() => {
-    if (!shop) return;
-    
-    // Check if geolocation is supported
-    if ("geolocation" in navigator) {
-      // Get current position
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          // Got position
-          console.log("Latitude is :", position.coords.latitude);
-          console.log("Longitude is :", position.coords.longitude);
-        },
-        (error) => {
-          // Handle errors
-          console.error("Error Code = " + error.code + " - " + error.message);
-        }
-      );
-    } else {
-      console.log("Geolocation is not supported by this browser.");
-    }
-  }, [shop]);
-
+  const [shop, setShop] = useState<Shop | null>(null);
+  const [products, setProducts] = useState<ShopProduct[]>([]);
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [activeTab, setActiveTab] = useState('products');
+  
   useEffect(() => {
-    const loadShopDetails = async () => {
-      if (!id) return;
+    const fetchShopData = async () => {
+      if (!shopId) return;
+      
+      setIsLoading(true);
       
       try {
-        setLoading(true);
-        const shop = await getShopById(id);
-        
-        if (shop) {
-          setShop(shop);
-          // Update document title with shop name
-          document.title = `${shop.name} | Haluna`;
-          
-          // Enable location services if available
-          if (enableLocation) {
-            enableLocation();
-          }
-          
-          // Load shop products
-          const products = await getProductsByShopId(id);
-          setShopProducts(products);
-        } else {
-          setError("Shop not found");
-        }
-      } catch (err) {
-        console.error("Error loading shop:", err);
-        setError("Failed to load shop details");
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    loadShopDetails();
-  }, [id, enableLocation]);
-
-  useEffect(() => {
-    const checkFavoriteStatus = async () => {
-      if (!isLoggedIn || !user || !shop) return;
-      
-      try {
-        const { data, error } = await updateUserShopPreference(shop.id, user.id, {});
-        
-        if (error) {
-          console.error("Error fetching favorite status:", error);
+        // Fetch shop details
+        const shopData = await getShopById(shopId);
+        if (!shopData) {
+          toast({
+            title: "Shop not found",
+            description: "The shop you're looking for doesn't exist or has been removed.",
+            variant: "destructive"
+          });
           return;
         }
         
-        setIsFavorite(data?.is_favorite || false);
+        setShop(shopData);
+        
+        // Fetch shop products
+        const productsData = await getShopProducts(shopId);
+        setProducts(productsData);
+        
+        // Fetch shop reviews
+        const reviewsData = await getShopReviews(shopId);
+        setReviews(reviewsData);
+        
+        // Check if shop is favorite (this would be a real API call in production)
+        if (isLoggedIn && user) {
+          // Mock implementation - replace with actual API call
+          setIsFavorite(Math.random() > 0.5);
+        }
       } catch (error) {
-        console.error("Error checking favorite status:", error);
+        console.error("Error fetching shop data:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load shop information. Please try again.",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoading(false);
       }
     };
     
-    checkFavoriteStatus();
-  }, [user, isLoggedIn, shop]);
-
-  const handleFavoriteToggle = async () => {
+    fetchShopData();
+  }, [shopId, isLoggedIn, user]);
+  
+  const handleToggleFavorite = async () => {
     if (!isLoggedIn || !user) {
       toast({
-        title: "Authentication required",
-        description: "Please log in to add shops to favorites",
-        variant: "destructive"
+        title: "Login Required",
+        description: "Please log in to save shops to your favorites.",
+        variant: "default"
       });
       return;
     }
@@ -132,153 +87,195 @@ const ShopDetail = () => {
     if (!shop) return;
     
     try {
-      setUpdatingFavorite(true);
+      // Call API to update favorite status
+      const success = await updateUserShopPreference(user.id, shop.id, !isFavorite);
       
-      // Toggle favorite status
-      const newStatus = !isFavorite;
-      
-      // Update in database
-      await updateUserShopPreference(shop.id, user.id, {
-        is_favorite: newStatus
-      });
-      
-      // Update local state
-      setIsFavorite(newStatus);
-      
-      toast({
-        title: newStatus ? "Added to favorites" : "Removed from favorites",
-        description: newStatus 
-          ? `${shop.name} has been added to your favorites` 
-          : `${shop.name} has been removed from your favorites`,
-      });
+      if (success) {
+        setIsFavorite(prev => !prev);
+        toast({
+          title: isFavorite ? "Removed from favorites" : "Added to favorites",
+          description: isFavorite 
+            ? `${shop.name} has been removed from your favorites.` 
+            : `${shop.name} has been added to your favorites.`,
+          variant: "default"
+        });
+      } else {
+        throw new Error("Failed to update favorite status");
+      }
     } catch (error) {
       console.error("Error updating favorite status:", error);
       toast({
-        title: "Failed to update",
-        description: "There was an error updating your preferences",
+        title: "Error",
+        description: "Failed to update favorite status. Please try again.",
         variant: "destructive"
       });
-    } finally {
-      setUpdatingFavorite(false);
     }
   };
-
-  const handleSubmitReview = (reviewData: { rating: number; comment: string }) => {
-    const newReview = {
-      id: Math.random().toString(),
-      userId: user?.id || 'guest',
-      username: user?.name || 'Guest',
-      rating: reviewData.rating,
-      comment: reviewData.comment,
-      createdAt: new Date().toISOString(),
-    };
-    setReviews([...reviews, newReview]);
-    toast({
-      title: "Review submitted",
-      description: "Thank you for your feedback!",
-    });
-  };
-
-  if (loading) {
-    return <div className="text-center py-8">Loading shop details...</div>;
+  
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-haluna-primary"></div>
+      </div>
+    );
   }
-
-  if (error) {
-    return <div className="text-center py-8 text-red-500">Error: {error}</div>;
-  }
-
+  
   if (!shop) {
-    return <div className="text-center py-8">Shop not found.</div>;
+    return (
+      <div className="container mx-auto px-4 py-16 text-center">
+        <h1 className="text-2xl font-bold mb-4">Shop Not Found</h1>
+        <p className="mb-8">The shop you're looking for may have been removed or doesn't exist.</p>
+        <Link to="/shops">
+          <Button>Browse Shops</Button>
+        </Link>
+      </div>
+    );
   }
-
+  
   return (
-    <div className="container mx-auto mt-8 px-4">
-      <div className="relative rounded-lg overflow-hidden shadow-md">
-        <img
-          src={shop.cover_image || '/placeholder-shop-cover.jpg'}
-          alt={`${shop.name} Cover`}
-          className="w-full h-64 object-cover object-center"
-        />
-        <div className="absolute top-4 left-4 bg-white bg-opacity-75 rounded-full p-2">
-          <img
-            src={shop.logo || '/placeholder-shop-logo.png'}
-            alt={`${shop.name} Logo`}
-            className="w-16 h-16 rounded-full object-cover"
-          />
-        </div>
-        <div className="absolute top-4 right-4">
-          <button
-            onClick={handleFavoriteToggle}
-            disabled={updatingFavorite}
-            className="bg-white bg-opacity-75 hover:bg-opacity-100 text-red-500 rounded-full p-2 transition-colors duration-200"
-          >
-            {updatingFavorite ? (
-              "Updating..."
-            ) : isFavorite ? (
-              <Heart className="h-6 w-6 fill-current" />
-            ) : (
-              <Heart className="h-6 w-6" />
-            )}
-          </button>
-        </div>
-      </div>
-
-      <div className="mt-6">
-        <h1 className="text-3xl font-bold text-gray-900">{shop.name}</h1>
-        <div className="flex items-center mt-2">
-          {[...Array(5)].map((_, i) => (
-            <Star 
-              key={i} 
-              className={`h-4 w-4 ${i < shop.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} 
-            />
-          ))}
-          <span className="ml-2 text-sm text-gray-600">
-            {shop.rating}/5 ({reviews.length} reviews)
-          </span>
-        </div>
-        <p className="text-gray-700 mt-2">{shop.description}</p>
-      </div>
-
-      <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <h2 className="text-xl font-bold text-gray-900 mb-2">Contact Information</h2>
-          <ul className="space-y-2">
-            <li className="flex items-center">
-              <MapPin className="h-5 w-5 mr-2 text-gray-500" />
-              {shop.location}
-            </li>
-            {shop.phone && (
-              <li className="flex items-center">
-                <Phone className="h-5 w-5 mr-2 text-gray-500" />
-                <a href={`tel:${shop.phone}`} className="text-haluna-primary hover:underline">
-                  {shop.phone}
-                </a>
-              </li>
-            )}
-            {shop.website && (
-              <li className="flex items-center">
-                <Globe className="h-5 w-5 mr-2 text-gray-500" />
-                <a href={shop.website} target="_blank" rel="noopener noreferrer" className="text-haluna-primary hover:underline">
-                  {shop.website}
-                </a>
-              </li>
-            )}
-          </ul>
-        </div>
-
-        <div>
-          <h2 className="text-xl font-bold text-gray-900 mb-2">Location</h2>
-          <div className="h-64 rounded-lg overflow-hidden">
-            <MapComponent latitude={shop.latitude} longitude={shop.longitude} />
+    <div className="bg-gray-50 min-h-screen pb-16 pt-20">
+      {/* Shop Header */}
+      <ShopHeader shop={shop} />
+      
+      {/* Main Content */}
+      <div className="container mx-auto px-4 -mt-6 relative z-10">
+        <div className="bg-white rounded-xl shadow-sm overflow-hidden mb-6">
+          {/* Actions Bar */}
+          <div className="p-4 flex justify-between items-center border-b">
+            <div className="flex items-center space-x-2">
+              {shop.is_verified && (
+                <div className="flex items-center text-green-600 text-sm">
+                  <CheckCircle className="h-4 w-4 mr-1" />
+                  <span>Verified</span>
+                </div>
+              )}
+              {shop.rating > 0 && (
+                <div className="flex items-center text-yellow-500 text-sm">
+                  <Star className="h-4 w-4 mr-1 fill-yellow-500" />
+                  <span>{shop.rating.toFixed(1)}</span>
+                </div>
+              )}
+              <div className="text-gray-500 text-sm">
+                <ShoppingBag className="h-4 w-4 inline mr-1" />
+                <span>{shop.product_count} products</span>
+              </div>
+            </div>
+            
+            <Button
+              variant={isFavorite ? "destructive" : "outline"}
+              size="sm"
+              onClick={handleToggleFavorite}
+              className="flex items-center"
+            >
+              <Heart className={`h-4 w-4 mr-1 ${isFavorite ? 'fill-white' : ''}`} />
+              {isFavorite ? 'Saved' : 'Save'}
+            </Button>
           </div>
+          
+          {/* Tabs Navigation */}
+          <Tabs defaultValue="products" onValueChange={setActiveTab} className="w-full">
+            <div className="border-b">
+              <TabsList className="w-full bg-transparent border-b p-0 h-auto">
+                <TabsTrigger 
+                  value="products" 
+                  className={`py-4 px-6 rounded-none border-b-2 ${
+                    activeTab === 'products' ? 'border-haluna-primary text-haluna-primary' : 'border-transparent'
+                  }`}
+                >
+                  Products
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="about" 
+                  className={`py-4 px-6 rounded-none border-b-2 ${
+                    activeTab === 'about' ? 'border-haluna-primary text-haluna-primary' : 'border-transparent'
+                  }`}
+                >
+                  About
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="reviews" 
+                  className={`py-4 px-6 rounded-none border-b-2 ${
+                    activeTab === 'reviews' ? 'border-haluna-primary text-haluna-primary' : 'border-transparent'
+                  }`}
+                >
+                  Reviews ({reviews.length})
+                </TabsTrigger>
+              </TabsList>
+            </div>
+            
+            {/* Tab Contents */}
+            <TabsContent value="products" className="p-0 mt-0">
+              <ShopProductList products={products} />
+            </TabsContent>
+            
+            <TabsContent value="about" className="p-6 mt-0">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div>
+                  <h3 className="text-lg font-semibold mb-4">About {shop.name}</h3>
+                  <p className="text-gray-600 mb-6">{shop.description}</p>
+                  
+                  <h3 className="text-lg font-semibold mb-4">Contact Information</h3>
+                  <ul className="space-y-3">
+                    <li className="flex items-start">
+                      <MapPin className="h-5 w-5 text-haluna-primary mr-3 mt-0.5" />
+                      <span className="text-gray-600">{shop.location}</span>
+                    </li>
+                    <li className="flex items-start">
+                      <Phone className="h-5 w-5 text-haluna-primary mr-3 mt-0.5" />
+                      <span className="text-gray-600">+1 (555) 123-4567</span>
+                    </li>
+                    <li className="flex items-start">
+                      <Mail className="h-5 w-5 text-haluna-primary mr-3 mt-0.5" />
+                      <span className="text-gray-600">contact@{shop.name.toLowerCase().replace(/\s+/g, '')}.com</span>
+                    </li>
+                    <li className="flex items-start">
+                      <Globe className="h-5 w-5 text-haluna-primary mr-3 mt-0.5" />
+                      <span className="text-haluna-primary">www.{shop.name.toLowerCase().replace(/\s+/g, '')}.com</span>
+                    </li>
+                    <li className="flex items-start">
+                      <Clock className="h-5 w-5 text-haluna-primary mr-3 mt-0.5" />
+                      <div>
+                        <p className="text-gray-600">Monday - Friday: 9AM - 8PM</p>
+                        <p className="text-gray-600">Saturday - Sunday: 10AM - 6PM</p>
+                      </div>
+                    </li>
+                  </ul>
+                </div>
+                
+                <div>
+                  <h3 className="text-lg font-semibold mb-4">Location</h3>
+                  <MapComponent 
+                    center={{ 
+                      lat: shop.latitude || 25.2854, 
+                      lng: shop.longitude || 51.5310 
+                    }} 
+                    markers={[{ 
+                      lat: shop.latitude || 25.2854, 
+                      lng: shop.longitude || 51.5310,
+                      title: shop.name 
+                    }]}
+                  />
+                </div>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="reviews" className="p-6 mt-0">
+              {isLoggedIn ? (
+                <AddReviewForm shopId={shop.id} onReviewAdded={(newReview) => {
+                  setReviews(prevReviews => [newReview, ...prevReviews]);
+                }} />
+              ) : (
+                <div className="bg-gray-50 p-4 rounded-lg mb-6">
+                  <p className="text-center text-gray-600">
+                    Please <Link to="/login" className="text-haluna-primary font-medium">login</Link> to leave a review
+                  </p>
+                </div>
+              )}
+              
+              <ReviewList reviews={reviews} />
+            </TabsContent>
+          </Tabs>
         </div>
-      </div>
-
-      <ShopProductList products={shopProducts} shopName={shop.name} />
-
-      <div className="mt-8">
-        <AddReviewForm onSubmit={handleSubmitReview} />
-        <ReviewList reviews={reviews} />
       </div>
     </div>
   );

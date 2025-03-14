@@ -1,4 +1,5 @@
-import { Database } from '@/types/supabase';
+
+import { Database } from '@/integrations/supabase/types';
 import { supabase } from '@/lib/supabaseClient';
 import { Shop, ShopProduct, ShopFilterOptions } from '@/models/shop';
 import { adaptDbProductToShopProduct } from './shopServiceHelpers';
@@ -41,6 +42,27 @@ export const getAllShops = async (): Promise<Shop[]> => {
   } catch (error) {
     console.error("Unexpected error fetching shops:", error);
     return [];
+  }
+};
+
+export const getMainShop = async (ownerId: string): Promise<Shop | null> => {
+  try {
+    const { data: shops, error } = await supabase
+      .from('shops')
+      .select('*')
+      .eq('owner_id', ownerId)
+      .order('created_at', { ascending: false })
+      .limit(1);
+
+    if (error) {
+      console.error("Error fetching main shop:", error);
+      return null;
+    }
+
+    return shops.length > 0 ? shops[0] as Shop : null;
+  } catch (error) {
+    console.error("Unexpected error fetching main shop:", error);
+    return null;
   }
 };
 
@@ -191,7 +213,7 @@ export const getShopsByFilter = async (options: ShopFilterOptions): Promise<Shop
       });
     }
     if (options.isHalalCertified) {
-      // Assuming there is a field is_halal_certified in the shop object
+      // Assuming there is a field is_verified in the shop object
       shops = shops.filter(shop => shop.is_verified === true);
     }
     if (options.search) {
@@ -243,5 +265,25 @@ export const getShopsByOwnerId = async (ownerId: string): Promise<Shop[]> => {
   } catch (error) {
     console.error("Unexpected error fetching shops by owner ID:", error);
     return [];
+  }
+};
+
+export const createShop = async (shopData: Partial<Shop>): Promise<Shop | null> => {
+  try {
+    const { data, error } = await supabase
+      .from('shops')
+      .insert([shopData])
+      .select('*')
+      .single();
+
+    if (error) {
+      console.error("Error creating shop:", error);
+      return null;
+    }
+
+    return data as Shop;
+  } catch (error) {
+    console.error("Unexpected error creating shop:", error);
+    return null;
   }
 };

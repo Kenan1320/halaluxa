@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Session, User as SupabaseUser } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
@@ -11,6 +12,8 @@ interface AuthContextType {
   signup: (email: string, password: string, name: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   updateProfile: (data: Partial<User>) => Promise<{ success: boolean; error?: string }>;
+  updateUserProfile: (data: Partial<User>) => Promise<boolean>;
+  updateBusinessProfile: (data: any) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -77,11 +80,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           city: userProfile.city || '',
           state: userProfile.state || '',
           zip: userProfile.zip || '',
-          shopName: userProfile.shop_name as string || '',
-          shopDescription: userProfile.shop_description as string || '',
-          shopCategory: userProfile.shop_category as string || '',
-          shopLocation: userProfile.shop_location as string || '',
-          shopLogo: userProfile.shop_logo as string || '',
+          shopName: String(userProfile.shop_name || ''),
+          shopDescription: String(userProfile.shop_description || ''),
+          shopCategory: String(userProfile.shop_category || ''),
+          shopLocation: String(userProfile.shop_location || ''),
+          shopLogo: String(userProfile.shop_logo || ''),
         });
         setIsLoggedIn(true);
       } catch (error) {
@@ -202,6 +205,27 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  // Add these new methods for compatibility with existing code
+  const updateUserProfile = async (data: Partial<User>): Promise<boolean> => {
+    const result = await updateProfile(data);
+    return result.success;
+  };
+
+  const updateBusinessProfile = async (data: any): Promise<boolean> => {
+    if (!user) return false;
+    
+    const profileData: Partial<User> = {
+      shopName: data.shop_name || '',
+      shopDescription: data.shop_description || '',
+      shopCategory: data.shop_category || '',
+      shopLocation: data.shop_location || '',
+      shopLogo: data.shop_logo || ''
+    };
+    
+    const result = await updateProfile(profileData);
+    return result.success;
+  };
+
   const value = {
     isLoggedIn,
     isLoading,
@@ -210,6 +234,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     signup,
     logout,
     updateProfile,
+    updateUserProfile,
+    updateBusinessProfile
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
