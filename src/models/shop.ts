@@ -18,6 +18,12 @@ export interface Shop {
   distance: number | null;
   created_at: string;
   updated_at: string;
+  pickup_available?: boolean;
+  delivery_available?: boolean;
+  // Compatibility with database types
+  product_count?: number;
+  owner_id?: string;
+  is_verified?: boolean;
 }
 
 export interface ShopProduct {
@@ -58,4 +64,48 @@ export interface ShopDisplaySettings {
   featuredProducts: string[] | null;
   bannerMessage: string | null;
   created_at: string;
+}
+
+// Converter functions
+export function adaptToModelShop(dbShop: any): Shop {
+  return {
+    id: dbShop.id,
+    name: dbShop.name,
+    description: dbShop.description,
+    location: dbShop.location,
+    rating: dbShop.rating,
+    productCount: dbShop.product_count || dbShop.productCount || 0,
+    isVerified: dbShop.is_verified || dbShop.isVerified || false,
+    category: dbShop.category,
+    logo: dbShop.logo_url || dbShop.logo || null,
+    logo_url: dbShop.logo_url || dbShop.logo || null,
+    coverImage: dbShop.cover_image || dbShop.coverImage || null,
+    ownerId: dbShop.owner_id || dbShop.ownerId,
+    latitude: dbShop.latitude || null,
+    longitude: dbShop.longitude || null,
+    distance: dbShop.distance || null,
+    created_at: dbShop.created_at,
+    updated_at: dbShop.updated_at,
+    pickup_available: dbShop.pickup_available || false,
+    delivery_available: dbShop.delivery_available || false
+  };
+}
+
+export function adaptToModelProduct(dbProduct: any): ShopProduct {
+  return {
+    id: dbProduct.id,
+    name: dbProduct.name,
+    price: dbProduct.price,
+    description: dbProduct.description,
+    category: dbProduct.category,
+    images: dbProduct.images || [],
+    sellerId: dbProduct.seller_id || dbProduct.sellerId,
+    sellerName: dbProduct.shop_name || dbProduct.sellerName,
+    rating: dbProduct.rating || 0,
+    shop_id: dbProduct.shop_id,
+    created_at: dbProduct.created_at,
+    updated_at: dbProduct.updated_at,
+    is_halal_certified: dbProduct.is_halal_certified || false,
+    in_stock: dbProduct.in_stock || true
+  };
 }

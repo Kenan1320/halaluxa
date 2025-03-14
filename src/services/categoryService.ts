@@ -14,15 +14,24 @@ export interface Category {
 // Get all categories
 export const getCategories = async (): Promise<Category[]> => {
   try {
-    // Since 'product_categories' is not in the Supabase schema,
-    // we'll return mock data for now
+    // Since we are mocking the data to avoid errors with the database
     return [
       { id: '1', name: 'Groceries', group: 'nearby', created_at: new Date().toISOString() },
       { id: '2', name: 'Online Stores', group: 'online', created_at: new Date().toISOString() },
       { id: '3', name: 'Restaurants', group: 'nearby', created_at: new Date().toISOString() },
       { id: '4', name: 'Coffee Shops', group: 'nearby', created_at: new Date().toISOString() },
       { id: '5', name: 'Clothing', group: 'online', created_at: new Date().toISOString() },
-      { id: '6', name: 'Halal Meat', group: 'nearby', created_at: new Date().toISOString() }
+      { id: '6', name: 'Halal Meat', group: 'nearby', created_at: new Date().toISOString() },
+      { id: '7', name: 'Hoodies', group: 'online', created_at: new Date().toISOString() },
+      { id: '8', name: 'Thobes', group: 'online', created_at: new Date().toISOString() },
+      { id: '9', name: 'Abayas', group: 'online', created_at: new Date().toISOString() },
+      { id: '10', name: 'Books', group: 'online', created_at: new Date().toISOString() },
+      { id: '11', name: 'Kids', group: 'nearby', created_at: new Date().toISOString() },
+      { id: '12', name: 'Gifts', group: 'online', created_at: new Date().toISOString() },
+      { id: '13', name: 'Food Delivery', group: 'service', created_at: new Date().toISOString() },
+      { id: '14', name: 'Electronics', group: 'online', created_at: new Date().toISOString() },
+      { id: '15', name: 'Pets', group: 'nearby', created_at: new Date().toISOString() },
+      { id: '16', name: 'Home & Garden', group: 'online', created_at: new Date().toISOString() }
     ];
   } catch (error) {
     console.error('Error in getCategories:', error);

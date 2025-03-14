@@ -1,189 +1,97 @@
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { getCurrentLocation, getAddressFromCoords } from '@/services/locationService';
+import { getAllShops } from '@/services/shopService';
+import { Coordinates, LocationContextProps } from '@/types/LocationTypes';
 import { useToast } from '@/hooks/use-toast';
-import { getAddressFromCoords } from '@/services/locationService';
-
-export interface Coordinates {
-  latitude: number;
-  longitude: number;
-}
-
-export interface LocationAddress {
-  formattedAddress: string;
-  city: string;
-  state: string;
-  postalCode: string;
-  country: string;
-}
-
-export interface LocationContextProps {
-  isLocationEnabled: boolean;
-  isGettingLocation: boolean;
-  location: Coordinates | null;
-  address: LocationAddress | null;
-  requestLocation: () => Promise<Coordinates | null>;
-  clearLocation: () => void;
-  initializeLocation: () => Promise<void>;
-  distance: number | null;
-}
-
-export const MAPBOX_API_KEY = 'sk.eyJ1Ijoia2VuYW4yNSIsImEiOiJjbTg3dGN0cHcwYmM0MnNxNHN5OTZidWViIn0.0Sba4mKBnPaKZfLj4p13iw';
 
 const LocationContext = createContext<LocationContextProps>({
   isLocationEnabled: false,
-  isGettingLocation: false,
   location: null,
-  address: null,
-  requestLocation: async () => null,
-  clearLocation: () => {},
-  initializeLocation: async () => {},
-  distance: null,
+  requestLocation: () => {},
 });
 
-export const useLocation = () => useContext(LocationContext);
-
-interface LocationProviderProps {
-  children: ReactNode;
-}
-
-export const LocationProvider: React.FC<LocationProviderProps> = ({ children }) => {
-  const { toast } = useToast();
+export const LocationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isLocationEnabled, setIsLocationEnabled] = useState(false);
-  const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [location, setLocation] = useState<Coordinates | null>(null);
-  const [address, setAddress] = useState<LocationAddress | null>(null);
-  const [distance, setDistance] = useState<number | null>(null);
-
-  // Initialize location from localStorage
+  const { toast } = useToast();
+  
+  const requestLocation = useCallback(async () => {
+    try {
+      const coords = await getCurrentLocation();
+      setLocation(coords);
+      setIsLocationEnabled(true);
+      
+      toast({
+        title: "Location updated",
+        description: `Your location is now set to ${coords.city || 'your current position'}.`,
+      });
+      
+      localStorage.setItem('location', JSON.stringify(coords));
+    } catch (error) {
+      console.error('Error getting location:', error);
+      toast({
+        title: "Location error",
+        description: "Couldn't access your location. Please check your browser settings.",
+        variant: "destructive",
+      });
+    }
+  }, [toast]);
+  
+  const enableLocation = useCallback(() => {
+    setIsLocationEnabled(true);
+  }, []);
+  
+  // Check for saved location on mount
   useEffect(() => {
-    const storedLocation = localStorage.getItem('userLocation');
-    if (storedLocation) {
+    const savedLocation = localStorage.getItem('location');
+    if (savedLocation) {
       try {
-        const parsedLocation = JSON.parse(storedLocation);
+        const parsedLocation = JSON.parse(savedLocation);
         setLocation(parsedLocation);
         setIsLocationEnabled(true);
-        getAddressFromCoordinates(parsedLocation.latitude, parsedLocation.longitude);
       } catch (error) {
-        console.error('Error parsing stored location', error);
-        localStorage.removeItem('userLocation');
+        console.error('Error parsing saved location:', error);
       }
     }
   }, []);
-
-  const getAddressFromCoordinates = async (latitude: number, longitude: number) => {
-    try {
-      const addressDetails = await getAddressFromCoords(latitude, longitude);
-      if (addressDetails) {
-        setAddress(addressDetails);
-      }
-    } catch (error) {
-      console.error('Error getting address from coordinates', error);
+  
+  // Method to get nearby shops based on location
+  const getNearbyShops = useCallback(async () => {
+    if (!location) {
+      // If location is not available, return all shops
+      return getAllShops();
     }
-  };
-
-  const requestLocation = async (): Promise<Coordinates | null> => {
-    setIsGettingLocation(true);
     
     try {
-      // Check if geolocation is available
-      if (!navigator.geolocation) {
-        toast({
-          title: "Location Unavailable",
-          description: "Your browser does not support geolocation. Please enter your location manually.",
-          variant: "destructive",
-        });
-        setIsGettingLocation(false);
-        return null;
-      }
-
-      // Request geolocation permission
-      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(resolve, reject, {
-          enableHighAccuracy: true,
-          timeout: 5000,
-          maximumAge: 0
-        });
-      });
-
-      const newLocation = {
-        latitude: position.coords.latitude,
-        longitude: position.coords.longitude
-      };
-
-      localStorage.setItem('userLocation', JSON.stringify(newLocation));
-      setLocation(newLocation);
-      setIsLocationEnabled(true);
+      // In a real implementation, we would pass the location to filter shops by proximity
+      // For now, we just return all shops
+      const shops = await getAllShops();
       
-      await getAddressFromCoordinates(newLocation.latitude, newLocation.longitude);
-      
-      toast({
-        title: "Location Updated",
-        description: "We've updated your location.",
-      });
-      
-      return newLocation;
+      // Sort shops by "distance" (simulated)
+      return shops.map(shop => ({
+        ...shop,
+        distance: Math.random() * 10 // Random distance between 0-10 miles
+      })).sort((a, b) => (a.distance || 999) - (b.distance || 999));
     } catch (error) {
-      console.error('Error getting location', error);
-      let errorMessage = "Unable to get your location. Please try again or enter manually.";
-      
-      if (error instanceof GeolocationPositionError) {
-        switch (error.code) {
-          case error.PERMISSION_DENIED:
-            errorMessage = "Location access was denied. Please enable location permissions in your browser.";
-            break;
-          case error.POSITION_UNAVAILABLE:
-            errorMessage = "Location information is unavailable.";
-            break;
-          case error.TIMEOUT:
-            errorMessage = "Location request timed out. Please try again.";
-            break;
-        }
-      }
-      
-      toast({
-        title: "Location Error",
-        description: errorMessage,
-        variant: "destructive",
-      });
-      
-      return null;
-    } finally {
-      setIsGettingLocation(false);
+      console.error('Error getting nearby shops:', error);
+      return [];
     }
-  };
-
-  const clearLocation = () => {
-    localStorage.removeItem('userLocation');
-    setLocation(null);
-    setAddress(null);
-    setIsLocationEnabled(false);
-    toast({
-      title: "Location Cleared",
-      description: "Your location has been cleared.",
-    });
-  };
-
-  const initializeLocation = async () => {
-    // If we already have location, don't request again
-    if (location) return;
-    
-    await requestLocation();
-  };
-
+  }, [location]);
+  
   return (
     <LocationContext.Provider 
       value={{ 
         isLocationEnabled, 
-        isGettingLocation,
         location, 
-        address,
-        requestLocation, 
-        clearLocation,
-        initializeLocation,
-        distance
+        requestLocation,
+        enableLocation,
+        getNearbyShops
       }}
     >
       {children}
     </LocationContext.Provider>
   );
 };
+
+export const useLocation = () => useContext(LocationContext);

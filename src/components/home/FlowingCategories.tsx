@@ -56,7 +56,7 @@ const CategoryItem: React.FC<CategoryItemProps> = ({ category, isHighlighted, on
         transition: { duration: 0.2 }
       }}
       whileTap={{ scale: 0.95 }}
-      className={`flex flex-col items-center justify-center mx-2 group cursor-pointer transition-all duration-300 ${
+      className={`flex flex-col items-center justify-center mx-3 group cursor-pointer transition-all duration-300 ${
         isHighlighted ? 'scale-105' : ''
       }`}
       onClick={onClick}
