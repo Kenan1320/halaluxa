@@ -1,290 +1,284 @@
-
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useLocation } from '@/context/LocationContext';
-import { getShopProducts } from '@/services/shopService';
-import { getShopById } from '@/services/shopService';
-import { Shop } from '@/types/database';
-import { Shop as ModelShop, ShopProduct, adaptToModelShop } from '@/models/shop';
-import { Product } from '@/models/product';
-import { ProductCard } from '@/components/cards/ProductCard';
-import { ShopHeader } from '@/components/shop/ShopHeader';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useParams, Link } from 'react-router-dom';
+import { MapPin, Phone, Globe, Heart, Star } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { Button } from '@/components/ui/button';
-import { ShoppingBag, Phone, Mail, MapPin, Navigation, Star, Calendar, Clock, Info } from 'lucide-react';
-import { ShopDetails, ShopCategory } from '@/types/shop';
+import { getShopById, updateUserShopPreference } from '@/services/shopService';
+import { getProductsByShopId } from '@/services/productService';
+import { Shop } from '@/types/database';
+import ShopProductList from '@/components/shop/ShopProductList';
+import AddReviewForm from '@/components/shop/AddReviewForm';
+import ReviewList from '@/components/shop/ReviewList';
+import MapComponent from '@/components/MapComponent';
 
-const ShopDetail: React.FC = () => {
+const ShopDetail = () => {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
-  const { isLocationEnabled, enableLocation } = useLocation();
-  const { toast } = useToast();
-  
-  const [shop, setShop] = useState<ModelShop | null>(null);
-  const [products, setProducts] = useState<ShopProduct[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [shop, setShop] = useState<Shop | null>(null);
+  const [shopProducts, setShopProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [updatingFavorite, setUpdatingFavorite] = useState(false);
+  const { user, isLoggedIn } = useAuth();
+  const { toast } = useToast();
+  const [reviews, setReviews] = useState([
+    {
+      id: '1',
+      userId: 'user-1',
+      username: 'John Doe',
+      rating: 5,
+      comment: 'Great shop! Highly recommended.',
+      createdAt: new Date().toISOString(),
+    },
+    {
+      id: '2',
+      userId: 'user-2',
+      username: 'Jane Smith',
+      rating: 4,
+      comment: 'Good products and service.',
+      createdAt: new Date().toISOString(),
+    },
+  ]);
   
+  const enableLocation = useCallback(() => {
+    if (!shop) return;
+    
+    // Check if geolocation is supported
+    if ("geolocation" in navigator) {
+      // Get current position
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          // Got position
+          console.log("Latitude is :", position.coords.latitude);
+          console.log("Longitude is :", position.coords.longitude);
+        },
+        (error) => {
+          // Handle errors
+          console.error("Error Code = " + error.code + " - " + error.message);
+        }
+      );
+    } else {
+      console.log("Geolocation is not supported by this browser.");
+    }
+  }, [shop]);
+
   useEffect(() => {
-    const fetchShopDetails = async () => {
-      if (!id) {
-        setError('Shop ID is missing');
-        setLoading(false);
-        return;
-      }
+    const loadShopDetails = async () => {
+      if (!id) return;
       
       try {
-        const shopData = await getShopById(id);
+        setLoading(true);
+        const shop = await getShopById(id);
         
-        if (!shopData) {
-          setError('Shop not found');
-          setLoading(false);
-          return;
+        if (shop) {
+          setShop(shop);
+          // Update document title with shop name
+          document.title = `${shop.name} | Haluna`;
+          
+          // Enable location services if available
+          if (enableLocation) {
+            enableLocation();
+          }
+          
+          // Load shop products
+          const products = await getProductsByShopId(id);
+          setShopProducts(products);
+        } else {
+          setError("Shop not found");
         }
-        
-        // Convert database Shop to ModelShop
-        const modelShop = adaptToModelShop(shopData);
-        setShop(modelShop);
-        
-        // Fetch products for this shop
-        const shopProducts = await getShopProducts(id);
-        setProducts(shopProducts);
       } catch (err) {
-        console.error('Error fetching shop details:', err);
-        setError('Failed to load shop details');
+        console.error("Error loading shop:", err);
+        setError("Failed to load shop details");
       } finally {
         setLoading(false);
       }
     };
     
-    fetchShopDetails();
-  }, [id]);
-  
-  if (loading) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="animate-pulse">
-          <div className="h-40 bg-gray-200 rounded-xl mb-6"></div>
-          <div className="flex flex-col gap-4">
-            <div className="h-8 bg-gray-200 rounded w-1/3"></div>
-            <div className="h-4 bg-gray-200 rounded w-2/3"></div>
-            <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-  
-  if (error || !shop) {
-    return (
-      <div className="container mx-auto px-4 py-8 text-center">
-        <Info className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-        <h1 className="text-2xl font-bold mb-2">Something went wrong</h1>
-        <p className="text-gray-500 mb-6">{error || 'Failed to load shop details'}</p>
-        <Button onClick={() => navigate('/shops')}>
-          Browse Other Shops
-        </Button>
-      </div>
-    );
-  }
-  
-  const convertToProduct = (shopProduct: ShopProduct): Product => {
-    return {
-      id: shopProduct.id,
-      name: shopProduct.name,
-      description: shopProduct.description,
-      price: shopProduct.price,
-      category: shopProduct.category,
-      images: shopProduct.images,
-      shopId: shop.id,
-      isHalalCertified: shopProduct.is_halal_certified || false,
-      inStock: shopProduct.in_stock || true,
-      createdAt: shopProduct.created_at || new Date().toISOString(),
-      sellerId: shopProduct.sellerId,
-      sellerName: shopProduct.sellerName,
-      rating: shopProduct.rating
-    };
-  };
-  
-  const shopCategories: ShopCategory[] = [];
-  const categoryMap = new Map<string, Product[]>();
-  
-  products.forEach(product => {
-    const category = product.category;
-    if (!categoryMap.has(category)) {
-      categoryMap.set(category, []);
-    }
-    categoryMap.get(category)?.push(convertToProduct(product));
-  });
-  
-  categoryMap.forEach((products, name) => {
-    shopCategories.push({
-      id: name.toLowerCase().replace(/\s+/g, '-'),
-      name,
-      products
-    });
-  });
-  
-  if (shopCategories.length === 0) {
-    const defaultCategories = ['Popular Items', 'Featured', 'New Arrivals'];
-    defaultCategories.forEach((name, index) => {
-      shopCategories.push({
-        id: `default-${index}`,
-        name,
-        products: []
-      });
-    });
-  }
-  
-  const shopDetails: ShopDetails = {
-    id: shop?.id || '',
-    name: shop?.name || '',
-    description: shop?.description || '',
-    location: shop?.location || '',
-    categories: shopCategories,
-    cover_image: shop?.coverImage || undefined,
-    logo: shop?.logo || undefined,
-    deliveryInfo: {
-      isDeliveryAvailable: true,
-      isPickupAvailable: true,
-      deliveryFee: 2.99,
-      estimatedTime: '30-45 min',
-      minOrder: 10
-    },
-    workingHours: {
-      open: '9:00 AM',
-      close: '9:00 PM'
-    },
-    isGroupOrderEnabled: true,
-    rating: {
-      average: shop?.rating || 0,
-      count: 25
-    },
-    product_count: shop?.productCount || 0,
-    is_verified: shop?.isVerified || false,
-    category: shop?.category || '',
-    owner_id: shop?.ownerId || '',
-    latitude: shop?.latitude,
-    longitude: shop?.longitude,
-    distance: shop?.distance
-  };
-  
-  const handleGetDirections = () => {
-    if (!isLocationEnabled) {
-      // Make sure this doesn't return a Promise that needs to be checked
-      const locationPromise = enableLocation();
-      if (locationPromise && typeof locationPromise.then === 'function') {
-        locationPromise.then(success => {
-          if (success && shop.latitude && shop.longitude) {
-            window.open(`https://maps.google.com/?q=${shop.latitude},${shop.longitude}`, '_blank');
-          }
-        });
-      }
-    } else if (shop.latitude && shop.longitude) {
-      window.open(`https://maps.google.com/?q=${shop.latitude},${shop.longitude}`, '_blank');
-    }
-  };
-  
-  return (
-    <div className="container mx-auto px-4 py-6">
-      <ShopHeader shop={shopDetails} />
+    loadShopDetails();
+  }, [id, enableLocation]);
+
+  useEffect(() => {
+    const checkFavoriteStatus = async () => {
+      if (!isLoggedIn || !user || !shop) return;
       
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8">
-        <div className="lg:col-span-2">
-          <h2 className="text-xl font-semibold mb-4">Products</h2>
-          
-          {products.length === 0 ? (
-            <div className="bg-gray-50 rounded-lg p-8 text-center">
-              <ShoppingBag className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-              <h3 className="text-lg font-medium mb-2">No products available</h3>
-              <p className="text-gray-500">This shop hasn't added any products yet.</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {products.map((product) => (
-                <ProductCard key={product.id} product={convertToProduct(product)} />
-              ))}
-            </div>
-          )}
-        </div>
+      try {
+        const { data, error } = await updateUserShopPreference(shop.id, user.id, {});
         
+        if (error) {
+          console.error("Error fetching favorite status:", error);
+          return;
+        }
+        
+        setIsFavorite(data?.is_favorite || false);
+      } catch (error) {
+        console.error("Error checking favorite status:", error);
+      }
+    };
+    
+    checkFavoriteStatus();
+  }, [user, isLoggedIn, shop]);
+
+  const handleFavoriteToggle = async () => {
+    if (!isLoggedIn || !user) {
+      toast({
+        title: "Authentication required",
+        description: "Please log in to add shops to favorites",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if (!shop) return;
+    
+    try {
+      setUpdatingFavorite(true);
+      
+      // Toggle favorite status
+      const newStatus = !isFavorite;
+      
+      // Update in database
+      await updateUserShopPreference(shop.id, user.id, {
+        is_favorite: newStatus
+      });
+      
+      // Update local state
+      setIsFavorite(newStatus);
+      
+      toast({
+        title: newStatus ? "Added to favorites" : "Removed from favorites",
+        description: newStatus 
+          ? `${shop.name} has been added to your favorites` 
+          : `${shop.name} has been removed from your favorites`,
+      });
+    } catch (error) {
+      console.error("Error updating favorite status:", error);
+      toast({
+        title: "Failed to update",
+        description: "There was an error updating your preferences",
+        variant: "destructive"
+      });
+    } finally {
+      setUpdatingFavorite(false);
+    }
+  };
+
+  const handleSubmitReview = (reviewData: { rating: number; comment: string }) => {
+    const newReview = {
+      id: Math.random().toString(),
+      userId: user?.id || 'guest',
+      username: user?.name || 'Guest',
+      rating: reviewData.rating,
+      comment: reviewData.comment,
+      createdAt: new Date().toISOString(),
+    };
+    setReviews([...reviews, newReview]);
+    toast({
+      title: "Review submitted",
+      description: "Thank you for your feedback!",
+    });
+  };
+
+  if (loading) {
+    return <div className="text-center py-8">Loading shop details...</div>;
+  }
+
+  if (error) {
+    return <div className="text-center py-8 text-red-500">Error: {error}</div>;
+  }
+
+  if (!shop) {
+    return <div className="text-center py-8">Shop not found.</div>;
+  }
+
+  return (
+    <div className="container mx-auto mt-8 px-4">
+      <div className="relative rounded-lg overflow-hidden shadow-md">
+        <img
+          src={shop.cover_image || '/placeholder-shop-cover.jpg'}
+          alt={`${shop.name} Cover`}
+          className="w-full h-64 object-cover object-center"
+        />
+        <div className="absolute top-4 left-4 bg-white bg-opacity-75 rounded-full p-2">
+          <img
+            src={shop.logo || '/placeholder-shop-logo.png'}
+            alt={`${shop.name} Logo`}
+            className="w-16 h-16 rounded-full object-cover"
+          />
+        </div>
+        <div className="absolute top-4 right-4">
+          <button
+            onClick={handleFavoriteToggle}
+            disabled={updatingFavorite}
+            className="bg-white bg-opacity-75 hover:bg-opacity-100 text-red-500 rounded-full p-2 transition-colors duration-200"
+          >
+            {updatingFavorite ? (
+              "Updating..."
+            ) : isFavorite ? (
+              <Heart className="h-6 w-6 fill-current" />
+            ) : (
+              <Heart className="h-6 w-6" />
+            )}
+          </button>
+        </div>
+      </div>
+
+      <div className="mt-6">
+        <h1 className="text-3xl font-bold text-gray-900">{shop.name}</h1>
+        <div className="flex items-center mt-2">
+          {[...Array(5)].map((_, i) => (
+            <Star 
+              key={i} 
+              className={`h-4 w-4 ${i < shop.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} 
+            />
+          ))}
+          <span className="ml-2 text-sm text-gray-600">
+            {shop.rating}/5 ({reviews.length} reviews)
+          </span>
+        </div>
+        <p className="text-gray-700 mt-2">{shop.description}</p>
+      </div>
+
+      <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-            <h3 className="text-lg font-semibold mb-4">Shop Information</h3>
-            
-            <div className="space-y-4">
-              <div className="flex items-start">
-                <MapPin className="h-5 w-5 text-haluna-primary mt-0.5 mr-3 flex-shrink-0" />
-                <div>
-                  <h4 className="font-medium text-sm">Location</h4>
-                  <p className="text-gray-600">{shop.location}</p>
-                  
-                  {shop.latitude && shop.longitude && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="mt-2 text-xs"
-                      onClick={handleGetDirections}
-                    >
-                      <Navigation className="h-3 w-3 mr-1" />
-                      Get Directions
-                    </Button>
-                  )}
-                </div>
-              </div>
-              
-              <div className="flex items-start">
-                <Star className="h-5 w-5 text-haluna-primary mt-0.5 mr-3 flex-shrink-0" />
-                <div>
-                  <h4 className="font-medium text-sm">Rating</h4>
-                  <p className="text-gray-600">{shop.rating.toFixed(1)} out of 5</p>
-                </div>
-              </div>
-              
-              <div className="flex items-start">
-                <Calendar className="h-5 w-5 text-haluna-primary mt-0.5 mr-3 flex-shrink-0" />
-                <div>
-                  <h4 className="font-medium text-sm">Category</h4>
-                  <p className="text-gray-600">{shop.category}</p>
-                </div>
-              </div>
-              
-              <div className="flex items-start">
-                <Clock className="h-5 w-5 text-haluna-primary mt-0.5 mr-3 flex-shrink-0" />
-                <div>
-                  <h4 className="font-medium text-sm">Availability</h4>
-                  <p className="text-gray-600">Shop is currently open</p>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <h3 className="text-lg font-semibold mb-4">Contact Information</h3>
-            
-            <div className="space-y-4">
-              <div className="flex items-start">
-                <Phone className="h-5 w-5 text-haluna-primary mt-0.5 mr-3 flex-shrink-0" />
-                <div>
-                  <h4 className="font-medium text-sm">Phone</h4>
-                  <p className="text-gray-600">(123) 456-7890</p>
-                </div>
-              </div>
-              
-              <div className="flex items-start">
-                <Mail className="h-5 w-5 text-haluna-primary mt-0.5 mr-3 flex-shrink-0" />
-                <div>
-                  <h4 className="font-medium text-sm">Email</h4>
-                  <p className="text-gray-600">contact@{shop.name.toLowerCase().replace(/\s+/g, '')}.com</p>
-                </div>
-              </div>
-              
-              <Button className="w-full mt-2">
-                Contact Shop
-              </Button>
-            </div>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">Contact Information</h2>
+          <ul className="space-y-2">
+            <li className="flex items-center">
+              <MapPin className="h-5 w-5 mr-2 text-gray-500" />
+              {shop.location}
+            </li>
+            {shop.phone && (
+              <li className="flex items-center">
+                <Phone className="h-5 w-5 mr-2 text-gray-500" />
+                <a href={`tel:${shop.phone}`} className="text-haluna-primary hover:underline">
+                  {shop.phone}
+                </a>
+              </li>
+            )}
+            {shop.website && (
+              <li className="flex items-center">
+                <Globe className="h-5 w-5 mr-2 text-gray-500" />
+                <a href={shop.website} target="_blank" rel="noopener noreferrer" className="text-haluna-primary hover:underline">
+                  {shop.website}
+                </a>
+              </li>
+            )}
+          </ul>
+        </div>
+
+        <div>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">Location</h2>
+          <div className="h-64 rounded-lg overflow-hidden">
+            <MapComponent latitude={shop.latitude} longitude={shop.longitude} />
           </div>
         </div>
+      </div>
+
+      <ShopProductList products={shopProducts} shopName={shop.name} />
+
+      <div className="mt-8">
+        <AddReviewForm onSubmit={handleSubmitReview} />
+        <ReviewList reviews={reviews} />
       </div>
     </div>
   );

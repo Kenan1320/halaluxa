@@ -16,6 +16,9 @@ const MOCK_SELLER_ACCOUNTS: SellerAccount[] = [
     stripe_account_id: null,
     applepay_merchant_id: null,
     is_active: true,
+    is_verified: true,
+    balance: 5000.00,
+    currency: 'USD',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
   }
@@ -68,6 +71,9 @@ export const createSellerAccount = async (data: {
       stripe_account_id: data.stripeAccountId,
       applepay_merchant_id: data.applePayMerchantId,
       is_active: true,
+      is_verified: false,
+      balance: 0,
+      currency: 'USD',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };

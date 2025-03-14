@@ -22,12 +22,15 @@ export interface Product {
   sellerName?: string;
   rating?: number;
   details?: ProductDetails;
-  // Add these to match database type requirements
+  // Database compatibility fields
   shop_id?: string;
   created_at?: string;
   updated_at?: string;
   is_halal_certified?: boolean;
   in_stock?: boolean;
+  // Add more optional fields for compatibility
+  logo?: string;
+  logo_url?: string;
 }
 
 export const productCategories = [

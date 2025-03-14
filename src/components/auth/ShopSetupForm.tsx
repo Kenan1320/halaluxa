@@ -7,7 +7,12 @@ import { createShop } from '@/services/shopService';
 import { useNavigate } from 'react-router-dom';
 import { Shop } from '@/types/database';
 
-const ShopSetupForm = () => {
+interface ShopSetupFormProps {
+  onComplete?: () => void;
+  onSkip?: () => void;
+}
+
+const ShopSetupForm = ({ onComplete, onSkip }: ShopSetupFormProps) => {
   const { user, updateBusinessProfile } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -75,7 +80,11 @@ const ShopSetupForm = () => {
           title: "Success",
           description: "Your shop has been set up successfully",
         });
-        navigate("/dashboard");
+        if (onComplete) {
+          onComplete();
+        } else {
+          navigate("/dashboard");
+        }
       } else {
         throw new Error("Failed to create shop");
       }
@@ -183,9 +192,16 @@ const ShopSetupForm = () => {
         </p>
       </div>
       
-      <Button type="submit" disabled={isLoading} className="w-full">
-        {isLoading ? "Setting Up Your Shop..." : "Create My Shop"}
-      </Button>
+      <div className="flex gap-4">
+        {onSkip && (
+          <Button type="button" onClick={onSkip} variant="outline" className="w-full">
+            Skip for Now
+          </Button>
+        )}
+        <Button type="submit" disabled={isLoading} className="w-full">
+          {isLoading ? "Setting Up Your Shop..." : "Create My Shop"}
+        </Button>
+      </div>
     </form>
   );
 };

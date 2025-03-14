@@ -24,7 +24,7 @@ const SnoonuProductCard: React.FC<SnoonuProductCardProps> = ({
     e.preventDefault();
     e.stopPropagation();
     
-    // Convert ShopProduct to Product if needed
+    // Standardize product structure to match Product type
     const productToAdd: Product = {
       id: product.id,
       name: product.name,
@@ -36,9 +36,14 @@ const SnoonuProductCard: React.FC<SnoonuProductCardProps> = ({
       isHalalCertified: (product as Product).isHalalCertified || (product as ShopProduct).is_halal_certified || false,
       inStock: (product as Product).inStock || (product as ShopProduct).in_stock !== false,
       createdAt: (product as Product).createdAt || (product as ShopProduct).created_at || new Date().toISOString(),
-      sellerId: (product as Product).sellerId || (product as ShopProduct).sellerId,
-      sellerName: (product as Product).sellerName || (product as ShopProduct).sellerName,
-      rating: product.rating || 0
+      sellerId: (product as Product).sellerId || (product as ShopProduct).seller_id,
+      sellerName: (product as Product).sellerName || (product as ShopProduct).shop_name,
+      rating: product.rating || 0,
+      // Ensure compatibility fields exist
+      shop_id: (product as Product).shopId || (product as ShopProduct).shop_id || '',
+      created_at: (product as Product).createdAt || (product as ShopProduct).created_at || new Date().toISOString(),
+      is_halal_certified: (product as Product).isHalalCertified || (product as ShopProduct).is_halal_certified || false,
+      in_stock: (product as Product).inStock || (product as ShopProduct).in_stock !== false
     };
     
     addToCart(productToAdd, 1);
@@ -50,9 +55,8 @@ const SnoonuProductCard: React.FC<SnoonuProductCardProps> = ({
   };
   
   const hasHalalCertification = 
-    (product as Product).isHalalCertified !== undefined ? 
-    (product as Product).isHalalCertified : 
-    (product as ShopProduct).is_halal_certified;
+    'isHalalCertified' in product ? product.isHalalCertified : 
+    'is_halal_certified' in product ? product.is_halal_certified : false;
   
   return (
     <motion.div
@@ -77,7 +81,7 @@ const SnoonuProductCard: React.FC<SnoonuProductCardProps> = ({
       <Link to={`/product/${product.id}`}>
         <div className="h-36 overflow-hidden">
           <img 
-            src={product.images[0] || '/placeholder-product.png'} 
+            src={product.images && product.images.length > 0 ? product.images[0] : '/placeholder-product.png'} 
             alt={product.name}
             className="w-full h-full object-cover"
           />

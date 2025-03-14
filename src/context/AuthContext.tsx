@@ -112,11 +112,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           state: data.state,
           zip: data.zip,
           avatar_url: data.avatar_url,
-          shop_name: data.shop_name,
-          shop_description: data.shop_description,
-          shop_category: data.shop_category,
-          shop_location: data.shop_location,
-          shop_logo: data.shop_logo,
+          shop_name: 'shop_name' in data ? data.shop_name : undefined,
+          shop_description: 'shop_description' in data ? data.shop_description : undefined,
+          shop_category: 'shop_category' in data ? data.shop_category : undefined,
+          shop_location: 'shop_location' in data ? data.shop_location : undefined,
+          shop_logo: 'shop_logo' in data ? data.shop_logo : undefined,
         };
         
         setUser(userProfile);
@@ -315,7 +315,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       setIsLoading(true);
       
-      const dbProfile: Partial<DatabaseProfile> = {};
+      // Create a compatible dbProfile object
+      const dbProfile: Record<string, any> = {};
       
       if (businessProfile.shop_name !== undefined) dbProfile.shop_name = businessProfile.shop_name;
       if (businessProfile.shop_description !== undefined) dbProfile.shop_description = businessProfile.shop_description;
