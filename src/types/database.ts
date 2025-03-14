@@ -1,4 +1,3 @@
-
 export interface DatabaseProfile {
   id: string;
   name: string;
@@ -72,6 +71,12 @@ export interface Product {
   pickup_options?: {
     store: boolean;
     curbside: boolean;
+  };
+  shipping_details?: {
+    tracking_number?: string;
+    carrier?: string;
+    estimated_arrival?: string;
+    status?: string;
   };
 }
 

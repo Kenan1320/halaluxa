@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { CartItem } from '@/models/cart';
 import { Product } from '@/models/product';
@@ -166,6 +165,9 @@ export const getSellerAccount = async (): Promise<SellerAccount | null> => {
       stripe_account_id: '',
       applepay_merchant_id: '',
       is_active: true,
+      is_verified: true,
+      balance: 0,
+      currency: 'QAR',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
@@ -200,6 +202,9 @@ export const getAllSellerAccounts = async (): Promise<SellerAccount[]> => {
       stripe_account_id: '',
       applepay_merchant_id: '',
       is_active: true,
+      is_verified: true,
+      balance: 0,
+      currency: 'QAR',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     }];
@@ -255,6 +260,9 @@ export const updateSellerAccount = async (
       stripe_account_id: accountData.stripe_account_id || '',
       applepay_merchant_id: accountData.applepay_merchant_id || '',
       is_active: true,
+      is_verified: true,
+      balance: accountData.balance || 0,
+      currency: accountData.currency || 'QAR',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };

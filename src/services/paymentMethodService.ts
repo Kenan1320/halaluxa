@@ -1,8 +1,7 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { SellerAccount } from '@/types/database';
 
-// Mock seller accounts for development
+// Update the MOCK_SELLER_ACCOUNTS to include required fields
 const MOCK_SELLER_ACCOUNTS: SellerAccount[] = [
   {
     id: '1',
@@ -12,9 +11,9 @@ const MOCK_SELLER_ACCOUNTS: SellerAccount[] = [
     account_name: 'Main Business Account',
     account_number: '1234567890',
     bank_name: 'Chase Bank',
-    paypal_email: null,
-    stripe_account_id: null,
-    applepay_merchant_id: null,
+    paypal_email: '',
+    stripe_account_id: '',
+    applepay_merchant_id: '',
     is_active: true,
     is_verified: true,
     balance: 5000.00,
@@ -46,6 +45,7 @@ export const getSellerAccountByShopId = async (shopId: string): Promise<SellerAc
   }
 };
 
+// Update createSellerAccount to include required fields
 export const createSellerAccount = async (data: {
   userId: string;
   shopId?: string;
@@ -64,12 +64,12 @@ export const createSellerAccount = async (data: {
       user_id: data.userId,
       shop_id: data.shopId,
       account_type: data.accountType,
-      account_name: data.accountName,
-      account_number: data.accountNumber,
-      bank_name: data.bankName,
-      paypal_email: data.paypalEmail,
-      stripe_account_id: data.stripeAccountId,
-      applepay_merchant_id: data.applePayMerchantId,
+      account_name: data.accountName || '',
+      account_number: data.accountNumber || '',
+      bank_name: data.bankName || '',
+      paypal_email: data.paypalEmail || '',
+      stripe_account_id: data.stripeAccountId || '',
+      applepay_merchant_id: data.applePayMerchantId || '',
       is_active: true,
       is_verified: false,
       balance: 0,

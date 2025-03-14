@@ -12,8 +12,8 @@ const convertToModelProduct = (product: DbProduct): ModelProduct => {
     shopId: product.shop_id,
     category: product.category,
     images: product.images || [],
-    isHalalCertified: product.is_halal_certified,
-    inStock: product.in_stock,
+    isHalalCertified: product.is_halal_certified || false,
+    inStock: product.in_stock !== undefined ? product.in_stock : true,
     createdAt: product.created_at,
     sellerId: product.seller_id || product.shop_id,
     sellerName: product.shop_name || '', // This would typically come from a join
@@ -22,8 +22,9 @@ const convertToModelProduct = (product: DbProduct): ModelProduct => {
     shop_id: product.shop_id,
     created_at: product.created_at,
     updated_at: product.updated_at,
-    is_halal_certified: product.is_halal_certified,
-    in_stock: product.in_stock
+    is_halal_certified: product.is_halal_certified || false,
+    in_stock: product.in_stock !== undefined ? product.in_stock : true,
+    longDescription: product.long_description,
   };
 };
 
@@ -71,7 +72,8 @@ export const createProduct = async (productData: Partial<DbProduct>): Promise<Db
         is_halal_certified: productData.is_halal_certified || false,
         in_stock: productData.in_stock !== undefined ? productData.in_stock : true,
         created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
+        long_description: productData.long_description || productData.description
       })
       .select()
       .single();

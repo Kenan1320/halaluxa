@@ -36,8 +36,8 @@ const SnoonuProductCard: React.FC<SnoonuProductCardProps> = ({
       isHalalCertified: (product as Product).isHalalCertified || (product as ShopProduct).is_halal_certified || false,
       inStock: (product as Product).inStock || (product as ShopProduct).in_stock !== false,
       createdAt: (product as Product).createdAt || (product as ShopProduct).created_at || new Date().toISOString(),
-      sellerId: (product as Product).sellerId || (product as ShopProduct).seller_id,
-      sellerName: (product as Product).sellerName || (product as ShopProduct).shop_name,
+      sellerId: (product as Product).sellerId || (product as ShopProduct).sellerId,
+      sellerName: (product as Product).sellerName || (product as ShopProduct).sellerName,
       rating: product.rating || 0,
       // Ensure compatibility fields exist
       shop_id: (product as Product).shopId || (product as ShopProduct).shop_id || '',

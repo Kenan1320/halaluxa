@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Shop, Product } from '@/types/database';
 import { Shop as ModelShop, ShopProduct } from '@/models/shop';
@@ -74,14 +73,14 @@ export const getShopProducts = async (shopId: string): Promise<ShopProduct[]> =>
       description: item.description,
       category: item.category,
       images: item.images || [], 
+      shop_id: item.shop_id,
       sellerId: item.seller_id || item.shop_id || '', // Use shop_id as seller_id if not available
       sellerName: item.shop_name || 'Shop Owner',
       rating: item.rating || 0,
-      shop_id: item.shop_id,
       created_at: item.created_at,
       updated_at: item.updated_at,
       is_halal_certified: item.is_halal_certified || false,
-      in_stock: item.in_stock !== false
+      in_stock: item.in_stock !== undefined ? item.in_stock : true
     }));
   } catch (error) {
     console.error(`Error fetching products for shop with ID ${shopId}:`, error);
@@ -98,19 +97,19 @@ export const convertToModelProduct = (product: Product): ModelProduct => {
     price: product.price,
     images: product.images || [],
     category: product.category,
-    shopId: product.shop_id,
+    shopId: product.shop_id || '',
     isHalalCertified: product.is_halal_certified || false,
-    inStock: product.in_stock !== false,
-    createdAt: product.created_at,
-    sellerId: product.seller_id || product.shop_id, // Map shop_id to sellerId
+    inStock: product.in_stock !== undefined ? product.in_stock : true,
+    createdAt: product.created_at || new Date().toISOString(),
+    sellerId: product.seller_id || product.shop_id || '', // Map shop_id to sellerId
     sellerName: product.shop_name || 'Shop Owner',
     rating: product.rating || 0,
     details: product.details || {},
-    shop_id: product.shop_id,
-    created_at: product.created_at,
-    updated_at: product.updated_at,
-    is_halal_certified: product.is_halal_certified,
-    in_stock: product.in_stock
+    shop_id: product.shop_id || '',
+    created_at: product.created_at || new Date().toISOString(),
+    updated_at: product.updated_at || new Date().toISOString(),
+    is_halal_certified: product.is_halal_certified || false,
+    in_stock: product.in_stock !== undefined ? product.in_stock : true
   };
 };
 

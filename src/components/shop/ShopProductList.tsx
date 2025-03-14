@@ -1,24 +1,73 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Filter, ChevronDown } from 'lucide-react';
 import { ShopProduct } from '@/models/shop';
 import { Product as ModelProduct } from '@/models/product';
 import SnoonuProductCard from './SnoonuProductCard';
+import { getProductsByShopId } from '@/services/productService';
 
 interface ShopProductListProps {
-  products: ShopProduct[];
-  shopName: string;
+  products?: ShopProduct[];
+  shopName?: string;
+  shopId?: string;
 }
 
-const ShopProductList: React.FC<ShopProductListProps> = ({ products, shopName }) => {
+const ShopProductList: React.FC<ShopProductListProps> = ({ products: initialProducts, shopName, shopId }) => {
   const [filterVisible, setFilterVisible] = useState(false);
   const [sortBy, setSortBy] = useState<'default' | 'price-low' | 'price-high' | 'name'>('default');
+  const [products, setProducts] = useState<ShopProduct[]>([]);
+  const [loading, setLoading] = useState(false);
+  
+  useEffect(() => {
+    if (initialProducts) {
+      setProducts(initialProducts);
+    } else if (shopId) {
+      const fetchProducts = async () => {
+        setLoading(true);
+        try {
+          const fetchedProducts = await getProductsByShopId(shopId);
+          // Convert ModelProduct[] to ShopProduct[]
+          const shopProducts: ShopProduct[] = fetchedProducts.map(p => ({
+            id: p.id,
+            name: p.name,
+            description: p.description,
+            price: p.price,
+            images: p.images,
+            category: p.category,
+            shop_id: p.shopId || p.shop_id,
+            created_at: p.createdAt || p.created_at,
+            updated_at: p.updated_at,
+            is_halal_certified: p.isHalalCertified || p.is_halal_certified,
+            in_stock: p.inStock || p.in_stock,
+            sellerId: p.sellerId || p.seller_id,
+            sellerName: p.sellerName || p.shop_name,
+            rating: p.rating
+          }));
+          setProducts(shopProducts);
+        } catch (error) {
+          console.error("Error fetching products for shop:", error);
+        } finally {
+          setLoading(false);
+        }
+      };
+      
+      fetchProducts();
+    }
+  }, [initialProducts, shopId]);
+  
+  if (loading) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-gray-500">Loading products...</p>
+      </div>
+    );
+  }
   
   if (!products || products.length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-500">No products available from {shopName} at the moment.</p>
+        <p className="text-gray-500">No products available{shopName ? ` from ${shopName}` : ''} at the moment.</p>
       </div>
     );
   }
@@ -37,27 +86,6 @@ const ShopProductList: React.FC<ShopProductListProps> = ({ products, shopName })
     }
     return 0;
   });
-  
-  // Convert ShopProduct to ModelProduct for compatibility with ProductCard
-  const convertToModelProduct = (product: ShopProduct): ModelProduct => {
-    return {
-      id: product.id,
-      name: product.name,
-      description: product.description,
-      price: product.price,
-      images: product.images || [],
-      category: product.category,
-      shopId: product.shop_id || '',
-      isHalalCertified: product.is_halal_certified || false,
-      inStock: product.in_stock !== false,
-      createdAt: product.created_at || new Date().toISOString(),
-      shop_id: product.shop_id,
-      in_stock: product.in_stock,
-      is_halal_certified: product.is_halal_certified,
-      created_at: product.created_at,
-      updated_at: product.updated_at
-    };
-  };
   
   return (
     <div className="mt-6">

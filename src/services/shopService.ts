@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import type { Shop } from '@/types/database';
 import { 
@@ -219,5 +218,46 @@ export const deleteShop = async (id: string): Promise<boolean> => {
   } catch (error) {
     console.error(`Error deleting shop with ID ${id}:`, error);
     return false;
+  }
+};
+
+// Mock implementation for updateUserShopPreference
+export const updateUserShopPreference = async (
+  shopId: string,
+  userId: string,
+  preferences: { is_favorite?: boolean; is_following?: boolean; is_main_shop?: boolean }
+): Promise<{ data: { is_favorite: boolean; is_following: boolean } | null; error: any }> => {
+  try {
+    const { data, error } = await supabase
+      .from('user_shop_preferences')
+      .upsert(
+        {
+          user_id: userId,
+          shop_id: shopId,
+          ...(preferences.is_favorite !== undefined && { is_favorite: preferences.is_favorite }),
+          ...(preferences.is_following !== undefined && { is_following: preferences.is_following }),
+          ...(preferences.is_main_shop !== undefined && { is_main_shop: preferences.is_main_shop }),
+          updated_at: new Date().toISOString()
+        },
+        { onConflict: 'user_id,shop_id' }
+      )
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error updating shop preferences:', error);
+      return { data: null, error };
+    }
+
+    return { 
+      data: { 
+        is_favorite: data.is_favorite, 
+        is_following: data.is_following 
+      }, 
+      error: null 
+    };
+  } catch (error) {
+    console.error('Error in updateUserShopPreference:', error);
+    return { data: null, error };
   }
 };
