@@ -12,7 +12,7 @@ const LocationBar = () => {
   
   const handleLocationClick = () => {
     if (!isLocationEnabled) {
-      logger.info('User requesting location');
+      logger.info('User requesting location silently');
       requestLocation();
     } else {
       setIsEditing(true);
@@ -37,7 +37,7 @@ const LocationBar = () => {
         <div className="flex flex-col mr-2">
           <span className="text-xs text-gray-500">How do you want your items?</span>
           <div className="flex items-center">
-            <MapPin className="h-4 w-4 text-[#183080] mr-1" />
+            <MapPin className="h-4 w-4 text-[#0F1B44] mr-1" />
             
             {isEditing ? (
               <form onSubmit={handleSubmit} className="flex items-center">

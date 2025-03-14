@@ -12,14 +12,11 @@ import {
 export function Toaster() {
   const { toasts } = useToast()
 
-  // Filter out unwanted toasts (optional)
+  // Filter out unwanted toasts - specifically location-related ones
   const filteredToasts = toasts.filter(toast => {
-    // Filter logic - you can add conditions here to hide specific toasts
-    // For example, to hide location-related toasts:
-    if (toast.title === "Location enabled" || 
-        toast.title === "Location access denied" ||
-        toast.title === "Location timeout" ||
-        toast.title === "Location error") {
+    // Filter out all location-related toasts
+    if (toast.title?.toLowerCase().includes('location') || 
+        toast.description?.toLowerCase().includes('location')) {
       return false;
     }
     return true;

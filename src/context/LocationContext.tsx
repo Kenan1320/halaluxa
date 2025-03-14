@@ -39,7 +39,7 @@ export const LocationProvider: React.FC<LocationProviderProps> = ({ children }) 
   const { toast } = useToast();
   const [isLocationEnabled, setIsLocationEnabled] = useState<boolean>(false);
   const [location, setLocation] = useState<EnhancedLocation | null>(null);
-  const [hasShownLocationToast, setHasShownLocationToast] = useState<boolean>(false);
+  const [hasShownLocationToast, setHasShownLocationToast] = useState<boolean>(true); // Set to true to prevent initial toast
 
   useEffect(() => {
     // Check if geolocation is available in the browser
@@ -48,7 +48,7 @@ export const LocationProvider: React.FC<LocationProviderProps> = ({ children }) 
       return;
     }
 
-    // Check if location permission was previously granted
+    // Check if location permission was previously granted, but don't show toast
     if (localStorage.getItem('locationPermission') === 'granted') {
       enableLocation(false); // Silent mode - no toast
     }
@@ -72,7 +72,7 @@ export const LocationProvider: React.FC<LocationProviderProps> = ({ children }) 
     }
   };
 
-  const enableLocation = async (showToast: boolean = true): Promise<boolean> => {
+  const enableLocation = async (showToast: boolean = false): Promise<boolean> => {
     if (!navigator.geolocation) {
       return false;
     }
@@ -103,38 +103,22 @@ export const LocationProvider: React.FC<LocationProviderProps> = ({ children }) 
       setIsLocationEnabled(true);
       localStorage.setItem('locationPermission', 'granted');
       
-      // Only show toast if explicitly asked and hasn't shown before
-      if (showToast && !hasShownLocationToast) {
-        toast({
-          title: "Location enabled",
-          description: "We can now show shops near you.",
-        });
-        setHasShownLocationToast(true);
-      }
+      // Completely disabled toasts for location
+      // Only logging for debugging
+      logger.info("Location enabled silently", { city, state });
 
       return true;
     } catch (error) {
       logger.error('Error getting location:', error);
       
+      // No toasts for location errors either, just log them
       if (error instanceof GeolocationPositionError) {
-        if (error.code === error.PERMISSION_DENIED && showToast) {
-          toast({
-            title: "Location access denied",
-            description: "Please enable location in your browser settings to see nearby shops.",
-            variant: "destructive",
-          });
-        } else if (error.code === error.TIMEOUT && showToast) {
-          toast({
-            title: "Location timeout",
-            description: "Getting your location took too long. Please try again.",
-            variant: "destructive",
-          });
-        } else if (showToast) {
-          toast({
-            title: "Location error",
-            description: "Could not get your location. Please try again.",
-            variant: "destructive",
-          });
+        if (error.code === error.PERMISSION_DENIED) {
+          logger.warn("Location access denied");
+        } else if (error.code === error.TIMEOUT) {
+          logger.warn("Location timeout");
+        } else {
+          logger.warn("Location error");
         }
       }
       
@@ -142,9 +126,9 @@ export const LocationProvider: React.FC<LocationProviderProps> = ({ children }) 
     }
   };
 
-  // Add the requestLocation function (will show toasts)
+  // Add the requestLocation function (will NOT show toasts)
   const requestLocation = async (): Promise<boolean> => {
-    return enableLocation(true);
+    return enableLocation(false); // Changed to false to prevent toasts
   };
 
   const getNearbyShops = async (): Promise<Shop[]> => {

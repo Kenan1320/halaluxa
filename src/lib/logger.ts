@@ -5,9 +5,9 @@
  */
 
 // Set to false in production to disable all logs
-const ENABLE_LOGS = false; // Changed to false to stop all logs except errors
+const ENABLE_LOGS = false;
 
-// Set to true to enable debug level logs
+// Set to false to disable debug level logs
 const ENABLE_DEBUG = false;
 
 export const logger = {
@@ -34,9 +34,8 @@ export const logger = {
   
   // Error logs - should always be enabled even in production
   error: (message: string, ...args: any[]) => {
-    if (ENABLE_LOGS) {
-      console.error(`[ERROR] ${message}`, ...args);
-    }
+    // Error logs are the only ones still enabled
+    console.error(`[ERROR] ${message}`, ...args);
   },
   
   // Debug logs - very verbose, disabled by default
