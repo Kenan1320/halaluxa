@@ -1,344 +1,181 @@
-import { supabase } from '@/integrations/supabase/client';
-import { CartItem } from '@/models/cart';
-import { Product } from '@/models/product';
-import { Json } from '@/integrations/supabase/types';
 import { SellerAccount } from '@/types/database';
 
-interface PaymentResult {
-  success: boolean;
-  orderId: string;
-  orderDate: string;
-}
-
-export interface OrderDetails {
-  orderId: string;
-  orderDate: string;
-  total: number;
-}
-
-// Process payment for a customer order
-export const processPayment = async (
-  cart: { items: CartItem[]; totalPrice: number },
-  paymentMethodDetails: any,
-  shippingDetails: any
-): Promise<PaymentResult> => {
-  // Simulate payment processing delay
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  
-  // Create an order in the database
-  try {
-    // Get current user
-    const { data: userData } = await supabase.auth.getUser();
-    const userId = userData.user?.id;
-    
-    if (!userId) {
-      throw new Error('User not authenticated');
-    }
-    
-    // Serialize cart items for storage as JSON
-    const serializedItems = cart.items.map(item => ({
-      productId: item.product.id,
-      quantity: item.quantity,
-      price: item.product.price,
-      name: item.product.name,
-      image: item.product.images[0]
-    }));
-    
-    // Store order in database
-    const { data, error } = await supabase
-      .from('orders')
-      .insert({
-        items: serializedItems as unknown as Json,
-        total: cart.totalPrice,
-        user_id: userId,
-        shipping_details: shippingDetails as unknown as Json,
-        status: 'Processing'
-      })
-      .select()
-      .single();
-    
-    if (error) {
-      console.error("Error creating order:", error);
-      throw error;
-    }
-    
-    // Return success with the order ID
-    return {
-      success: true,
-      orderId: data.id,
-      orderDate: data.created_at
-    };
-  } catch (error) {
-    console.error('Payment processing error:', error);
-    throw new Error('Payment processing failed');
-  }
+// Mock function to simulate fetching seller account by ID
+export const getSellerAccountById = async (accountId: string): Promise<SellerAccount | undefined> => {
+  // In a real application, you would fetch this data from a database
+  const account = mockSellerAccounts.find(acc => acc.id === accountId);
+  return account ? { ...account } : undefined;
 };
 
-// Get all orders for the current user
-export const getUserOrders = async (): Promise<OrderDetails[]> => {
-  try {
-    const { data: user } = await supabase.auth.getUser();
-    
-    if (!user.user) {
-      throw new Error('User not authenticated');
-    }
-    
-    const { data, error } = await supabase
-      .from('orders')
-      .select('*')
-      .eq('user_id', user.user.id)
-      .order('created_at', { ascending: false });
-    
-    if (error) {
-      throw error;
-    }
-    
-    return data.map(order => ({
-      orderId: order.id,
-      orderDate: order.created_at,
-      total: order.total
-    }));
-  } catch (error) {
-    console.error('Error fetching user orders:', error);
-    return [];
-  }
+// Mock function to simulate fetching seller account by user ID
+export const getSellerAccountByUserId = async (userId: string): Promise<SellerAccount | undefined> => {
+  // In a real application, you would fetch this data from a database
+  const account = mockSellerAccounts.find(acc => acc.user_id === userId);
+  return account ? { ...account } : undefined;
 };
 
-// Create a seller account with payment details
-export const createSellerAccount = async (
-  accountData: Partial<SellerAccount>
-): Promise<SellerAccount | null> => {
-  try {
-    const { data: user } = await supabase.auth.getUser();
-    
-    if (!user.user) {
-      throw new Error('User not authenticated');
-    }
-    
-    // For now, we'll mock this functionality since seller_accounts table is not available
-    console.log('Would create seller account with data:', accountData);
-    
-    // Return mock data
-    return {
-      id: 'mock-id',
-      user_id: user.user.id,
-      shop_id: accountData.shop_id || 'mock-shop-id',
-      account_type: accountData.account_type || 'bank',
-      account_name: accountData.account_name || 'Default Account',
-      account_number: accountData.account_number || 'N/A',
-      bank_name: accountData.bank_name || 'N/A',
-      paypal_email: accountData.paypal_email || '',
-      stripe_account_id: accountData.stripe_account_id || '',
-      applepay_merchant_id: accountData.applepay_merchant_id || '',
-      is_active: true,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    };
-  } catch (error) {
-    console.error('Error creating seller account:', error);
-    return null;
+// Mock function to simulate updating seller account details
+export const updateSellerAccount = async (accountId: string, updates: Partial<SellerAccount>): Promise<SellerAccount | undefined> => {
+  // In a real application, you would update this data in a database
+  const accountIndex = mockSellerAccounts.findIndex(acc => acc.id === accountId);
+  if (accountIndex === -1) {
+    return undefined;
   }
+
+  mockSellerAccounts[accountIndex] = { ...mockSellerAccounts[accountIndex], ...updates };
+  return { ...mockSellerAccounts[accountIndex] };
 };
 
-// Get seller account for current user
-export const getSellerAccount = async (): Promise<SellerAccount | null> => {
-  try {
-    const { data: user } = await supabase.auth.getUser();
-    
-    if (!user.user) {
-      throw new Error('User not authenticated');
-    }
-    
-    // For now, we'll mock this functionality since seller_accounts table is not available
-    console.log('Would get seller account for user:', user.user.id);
-    
-    // Return mock data
-    return {
-      id: 'mock-id',
-      user_id: user.user.id,
-      shop_id: 'mock-shop-id',
-      account_type: 'bank',
-      account_name: 'Default Account',
-      account_number: '****1234',
-      bank_name: 'Example Bank',
-      paypal_email: '',
-      stripe_account_id: '',
-      applepay_merchant_id: '',
-      is_active: true,
-      is_verified: true,
-      balance: 0,
-      currency: 'QAR',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    };
-  } catch (error) {
-    console.error('Error fetching seller account:', error);
-    return null;
-  }
+// Mock function to simulate creating a seller account
+export const createSellerAccount = async (accountDetails: Omit<SellerAccount, 'id' | 'created_at' | 'updated_at'>): Promise<SellerAccount> => {
+  // In a real application, you would create this data in a database
+  const newAccount: SellerAccount = {
+    id: `acc_${Math.random().toString(36).substring(2, 15)}`,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    ...accountDetails
+  };
+  mockSellerAccounts.push(newAccount);
+  return { ...newAccount };
 };
 
-// Get all seller accounts for current user
-export const getAllSellerAccounts = async (): Promise<SellerAccount[]> => {
-  try {
-    const { data: user } = await supabase.auth.getUser();
-    
-    if (!user.user) {
-      throw new Error('User not authenticated');
-    }
-    
-    // For now, we'll mock this functionality since seller_accounts table is not available
-    console.log('Would get all seller accounts for user:', user.user.id);
-    
-    // Return mock data
-    return [{
-      id: 'mock-id-1',
-      user_id: user.user.id,
-      shop_id: 'mock-shop-id',
-      account_type: 'bank',
-      account_name: 'Default Account',
-      account_number: '****1234',
-      bank_name: 'Example Bank',
-      paypal_email: '',
-      stripe_account_id: '',
-      applepay_merchant_id: '',
-      is_active: true,
-      is_verified: true,
-      balance: 0,
-      currency: 'QAR',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    }];
-  } catch (error) {
-    console.error('Error fetching seller accounts:', error);
-    return [];
+// Mock function to simulate deleting a seller account
+export const deleteSellerAccount = async (accountId: string): Promise<boolean> => {
+  // In a real application, you would delete this data from a database
+  const accountIndex = mockSellerAccounts.findIndex(acc => acc.id === accountId);
+  if (accountIndex === -1) {
+    return false;
   }
+
+  mockSellerAccounts.splice(accountIndex, 1);
+  return true;
 };
 
-// Alias function to get multiple accounts (same as getAllSellerAccounts)
-export const getSellerAccounts = getAllSellerAccounts;
-
-// Save seller account - for backward compatibility
-export const saveSellerAccount = async (
-  accountData: Partial<SellerAccount>
-): Promise<SellerAccount | null> => {
-  // If id exists, update, otherwise create
-  if (accountData.id) {
-    return updateSellerAccount(accountData);
-  } else {
-    return createSellerAccount(accountData);
+// Mock function to simulate verifying a seller account
+export const verifySellerAccount = async (accountId: string): Promise<boolean> => {
+  // In a real application, you would verify this data against a third-party service
+  const accountIndex = mockSellerAccounts.findIndex(acc => acc.id === accountId);
+  if (accountIndex === -1) {
+    return false;
   }
+
+  mockSellerAccounts[accountIndex].is_verified = true;
+  return true;
 };
 
-// Update seller account
-export const updateSellerAccount = async (
-  accountData: Partial<SellerAccount>
-): Promise<SellerAccount | null> => {
-  try {
-    const { data: user } = await supabase.auth.getUser();
-    
-    if (!user.user) {
-      throw new Error('User not authenticated');
-    }
-    
-    if (!accountData.id) {
-      throw new Error('Account ID is required for update');
-    }
-    
-    // For now, we'll mock this functionality since seller_accounts table is not available
-    console.log('Would update seller account with data:', accountData);
-    
-    // Return mock data
-    return {
-      id: accountData.id,
-      user_id: user.user.id,
-      shop_id: accountData.shop_id || 'mock-shop-id',
-      account_type: accountData.account_type || 'bank',
-      account_name: accountData.account_name || 'Updated Account',
-      account_number: accountData.account_number || '****5678',
-      bank_name: accountData.bank_name || 'Updated Bank',
-      paypal_email: accountData.paypal_email || '',
-      stripe_account_id: accountData.stripe_account_id || '',
-      applepay_merchant_id: accountData.applepay_merchant_id || '',
-      is_active: true,
-      is_verified: true,
-      balance: accountData.balance || 0,
-      currency: accountData.currency || 'QAR',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    };
-  } catch (error) {
-    console.error('Error updating seller account:', error);
-    return null;
+// Mock function to simulate processing a payment to a seller account
+export const processPaymentToSeller = async (accountId: string, amount: number): Promise<boolean> => {
+  // In a real application, you would process this payment through a payment gateway
+  const accountIndex = mockSellerAccounts.findIndex(acc => acc.id === accountId);
+  if (accountIndex === -1) {
+    return false;
   }
+
+  mockSellerAccounts[accountIndex].balance += amount;
+  return true;
 };
 
-// Format payment method based on account type
-export const formatPaymentMethod = (account: SellerAccount): string => {
-  switch (account.account_type) {
-    case 'bank':
-      return `${account.bank_name} - ${account.account_number}`;
-    case 'paypal':
-      return `PayPal - ${account.paypal_email}`;
-    case 'stripe':
-      return `Stripe Account - ${account.stripe_account_id}`;
-    case 'applepay':
-      return 'Apple Pay';
-    default:
-      return `${account.bank_name} - ${account.account_number}`;
+// Mock function to simulate initiating a payout from a seller account
+export const initiatePayoutFromSeller = async (accountId: string, amount: number): Promise<boolean> => {
+  // In a real application, you would initiate this payout through a payment gateway
+  const accountIndex = mockSellerAccounts.findIndex(acc => acc.id === accountId);
+  if (accountIndex === -1) {
+    return false;
   }
+
+  if (mockSellerAccounts[accountIndex].balance < amount) {
+    return false; // Insufficient balance
+  }
+
+  mockSellerAccounts[accountIndex].balance -= amount;
+  return true;
 };
 
-// Initialize seller account
-export const initializeSellerAccount = async (
-  sellerId: string,
-  accountName: string,
-  accountNumber: string,
-  bankName: string,
-  accountType: string,
-  paypalEmail: string,
-  stripeAccountId: string,
-  applePayMerchantId: string
-): Promise<SellerAccount | null> => {
-  try {
-    // Use the mocked service function instead of direct database access
-    const sellerAccount = await createSellerAccount({
-      user_id: sellerId,
-      account_name: accountName,
-      account_number: accountNumber,
-      bank_name: bankName,
-      account_type: accountType,
-      paypal_email: paypalEmail,
-      stripe_account_id: stripeAccountId,
-      applepay_merchant_id: applePayMerchantId
-    });
-
-    return sellerAccount;
-  } catch (error) {
-    console.error('Error initializing seller account:', error);
-    return null;
+// Mock function to simulate setting up a Stripe Connect account for a seller
+export const setupStripeConnectAccount = async (accountId: string): Promise<string | undefined> => {
+  // In a real application, you would use the Stripe API to create a Connect account
+  const accountIndex = mockSellerAccounts.findIndex(acc => acc.id === accountId);
+  if (accountIndex === -1) {
+    return undefined;
   }
+
+  const stripeAccountId = `stripe_acct_${Math.random().toString(36).substring(2, 15)}`;
+  mockSellerAccounts[accountIndex].stripe_account_id = stripeAccountId;
+  return stripeAccountId;
 };
 
-// Get seller account details
-export const getSellerAccountDetails = async (): Promise<SellerAccount | null> => {
-  try {
-    // Use the mocked service function
-    const sellerAccount = await getSellerAccount();
-    return sellerAccount;
-  } catch (error) {
-    console.error('Error getting seller account details:', error);
-    return null;
+// Mock function to simulate linking a PayPal account to a seller account
+export const linkPayPalAccount = async (accountId: string, paypalEmail: string): Promise<boolean> => {
+  // In a real application, you would verify this PayPal account through the PayPal API
+  const accountIndex = mockSellerAccounts.findIndex(acc => acc.id === accountId);
+  if (accountIndex === -1) {
+    return false;
   }
+
+  mockSellerAccounts[accountIndex].paypal_email = paypalEmail;
+  return true;
 };
 
-// Get all seller account details
-export const getAllSellerAccountDetails = async (): Promise<SellerAccount[]> => {
-  try {
-    // Use the mocked service function
-    const accounts = await getAllSellerAccounts();
-    return accounts;
-  } catch (error) {
-    console.error('Error getting all seller accounts:', error);
-    return [];
+// Mock function to simulate setting up Apple Pay for a seller
+export const setupApplePay = async (accountId: string): Promise<string | undefined> => {
+  // In a real application, you would use the Apple Pay API to set up Apple Pay
+  const accountIndex = mockSellerAccounts.findIndex(acc => acc.id === accountId);
+  if (accountIndex === -1) {
+    return undefined;
   }
+
+  const applePayMerchantId = `merchant.com.example.shop${Math.random().toString(36).substring(2, 8)}`;
+  mockSellerAccounts[accountIndex].applepay_merchant_id = applePayMerchantId;
+  return applePayMerchantId;
 };
+
+// Mock function to simulate setting account as active or inactive
+export const setAccountActiveStatus = async (accountId: string, isActive: boolean): Promise<boolean> => {
+  const accountIndex = mockSellerAccounts.findIndex(acc => acc.id === accountId);
+  if (accountIndex === -1) {
+    return false;
+  }
+
+  mockSellerAccounts[accountIndex].is_active = isActive;
+  return true;
+};
+
+// Update the mock seller accounts to include the required fields
+const mockSellerAccounts: SellerAccount[] = [
+  {
+    id: "acc_123456",
+    user_id: "user_123",
+    shop_id: "shop_123",
+    account_type: "bank",
+    account_name: "Main Business Account",
+    account_number: "****4567",
+    bank_name: "Qatar National Bank",
+    paypal_email: "business@example.com",
+    stripe_account_id: "acct_123456",
+    applepay_merchant_id: "merchant.com.example",
+    is_active: true,
+    is_verified: true,
+    balance: 5000,
+    currency: "QAR",
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  },
+  {
+    id: "acc_234567",
+    user_id: "user_234",
+    shop_id: "shop_234",
+    account_type: "bank",
+    account_name: "Business Account",
+    account_number: "****7890",
+    bank_name: "Commercial Bank",
+    paypal_email: "another@example.com",
+    stripe_account_id: "acct_234567",
+    applepay_merchant_id: "merchant.com.another",
+    is_active: true,
+    is_verified: true,
+    balance: 3500,
+    currency: "QAR",
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  }
+];

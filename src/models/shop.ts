@@ -34,12 +34,17 @@ export interface ShopProduct {
   category: string;
   images: string[];
   shop_id?: string;
+  shopId?: string;
   created_at?: string;
   updated_at?: string;
   is_halal_certified?: boolean;
+  isHalalCertified?: boolean;
   in_stock?: boolean;
+  inStock?: boolean;
   sellerId?: string;
+  seller_id?: string;
   sellerName?: string;
+  shop_name?: string;
   rating?: number;
 }
 
@@ -65,3 +70,28 @@ export interface ShopFilterOptions {
     longitude: number;
   };
 }
+
+// Helper function to convert database product to model product format
+export const adaptToModelProduct = (product: any): ShopProduct => {
+  return {
+    id: product.id,
+    name: product.name,
+    description: product.description,
+    price: product.price,
+    category: product.category,
+    images: product.images || [],
+    shop_id: product.shop_id,
+    shopId: product.shop_id,
+    created_at: product.created_at,
+    updated_at: product.updated_at,
+    is_halal_certified: product.is_halal_certified,
+    isHalalCertified: product.is_halal_certified,
+    in_stock: product.in_stock ?? true,
+    inStock: product.in_stock ?? true,
+    sellerId: product.seller_id,
+    seller_id: product.seller_id,
+    sellerName: product.seller_name || product.shop_name,
+    shop_name: product.shop_name,
+    rating: product.rating || 0
+  };
+};

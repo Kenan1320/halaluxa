@@ -74,6 +74,7 @@ export const getShopProducts = async (shopId: string): Promise<ShopProduct[]> =>
       category: item.category,
       images: item.images || [], 
       shop_id: item.shop_id,
+      shopId: item.shop_id,
       sellerId: item.seller_id || item.shop_id || '', // Use shop_id as seller_id if not available
       sellerName: item.shop_name || 'Shop Owner',
       rating: item.rating || 0,
@@ -110,6 +111,31 @@ export const convertToModelProduct = (product: Product): ModelProduct => {
     updated_at: product.updated_at || new Date().toISOString(),
     is_halal_certified: product.is_halal_certified || false,
     in_stock: product.in_stock !== undefined ? product.in_stock : true
+  };
+};
+
+// Update functions to handle the missing fields
+export const adaptDbProductToShopProduct = (product: any): ShopProduct => {
+  return {
+    id: product.id,
+    name: product.name,
+    description: product.description,
+    price: product.price,
+    category: product.category,
+    images: product.images || [],
+    shop_id: product.shop_id,
+    shopId: product.shop_id,
+    created_at: product.created_at,
+    updated_at: product.updated_at,
+    is_halal_certified: product.is_halal_certified,
+    isHalalCertified: product.is_halal_certified,
+    in_stock: product.in_stock ?? true,
+    inStock: product.in_stock ?? true,
+    sellerId: product.seller_id || product.sellerId || '',
+    seller_id: product.seller_id || product.sellerId || '',
+    sellerName: product.sellerName || product.shop_name || '',
+    shop_name: product.shop_name || product.sellerName || '',
+    rating: product.rating || 0
   };
 };
 
