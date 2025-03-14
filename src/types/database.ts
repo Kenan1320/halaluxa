@@ -25,16 +25,16 @@ export interface Shop {
   description: string;
   location: string;
   category: string;
-  logo_url: string;
-  cover_image?: string;
+  logo_url: string | null;
+  cover_image?: string | null;
   rating: number;
   product_count: number;
   owner_id: string;
   is_verified: boolean;
   created_at: string;
   updated_at: string;
-  latitude?: number;
-  longitude?: number;
+  latitude?: number | null;
+  longitude?: number | null;
   delivery_available?: boolean;
   pickup_available?: boolean;
   is_halal_certified?: boolean;
@@ -44,9 +44,9 @@ export interface Shop {
   phone?: string;
   email?: string;
   website?: string;
-  distance?: number;
+  distance?: number | null;
   // Add logo for compatibility with frontend references
-  logo?: string;
+  logo?: string | null;
 }
 
 export interface Product {

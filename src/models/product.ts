@@ -1,3 +1,4 @@
+
 export interface ProductDetails {
   weight?: string;
   servings?: string;
@@ -15,12 +16,18 @@ export interface Product {
   category: string;
   shopId: string;
   isHalalCertified: boolean;
-  inStock?: boolean;
+  inStock: boolean;
   createdAt: string;
   sellerId?: string;
   sellerName?: string;
   rating?: number;
   details?: ProductDetails;
+  // Add these to match database type requirements
+  shop_id?: string;
+  created_at?: string;
+  updated_at?: string;
+  is_halal_certified?: boolean;
+  in_stock?: boolean;
 }
 
 export const productCategories = [

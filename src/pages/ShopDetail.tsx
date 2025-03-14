@@ -1,10 +1,11 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useLocation } from '@/context/LocationContext';
-import { getShopProducts } from '@/services/shopServiceHelpers';
+import { getShopProducts } from '@/services/shopService';
 import { getShopById } from '@/services/shopService';
 import { Shop } from '@/types/database';
-import { Shop as ModelShop, ShopProduct } from '@/models/shop';
+import { Shop as ModelShop, ShopProduct, adaptToModelShop } from '@/models/shop';
 import { Product } from '@/models/product';
 import { ProductCard } from '@/components/cards/ProductCard';
 import { ShopHeader } from '@/components/shop/ShopHeader';
@@ -42,23 +43,7 @@ const ShopDetail: React.FC = () => {
         }
         
         // Convert database Shop to ModelShop
-        const modelShop: ModelShop = {
-          id: shopData.id,
-          name: shopData.name,
-          description: shopData.description,
-          location: shopData.location,
-          rating: shopData.rating || 0,
-          productCount: shopData.product_count || 0,
-          isVerified: shopData.is_verified || false,
-          category: shopData.category || '',
-          logo: shopData.logo_url || null,
-          coverImage: shopData.cover_image || null,
-          ownerId: shopData.owner_id || '',
-          latitude: shopData.latitude || null,
-          longitude: shopData.longitude || null,
-          distance: shopData.distance || null
-        };
-        
+        const modelShop = adaptToModelShop(shopData);
         setShop(modelShop);
         
         // Fetch products for this shop
@@ -112,12 +97,12 @@ const ShopDetail: React.FC = () => {
       category: shopProduct.category,
       images: shopProduct.images,
       shopId: shop.id,
-      isHalalCertified: true,
-      createdAt: new Date().toISOString(),
+      isHalalCertified: shopProduct.is_halal_certified || false,
+      inStock: shopProduct.in_stock || true,
+      createdAt: shopProduct.created_at || new Date().toISOString(),
       sellerId: shopProduct.sellerId,
       sellerName: shopProduct.sellerName,
-      rating: shopProduct.rating,
-      inStock: true
+      rating: shopProduct.rating
     };
   };
   
@@ -184,6 +169,22 @@ const ShopDetail: React.FC = () => {
     distance: shop?.distance
   };
   
+  const handleGetDirections = () => {
+    if (!isLocationEnabled) {
+      // Make sure this doesn't return a Promise that needs to be checked
+      const locationPromise = enableLocation();
+      if (locationPromise && typeof locationPromise.then === 'function') {
+        locationPromise.then(success => {
+          if (success && shop.latitude && shop.longitude) {
+            window.open(`https://maps.google.com/?q=${shop.latitude},${shop.longitude}`, '_blank');
+          }
+        });
+      }
+    } else if (shop.latitude && shop.longitude) {
+      window.open(`https://maps.google.com/?q=${shop.latitude},${shop.longitude}`, '_blank');
+    }
+  };
+  
   return (
     <div className="container mx-auto px-4 py-6">
       <ShopHeader shop={shopDetails} />
@@ -223,17 +224,7 @@ const ShopDetail: React.FC = () => {
                       variant="outline"
                       size="sm"
                       className="mt-2 text-xs"
-                      onClick={() => {
-                        if (!isLocationEnabled) {
-                          enableLocation().then(success => {
-                            if (success) {
-                              window.open(`https://maps.google.com/?q=${shop.latitude},${shop.longitude}`, '_blank');
-                            }
-                          });
-                        } else {
-                          window.open(`https://maps.google.com/?q=${shop.latitude},${shop.longitude}`, '_blank');
-                        }
-                      }}
+                      onClick={handleGetDirections}
                     >
                       <Navigation className="h-3 w-3 mr-1" />
                       Get Directions

@@ -1,4 +1,3 @@
-
 // Shop model interfaces
 export interface Shop {
   id: string;
@@ -10,7 +9,7 @@ export interface Shop {
   isVerified: boolean;
   category: string;
   logo: string | null;
-  logo_url?: string | null; // For compatibility with database schema
+  logo_url: string | null; // For compatibility with database schema
   coverImage: string | null;
   ownerId: string;
   latitude: number | null;
@@ -24,6 +23,7 @@ export interface Shop {
   product_count?: number;
   owner_id?: string;
   is_verified?: boolean;
+  cover_image?: string;
 }
 
 export interface ShopProduct {
@@ -37,10 +37,14 @@ export interface ShopProduct {
   sellerName: string;
   rating: number;
   shop_id?: string;
+  shopId?: string;
   created_at?: string;
   updated_at?: string;
   is_halal_certified?: boolean;
+  isHalalCertified?: boolean;
   in_stock?: boolean;
+  inStock?: boolean;
+  createdAt?: string;
 }
 
 export interface ShopLocation {
@@ -84,10 +88,14 @@ export function adaptToModelShop(dbShop: any): Shop {
     latitude: dbShop.latitude || null,
     longitude: dbShop.longitude || null,
     distance: dbShop.distance || null,
-    created_at: dbShop.created_at,
-    updated_at: dbShop.updated_at,
+    created_at: dbShop.created_at || new Date().toISOString(),
+    updated_at: dbShop.updated_at || new Date().toISOString(),
     pickup_available: dbShop.pickup_available || false,
-    delivery_available: dbShop.delivery_available || false
+    delivery_available: dbShop.delivery_available || false,
+    product_count: dbShop.product_count || dbShop.productCount || 0,
+    owner_id: dbShop.owner_id || dbShop.ownerId,
+    is_verified: dbShop.is_verified || dbShop.isVerified || false,
+    cover_image: dbShop.cover_image || dbShop.coverImage || null
   };
 }
 
@@ -103,9 +111,13 @@ export function adaptToModelProduct(dbProduct: any): ShopProduct {
     sellerName: dbProduct.shop_name || dbProduct.sellerName,
     rating: dbProduct.rating || 0,
     shop_id: dbProduct.shop_id,
+    shopId: dbProduct.shop_id || dbProduct.shopId,
     created_at: dbProduct.created_at,
+    createdAt: dbProduct.created_at,
     updated_at: dbProduct.updated_at,
     is_halal_certified: dbProduct.is_halal_certified || false,
-    in_stock: dbProduct.in_stock || true
+    isHalalCertified: dbProduct.is_halal_certified || dbProduct.isHalalCertified || false,
+    in_stock: dbProduct.in_stock || true,
+    inStock: dbProduct.in_stock || dbProduct.inStock || true
   };
 }

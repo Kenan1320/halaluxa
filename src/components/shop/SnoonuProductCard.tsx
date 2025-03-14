@@ -6,9 +6,10 @@ import { ShoppingCart, Star, ShoppingBag } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { useToast } from '@/hooks/use-toast';
 import { ShopProduct } from '@/models/shop';
+import { Product } from '@/models/product';
 
 interface SnoonuProductCardProps {
-  product: ShopProduct;
+  product: ShopProduct | Product;
   isPromo?: boolean;
 }
 
@@ -23,13 +24,35 @@ const SnoonuProductCard: React.FC<SnoonuProductCardProps> = ({
     e.preventDefault();
     e.stopPropagation();
     
-    addToCart(product, 1);
+    // Convert ShopProduct to Product if needed
+    const productToAdd: Product = {
+      id: product.id,
+      name: product.name,
+      description: product.description,
+      price: product.price,
+      images: product.images || [],
+      category: product.category,
+      shopId: (product as Product).shopId || (product as ShopProduct).shop_id || '',
+      isHalalCertified: (product as Product).isHalalCertified || (product as ShopProduct).is_halal_certified || false,
+      inStock: (product as Product).inStock || (product as ShopProduct).in_stock !== false,
+      createdAt: (product as Product).createdAt || (product as ShopProduct).created_at || new Date().toISOString(),
+      sellerId: (product as Product).sellerId || (product as ShopProduct).sellerId,
+      sellerName: (product as Product).sellerName || (product as ShopProduct).sellerName,
+      rating: product.rating || 0
+    };
+    
+    addToCart(productToAdd, 1);
     
     toast({
       title: "Added to cart",
       description: `${product.name} has been added to your cart.`,
     });
   };
+  
+  const hasHalalCertification = 
+    (product as Product).isHalalCertified !== undefined ? 
+    (product as Product).isHalalCertified : 
+    (product as ShopProduct).is_halal_certified;
   
   return (
     <motion.div
@@ -45,7 +68,7 @@ const SnoonuProductCard: React.FC<SnoonuProductCardProps> = ({
         </div>
       )}
       
-      {product.is_halal_certified && (
+      {hasHalalCertification && (
         <div className="absolute top-2 left-2 bg-green-600 text-white text-xs font-bold px-3 py-1 rounded-full z-10">
           Halal
         </div>

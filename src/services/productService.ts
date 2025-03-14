@@ -1,10 +1,9 @@
-
 import { supabase } from '@/integrations/supabase/client';
-import { Product } from '@/types/database';
+import { Product as DbProduct } from '@/types/database';
 import { Product as ModelProduct } from '@/models/product';
 
 // Convert database product to model product
-const convertToModelProduct = (product: Product): ModelProduct => {
+const convertToModelProduct = (product: DbProduct): ModelProduct => {
   return {
     id: product.id,
     name: product.name,
@@ -17,9 +16,14 @@ const convertToModelProduct = (product: Product): ModelProduct => {
     inStock: product.in_stock,
     createdAt: product.created_at,
     sellerId: product.seller_id || product.shop_id,
-    sellerName: '', // This would typically come from a join
+    sellerName: product.shop_name || '', // This would typically come from a join
     rating: product.rating || 0, // Default rating
-    details: product.details || {}
+    details: product.details || {},
+    shop_id: product.shop_id,
+    created_at: product.created_at,
+    updated_at: product.updated_at,
+    is_halal_certified: product.is_halal_certified,
+    in_stock: product.in_stock
   };
 };
 
@@ -46,7 +50,7 @@ export const getFeaturedProducts = async (): Promise<ModelProduct[]> => {
 };
 
 // Add createProduct function
-export const createProduct = async (productData: Partial<Product>): Promise<Product | null> => {
+export const createProduct = async (productData: Partial<DbProduct>): Promise<DbProduct | null> => {
   try {
     // Ensure required fields are present
     if (!productData.name || !productData.description || !productData.price || 
@@ -163,11 +167,14 @@ export const getProductsByCategory = async (category: string): Promise<ModelProd
   }
 };
 
-export const updateProduct = async (id: string, updates: Partial<Product>): Promise<ModelProduct | null> => {
+export const updateProduct = async (id: string, updates: Partial<DbProduct>): Promise<ModelProduct | null> => {
   try {
     const { data, error } = await supabase
       .from('products')
-      .update(updates)
+      .update({
+        ...updates, 
+        updated_at: new Date().toISOString()
+      })
       .eq('id', id)
       .select()
       .single();

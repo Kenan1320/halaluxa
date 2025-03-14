@@ -1,98 +1,66 @@
 
-import { supabase } from '@/integrations/supabase/client';
+import { productCategories } from '@/models/product';
 
+// Simple Category interface
 export interface Category {
   id: string;
   name: string;
-  group: string;
-  created_at: string;
   icon?: string;
   description?: string;
-  slug?: string;
 }
 
-// Get all categories
+// This is a simple mock implementation to avoid the database errors
+// We'll use the product categories from the model
 export const getCategories = async (): Promise<Category[]> => {
   try {
-    // Since we are mocking the data to avoid errors with the database
-    return [
-      { id: '1', name: 'Groceries', group: 'nearby', created_at: new Date().toISOString() },
-      { id: '2', name: 'Online Stores', group: 'online', created_at: new Date().toISOString() },
-      { id: '3', name: 'Restaurants', group: 'nearby', created_at: new Date().toISOString() },
-      { id: '4', name: 'Coffee Shops', group: 'nearby', created_at: new Date().toISOString() },
-      { id: '5', name: 'Clothing', group: 'online', created_at: new Date().toISOString() },
-      { id: '6', name: 'Halal Meat', group: 'nearby', created_at: new Date().toISOString() },
-      { id: '7', name: 'Hoodies', group: 'online', created_at: new Date().toISOString() },
-      { id: '8', name: 'Thobes', group: 'online', created_at: new Date().toISOString() },
-      { id: '9', name: 'Abayas', group: 'online', created_at: new Date().toISOString() },
-      { id: '10', name: 'Books', group: 'online', created_at: new Date().toISOString() },
-      { id: '11', name: 'Kids', group: 'nearby', created_at: new Date().toISOString() },
-      { id: '12', name: 'Gifts', group: 'online', created_at: new Date().toISOString() },
-      { id: '13', name: 'Food Delivery', group: 'service', created_at: new Date().toISOString() },
-      { id: '14', name: 'Electronics', group: 'online', created_at: new Date().toISOString() },
-      { id: '15', name: 'Pets', group: 'nearby', created_at: new Date().toISOString() },
-      { id: '16', name: 'Home & Garden', group: 'online', created_at: new Date().toISOString() }
-    ];
+    // Return categories based on productCategories array
+    return productCategories.map(category => ({
+      id: category.toLowerCase().replace(/\s+/g, '-'),
+      name: category,
+      description: `Products in the ${category} category`
+    }));
   } catch (error) {
-    console.error('Error in getCategories:', error);
-    // Return some default categories as fallback
-    return [
-      { id: '1', name: 'Groceries', group: 'nearby', created_at: new Date().toISOString() },
-      { id: '2', name: 'Online Stores', group: 'online', created_at: new Date().toISOString() },
-      { id: '3', name: 'Restaurants', group: 'nearby', created_at: new Date().toISOString() },
-      { id: '4', name: 'Coffee Shops', group: 'nearby', created_at: new Date().toISOString() },
-      { id: '5', name: 'Clothing', group: 'online', created_at: new Date().toISOString() },
-      { id: '6', name: 'Halal Meat', group: 'nearby', created_at: new Date().toISOString() }
-    ];
-  }
-};
-
-// Get categories by group (e.g., 'nearby', 'online')
-export const getCategoriesByGroup = async (group: string): Promise<Category[]> => {
-  try {
-    const allCategories = await getCategories();
-    return allCategories.filter(category => category.group === group);
-  } catch (error) {
-    console.error(`Error in getCategoriesByGroup(${group}):`, error);
-    // Return empty array as fallback
+    console.error('Error fetching categories:', error);
     return [];
   }
 };
 
-// Create a category
-export const createCategory = async (category: Omit<Category, 'id' | 'created_at'>): Promise<Category | null> => {
-  try {
-    // Since we can't add to product_categories, return a mock response
-    return {
-      id: Math.random().toString(36).substring(2, 15),
-      name: category.name,
-      group: category.group,
-      created_at: new Date().toISOString(),
-      icon: category.icon,
-      description: category.description,
-      slug: category.slug
-    };
-  } catch (error) {
-    console.error('Error in createCategory:', error);
-    return null;
-  }
+// Get categories by group
+export const getCategoriesByGroup = async (group: string): Promise<Category[]> => {
+  // In this mock implementation, we'll return all categories
+  // In a real implementation, you'd filter by group
+  return getCategories();
 };
 
-// Get a category by id
-export const getCategoryById = async (id: string): Promise<Category | null> => {
-  try {
-    const allCategories = await getCategories();
-    const category = allCategories.find(c => c.id === id);
-    if (!category) {
-      throw new Error(`Category with id ${id} not found`);
-    }
-    return category;
-  } catch (error) {
-    console.error(`Error in getCategoryById(${id}):`, error);
-    return null;
-  }
+// Get featured categories
+export const getFeaturedCategories = async (): Promise<Category[]> => {
+  // In this mock implementation, we'll return the first 6 categories
+  const allCategories = await getCategories();
+  return allCategories.slice(0, 6);
 };
 
-// For compatibility with any existing code that might use this
-// Just alias getCategories to maintain API compatibility
-export const listCategories = getCategories;
+// A function to get a mapping between category names and icons
+export const getCategoryIconMapping = () => {
+  const iconMapping: Record<string, string> = {
+    'Groceries': '/icons/grocery.png',
+    'Restaurants': '/icons/restaurant.png',
+    'Furniture': '/icons/home.png',
+    'Halal Meat': '/icons/grocery.png',
+    'Books': '/icons/home.png',
+    'Thobes': '/icons/clothing.png',
+    'Hijab': '/icons/clothing.png',
+    'Decorations': '/icons/home.png',
+    'Abaya': '/icons/clothing.png',
+    'Online Shops': '/icons/grocery.png',
+    'Gifts': '/icons/grocery.png',
+    'Arabic Calligraphy': '/icons/home.png',
+    'Muslim Therapists': '/icons/services.png',
+    'Coffee Shops': '/icons/restaurant.png',
+    'Hoodies': '/icons/clothing.png',
+    'Pets': '/icons/pets.png',
+    'Toys': '/icons/toys.png',
+    'Electronics': '/icons/electronics.png',
+  };
+
+  return iconMapping;
+};

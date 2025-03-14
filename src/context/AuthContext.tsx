@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
@@ -29,7 +28,7 @@ interface AuthContextProps {
   isLoggedIn: boolean;
   isLoading: boolean;
   isInitializing: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<string | null>;
   signup: (email: string, password: string, name: string, role: 'shopper' | 'business') => Promise<void>;
   logout: () => Promise<void>;
   updateUserProfile: (profile: Partial<User>) => Promise<boolean>;
@@ -144,19 +143,29 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
       
       if (data.user) {
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', data.user.id)
+          .single();
+        
         await fetchAndSetUserProfile(data.user.id);
         toast({
           title: "Login successful",
           description: "Welcome back!",
         });
         navigate('/');
+        
+        return profileData?.role || null;
       }
+      return null;
     } catch (error: any) {
       toast({
         title: "Login failed",
         description: error.message || "An error occurred during login",
         variant: "destructive",
       });
+      return null;
     } finally {
       setIsLoading(false);
     }
@@ -252,9 +261,26 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       setIsLoading(true);
       
+      // Convert profile data to database format
+      const dbProfile: Partial<DatabaseProfile> = {};
+      
+      if (profile.name !== undefined) dbProfile.name = profile.name;
+      if (profile.email !== undefined) dbProfile.email = profile.email;
+      if (profile.phone !== undefined) dbProfile.phone = profile.phone;
+      if (profile.address !== undefined) dbProfile.address = profile.address;
+      if (profile.city !== undefined) dbProfile.city = profile.city;
+      if (profile.state !== undefined) dbProfile.state = profile.state;
+      if (profile.zip !== undefined) dbProfile.zip = profile.zip;
+      if (profile.avatar_url !== undefined) dbProfile.avatar_url = profile.avatar_url;
+      if (profile.shop_name !== undefined) dbProfile.shop_name = profile.shop_name;
+      if (profile.shop_description !== undefined) dbProfile.shop_description = profile.shop_description;
+      if (profile.shop_category !== undefined) dbProfile.shop_category = profile.shop_category;
+      if (profile.shop_location !== undefined) dbProfile.shop_location = profile.shop_location;
+      if (profile.shop_logo !== undefined) dbProfile.shop_logo = profile.shop_logo;
+      
       const { error } = await supabase
         .from('profiles')
-        .update(profile)
+        .update(dbProfile)
         .eq('id', user.id);
       
       if (error) {
@@ -289,15 +315,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       setIsLoading(true);
       
+      const dbProfile: Partial<DatabaseProfile> = {};
+      
+      if (businessProfile.shop_name !== undefined) dbProfile.shop_name = businessProfile.shop_name;
+      if (businessProfile.shop_description !== undefined) dbProfile.shop_description = businessProfile.shop_description;
+      if (businessProfile.shop_category !== undefined) dbProfile.shop_category = businessProfile.shop_category;
+      if (businessProfile.shop_location !== undefined) dbProfile.shop_location = businessProfile.shop_location;
+      if (businessProfile.shop_logo !== undefined) dbProfile.shop_logo = businessProfile.shop_logo;
+      
       const { error } = await supabase
         .from('profiles')
-        .update({
-          shop_name: businessProfile.shop_name,
-          shop_description: businessProfile.shop_description,
-          shop_category: businessProfile.shop_category,
-          shop_location: businessProfile.shop_location,
-          shop_logo: businessProfile.shop_logo,
-        })
+        .update(dbProfile)
         .eq('id', user.id);
       
       if (error) {

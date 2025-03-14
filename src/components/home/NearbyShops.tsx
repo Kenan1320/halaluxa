@@ -1,9 +1,9 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { getShops, Shop, getShopProducts, convertToModelProduct } from '@/services/shopService';
+import { getShops, mapShopToModel } from '@/services/shopService';
 import { useLocation } from '@/context/LocationContext';
-import ShopCard from '@/components/shop/ShopCard';
+import { Shop } from '@/models/shop';
 import ShopProductList from '@/components/shop/ShopProductList';
 import { Link } from 'react-router-dom';
 
@@ -20,7 +20,9 @@ const NearbyShops = () => {
         setIsLoading(true);
         // Use getShops from the shopService
         const nearbyShops = await getShops();
-        setShops(nearbyShops);
+        // Map the database shops to our model Shop type
+        const modelShops = nearbyShops.map(mapShopToModel);
+        setShops(modelShops);
       } catch (error) {
         console.error('Error loading nearby shops:', error);
       } finally {

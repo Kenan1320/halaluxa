@@ -2,8 +2,9 @@ import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { ShoppingCart, Heart, ChevronRight, ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { getShopProducts, convertToModelProduct } from '@/services/shopService';
+import { getShopProducts } from '@/services/shopService';
 import { Product } from '@/models/product';
+import { ShopProduct, adaptToModelProduct } from '@/models/shop';
 import { useCart } from '@/context/CartContext';
 import { Link } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -34,8 +35,24 @@ const ShopProductList = ({ shopId, products: initialProducts }: ShopProductListP
       try {
         setIsLoading(true);
         const shopProducts = await getShopProducts(shopId);
-        const modelProducts = shopProducts.map(convertToModelProduct);
-        setProducts(modelProducts);
+        
+        const convertedProducts = shopProducts.map((item: ShopProduct): Product => ({
+          id: item.id,
+          name: item.name,
+          description: item.description,
+          price: item.price,
+          category: item.category,
+          images: item.images || [],
+          shopId: item.shop_id || shopId,
+          isHalalCertified: item.is_halal_certified || false,
+          inStock: item.in_stock !== false,
+          createdAt: item.created_at || new Date().toISOString(),
+          sellerId: item.sellerId,
+          sellerName: item.sellerName,
+          rating: item.rating || 0
+        }));
+        
+        setProducts(convertedProducts);
       } catch (error) {
         console.error('Error loading shop products:', error);
       } finally {
@@ -108,7 +125,6 @@ const ShopProductList = ({ shopId, products: initialProducts }: ShopProductListP
   
   return (
     <div className="relative group">
-      {/* Scroll controls */}
       {canScrollLeft && (
         <motion.button
           className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 rounded-full p-1 shadow-md opacity-0 group-hover:opacity-100 transition-opacity"

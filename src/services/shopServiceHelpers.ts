@@ -11,7 +11,7 @@ export const setupDatabaseTables = async (): Promise<void> => {
 };
 
 // Mock implementation for getShops
-export const getShops = async (): Promise<ModelShop[]> => {
+export const getShops = async (): Promise<Shop[]> => {
   try {
     const { data: shops, error } = await supabase
       .from('shops')
@@ -21,7 +21,7 @@ export const getShops = async (): Promise<ModelShop[]> => {
       throw error;
     }
 
-    return (shops || []).map(mapShopToModel);
+    return shops || [];
   } catch (error) {
     console.error('Error fetching shops:', error);
     return [];
@@ -39,12 +39,19 @@ export const mapShopToModel = (shop: Shop): ModelShop => {
     productCount: shop.product_count || 0,
     isVerified: shop.is_verified || false,
     category: shop.category || '',
-    logo: shop.logo_url || null, // Use logo_url as the source for logo
+    logo: shop.logo_url || null,
+    logo_url: shop.logo_url || null,
     coverImage: shop.cover_image || null,
     ownerId: shop.owner_id || '',
     latitude: shop.latitude || null,
     longitude: shop.longitude || null,
-    distance: shop.distance || null
+    distance: shop.distance || null,
+    created_at: shop.created_at,
+    updated_at: shop.updated_at,
+    cover_image: shop.cover_image || null,
+    owner_id: shop.owner_id,
+    product_count: shop.product_count,
+    is_verified: shop.is_verified
   };
 };
 
@@ -70,7 +77,11 @@ export const getShopProducts = async (shopId: string): Promise<ShopProduct[]> =>
       sellerId: item.seller_id || item.shop_id || '', // Use shop_id as seller_id if not available
       sellerName: item.shop_name || 'Shop Owner',
       rating: item.rating || 0,
-      isHalalCertified: item.is_halal_certified || false
+      shop_id: item.shop_id,
+      created_at: item.created_at,
+      updated_at: item.updated_at,
+      is_halal_certified: item.is_halal_certified || false,
+      in_stock: item.in_stock !== false
     }));
   } catch (error) {
     console.error(`Error fetching products for shop with ID ${shopId}:`, error);
@@ -94,7 +105,12 @@ export const convertToModelProduct = (product: Product): ModelProduct => {
     sellerId: product.seller_id || product.shop_id, // Map shop_id to sellerId
     sellerName: product.shop_name || 'Shop Owner',
     rating: product.rating || 0,
-    details: product.details || {}
+    details: product.details || {},
+    shop_id: product.shop_id,
+    created_at: product.created_at,
+    updated_at: product.updated_at,
+    is_halal_certified: product.is_halal_certified,
+    in_stock: product.in_stock
   };
 };
 
