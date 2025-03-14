@@ -32,6 +32,8 @@ export const normalizeShop = (shop: any): Shop => {
     ownerId: shop.owner_id || shop.ownerId,
     productCount: shop.product_count || shop.productCount,
     isVerified: shop.is_verified || shop.isVerified,
+    createdAt: shop.created_at || shop.createdAt,
+    updatedAt: shop.updated_at || shop.updatedAt,
   };
 };
 

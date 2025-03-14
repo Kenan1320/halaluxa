@@ -6,6 +6,7 @@ import { useLocation } from '@/context/LocationContext';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { normalizeShop } from '@/lib/normalizeData';
 
 const Hero = () => {
   const { isLoggedIn, user } = useAuth();
@@ -19,7 +20,9 @@ const Hero = () => {
       try {
         const shops = await getNearbyShops();
         if (shops && shops.length > 0) {
-          setFeaturedShops(shops.slice(0, 6));
+          // Normalize shop data to ensure consistent properties
+          const normalizedShops = shops.map(shop => normalizeShop(shop));
+          setFeaturedShops(normalizedShops.slice(0, 6));
         }
       } catch (error) {
         console.error('Error loading featured shops:', error);
@@ -83,8 +86,8 @@ const Hero = () => {
             </form>
           </motion.div>
           
-          {/* Location Display */}
-          {isLocationEnabled && location && (
+          {/* Location Display - Only show when user explicitly enabled it, not on initial load */}
+          {isLocationEnabled && location && location.city && (
             <motion.div 
               className="mb-6"
               initial={{ opacity: 0, y: 20 }}
@@ -152,8 +155,8 @@ const Hero = () => {
                     className="w-full h-auto p-4 flex flex-col items-center gap-3 rounded-lg hover:bg-white/10 text-white"
                   >
                     <div className="w-16 h-16 rounded-full overflow-hidden bg-white/10 flex items-center justify-center">
-                      {shop.logo ? (
-                        <img src={shop.logo} alt={shop.name} className="w-full h-full object-cover" />
+                      {shop.logo_url ? (
+                        <img src={shop.logo_url} alt={shop.name} className="w-full h-full object-cover" />
                       ) : (
                         <Store className="h-8 w-8 text-white/70" />
                       )}

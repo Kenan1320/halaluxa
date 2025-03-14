@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { MapPin, ChevronDown } from 'lucide-react';
 import { useLocation } from '@/context/LocationContext';
 import { motion } from 'framer-motion';
+import logger from '@/lib/logger';
 
 const LocationBar = () => {
   const { isLocationEnabled, location, requestLocation } = useLocation();
@@ -11,6 +12,7 @@ const LocationBar = () => {
   
   const handleLocationClick = () => {
     if (!isLocationEnabled) {
+      logger.info('User requesting location');
       requestLocation();
     } else {
       setIsEditing(true);
@@ -22,6 +24,7 @@ const LocationBar = () => {
     setIsEditing(false);
     // Here you would typically validate the ZIP code and update the location
     // This is a simplified version
+    logger.info('User submitted location:', zipCode);
   };
   
   return (
@@ -34,7 +37,7 @@ const LocationBar = () => {
         <div className="flex flex-col mr-2">
           <span className="text-xs text-gray-500">How do you want your items?</span>
           <div className="flex items-center">
-            <MapPin className="h-4 w-4 text-[#2A866A] mr-1" />
+            <MapPin className="h-4 w-4 text-[#183080] mr-1" />
             
             {isEditing ? (
               <form onSubmit={handleSubmit} className="flex items-center">
@@ -53,7 +56,7 @@ const LocationBar = () => {
                 <span className="text-gray-800 font-medium">
                   {location?.city ? `${location.city}, ${location.state}` : 'Enable location'}
                 </span>
-                <ChevronDown className="h-3 w-3 text-[#2A866A] ml-1" />
+                <ChevronDown className="h-3 w-3 text-[#183080] ml-1" />
               </div>
             )}
           </div>

@@ -22,6 +22,13 @@ const Toaster = ({ ...props }: ToasterProps) => {
             "group-[.toast]:bg-muted group-[.toast]:text-muted-foreground",
         },
       }}
+      // Set to false to prevent toasts from appearing automatically
+      richColors
+      position="top-right"
+      // Set to 0 to disable showing multiple toasts at the same time
+      expand={false}
+      // Disable toasts by setting duration to 0
+      duration={3000}
       {...props}
     />
   )

@@ -11,7 +11,7 @@ interface CategoryCardProps {
 }
 
 const CategoryCard = ({ title, description, imageSrc, backgroundColor, link }: CategoryCardProps) => {
-  // Replace all mint or green colors with deep night blue gradient
+  // Replace all mint, green, or primary colors with deep night blue gradient
   const bgColor = backgroundColor.includes('haluna-primary') || 
                   backgroundColor.includes('primary-light') || 
                   backgroundColor.includes('mint') || 

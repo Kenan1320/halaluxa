@@ -3,6 +3,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { useToast } from '@/hooks/use-toast';
 import { getAllShops } from '@/services/shopService';
 import { Shop } from '@/types/database';
+import logger from '@/lib/logger';
 
 // Extended GeolocationPosition type with city and state
 interface EnhancedLocation {
@@ -15,7 +16,7 @@ interface EnhancedLocation {
 interface LocationContextType {
   isLocationEnabled: boolean;
   enableLocation: () => Promise<boolean>;
-  requestLocation: () => Promise<boolean>; // Added missing function
+  requestLocation: () => Promise<boolean>;
   location: EnhancedLocation | null;
   getNearbyShops: () => Promise<Shop[]>;
 }
@@ -38,21 +39,18 @@ export const LocationProvider: React.FC<LocationProviderProps> = ({ children }) 
   const { toast } = useToast();
   const [isLocationEnabled, setIsLocationEnabled] = useState<boolean>(false);
   const [location, setLocation] = useState<EnhancedLocation | null>(null);
+  const [hasShownLocationToast, setHasShownLocationToast] = useState<boolean>(false);
 
   useEffect(() => {
     // Check if geolocation is available in the browser
     if (!navigator.geolocation) {
-      toast({
-        title: "Geolocation not supported",
-        description: "Your browser does not support geolocation features.",
-        variant: "destructive",
-      });
+      logger.warn("Geolocation not supported by browser");
       return;
     }
 
     // Check if location permission was previously granted
     if (localStorage.getItem('locationPermission') === 'granted') {
-      enableLocation();
+      enableLocation(false); // Silent mode - no toast
     }
   }, []);
 
@@ -66,7 +64,7 @@ export const LocationProvider: React.FC<LocationProviderProps> = ({ children }) 
         state: "CA"
       };
     } catch (error) {
-      console.error('Error getting city and state:', error);
+      logger.error('Error getting city and state:', error);
       return {
         city: "Unknown",
         state: ""
@@ -74,7 +72,7 @@ export const LocationProvider: React.FC<LocationProviderProps> = ({ children }) 
     }
   };
 
-  const enableLocation = async (): Promise<boolean> => {
+  const enableLocation = async (showToast: boolean = true): Promise<boolean> => {
     if (!navigator.geolocation) {
       return false;
     }
@@ -105,29 +103,33 @@ export const LocationProvider: React.FC<LocationProviderProps> = ({ children }) 
       setIsLocationEnabled(true);
       localStorage.setItem('locationPermission', 'granted');
       
-      toast({
-        title: "Location enabled",
-        description: "We can now show shops near you.",
-      });
+      // Only show toast if explicitly asked and hasn't shown before
+      if (showToast && !hasShownLocationToast) {
+        toast({
+          title: "Location enabled",
+          description: "We can now show shops near you.",
+        });
+        setHasShownLocationToast(true);
+      }
 
       return true;
     } catch (error) {
-      console.error('Error getting location:', error);
+      logger.error('Error getting location:', error);
       
       if (error instanceof GeolocationPositionError) {
-        if (error.code === error.PERMISSION_DENIED) {
+        if (error.code === error.PERMISSION_DENIED && showToast) {
           toast({
             title: "Location access denied",
             description: "Please enable location in your browser settings to see nearby shops.",
             variant: "destructive",
           });
-        } else if (error.code === error.TIMEOUT) {
+        } else if (error.code === error.TIMEOUT && showToast) {
           toast({
             title: "Location timeout",
             description: "Getting your location took too long. Please try again.",
             variant: "destructive",
           });
-        } else {
+        } else if (showToast) {
           toast({
             title: "Location error",
             description: "Could not get your location. Please try again.",
@@ -140,9 +142,9 @@ export const LocationProvider: React.FC<LocationProviderProps> = ({ children }) 
     }
   };
 
-  // Add the missing requestLocation function (alias for enableLocation)
+  // Add the requestLocation function (will show toasts)
   const requestLocation = async (): Promise<boolean> => {
-    return enableLocation();
+    return enableLocation(true);
   };
 
   const getNearbyShops = async (): Promise<Shop[]> => {
@@ -163,7 +165,7 @@ export const LocationProvider: React.FC<LocationProviderProps> = ({ children }) 
         distance: Math.random() * 5 // Random distance between 0 and 5 miles
       })).sort((a, b) => (a.distance || 99) - (b.distance || 99));
     } catch (error) {
-      console.error('Error getting nearby shops:', error);
+      logger.error('Error getting nearby shops:', error);
       return [];
     }
   };
