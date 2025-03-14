@@ -1,121 +1,130 @@
 
-import { supabase } from '@/lib/supabase';
 import { Shop } from '@/models/shop';
-import { Product, adaptDatabaseProductToProduct } from '@/models/product';
-import { adaptDbShopToShop } from './modelAdapterService';
-import { UUID } from '@/models/types';
+import { DBShop, Category } from '@/models/types';
+import { calculateDistance } from '@/utils/locationUtils';
 
-// Helper function to filter shops
-export const filterShops = (shops: Shop[], filters: any) => {
-  let filteredShops = [...shops];
-  
-  if (filters?.category) {
-    filteredShops = filteredShops.filter(shop => 
-      shop.category === filters.category
-    );
-  }
-  
-  if (filters?.search) {
-    const searchQuery = filters.search.toLowerCase();
-    filteredShops = filteredShops.filter(shop => 
-      shop.name.toLowerCase().includes(searchQuery) || 
-      shop.description.toLowerCase().includes(searchQuery)
-    );
-  }
-  
-  if (filters?.deliveryOnly) {
-    filteredShops = filteredShops.filter(shop => 
-      shop.deliveryAvailable || shop.delivery_available
-    );
-  }
-  
-  if (filters?.pickupOnly) {
-    filteredShops = filteredShops.filter(shop => 
-      shop.pickupAvailable || shop.pickup_available
-    );
-  }
-  
-  if (filters?.isHalalCertified) {
-    filteredShops = filteredShops.filter(shop => 
-      shop.isHalalCertified || shop.is_halal_certified
-    );
-  }
-  
-  if (filters?.maxDistance && filters?.userLat && filters?.userLng) {
-    // This would require a distance calculation function
-    // For now we'll use the pre-calculated distance
-    filteredShops = filteredShops.filter(shop => 
-      shop.distance !== null && shop.distance <= filters.maxDistance
-    );
-  }
-  
-  if (filters?.sort === 'nearest') {
-    filteredShops.sort((a, b) => {
-      const distA = a.distance || Infinity;
-      const distB = b.distance || Infinity;
-      return distA - distB;
-    });
-  } else if (filters?.sort === 'rating') {
-    filteredShops.sort((a, b) => {
-      const ratingA = typeof a.rating === 'object' ? a.rating.average : a.rating || 0;
-      const ratingB = typeof b.rating === 'object' ? b.rating.average : b.rating || 0;
-      return ratingB - ratingA;
-    });
-  }
-  
-  return filteredShops;
+// Convert a database shop to frontend shop model
+export const convertDBShopToShop = (shop: DBShop): Shop => {
+  return {
+    id: shop.id,
+    name: shop.name,
+    description: shop.description || '',
+    logo: shop.logo_url || '',
+    logoUrl: shop.logo_url || '',
+    category: shop.category || '',
+    location: shop.location || '',
+    rating: shop.rating || 0,
+    latitude: shop.latitude || 0,
+    longitude: shop.longitude || 0,
+    distance: shop.distance || 0,
+    productCount: shop.product_count || 0,
+    isVerified: shop.is_verified || false,
+    ownerId: shop.owner_id || '',
+    createdAt: shop.created_at,
+    updatedAt: shop.updated_at || '',
+    owner_id: shop.owner_id || '',
+    product_count: shop.product_count || 0,
+    is_verified: shop.is_verified || false,
+    delivery_available: shop.delivery_available || false,
+    pickup_available: shop.pickup_available || false,
+    is_halal_certified: shop.is_halal_certified || false
+  };
 };
 
-// Function to get products for a specific shop
-export const getShopProducts = async (shopId: UUID): Promise<Product[]> => {
+// Filter shops based on location and search criteria
+export const filterShops = (
+  shops: Shop[],
+  userLocation: { latitude: number; longitude: number } | null,
+  searchTerm: string = '',
+  categoryFilter: string = '',
+  maxDistance: number = 50 // in km
+): Shop[] => {
+  return shops
+    .filter(shop => {
+      // Apply search term filter
+      if (searchTerm && !shop.name.toLowerCase().includes(searchTerm.toLowerCase())) {
+        return false;
+      }
+      
+      // Apply category filter
+      if (categoryFilter && shop.category !== categoryFilter) {
+        return false;
+      }
+      
+      // Calculate distance if user location is available
+      if (userLocation && shop.latitude && shop.longitude) {
+        const distance = calculateDistance(
+          userLocation.latitude,
+          userLocation.longitude,
+          shop.latitude,
+          shop.longitude
+        );
+        
+        // Only include shops within maxDistance
+        if (distance > maxDistance) {
+          return false;
+        }
+        
+        // Update shop with calculated distance
+        shop.distance = distance;
+      }
+      
+      return true;
+    })
+    .sort((a, b) => {
+      // Sort by distance if available
+      if (a.distance !== undefined && b.distance !== undefined) {
+        return a.distance - b.distance;
+      }
+      
+      // Fallback to sort by rating
+      return b.rating - a.rating;
+    });
+};
+
+// Map category name to icon
+export const getCategoryIcon = (categoryName: string): string => {
+  const icons: Record<string, string> = {
+    'Groceries': '🛒',
+    'Restaurants': '🍽️',
+    'Clothing': '👕',
+    'Electronics': '📱',
+    'Books': '📚',
+    'Furniture': '🛋️',
+    'Health': '💊',
+    'Beauty': '💄',
+    'Sports': '⚽',
+    'Toys': '🧸',
+    'Jewelry': '💍',
+    'Coffee Shops': '☕',
+    'Bakeries': '🥐',
+    'Halal Meat': '🥩',
+    'Online Shops': '🛍️',
+    'Gifts': '🎁',
+    'Thobes': '👘',
+    'Hijab': '🧕'
+  };
+  
+  return icons[categoryName] || '🏪';
+};
+
+// Get shop products from the same service file
+export const getShopProducts = async (shopId: string, limit = 20) => {
   try {
+    // This is a placeholder implementation until we have a proper product service
+    const { supabase } = await import('@/lib/supabase');
+    
     const { data, error } = await supabase
       .from('products')
       .select('*')
-      .eq('shop_id', shopId);
-    
+      .eq('shop_id', shopId)
+      .limit(limit);
+      
     if (error) throw error;
     
-    return (data || []).map(adaptDatabaseProductToProduct);
+    return data || [];
   } catch (error) {
-    console.error(`Error fetching products for shop ${shopId}:`, error);
+    console.error('Error fetching shop products:', error);
     return [];
-  }
-};
-
-// Function to get a mock array of categories (temporary solution)
-export const listCategories = async (): Promise<string[]> => {
-  // This is a fallback in case the database call fails
-  const defaultCategories = [
-    "Food & Groceries",
-    "Fashion",
-    "Beauty & Wellness",
-    "Home & Decor",
-    "Books & Stationery",
-    "Electronics",
-    "Toys & Games",
-    "Health & Fitness",
-    "Islamic Goods",
-    "Halal Meat",
-    "Clothing",
-    "Services",
-    "Other"
-  ];
-  
-  try {
-    // Try to get categories from database
-    const { data, error } = await supabase
-      .from('products')
-      .select('category')
-      .limit(100);
-    
-    if (error) return defaultCategories;
-    
-    // Extract unique categories
-    const categories = [...new Set(data.map(item => item.category))];
-    return categories.length > 0 ? categories : defaultCategories;
-  } catch (error) {
-    console.error('Error fetching categories:', error);
-    return defaultCategories;
   }
 };

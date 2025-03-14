@@ -1,120 +1,60 @@
 
-import React, { useRef, useEffect, useState } from 'react';
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useTheme } from '@/context/ThemeContext';
-import { getCategoryIcon } from '@/components/icons/CategoryIcons';
-import { Link } from 'react-router-dom';
-
-interface Category {
-  id: string;
-  name: string;
-}
+import { Category } from '@/models/types';
 
 interface FlowingCategoryBarProps {
   categories: Category[];
 }
 
 const FlowingCategoryBar: React.FC<FlowingCategoryBarProps> = ({ categories }) => {
-  const containerRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
   const { mode } = useTheme();
-  const isDark = mode === 'dark';
-  const [isScrolling, setIsScrolling] = useState(false);
   
-  // Automatic scrolling effect
-  useEffect(() => {
-    if (!containerRef.current || categories.length === 0) return;
-    
-    const container = containerRef.current;
-    const scrollWidth = container.scrollWidth;
-    const clientWidth = container.clientWidth;
-    
-    // Only activate auto-scroll if content overflows
-    if (scrollWidth <= clientWidth) return;
-    
-    let animationId: number;
-    let scrollPos = 0;
-    const scrollSpeed = 0.5; // pixels per frame
-    
-    const scroll = () => {
-      if (!containerRef.current) return;
-      
-      scrollPos += scrollSpeed;
-      
-      // Reset scroll position when we've scrolled through all items
-      if (scrollPos >= (scrollWidth - clientWidth)) {
-        scrollPos = 0;
-      }
-      
-      container.scrollLeft = scrollPos;
-      animationId = requestAnimationFrame(scroll);
-    };
-    
-    // Start/stop scrolling based on hover
-    const startScrolling = () => {
-      setIsScrolling(true);
-      animationId = requestAnimationFrame(scroll);
-    };
-    
-    const stopScrolling = () => {
-      setIsScrolling(false);
-      cancelAnimationFrame(animationId);
-    };
-    
-    // Initial start after a short delay
-    const timeoutId = setTimeout(startScrolling, 1000);
-    
-    // Pause on hover or touch
-    container.addEventListener('mouseenter', stopScrolling);
-    container.addEventListener('mouseleave', startScrolling);
-    container.addEventListener('touchstart', stopScrolling);
-    container.addEventListener('touchend', startScrolling);
-    
-    return () => {
-      clearTimeout(timeoutId);
-      cancelAnimationFrame(animationId);
-      container.removeEventListener('mouseenter', stopScrolling);
-      container.removeEventListener('mouseleave', startScrolling);
-      container.removeEventListener('touchstart', stopScrolling);
-      container.removeEventListener('touchend', startScrolling);
-    };
-  }, [categories]);
-  
+  const handleCategoryClick = (category: Category) => {
+    navigate(`/browse?category=${encodeURIComponent(category.name)}`);
+  };
+
+  // Duplicate categories to create flowing effect
+  const repeatedCategories = [...categories, ...categories, ...categories];
+
   return (
-    <div className="relative overflow-hidden mx-auto max-w-screen-xl">
-      <div
-        ref={containerRef}
-        className="flex space-x-4 py-3 overflow-x-auto scrollbar-none"
-        style={{ scrollBehavior: 'smooth' }}
-      >
-        {categories.map((category) => (
-          <Link
-            key={category.id}
-            to={`/browse?category=${encodeURIComponent(category.name)}`}
-            className="flex-shrink-0"
-          >
+    <div className="w-full overflow-hidden py-2">
+      <div className="relative">
+        <motion.div
+          className="flex whitespace-nowrap"
+          animate={{ x: ["0%", "-50%"] }}
+          transition={{ 
+            repeat: Infinity,
+            repeatType: "loop",
+            duration: 30,
+            ease: "linear"
+          }}
+        >
+          {repeatedCategories.map((category, index) => (
             <motion.div
-              className={`flex flex-col items-center justify-center ${
-                isDark ? 'hover:bg-gray-800' : 'hover:bg-gray-100'
-              } rounded-xl p-2 transition-colors`}
+              key={`${category.id}-${index}`}
+              className={`inline-block mx-2 px-4 py-2 rounded-full cursor-pointer
+                ${mode === 'dark' 
+                  ? 'bg-gray-800 hover:bg-gray-700 text-white border border-gray-700' 
+                  : 'bg-white hover:bg-gray-50 text-gray-900 border border-gray-200 shadow-sm'}
+              `}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
+              onClick={() => handleCategoryClick(category)}
             >
-              <div
-                className={`w-14 h-14 flex items-center justify-center rounded-full mb-1 ${
-                  isDark ? 'bg-gray-800' : 'bg-white'
-                } shadow-sm`}
-              >
-                {getCategoryIcon(category.name, `w-7 h-7 ${isDark ? 'text-white' : 'text-green-600'}`)}
+              <div className="flex items-center space-x-2">
+                {category.icon && (
+                  <span className="text-green-600 dark:text-green-400">{category.icon}</span>
+                )}
+                <span className="text-sm font-medium">{category.name}</span>
               </div>
-              <span className="text-xs font-medium mt-1">{category.name}</span>
             </motion.div>
-          </Link>
-        ))}
+          ))}
+        </motion.div>
       </div>
-      
-      {/* Gradient overlays for scroll indication */}
-      <div className={`absolute top-0 left-0 h-full w-8 pointer-events-none ${isDark ? 'bg-gradient-to-r from-gray-900' : 'bg-gradient-to-r from-white'}`}></div>
-      <div className={`absolute top-0 right-0 h-full w-8 pointer-events-none ${isDark ? 'bg-gradient-to-l from-gray-900' : 'bg-gradient-to-l from-white'}`}></div>
     </div>
   );
 };

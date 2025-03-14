@@ -1,73 +1,59 @@
 
-import React, { useRef } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useTheme } from '@/context/ThemeContext';
-import CategoryButton from './CategoryButton';
-import { productCategories } from '@/models/product';
+import { Category } from '@/models/types';
 
-const CategoryScrollMenu = () => {
+interface CategoryScrollMenuProps {
+  categories: Category[];
+}
+
+const CategoryScrollMenu: React.FC<CategoryScrollMenuProps> = ({ categories }) => {
+  const navigate = useNavigate();
   const { mode } = useTheme();
-  const scrollRef = useRef<HTMLDivElement>(null);
-
-  const scroll = (direction: 'left' | 'right') => {
-    if (scrollRef.current) {
-      const { current } = scrollRef;
-      const scrollAmount = 200;
-      
-      if (direction === 'left') {
-        current.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
-      } else {
-        current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
-      }
-    }
+  
+  // Create doubled array for continuous flow
+  const doubledCategories = [...categories, ...categories];
+  
+  const handleCategoryClick = (category: Category) => {
+    navigate(`/browse?category=${encodeURIComponent(category.name)}`);
   };
-
+  
   return (
-    <div className="relative">
-      <div className="flex items-center">
-        <button
-          onClick={() => scroll('left')}
-          className={`p-2 rounded-full ${
-            mode === 'dark' 
-              ? 'bg-gray-800 text-white hover:bg-gray-700' 
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-          } mr-2 hidden md:flex`}
-        >
-          <ChevronLeft className="h-5 w-5" />
-        </button>
-        
-        <div 
-          ref={scrollRef}
-          className="flex overflow-x-auto pb-2 hide-scrollbar gap-3 flex-1"
-        >
-          {productCategories.map((category) => (
-            <motion.div
-              key={category}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-              className="flex-shrink-0"
-            >
-              <CategoryButton
-                name={category}
-                to={`/browse?category=${encodeURIComponent(category)}`}
-              />
-            </motion.div>
-          ))}
-        </div>
-        
-        <button
-          onClick={() => scroll('right')}
-          className={`p-2 rounded-full ${
-            mode === 'dark' 
-              ? 'bg-gray-800 text-white hover:bg-gray-700' 
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-          } ml-2 hidden md:flex`}
-        >
-          <ChevronRight className="h-5 w-5" />
-        </button>
-      </div>
+    <div className="w-full overflow-hidden py-2">
+      <motion.div
+        className="flex space-x-4 overflow-x-auto scrollbar-hide"
+        initial={{ x: 0 }}
+        animate={{ x: [0, -2000] }}
+        transition={{ 
+          repeat: Infinity, 
+          duration: 60, 
+          repeatType: "loop",
+          ease: "linear"
+        }}
+      >
+        {doubledCategories.map((category, index) => (
+          <motion.div
+            key={`${category.id}-${index}`}
+            className={`flex-shrink-0 px-4 py-2 rounded-full cursor-pointer 
+              ${mode === 'dark' 
+                ? 'bg-gray-800 hover:bg-gray-700 text-white' 
+                : 'bg-white hover:bg-gray-50 text-gray-900 shadow-sm border border-gray-200'}
+            `}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => handleCategoryClick(category)}
+          >
+            <div className="flex items-center space-x-2 whitespace-nowrap">
+              {category.icon && (
+                <span className="text-green-600 dark:text-green-400">{category.icon}</span>
+              )}
+              <span className="text-sm font-medium">{category.name}</span>
+            </div>
+          </motion.div>
+        ))}
+      </motion.div>
     </div>
   );
 };

@@ -5,7 +5,6 @@ import { getFeaturedProducts } from '@/services/shopService';
 import ProductCard from '@/components/shop/ProductCard';
 import { Product, adaptDatabaseProductToProduct } from '@/models/product';
 import { useTheme } from '@/context/ThemeContext';
-import { DBProduct } from '@/models/types';
 
 const FeaturedProducts = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -23,7 +22,7 @@ const FeaturedProducts = () => {
         if (result && Array.isArray(result)) {
           const formattedProducts = result.map(item => {
             // Handle potential missing properties
-            const product: DBProduct = {
+            const product = {
               id: item.id,
               name: item.name,
               description: item.description || '',
@@ -31,7 +30,7 @@ const FeaturedProducts = () => {
               images: item.images || [],
               category: item.category || '',
               shop_id: item.shop_id,
-              in_stock: item.in_stock !== undefined ? item.in_stock : true,
+              in_stock: item.is_published !== undefined ? item.is_published : true,
               is_halal_certified: item.is_halal_certified || false,
               created_at: item.created_at,
               shops: item.shops
