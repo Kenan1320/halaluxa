@@ -6,14 +6,14 @@ interface CategoryCardProps {
   title: string;
   description: string;
   imageSrc: string;
-  backgroundColor: string;
+  backgroundColor?: string;
   link: string;
 }
 
 const CategoryCard = ({ title, description, imageSrc, link }: CategoryCardProps) => {
   return (
     <div 
-      className="rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow h-full bg-gradient-to-br from-[#0F1B44] to-[#152554]"
+      className="rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow h-full bg-gradient-to-br from-[#0F1B44] to-[#183080]"
     >
       <div className="p-8 flex flex-col h-full">
         <div className="mb-6">

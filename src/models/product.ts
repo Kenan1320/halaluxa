@@ -23,6 +23,7 @@ export interface Product {
   seller_id?: string;
   seller_name?: string;
   rating?: number;
+  stock?: number;
   // Properties used in frontend but mapped from database fields
   shopId?: string; // Alias for shop_id
   isHalalCertified?: boolean; // Alias for is_halal_certified
@@ -33,7 +34,6 @@ export interface Product {
   sellerName?: string; // Alias for seller_name
   long_description?: string;
   is_published?: boolean;
-  stock?: number;
 }
 
 export const productCategories = [

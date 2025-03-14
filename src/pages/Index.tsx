@@ -1,3 +1,4 @@
+
 import { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useLocation } from '@/context/LocationContext';
@@ -5,6 +6,7 @@ import { Link } from 'react-router-dom';
 import Footer from '@/components/layout/Footer';
 import SearchBar from '@/components/home/SearchBar';
 import CategoryScroll from '@/components/home/CategoryScroll';
+import ScrollableNavigation from '@/components/home/ScrollableNavigation';
 import ProductGrid from '@/components/home/ProductGrid';
 import NearbyShops from '@/components/home/NearbyShops';
 import CategorySuggestions from '@/components/home/CategorySuggestions';
@@ -173,6 +175,13 @@ const Index = () => {
           <div className="mt-1">
             <CategoryScroll />
           </div>
+        </div>
+      </div>
+      
+      {/* New scrollable navigation section */}
+      <div className="bg-white dark:bg-gray-900 py-2 shadow-sm border-b border-gray-100 dark:border-gray-800">
+        <div className="container mx-auto px-4">
+          <ScrollableNavigation />
         </div>
       </div>
       

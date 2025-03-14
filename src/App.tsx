@@ -34,6 +34,13 @@ import LoginPage from "./pages/auth/LoginPage";
 import SignUpPage from "./pages/auth/SignUpPage";
 import SelectShops from "./pages/SelectShops";
 
+// New Pages for Navigation Buttons
+import NearbyPage from "./pages/nearby";
+import TrendingPage from "./pages/trending";
+import PopularSearchesPage from "./pages/popular-searches";
+import OrderDeliveryPage from "./pages/order-delivery";
+import AffiliatePage from "./pages/affiliate";
+
 // Dashboard imports
 import DashboardLayout from "./components/layout/DashboardLayout";
 import DashboardHome from "./pages/dashboard/DashboardHome";
@@ -82,6 +89,13 @@ const AppRoutes = () => {
         <Route path="/shop/:shopId" element={<ShopDetail />} />
         <Route path="/product/:productId" element={<ProductDetail />} />
         <Route path="/select-shops" element={<SelectShops />} />
+        
+        {/* New navigation button routes */}
+        <Route path="/nearby" element={<NearbyPage />} />
+        <Route path="/trending" element={<TrendingPage />} />
+        <Route path="/popular-searches" element={<PopularSearchesPage />} />
+        <Route path="/order-delivery" element={<OrderDeliveryPage />} />
+        <Route path="/affiliate" element={<AffiliatePage />} />
         
         {/* Protected shopper routes - explicitly disallow business users */}
         <Route 
@@ -153,8 +167,6 @@ const AppRoutes = () => {
 };
 
 function App() {
-  // Initialization used to happen here, but we removed the reference to setupDatabaseTables
-
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
