@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useForm, SubmitHandler, Controller } from 'react-hook-form';
@@ -7,6 +6,7 @@ import * as z from 'zod';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -18,12 +18,11 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+} from "@/components/ui/form"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { createProduct, updateProduct, getProductById } from '@/services/productService';
-import { listCategories } from '@/services/shopServiceHelpers';
+import { listCategories } from '@/services/categoryService';
 import { Product } from '@/models/product';
-import { useAuth } from '@/context/AuthContext';
 
 const productFormSchema = z.object({
   name: z.string().min(2, {
@@ -51,7 +50,6 @@ const AddEditProductPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user } = useAuth();
   const [categories, setCategories] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [product, setProduct] = useState<Product | null>(null);
@@ -128,29 +126,15 @@ const AddEditProductPage: React.FC = () => {
     fetchProduct();
   }, [id, navigate, toast, form]);
 
-  const handleSubmit = async (data: ProductFormData) => {
-    if (!user) {
-      toast({
-        title: "Error",
-        description: "You must be logged in to manage products",
-        variant: "destructive",
-      });
-      return;
-    }
-    
+  const handleSubmit: SubmitHandler<ProductFormData> = async (data, e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
     setLoading(true);
 
     try {
-      const productData: Partial<Product> = {
-        name: data.name,
-        description: data.description,
+      const productData = {
+        ...data,
         price: parseFloat(data.price.toString()),
         images: [data.images],
-        category: data.category,
-        isHalalCertified: data.isHalalCertified,
-        inStock: data.inStock,
-        shopId: product?.shopId || user.id, // Use existing shopId or fall back to user ID
-        sellerId: product?.sellerId || user.id
       };
 
       if (id) {

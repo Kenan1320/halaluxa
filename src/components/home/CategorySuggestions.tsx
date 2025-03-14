@@ -19,13 +19,7 @@ const TabItem = ({ isActive, onClick, icon, children }: {
     }`}
     style={{ fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}
   >
-    <motion.div
-      className="w-6 h-6"
-      whileHover={{ scale: 1.1 }}
-      whileTap={{ scale: 0.95 }}
-    >
-      {icon}
-    </motion.div>
+    {icon}
     <span className="text-base font-semibold">{children}</span>
     {isActive && (
       <motion.div
@@ -42,59 +36,22 @@ const CategoryIcon = ({ category, onClick, isSelected }: {
   onClick: () => void;
   isSelected?: boolean;
 }) => (
-  <motion.div 
+  <div 
     onClick={onClick}
-    whileHover={{ scale: 1.05 }}
-    whileTap={{ scale: 0.95 }}
     className="flex flex-col items-center space-y-2 min-w-[80px] cursor-pointer px-1"
   >
-    <motion.div 
-      className={`w-16 h-16 flex items-center justify-center ${
-        isSelected ? 'text-[#29866B]' : 'text-gray-600 dark:text-gray-300'
-      }`}
-      initial={{ rotateX: 0 }}
-      whileHover={{ 
-        rotateX: 10,
-        rotateY: 10,
-        boxShadow: "0px 5px 15px rgba(0,0,0,0.1)" 
-      }}
-      style={{ 
-        transformStyle: "preserve-3d", 
-        perspective: "500px" 
-      }}
-    >
-      {getCategoryIcon(category.name, `w-9 h-9 ${isSelected ? 'text-[#29866B]' : 'text-gray-600 dark:text-gray-300'}`)}
-    </motion.div>
-    <span className={`text-xs font-bold text-center text-gray-600 dark:text-gray-300 whitespace-nowrap ${
-      isSelected ? 'text-[#2A866A] dark:text-[#5bbea7]' : ''
+    <div className={`w-14 h-14 flex items-center justify-center ${
+      isSelected ? 'text-[#29866B]' : 'text-gray-600 dark:text-gray-300'
+    }`}>
+      {getCategoryIcon(category.name, `w-8 h-8 ${isSelected ? 'text-[#29866B]' : 'text-gray-600 dark:text-gray-300'}`)}
+    </div>
+    <span className={`text-xs text-center text-gray-600 dark:text-gray-300 whitespace-nowrap ${
+      isSelected ? 'font-bold text-[#2A866A] dark:text-[#5bbea7]' : ''
     }`}>
       {category.name}
     </span>
-  </motion.div>
+  </div>
 );
-
-const getOrderedCategories = (categories: Category[], mode: 'nearby' | 'online'): Category[] => {
-  const orderMap: Record<string, number> = {};
-  
-  if (mode === 'nearby') {
-    // Define the order for Halvi't Nearby
-    ['Groceries', 'Restaurants', 'Coffee Shops', 'Halal Meat'].forEach((name, index) => {
-      orderMap[name] = index;
-    });
-  } else {
-    // Define the order for Halvi Mall
-    ['Online Shops', 'Hoodies', 'Thobes', 'Abayas'].forEach((name, index) => {
-      orderMap[name] = index;
-    });
-  }
-  
-  // Sort the categories based on the defined order
-  return [...categories].sort((a, b) => {
-    const aOrder = orderMap[a.name] !== undefined ? orderMap[a.name] : 999;
-    const bOrder = orderMap[b.name] !== undefined ? orderMap[b.name] : 999;
-    return aOrder - bOrder;
-  });
-};
 
 export default function CategorySuggestions() {
   const { mode } = useTheme();
@@ -123,7 +80,7 @@ export default function CategorySuggestions() {
             setActiveTab('nearby');
             setSelectedCategory(null);
           }}
-          icon={getCategoryIcon('Groceries', 'w-6 h-6')}
+          icon={getCategoryIcon('Groceries', 'w-5 h-5')}
         >
           Halvi't Nearby
         </TabItem>
@@ -133,19 +90,16 @@ export default function CategorySuggestions() {
             setActiveTab('online');
             setSelectedCategory(null);
           }}
-          icon={getCategoryIcon('Online Shops', 'w-6 h-6')}
+          icon={getCategoryIcon('Online Shops', 'w-5 h-5')}
         >
           Halvi Mall
         </TabItem>
       </div>
       
-      {/* Categories scroll section with divider */}
+      {/* Categories scroll section */}
       <div className="overflow-x-auto scrollbar-none">
         <div className="flex space-x-4 pb-4 min-w-max px-2">
-          {getOrderedCategories(
-            activeTab === 'nearby' ? nearbyCategories : onlineCategories,
-            activeTab
-          ).map((category) => (
+          {(activeTab === 'nearby' ? nearbyCategories : onlineCategories).map((category) => (
             <CategoryIcon 
               key={category.id} 
               category={category}
@@ -155,7 +109,6 @@ export default function CategorySuggestions() {
           ))}
         </div>
       </div>
-      <div className="border-b border-[#DADADA] dark:border-gray-700 my-2"></div>
     </div>
   );
 }

@@ -1,18 +1,16 @@
-
 import { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useLocation } from '@/context/LocationContext';
 import { Link } from 'react-router-dom';
+import Footer from '@/components/layout/Footer';
 import SearchBar from '@/components/home/SearchBar';
 import CategoryScroll from '@/components/home/CategoryScroll';
 import ProductGrid from '@/components/home/ProductGrid';
 import NearbyShops from '@/components/home/NearbyShops';
 import CategorySuggestions from '@/components/home/CategorySuggestions';
-import { ChevronDown } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, useAnimationControls } from 'framer-motion';
 import { getShopById, subscribeToShops, getShops, Shop } from '@/services/shopService';
 import { useTheme } from '@/context/ThemeContext';
-import { Dialog, DialogTrigger, DialogContent } from '@/components/ui/dialog';
 
 const Index = () => {
   const { isLoggedIn, user } = useAuth();
@@ -21,8 +19,6 @@ const Index = () => {
   const [nearbyShops, setNearbyShops] = useState<Shop[]>([]);
   const [isLoadingShops, setIsLoadingShops] = useState(false);
   const [activeShopIndex, setActiveShopIndex] = useState(0);
-  const [showShopSelector, setShowShopSelector] = useState(false);
-  const [selectedShopId, setSelectedShopId] = useState<string | null>(null);
   const shopScrollRef = useRef<HTMLDivElement>(null);
   const [activeTab, setActiveTab] = useState('online');
   const { mode } = useTheme();
@@ -54,7 +50,7 @@ const Index = () => {
     }
   }, []);
 
-  // Shop subscription and loading logic
+  // Subscribe to real-time shop updates and load selected shops
   useEffect(() => {
     setIsLoadingShops(true);
     
@@ -120,7 +116,7 @@ const Index = () => {
     };
   }, [loadSelectedShops]);
 
-  // Cycling shop index animation
+  // Cycling shop index animation effect with more efficient interval
   useEffect(() => {
     if (selectedShops.length === 0) return;
     
@@ -131,7 +127,7 @@ const Index = () => {
     return () => clearInterval(interval);
   }, [selectedShops.length]);
 
-  // Get greeting based on time of day
+  // Get current hour to determine greeting
   const greeting = useMemo(() => {
     const currentHour = new Date().getHours();
     if (currentHour < 12) return "Good morning";
@@ -139,111 +135,16 @@ const Index = () => {
     return "Good evening";
   }, []);
 
-  // Set the shop as main
-  const setAsMainShop = (shopId: string) => {
-    localStorage.setItem('mainShopId', shopId);
-    setSelectedShopId(null);
-  };
-
-  // Visit the shop
-  const visitShop = (shopId: string) => {
-    window.location.href = `/shop/${shopId}`;
-  };
-
-  // Toggle shop selection
-  const toggleShopSelection = (shopId: string) => {
-    const currentSelection = JSON.parse(localStorage.getItem('selectedShops') || '[]') as string[];
-    
-    if (currentSelection.includes(shopId)) {
-      const newSelection = currentSelection.filter(id => id !== shopId);
-      localStorage.setItem('selectedShops', JSON.stringify(newSelection));
-    } else {
-      currentSelection.push(shopId);
-      localStorage.setItem('selectedShops', JSON.stringify(currentSelection));
-    }
-    
-    loadSelectedShops();
-  };
-
-  // Shop selector modal content
-  const ShopSelectorModal = () => (
-    <Dialog>
-      <DialogTrigger asChild>
-        <motion.div 
-          className="flex items-center gap-1 cursor-pointer mt-1 mb-2"
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.98 }}
-        >
-          <h2 className={`text-sm font-bold tracking-wide ${
-            mode === 'dark'
-              ? 'text-white bg-gray-800/90 dark:border dark:border-gray-700'
-              : 'text-gray-700 bg-gray-100'
-          } rounded-full px-4 py-1 inline-block`}
-          style={{ fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}>
-            Your Shops
-          </h2>
-          <ChevronDown className="h-4 w-4 text-gray-500" />
-        </motion.div>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-md rounded-t-xl p-0 gap-0">
-        <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="font-bold text-lg">Shop Selection</h2>
-          <p className="text-gray-500 text-sm">Manage your favorite shops</p>
-        </div>
-        
-        <div className="p-4 max-h-[60vh] overflow-y-auto">
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-            {nearbyShops.map(shop => (
-              <div key={shop.id} className="flex flex-col items-center">
-                <div 
-                  className="w-16 h-16 rounded-lg flex items-center justify-center overflow-hidden cursor-pointer border border-gray-200 dark:border-gray-700"
-                  onClick={() => setSelectedShopId(shop.id === selectedShopId ? null : shop.id)}
-                >
-                  {shop.logo_url ? (
-                    <img src={shop.logo_url} alt={shop.name} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gray-100 dark:bg-gray-800 text-gray-500">
-                      {shop.name.charAt(0)}
-                    </div>
-                  )}
-                </div>
-                <p className="text-xs text-center mt-1 font-medium">{shop.name}</p>
-                
-                {selectedShopId === shop.id && (
-                  <motion.div 
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 10 }}
-                    className="mt-2 space-y-1"
-                  >
-                    <button 
-                      onClick={() => visitShop(shop.id)}
-                      className="w-full text-xs py-1 px-2 bg-[#2A866A] text-white rounded-md"
-                    >
-                      Visit Shop
-                    </button>
-                    <button 
-                      onClick={() => setAsMainShop(shop.id)}
-                      className="w-full text-xs py-1 px-2 bg-blue-500 text-white rounded-md"
-                    >
-                      Set as Main
-                    </button>
-                    <button 
-                      onClick={() => toggleShopSelection(shop.id)}
-                      className="w-full text-xs py-1 px-2 bg-gray-200 dark:bg-gray-700 rounded-md"
-                    >
-                      {JSON.parse(localStorage.getItem('selectedShops') || '[]').includes(shop.id) 
-                        ? 'Remove' 
-                        : 'Select Shop'}
-                    </button>
-                  </motion.div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+  // Heading style for section titles - made bolder
+  const SectionHeading = ({ children }: { children: React.ReactNode }) => (
+    <h2 className={`text-sm font-bold tracking-wide ${
+      mode === 'dark'
+        ? 'text-white bg-gray-800/90 dark:border dark:border-gray-700'
+        : 'text-gray-700 bg-gray-100'
+    } rounded-full px-4 py-1 inline-block`}
+    style={{ fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}>
+      {children}
+    </h2>
   );
 
   return (
@@ -256,7 +157,7 @@ const Index = () => {
             <SearchBar />
           </div>
           
-          {/* Personalized greeting for user */}
+          {/* Personalized greeting for user - smaller text */}
           <motion.div
             className="mb-1"
             initial={{ opacity: 0, y: -10 }}
@@ -267,7 +168,7 @@ const Index = () => {
             </h2>
           </motion.div>
           
-          {/* Category scroll */}
+          {/* Category scroll inside mint background */}
           <div className="mt-1">
             <CategoryScroll />
           </div>
@@ -276,13 +177,16 @@ const Index = () => {
       
       {/* Main content with white background */}
       <div className="container mx-auto px-4 pt-3 bg-white dark:bg-gray-900">
-        {/* Section divider */}
-        <div className="border-b border-[#DADADA] dark:border-gray-700 my-2"></div>
-        
-        {/* Selected/Featured Shops Section - with new modal approach */}
+        {/* Selected/Featured Shops Section - Always visible */}
         <section className="mt-3 mb-5">
           <div className="flex justify-between items-center mb-2">
-            <ShopSelectorModal />
+            <SectionHeading>Your Shops</SectionHeading>
+            <Link 
+              to="/select-shops" 
+              className="bg-gray-100 hover:bg-gray-200 transition-colors duration-200 rounded-full px-4 py-1 text-xs text-gray-800 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700 dark:border dark:border-gray-700"
+            >
+              Edit Selection
+            </Link>
           </div>
           
           {/* Shop carousel */}
@@ -290,7 +194,7 @@ const Index = () => {
             {selectedShops.length > 0 && (
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="w-full h-full flex items-center">
-                  {/* First set of logos */}
+                  {/* Create a continuous flow of logos - first set */}
                   <motion.div
                     className="flex absolute"
                     initial={{ x: "0%" }}
@@ -302,6 +206,7 @@ const Index = () => {
                       repeatType: "loop"
                     }}
                   >
+                    {/* Double the shops array for continuous animation */}
                     {[...selectedShops, ...selectedShops, ...selectedShops].map((shop, index) => (
                       <motion.div
                         key={`${shop.id}-flow1-${index}`}
@@ -355,7 +260,7 @@ const Index = () => {
                     ))}
                   </motion.div>
 
-                  {/* Second continuous flow of logos */}
+                  {/* Second identical motion div that follows the first to create seamless transition */}
                   <motion.div
                     className="flex absolute"
                     initial={{ x: "100%" }}
@@ -425,47 +330,28 @@ const Index = () => {
           </div>
         </section>
         
-        {/* Section divider */}
-        <div className="border-b border-[#DADADA] dark:border-gray-700 my-3"></div>
-        
-        {/* Category Suggestions */}
-        <section className="mt-3 mb-4">
+        {/* Category Suggestions - NEW SECTION */}
+        <section className="mt-4 mb-6">
           <CategorySuggestions />
         </section>
         
-        {/* Section divider */}
-        <div className="border-b border-[#DADADA] dark:border-gray-700 my-2"></div>
-        
         {/* Nearby Shops Section */}
-        <section className="mt-4 mb-4">
-          <h2 className={`text-sm font-bold tracking-wide ${
-            mode === 'dark'
-              ? 'text-white bg-gray-800/90 dark:border dark:border-gray-700'
-              : 'text-gray-700 bg-gray-100'
-          } rounded-full px-4 py-1 inline-block`}
-          style={{ fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}>
+        <section className="mt-1">
+          <SectionHeading>
             {activeTab === 'online' ? 'Shops' : 'Nearby Shops'}
-          </h2>
+          </SectionHeading>
           
           <NearbyShops />
         </section>
         
-        {/* Section divider */}
-        <div className="border-b border-[#DADADA] dark:border-gray-700 my-3"></div>
-        
         {/* Featured Products Section */}
-        <section className="mt-4 mb-6">
-          <h2 className={`text-sm font-bold tracking-wide ${
-            mode === 'dark'
-              ? 'text-white bg-gray-800/90 dark:border dark:border-gray-700'
-              : 'text-gray-700 bg-gray-100'
-          } rounded-full px-4 py-1 inline-block`}
-          style={{ fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}>
-            Featured Products
-          </h2>
+        <section className="mt-4">
+          <SectionHeading>Featured Products</SectionHeading>
           <ProductGrid />
         </section>
       </div>
+      
+      <Footer />
     </div>
   );
 };

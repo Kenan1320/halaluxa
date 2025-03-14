@@ -1,280 +1,223 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { Shop, adaptDbShopToModelShop, adaptModelShopToDBShop } from '@/models/shop';
-import { UUID, DBShop, Category } from '@/models/types';
-import { calculateDistance } from '@/utils/locationUtils';
-import { filterShops } from './shopServiceHelpers';
+import type { Shop } from '@/types/database';
+import { 
+  setupDatabaseTables,
+  getShops,
+  getShopProducts,
+  convertToModelProduct,
+  uploadProductImage,
+  mapShopToModel
+} from './shopServiceHelpers';
 
-// Export the Shop type for components that need it
-export type { Shop } from '@/models/shop';
+// Export types and helper functions from shopServiceHelpers
+export type { Shop };
+export { 
+  setupDatabaseTables,
+  getShops,
+  getShopProducts,
+  convertToModelProduct,
+  uploadProductImage,
+  mapShopToModel
+};
 
-/**
- * Fetch all shops from the database
- */
-export const getShops = async (filters?: any): Promise<Shop[]> => {
+// Function to subscribe to real-time updates for shops
+export const subscribeToShops = (callback: (shops: Shop[]) => void) => {
+  return supabase
+    .channel('public:shops')
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'shops' },
+      (payload) => {
+        // Fetch all shops to ensure the data is up-to-date
+        getAllShops().then((shops) => {
+          callback(shops);
+        });
+      }
+    )
+    .subscribe();
+};
+
+// Function to get all shops
+export const getAllShops = async (): Promise<Shop[]> => {
   try {
-    let query = supabase
+    const { data: shops, error } = await supabase
       .from('shops')
-      .select('*')
-      .order('name');
-    
-    if (filters?.category) {
-      query = query.eq('category', filters.category);
+      .select('*');
+
+    if (error) {
+      throw error;
     }
-    
-    if (filters?.search) {
-      query = query.ilike('name', `%${filters.search}%`);
-    }
-    
-    const { data, error } = await query;
-    
-    if (error) throw error;
-    
-    return (data || []).map((shop: DBShop) => adaptDbShopToModelShop(shop));
+
+    return shops || [];
   } catch (error) {
     console.error('Error fetching shops:', error);
     return [];
   }
 };
 
-// Alias for getShops for backward compatibility
-export const getAllShops = getShops;
-
-/**
- * Fetch a shop by ID
- */
-export const getShopById = async (id: UUID): Promise<Shop | null> => {
+// Function to get a shop by ID
+export const getShopById = async (id: string): Promise<Shop | null> => {
   try {
-    const { data, error } = await supabase
+    const { data: shop, error } = await supabase
       .from('shops')
       .select('*')
       .eq('id', id)
       .single();
-    
-    if (error) throw error;
-    
-    return data ? adaptDbShopToModelShop(data as DBShop) : null;
+
+    if (error) {
+      throw error;
+    }
+
+    return shop || null;
   } catch (error) {
     console.error(`Error fetching shop with ID ${id}:`, error);
     return null;
   }
 };
 
-/**
- * Create a new shop
- */
-export const createShop = async (shop: Omit<Shop, 'id' | 'createdAt' | 'updatedAt'>): Promise<Shop | null> => {
+// Function to get nearby shops based on user's location
+export const getNearbyShops = async (latitude?: number, longitude?: number): Promise<Shop[]> => {
   try {
-    const dbShop = adaptModelShopToDBShop({
-      ...shop,
-      id: crypto.randomUUID(),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    } as Shop);
-    
-    const { data, error } = await supabase
-      .from('shops')
-      .insert([dbShop])
-      .select()
-      .single();
-    
-    if (error) throw error;
-    
-    return data ? adaptDbShopToModelShop(data as DBShop) : null;
-  } catch (error) {
-    console.error('Error creating shop:', error);
-    return null;
-  }
-};
+    // Use passed coordinates or default to a fallback if not provided
+    const userLatitude = latitude || 37.7749;  // Default latitude
+    const userLongitude = longitude || -122.4194; // Default longitude
 
-/**
- * Update an existing shop
- */
-export const updateShop = async (id: UUID, shop: Partial<Shop>): Promise<Shop | null> => {
-  try {
-    const dbShop = adaptModelShopToDBShop({
-      ...shop,
-      id,
-      updatedAt: new Date().toISOString()
-    } as Shop);
-    
-    const { data, error } = await supabase
-      .from('shops')
-      .update(dbShop)
-      .eq('id', id)
-      .select()
-      .single();
-    
-    if (error) throw error;
-    
-    return data ? adaptDbShopToModelShop(data as DBShop) : null;
-  } catch (error) {
-    console.error(`Error updating shop with ID ${id}:`, error);
-    return null;
-  }
-};
-
-/**
- * Delete a shop
- */
-export const deleteShop = async (id: UUID): Promise<boolean> => {
-  try {
-    const { error } = await supabase
-      .from('shops')
-      .delete()
-      .eq('id', id);
-    
-    if (error) throw error;
-    
-    return true;
-  } catch (error) {
-    console.error(`Error deleting shop with ID ${id}:`, error);
-    return false;
-  }
-};
-
-/**
- * Get nearby shops based on coordinates
- */
-export const getNearbyShops = async (
-  latitude: number,
-  longitude: number,
-  maxDistance: number = 10,
-  category?: string
-): Promise<Shop[]> => {
-  try {
-    const { data, error } = await supabase
+    // For now, return all shops as a mock
+    const { data: shops, error } = await supabase
       .from('shops')
       .select('*');
-    
-    if (error) throw error;
-    
-    const shops = (data || []).map((shop: DBShop) => {
-      const shopObj = adaptDbShopToModelShop(shop);
-      
-      if (shopObj.latitude && shopObj.longitude) {
-        shopObj.distance = calculateDistance(
-          latitude, 
-          longitude, 
-          shopObj.latitude, 
-          shopObj.longitude
-        );
-      }
-      
-      return shopObj;
-    });
-    
-    // Filter shops by distance and optionally by category
-    const nearbyShops = shops.filter(shop => {
-      const distanceMatch = shop.distance !== null && shop.distance <= maxDistance;
-      const categoryMatch = !category || shop.category === category;
-      return distanceMatch && categoryMatch;
-    });
-    
-    // Sort by distance
-    return nearbyShops.sort((a, b) => {
-      return (a.distance || Infinity) - (b.distance || Infinity);
-    });
+
+    if (error) {
+      throw error;
+    }
+
+    return shops as Shop[];
   } catch (error) {
     console.error('Error fetching nearby shops:', error);
     return [];
   }
 };
 
-/**
- * Get main shop from localStorage
- */
+// Function to get the main shop ID from localStorage
+export const getMainShopId = (): string | null => {
+  if (typeof localStorage === 'undefined') {
+    return null;
+  }
+  return localStorage.getItem('mainShopId');
+};
+
+// Function to get the main shop
 export const getMainShop = async (): Promise<Shop | null> => {
-  const mainShopId = localStorage.getItem('mainShopId');
-  
+  const mainShopId = getMainShopId();
   if (!mainShopId) {
     return null;
   }
-  
-  return await getShopById(mainShopId);
+  return getShopById(mainShopId);
 };
 
-/**
- * Real-time subscription to shops
- */
-export const subscribeToShops = (callback: (shops: Shop[]) => void) => {
-  const subscription = supabase
-    .channel('shops-channel')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'shops' }, () => {
-      getShops().then(shops => callback(shops));
-    })
-    .subscribe();
-  
-  // Initial fetch
-  getShops().then(shops => callback(shops));
-  
-  return subscription;
-};
-
-/**
- * Get categories by group
- */
-export const getCategoriesByGroup = async (group: string): Promise<Category[]> => {
+// Function to get shops for a specific seller
+export const getShopsForSeller = async (sellerId: string): Promise<Shop[]> => {
   try {
-    const { data, error } = await supabase
-      .from('categories')
+    // Use direct shop query instead of seller_accounts
+    const { data: shops, error } = await supabase
+      .from('shops')
       .select('*')
-      .eq('group', group);
+      .eq('owner_id', sellerId);
     
     if (error) throw error;
-    
-    return data || [];
+    return shops as Shop[];
   } catch (error) {
-    console.error(`Error fetching categories for group ${group}:`, error);
+    console.error('Error fetching shops for seller:', error);
     return [];
   }
 };
 
-/**
- * Get featured products from all shops
- */
-export const getFeaturedProducts = async (limit: number = 10) => {
+// Function to create a new shop
+export const createShop = async (shop: Omit<Shop, 'id'>): Promise<Shop | null> => {
   try {
-    const { data, error } = await supabase
-      .from('products')
-      .select(`
-        *,
-        shops:shop_id (
-          id,
-          name,
-          logo_url
-        )
-      `)
-      .eq('featured', true)
-      .limit(limit);
-    
-    if (error) throw error;
-    
-    return data || [];
-  } catch (error) {
-    console.error('Error fetching featured products:', error);
-    return [];
-  }
-};
-
-/**
- * Get all categories
- */
-export const getCategories = async (): Promise<Category[]> => {
-  try {
-    const { data, error } = await supabase
-      .from('categories')
+    const { data: newShop, error } = await supabase
+      .from('shops')
+      .insert([{
+        name: shop.name,
+        description: shop.description,
+        location: shop.location,
+        category: shop.category,
+        logo_url: shop.logo_url, // Use snake_case for database
+        cover_image: shop.cover_image, // Use snake_case for database
+        rating: shop.rating || 0,
+        product_count: shop.product_count || 0,
+        is_verified: shop.is_verified || false,
+        owner_id: shop.owner_id,
+        latitude: shop.latitude,
+        longitude: shop.longitude
+      }])
       .select('*')
-      .order('name');
-    
-    if (error) throw error;
-    
-    return data || [];
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    return newShop as Shop;
   } catch (error) {
-    console.error('Error fetching categories:', error);
-    return [];
+    console.error('Error creating shop:', error);
+    return null;
   }
 };
 
-// Fix all the filter shops issues
-export { filterShops };
+// Function to update an existing shop
+export const updateShop = async (id: string, updates: Partial<Shop>): Promise<Shop | null> => {
+  try {
+    // Convert frontend property names to database column names
+    const dbUpdates: any = {};
+    
+    if (updates.name !== undefined) dbUpdates.name = updates.name;
+    if (updates.description !== undefined) dbUpdates.description = updates.description;
+    if (updates.location !== undefined) dbUpdates.location = updates.location;
+    if (updates.category !== undefined) dbUpdates.category = updates.category;
+    if (updates.logo_url !== undefined) dbUpdates.logo_url = updates.logo_url;
+    if (updates.cover_image !== undefined) dbUpdates.cover_image = updates.cover_image;
+    if (updates.rating !== undefined) dbUpdates.rating = updates.rating;
+    if (updates.product_count !== undefined) dbUpdates.product_count = updates.product_count;
+    if (updates.is_verified !== undefined) dbUpdates.is_verified = updates.is_verified;
+    if (updates.owner_id !== undefined) dbUpdates.owner_id = updates.owner_id;
+    if (updates.latitude !== undefined) dbUpdates.latitude = updates.latitude;
+    if (updates.longitude !== undefined) dbUpdates.longitude = updates.longitude;
+    
+    const { data: updatedShop, error } = await supabase
+      .from('shops')
+      .update(dbUpdates)
+      .eq('id', id)
+      .select('*')
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    return updatedShop as Shop;
+  } catch (error) {
+    console.error(`Error updating shop with ID ${id}:`, error);
+    return null;
+  }
+};
+
+// Function to delete a shop
+export const deleteShop = async (id: string): Promise<boolean> => {
+  try {
+    const { error } = await supabase
+      .from('shops')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      throw error;
+    }
+
+    return true;
+  } catch (error) {
+    console.error(`Error deleting shop with ID ${id}:`, error);
+    return false;
+  }
+};

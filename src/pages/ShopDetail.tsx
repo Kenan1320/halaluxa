@@ -1,11 +1,11 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useLocation } from '@/context/LocationContext';
 import { getShopProducts } from '@/services/shopServiceHelpers';
 import { getShopById } from '@/services/shopService';
-import { Shop as ModelShop } from '@/models/shop';
-import { Product, adaptDatabaseProductToProduct } from '@/models/product';
+import { Shop } from '@/types/database';
+import { Shop as ModelShop, ShopProduct } from '@/models/shop';
+import { Product } from '@/models/product';
 import { ProductCard } from '@/components/cards/ProductCard';
 import { ShopHeader } from '@/components/shop/ShopHeader';
 import { useToast } from '@/hooks/use-toast';
@@ -20,7 +20,7 @@ const ShopDetail: React.FC = () => {
   const { toast } = useToast();
   
   const [shop, setShop] = useState<ModelShop | null>(null);
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<ShopProduct[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   
@@ -41,7 +41,25 @@ const ShopDetail: React.FC = () => {
           return;
         }
         
-        setShop(shopData);
+        // Convert database Shop to ModelShop
+        const modelShop: ModelShop = {
+          id: shopData.id,
+          name: shopData.name,
+          description: shopData.description,
+          location: shopData.location,
+          rating: shopData.rating || 0,
+          productCount: shopData.product_count || 0,
+          isVerified: shopData.is_verified || false,
+          category: shopData.category || '',
+          logo: shopData.logo_url || null,
+          coverImage: shopData.cover_image || null,
+          ownerId: shopData.owner_id || '',
+          latitude: shopData.latitude || null,
+          longitude: shopData.longitude || null,
+          distance: shopData.distance || null
+        };
+        
+        setShop(modelShop);
         
         // Fetch products for this shop
         const shopProducts = await getShopProducts(id);
@@ -85,6 +103,24 @@ const ShopDetail: React.FC = () => {
     );
   }
   
+  const convertToProduct = (shopProduct: ShopProduct): Product => {
+    return {
+      id: shopProduct.id,
+      name: shopProduct.name,
+      description: shopProduct.description,
+      price: shopProduct.price,
+      category: shopProduct.category,
+      images: shopProduct.images,
+      shopId: shop.id,
+      isHalalCertified: true,
+      createdAt: new Date().toISOString(),
+      sellerId: shopProduct.sellerId,
+      sellerName: shopProduct.sellerName,
+      rating: shopProduct.rating,
+      inStock: true
+    };
+  };
+  
   const shopCategories: ShopCategory[] = [];
   const categoryMap = new Map<string, Product[]>();
   
@@ -93,7 +129,7 @@ const ShopDetail: React.FC = () => {
     if (!categoryMap.has(category)) {
       categoryMap.set(category, []);
     }
-    categoryMap.get(category)?.push(product);
+    categoryMap.get(category)?.push(convertToProduct(product));
   });
   
   categoryMap.forEach((products, name) => {
@@ -115,20 +151,17 @@ const ShopDetail: React.FC = () => {
     });
   }
   
-  // Convert shop rating to the expected format
-  const ratingValue = typeof shop.rating === 'object' ? shop.rating.average : shop.rating || 0;
-  
   const shopDetails: ShopDetails = {
     id: shop?.id || '',
     name: shop?.name || '',
     description: shop?.description || '',
     location: shop?.location || '',
     categories: shopCategories,
-    cover_image: shop?.coverImage || shop?.cover_image,
-    logo: shop?.logo || shop?.logo_url,
+    cover_image: shop?.coverImage || undefined,
+    logo: shop?.logo || undefined,
     deliveryInfo: {
-      isDeliveryAvailable: !!shop?.deliveryAvailable || !!shop?.delivery_available,
-      isPickupAvailable: !!shop?.pickupAvailable || !!shop?.pickup_available,
+      isDeliveryAvailable: true,
+      isPickupAvailable: true,
       deliveryFee: 2.99,
       estimatedTime: '30-45 min',
       minOrder: 10
@@ -139,29 +172,16 @@ const ShopDetail: React.FC = () => {
     },
     isGroupOrderEnabled: true,
     rating: {
-      average: ratingValue,
+      average: shop?.rating || 0,
       count: 25
     },
-    product_count: shop?.productCount || shop?.product_count || 0,
-    is_verified: shop?.isVerified || shop?.is_verified || false,
+    product_count: shop?.productCount || 0,
+    is_verified: shop?.isVerified || false,
     category: shop?.category || '',
-    owner_id: shop?.ownerId || shop?.owner_id || '',
+    owner_id: shop?.ownerId || '',
     latitude: shop?.latitude,
     longitude: shop?.longitude,
     distance: shop?.distance
-  };
-  
-  // Handler for directions button
-  const handleGetDirections = () => {
-    if (!isLocationEnabled) {
-      enableLocation().then((success: boolean) => {
-        if (success && shop.latitude && shop.longitude) {
-          window.open(`https://maps.google.com/?q=${shop.latitude},${shop.longitude}`, '_blank');
-        }
-      });
-    } else if (shop.latitude && shop.longitude) {
-      window.open(`https://maps.google.com/?q=${shop.latitude},${shop.longitude}`, '_blank');
-    }
   };
   
   return (
@@ -181,7 +201,7 @@ const ShopDetail: React.FC = () => {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {products.map((product) => (
-                <ProductCard key={product.id} product={product} />
+                <ProductCard key={product.id} product={convertToProduct(product)} />
               ))}
             </div>
           )}
@@ -203,7 +223,17 @@ const ShopDetail: React.FC = () => {
                       variant="outline"
                       size="sm"
                       className="mt-2 text-xs"
-                      onClick={handleGetDirections}
+                      onClick={() => {
+                        if (!isLocationEnabled) {
+                          enableLocation().then(success => {
+                            if (success) {
+                              window.open(`https://maps.google.com/?q=${shop.latitude},${shop.longitude}`, '_blank');
+                            }
+                          });
+                        } else {
+                          window.open(`https://maps.google.com/?q=${shop.latitude},${shop.longitude}`, '_blank');
+                        }
+                      }}
                     >
                       <Navigation className="h-3 w-3 mr-1" />
                       Get Directions
@@ -216,7 +246,7 @@ const ShopDetail: React.FC = () => {
                 <Star className="h-5 w-5 text-haluna-primary mt-0.5 mr-3 flex-shrink-0" />
                 <div>
                   <h4 className="font-medium text-sm">Rating</h4>
-                  <p className="text-gray-600">{ratingValue.toFixed(1)} out of 5</p>
+                  <p className="text-gray-600">{shop.rating.toFixed(1)} out of 5</p>
                 </div>
               </div>
               

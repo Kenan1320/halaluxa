@@ -9,20 +9,20 @@ export interface AuthMiddlewareProps {
 }
 
 const AuthMiddleware = ({ children }: AuthMiddlewareProps) => {
-  const { isLoading, isLoggedIn, user } = useAuth();
+  const { isInitializing, isLoggedIn, user } = useAuth();
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
 
   // Determine if business user needs onboarding
   useEffect(() => {
-    if (!isLoading && isLoggedIn && user?.role === 'business' && !user?.shopName) {
+    if (!isInitializing && isLoggedIn && user?.role === 'business' && !user?.shopName) {
       // If they don't have a shop name set, they need onboarding
       setNeedsOnboarding(true);
     } else {
       setNeedsOnboarding(false);
     }
-  }, [isLoading, isLoggedIn, user]);
+  }, [isInitializing, isLoggedIn, user]);
 
   // Don't show the business onboarding if they're already in the onboarding flow
   // or dashboard settings page where they can set up their shop
@@ -31,7 +31,7 @@ const AuthMiddleware = ({ children }: AuthMiddlewareProps) => {
     location.pathname === '/dashboard/settings';
 
   // Show a minimal loader only while auth is initializing
-  if (isLoading) {
+  if (isInitializing) {
     return null; // Return nothing while initializing to avoid any flash
   }
 

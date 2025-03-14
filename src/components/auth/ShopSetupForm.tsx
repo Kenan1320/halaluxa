@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -5,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { createShop } from '@/services/shopService';
 import { Store, MapPin, Tag, FileText, Upload, X } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ShopSetupFormProps {
   onComplete: () => void;
@@ -79,32 +80,17 @@ export default function ShopSetupForm({ onComplete, onSkip }: ShopSetupFormProps
     setIsLoading(true);
     
     try {
-      // Create the shop with all required fields
+      // Create the shop
       const shop = await createShop({
         name: shopData.name,
         description: shopData.description,
-        logo: logoPreview,
-        logo_url: logoPreview,
+        logo_url: logoPreview || undefined, // Use logo_url instead of logo
         category: shopData.category,
         location: shopData.location,
         rating: 0,
-        productCount: 0,
         product_count: 0,
-        isVerified: false,
         is_verified: false,
-        ownerId: user.id,
-        owner_id: user.id,
-        latitude: null,
-        longitude: null,
-        distance: null,
-        deliveryAvailable: false,
-        delivery_available: false,
-        pickupAvailable: false,
-        pickup_available: false,
-        isHalalCertified: false,
-        is_halal_certified: false,
-        coverImage: null,
-        cover_image: null
+        owner_id: user.id
       });
       
       if (shop) {

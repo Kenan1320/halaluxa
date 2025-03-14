@@ -1,74 +1,86 @@
 
-import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { useTheme } from '@/context/ThemeContext';
 import { getCategoryIcon } from '../icons/CategoryIcons';
-import { Category, getCategories } from '@/services/categoryService';
+import { productCategories } from '@/models/product';
 
 const CategoryScroll = () => {
-  const [categories, setCategories] = useState<Category[]>([]);
-  const { mode } = useTheme();
-  
-  // Only display these top categories
-  const topCategoryNames = ['Online Shops', 'Restaurants', 'Groceries', 'Halal Meat', 'Clothing'];
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
   
   useEffect(() => {
-    const loadCategories = async () => {
-      try {
-        const allCategories = await getCategories();
-        
-        // Filter to only show the specified top categories
-        const filteredCategories = allCategories.filter(cat => 
-          topCategoryNames.includes(cat.name)
-        );
-        
-        // Sort them in the order specified in topCategoryNames
-        const sortedCategories = [...filteredCategories].sort((a, b) => {
-          return topCategoryNames.indexOf(a.name) - topCategoryNames.indexOf(b.name);
-        });
-        
-        setCategories(sortedCategories);
-      } catch (error) {
-        console.error('Error loading categories:', error);
+    const scrollContainer = scrollRef.current;
+    if (!scrollContainer) return;
+    
+    let animationId: number;
+    let scrollPosition = 0;
+    let scrollDirection = 1;
+    let isPaused = false;
+    
+    const autoScroll = () => {
+      if (!scrollContainer || isPaused) {
+        animationId = requestAnimationFrame(autoScroll);
+        return;
       }
+      
+      scrollPosition += 0.5 * scrollDirection;
+      scrollContainer.scrollLeft = scrollPosition;
+      
+      if (scrollPosition >= scrollContainer.scrollWidth - scrollContainer.clientWidth) {
+        scrollDirection = -1;
+      } else if (scrollPosition <= 0) {
+        scrollDirection = 1;
+      }
+      
+      animationId = requestAnimationFrame(autoScroll);
     };
     
-    loadCategories();
+    animationId = requestAnimationFrame(autoScroll);
+    
+    const handlePause = () => { isPaused = true; };
+    const handleResume = () => { isPaused = false; };
+    
+    scrollContainer.addEventListener('mouseenter', handlePause);
+    scrollContainer.addEventListener('mouseleave', handleResume);
+    scrollContainer.addEventListener('touchstart', handlePause);
+    scrollContainer.addEventListener('touchend', handleResume);
+    
+    return () => {
+      cancelAnimationFrame(animationId);
+      scrollContainer.removeEventListener('mouseenter', handlePause);
+      scrollContainer.removeEventListener('mouseleave', handleResume);
+      scrollContainer.removeEventListener('touchstart', handlePause);
+      scrollContainer.removeEventListener('touchend', handleResume);
+    };
   }, []);
   
+  const handleCategoryClick = (category: string) => {
+    navigate(`/browse?category=${encodeURIComponent(category)}`);
+  };
+  
   return (
-    <div className="overflow-x-auto scrollbar-none">
-      <div className="flex space-x-4 pb-1 pt-1">
-        {categories.map((category) => (
-          <Link 
-            key={category.id}
-            to={`/browse?category=${encodeURIComponent(category.name)}`}
-            className="flex-shrink-0 flex flex-col items-center"
+    <div className="relative w-full my-1">
+      <div
+        ref={scrollRef}
+        className="flex overflow-x-auto scrollbar-hide py-1 space-x-4"
+      >
+        {productCategories.map((category, index) => (
+          <motion.button
+            key={index}
+            className="flex-shrink-0 flex flex-col items-center justify-center p-1"
+            style={{ minWidth: '55px' }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => handleCategoryClick(category)}
           >
-            <motion.div
-              className={`w-12 h-12 rounded-full flex items-center justify-center shadow-sm 
-                ${mode === 'dark' ? 'bg-gray-800' : 'bg-white'}`}
-              whileHover={{ 
-                scale: 1.1, 
-                boxShadow: "0px 4px 8px rgba(0,0,0,0.1)",
-                rotateY: 10,
-                rotateX: 10
-              }}
-              style={{ 
-                transformStyle: "preserve-3d", 
-                perspective: "500px" 
-              }}
-              whileTap={{ scale: 0.95 }}
-              transition={{ type: "spring", stiffness: 400, damping: 17 }}
-            >
-              {getCategoryIcon(category.name, `w-7 h-7 ${mode === 'dark' ? 'text-white' : 'text-[#2A866A]'}`)}
-            </motion.div>
-            <span className="text-xs font-bold mt-1 text-center"
-                  style={{ fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}>
-              {category.name}
+            <div className="h-8 w-8 mb-1 flex items-center justify-center">
+              {getCategoryIcon(category, "h-7 w-7")}
+            </div>
+            <span className="text-black dark:text-white text-xs font-medium text-center line-clamp-1">
+              {category}
             </span>
-          </Link>
+          </motion.button>
         ))}
       </div>
     </div>

@@ -14,8 +14,6 @@ import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import AuthMiddleware from "@/components/auth/AuthMiddleware";
 import Navbar from "@/components/layout/Navbar";
 import BottomNavigation from "@/components/layout/BottomNavigation";
-import Footer from "@/components/layout/Footer";
-import SplashScreen from "@/components/SplashScreen";
 
 // Pages
 import Index from "./pages/Index";
@@ -35,8 +33,6 @@ import NotFound from "./pages/NotFound";
 import LoginPage from "./pages/auth/LoginPage";
 import SignUpPage from "./pages/auth/SignUpPage";
 import SelectShops from "./pages/SelectShops";
-import MapPage from "./pages/MapPage";
-import OrderTrackingPage from "./pages/OrderTrackingPage";
 
 // Dashboard imports
 import DashboardLayout from "./components/layout/DashboardLayout";
@@ -47,7 +43,6 @@ import OrdersPage from "./pages/dashboard/OrdersPage";
 import CustomersPage from "./pages/dashboard/CustomersPage";
 import SettingsPage from "./pages/dashboard/SettingsPage";
 import PaymentAccountPage from "./pages/dashboard/PaymentAccountPage";
-import LiveDeliveryDashboardPage from "./pages/dashboard/LiveDeliveryDashboardPage";
 import UserProfilePage from "./pages/profile/UserProfilePage";
 
 const queryClient = new QueryClient({
@@ -69,9 +64,6 @@ const AppRoutes = () => {
                     (!location.pathname.startsWith('/dashboard') && 
                      location.pathname !== '/login' && 
                      location.pathname !== '/signup');
-                     
-  // Only show Footer on About page
-  const showFooter = location.pathname === '/about';
   
   return (
     <AuthMiddleware>
@@ -90,10 +82,8 @@ const AppRoutes = () => {
         <Route path="/shop/:shopId" element={<ShopDetail />} />
         <Route path="/product/:productId" element={<ProductDetail />} />
         <Route path="/select-shops" element={<SelectShops />} />
-        <Route path="/map" element={<MapPage />} />
-        <Route path="/order-tracking" element={<OrderTrackingPage />} />
         
-        {/* Protected shopper routes */}
+        {/* Protected shopper routes - explicitly disallow business users */}
         <Route 
           path="/cart" 
           element={
@@ -150,7 +140,6 @@ const AppRoutes = () => {
           <Route path="products/edit/:id" element={<AddEditProductPage />} />
           <Route path="orders" element={<OrdersPage />} />
           <Route path="customers" element={<CustomersPage />} />
-          <Route path="delivery-dashboard" element={<LiveDeliveryDashboardPage />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="payment-account" element={<PaymentAccountPage />} />
         </Route>
@@ -159,17 +148,12 @@ const AppRoutes = () => {
         <Route path="*" element={<NotFound />} />
       </Routes>
       {showNavbar && <BottomNavigation />}
-      {showFooter && <Footer />}
     </AuthMiddleware>
   );
 };
 
 function App() {
-  const [showSplash, setShowSplash] = useState(true);
-
-  const handleSplashComplete = () => {
-    setShowSplash(false);
-  };
+  // Initialization used to happen here, but we removed the reference to setupDatabaseTables
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -182,11 +166,7 @@ function App() {
               <AuthProvider>
                 <CartProvider>
                   <LocationProvider>
-                    {showSplash ? (
-                      <SplashScreen onComplete={handleSplashComplete} />
-                    ) : (
-                      <AppRoutes />
-                    )}
+                    <AppRoutes />
                   </LocationProvider>
                 </CartProvider>
               </AuthProvider>
