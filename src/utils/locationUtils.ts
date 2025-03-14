@@ -58,3 +58,28 @@ export const formatAddress = (
   const parts = [street, city, state, zipCode, country].filter(Boolean);
   return parts.join(', ');
 };
+
+/**
+ * Initialize location object with coords property
+ */
+export const initializeLocation = (
+  latitude: number | null,
+  longitude: number | null,
+  address?: string,
+  city?: string,
+  state?: string,
+  country?: string
+) => {
+  return {
+    latitude,
+    longitude,
+    address,
+    city,
+    state,
+    country,
+    coords: {
+      latitude,
+      longitude
+    }
+  };
+};

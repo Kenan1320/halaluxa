@@ -39,6 +39,10 @@ export interface EnhancedLocation {
   city?: string;
   state?: string;
   country?: string;
+  coords?: {
+    latitude: number | null;
+    longitude: number | null;
+  };
 }
 
 // Database to frontend model conversion interfaces

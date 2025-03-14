@@ -19,7 +19,7 @@ import {
   Sparkles,
   FileText,
   Dumbbell,
-  MedicalCross,
+  Cross, // Replacing MedicalCross with Cross
   Headphones,
   Baby,
   Gamepad2,
@@ -57,7 +57,7 @@ const iconMap: CategoryIconMap = {
   "Food & Groceries": <ShoppingCart />,
   "Home & Decor": <Home />,
   "Books & Stationery": <Book />,
-  "Services": <MedicalCross />,
+  "Services": <Cross />, // Using Cross instead of MedicalCross
   "Clothing": <Shirt />,
   "Other": <Grid3X3 />
 };
