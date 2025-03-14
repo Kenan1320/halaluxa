@@ -1,97 +1,182 @@
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { getCurrentLocation, getAddressFromCoords } from '@/services/locationService';
-import { getAllShops } from '@/services/shopService';
-import { Coordinates, LocationContextProps } from '@/types/LocationTypes';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { getAllShops, getNearbyShops as getShopsNearby } from '@/services/shopService';
+import { Shop } from '@/types/database';
 
-const LocationContext = createContext<LocationContextProps>({
+// Extended GeolocationPosition type with city and state
+interface EnhancedLocation {
+  coords: GeolocationCoordinates;
+  timestamp: number;
+  city?: string;
+  state?: string;
+}
+
+interface LocationContextType {
+  isLocationEnabled: boolean;
+  enableLocation: () => Promise<boolean>;
+  requestLocation: () => Promise<boolean>;
+  location: EnhancedLocation | null;
+  getNearbyShops: () => Promise<Shop[]>;
+}
+
+const LocationContext = createContext<LocationContextType>({
   isLocationEnabled: false,
+  enableLocation: async () => false,
+  requestLocation: async () => false,
   location: null,
-  requestLocation: () => {},
+  getNearbyShops: async () => [],
 });
 
-export const LocationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [isLocationEnabled, setIsLocationEnabled] = useState(false);
-  const [location, setLocation] = useState<Coordinates | null>(null);
+export const useLocation = () => useContext(LocationContext);
+
+interface LocationProviderProps {
+  children: ReactNode;
+}
+
+export const LocationProvider: React.FC<LocationProviderProps> = ({ children }) => {
   const { toast } = useToast();
-  
-  const requestLocation = useCallback(async () => {
-    try {
-      const coords = await getCurrentLocation();
-      setLocation(coords);
-      setIsLocationEnabled(true);
-      
+  const [isLocationEnabled, setIsLocationEnabled] = useState<boolean>(false);
+  const [location, setLocation] = useState<EnhancedLocation | null>(null);
+
+  useEffect(() => {
+    // Check if geolocation is available in the browser
+    if (!navigator.geolocation) {
       toast({
-        title: "Location updated",
-        description: `Your location is now set to ${coords.city || 'your current position'}.`,
-      });
-      
-      localStorage.setItem('location', JSON.stringify(coords));
-    } catch (error) {
-      console.error('Error getting location:', error);
-      toast({
-        title: "Location error",
-        description: "Couldn't access your location. Please check your browser settings.",
+        title: "Geolocation not supported",
+        description: "Your browser does not support geolocation features.",
         variant: "destructive",
       });
+      return;
     }
-  }, [toast]);
-  
-  const enableLocation = useCallback(() => {
-    setIsLocationEnabled(true);
-  }, []);
-  
-  // Check for saved location on mount
-  useEffect(() => {
-    const savedLocation = localStorage.getItem('location');
-    if (savedLocation) {
-      try {
-        const parsedLocation = JSON.parse(savedLocation);
-        setLocation(parsedLocation);
-        setIsLocationEnabled(true);
-      } catch (error) {
-        console.error('Error parsing saved location:', error);
-      }
+
+    // Check if location permission was previously granted
+    if (localStorage.getItem('locationPermission') === 'granted') {
+      enableLocation();
     }
   }, []);
-  
-  // Method to get nearby shops based on location
-  const getNearbyShops = useCallback(async () => {
-    if (!location) {
-      // If location is not available, return all shops
-      return getAllShops();
-    }
-    
+
+  // Function to get the city and state from coordinates
+  const getCityAndState = async (latitude: number, longitude: number): Promise<{city: string, state: string}> => {
     try {
-      // In a real implementation, we would pass the location to filter shops by proximity
-      // For now, we just return all shops
-      const shops = await getAllShops();
+      // This would typically be a reverse geocoding API call
+      // For a more complete implementation, we could use Mapbox's reverse geocoding API
+      // For now, we'll return mock data
+      return {
+        city: "San Francisco",
+        state: "CA"
+      };
+    } catch (error) {
+      console.error('Error getting city and state:', error);
+      return {
+        city: "Unknown",
+        state: ""
+      };
+    }
+  };
+
+  const enableLocation = async (): Promise<boolean> => {
+    if (!navigator.geolocation) {
+      return false;
+    }
+
+    try {
+      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: true,
+          timeout: 5000,
+          maximumAge: 0,
+        });
+      });
+
+      // Get city and state information
+      const { city, state } = await getCityAndState(
+        position.coords.latitude,
+        position.coords.longitude
+      );
+
+      // Create enhanced location object
+      const enhancedLocation: EnhancedLocation = {
+        ...position,
+        city,
+        state
+      };
+
+      setLocation(enhancedLocation);
+      setIsLocationEnabled(true);
+      localStorage.setItem('locationPermission', 'granted');
       
-      // Sort shops by "distance" (simulated)
-      return shops.map(shop => ({
-        ...shop,
-        distance: Math.random() * 10 // Random distance between 0-10 miles
-      })).sort((a, b) => (a.distance || 999) - (b.distance || 999));
+      toast({
+        title: "Location enabled",
+        description: "We can now show shops near you.",
+      });
+
+      return true;
+    } catch (error) {
+      console.error('Error getting location:', error);
+      
+      if (error instanceof GeolocationPositionError) {
+        if (error.code === error.PERMISSION_DENIED) {
+          toast({
+            title: "Location access denied",
+            description: "Please enable location in your browser settings to see nearby shops.",
+            variant: "destructive",
+          });
+        } else if (error.code === error.TIMEOUT) {
+          toast({
+            title: "Location timeout",
+            description: "Getting your location took too long. Please try again.",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Location error",
+            description: "Could not get your location. Please try again.",
+            variant: "destructive",
+          });
+        }
+      } else {
+        toast({
+          title: "Location error",
+          description: "An unexpected error occurred while getting your location.",
+          variant: "destructive",
+        });
+      }
+      
+      return false;
+    }
+  };
+
+  // Add the missing requestLocation function (alias for enableLocation)
+  const requestLocation = async (): Promise<boolean> => {
+    return enableLocation();
+  };
+
+  const getNearbyShops = async (): Promise<Shop[]> => {
+    try {
+      if (!isLocationEnabled || !location) {
+        return await getAllShops();
+      }
+
+      const { latitude, longitude } = location.coords;
+      
+      // Call the shopService function to get nearby shops
+      return await getShopsNearby(latitude, longitude);
     } catch (error) {
       console.error('Error getting nearby shops:', error);
       return [];
     }
-  }, [location]);
-  
+  };
+
   return (
-    <LocationContext.Provider 
-      value={{ 
-        isLocationEnabled, 
-        location, 
-        requestLocation,
-        enableLocation,
-        getNearbyShops
-      }}
-    >
+    <LocationContext.Provider value={{ 
+      isLocationEnabled, 
+      enableLocation,
+      requestLocation, 
+      location,
+      getNearbyShops 
+    }}>
       {children}
     </LocationContext.Provider>
   );
 };
-
-export const useLocation = () => useContext(LocationContext);

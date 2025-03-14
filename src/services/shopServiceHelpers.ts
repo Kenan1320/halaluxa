@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Shop, Product } from '@/types/database';
 import { Shop as ModelShop, ShopProduct } from '@/models/shop';
@@ -10,7 +11,7 @@ export const setupDatabaseTables = async (): Promise<void> => {
 };
 
 // Mock implementation for getShops
-export const getShops = async (): Promise<Shop[]> => {
+export const getShops = async (): Promise<ModelShop[]> => {
   try {
     const { data: shops, error } = await supabase
       .from('shops')
@@ -20,7 +21,7 @@ export const getShops = async (): Promise<Shop[]> => {
       throw error;
     }
 
-    return shops || [];
+    return (shops || []).map(mapShopToModel);
   } catch (error) {
     console.error('Error fetching shops:', error);
     return [];
@@ -38,19 +39,12 @@ export const mapShopToModel = (shop: Shop): ModelShop => {
     productCount: shop.product_count || 0,
     isVerified: shop.is_verified || false,
     category: shop.category || '',
-    logo: shop.logo_url || null,
-    logo_url: shop.logo_url || null,
+    logo: shop.logo_url || null, // Use logo_url as the source for logo
     coverImage: shop.cover_image || null,
     ownerId: shop.owner_id || '',
     latitude: shop.latitude || null,
     longitude: shop.longitude || null,
-    distance: shop.distance || null,
-    created_at: shop.created_at,
-    updated_at: shop.updated_at,
-    cover_image: shop.cover_image || null,
-    owner_id: shop.owner_id,
-    product_count: shop.product_count,
-    is_verified: shop.is_verified
+    distance: shop.distance || null
   };
 };
 
@@ -73,15 +67,10 @@ export const getShopProducts = async (shopId: string): Promise<ShopProduct[]> =>
       description: item.description,
       category: item.category,
       images: item.images || [], 
-      shop_id: item.shop_id,
-      shopId: item.shop_id,
       sellerId: item.seller_id || item.shop_id || '', // Use shop_id as seller_id if not available
       sellerName: item.shop_name || 'Shop Owner',
       rating: item.rating || 0,
-      created_at: item.created_at,
-      updated_at: item.updated_at,
-      is_halal_certified: item.is_halal_certified || false,
-      in_stock: item.in_stock !== undefined ? item.in_stock : true
+      isHalalCertified: item.is_halal_certified || false
     }));
   } catch (error) {
     console.error(`Error fetching products for shop with ID ${shopId}:`, error);
@@ -98,44 +87,14 @@ export const convertToModelProduct = (product: Product): ModelProduct => {
     price: product.price,
     images: product.images || [],
     category: product.category,
-    shopId: product.shop_id || '',
+    shopId: product.shop_id,
     isHalalCertified: product.is_halal_certified || false,
-    inStock: product.in_stock !== undefined ? product.in_stock : true,
-    createdAt: product.created_at || new Date().toISOString(),
-    sellerId: product.seller_id || product.shop_id || '', // Map shop_id to sellerId
+    inStock: product.in_stock !== false,
+    createdAt: product.created_at,
+    sellerId: product.seller_id || product.shop_id, // Map shop_id to sellerId
     sellerName: product.shop_name || 'Shop Owner',
     rating: product.rating || 0,
-    details: product.details || {},
-    shop_id: product.shop_id || '',
-    created_at: product.created_at || new Date().toISOString(),
-    updated_at: product.updated_at || new Date().toISOString(),
-    is_halal_certified: product.is_halal_certified || false,
-    in_stock: product.in_stock !== undefined ? product.in_stock : true
-  };
-};
-
-// Update functions to handle the missing fields
-export const adaptDbProductToShopProduct = (product: any): ShopProduct => {
-  return {
-    id: product.id,
-    name: product.name,
-    description: product.description,
-    price: product.price,
-    category: product.category,
-    images: product.images || [],
-    shop_id: product.shop_id,
-    shopId: product.shop_id,
-    created_at: product.created_at,
-    updated_at: product.updated_at,
-    is_halal_certified: product.is_halal_certified,
-    isHalalCertified: product.is_halal_certified,
-    in_stock: product.in_stock ?? true,
-    inStock: product.in_stock ?? true,
-    sellerId: product.seller_id || product.sellerId || '',
-    seller_id: product.seller_id || product.sellerId || '',
-    sellerName: product.sellerName || product.shop_name || '',
-    shop_name: product.shop_name || product.sellerName || '',
-    rating: product.rating || 0
+    details: product.details || {}
   };
 };
 

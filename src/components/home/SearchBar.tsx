@@ -12,15 +12,15 @@ const SearchBar = () => {
   const { mode } = useTheme();
 
   const placeholders = [
-    "Search products, shops and more...",
-    "Find halal products with Halvi",
-    "What are you looking for today?"
+    "Search The Hal Village with Halvi",
+    "From Local Finds to Global Treasures!",
+    "Your Halal Village, All in One Place"
   ];
 
   useEffect(() => {
     const interval = setInterval(() => {
       setPlaceholderIndex(prevIndex => (prevIndex + 1) % placeholders.length);
-    }, 5000);
+    }, 8000);
 
     return () => clearInterval(interval);
   }, []);
@@ -38,8 +38,8 @@ const SearchBar = () => {
         mode === 'dark' 
           ? 'bg-gray-800 text-white border border-gray-700' 
           : 'bg-white text-gray-700 border border-gray-200'
-      } px-4 py-3 shadow-sm hover:shadow-md transition-all duration-300`}>
-        <Search className="w-5 h-5 mr-3 text-gray-400" />
+      } px-5 py-3 shadow-md hover:shadow-lg transition-all duration-300`}>
+        <Search className="w-6 h-6 mr-3 text-gray-400" />
         <div className="relative w-full h-6 overflow-hidden">
           <AnimatePresence mode="wait">
             <motion.input
@@ -50,7 +50,8 @@ const SearchBar = () => {
               onChange={(e) => setQuery(e.target.value)}
               className={`w-full outline-none ${
                 mode === 'dark' ? 'bg-gray-800 text-white' : 'bg-white'
-              } text-base`}
+              } text-base font-medium`}
+              style={{ fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}

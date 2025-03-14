@@ -1,35 +1,70 @@
 
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { useAuth } from '@/context/AuthContext';
-import { useToast } from '@/hooks/use-toast';
-import { createShop } from '@/services/shopService';
 import { useNavigate } from 'react-router-dom';
-import { Shop } from '@/types/database';
+import { useToast } from '@/hooks/use-toast';
+import { Button } from '@/components/ui/button';
+import { createShop } from '@/services/shopService';
+import { Store, MapPin, Tag, FileText, Upload, X } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ShopSetupFormProps {
-  onComplete?: () => void;
-  onSkip?: () => void;
+  onComplete: () => void;
+  onSkip: () => void;
 }
 
-const ShopSetupForm = ({ onComplete, onSkip }: ShopSetupFormProps) => {
-  const { user, updateBusinessProfile } = useAuth();
+export default function ShopSetupForm({ onComplete, onSkip }: ShopSetupFormProps) {
+  const { user, updateUser } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
-  const [formData, setFormData] = useState({
+  
+  const [shopData, setShopData] = useState({
     name: '',
     description: '',
+    category: '',
     location: '',
-    category: 'Groceries', // Default category
     logo: ''
   });
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setShopData(prev => ({ ...prev, [name]: value }));
   };
-
+  
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    // Check file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast({
+        title: "Error",
+        description: "Image size should be less than 2MB",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // Create a file reader to preview the image
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const result = event.target?.result as string;
+      setLogoPreview(result);
+      setShopData(prev => ({ ...prev, logo: result }));
+    };
+    reader.readAsDataURL(file);
+  };
+  
+  const removeLogo = () => {
+    setLogoPreview(null);
+    setShopData(prev => ({ ...prev, logo: '' }));
+    const fileInput = document.getElementById('shopLogo') as HTMLInputElement;
+    if (fileInput) fileInput.value = '';
+  };
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -45,165 +80,245 @@ const ShopSetupForm = ({ onComplete, onSkip }: ShopSetupFormProps) => {
     setIsLoading(true);
     
     try {
-      // First, update the business profile in the user context
-      const businessUpdateSuccess = await updateBusinessProfile({
-        shop_name: formData.name,
-        shop_description: formData.description,
-        shop_category: formData.category,
-        shop_location: formData.location,
-        shop_logo: formData.logo
-      });
-      
-      if (!businessUpdateSuccess) {
-        throw new Error("Failed to update business profile");
-      }
-      
-      // Then, create the shop in the shops table
-      const shopData = {
-        name: formData.name,
-        description: formData.description,
-        logo_url: formData.logo,
-        category: formData.category,
-        location: formData.location,
+      // Create the shop
+      const shop = await createShop({
+        name: shopData.name,
+        description: shopData.description,
+        logo_url: logoPreview || undefined, // Use logo_url instead of logo
+        category: shopData.category,
+        location: shopData.location,
         rating: 0,
         product_count: 0,
         is_verified: false,
-        owner_id: user.id,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
+        owner_id: user.id
+      });
       
-      const newShop = await createShop(shopData);
-      
-      if (newShop) {
+      if (shop) {
+        // Update user profile with shop info
+        const updates = {
+          shopName: shopData.name,
+          shopDescription: shopData.description,
+          shopCategory: shopData.category,
+          shopLocation: shopData.location,
+          shopLogo: logoPreview
+        };
+        
+        await updateUser(updates);
+        
         toast({
           title: "Success",
-          description: "Your shop has been set up successfully",
+          description: "Your shop has been created successfully"
         });
-        if (onComplete) {
-          onComplete();
-        } else {
-          navigate("/dashboard");
-        }
+        
+        onComplete();
       } else {
-        throw new Error("Failed to create shop");
+        toast({
+          title: "Error",
+          description: "Failed to create shop. Please try again.",
+          variant: "destructive"
+        });
       }
-    } catch (error: any) {
+    } catch (error) {
+      console.error('Error creating shop:', error);
       toast({
         title: "Error",
-        description: error.message || "Failed to create your shop. Please try again.",
+        description: "An unexpected error occurred. Please try again.",
         variant: "destructive"
       });
     } finally {
       setIsLoading(false);
     }
   };
-
+  
+  // Shop categories
+  const shopCategories = [
+    "Food & Groceries",
+    "Fashion",
+    "Beauty & Wellness",
+    "Home & Decor",
+    "Books & Stationery",
+    "Electronics",
+    "Toys & Games",
+    "Health & Fitness",
+    "Other"
+  ];
+  
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div>
-        <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-          Shop Name
-        </label>
-        <input
-          id="name"
-          name="name"
-          type="text"
-          required
-          value={formData.name}
-          onChange={handleChange}
-          className="w-full border-gray-300 rounded-md shadow-sm focus:border-haluna-primary focus:ring focus:ring-haluna-primary focus:ring-opacity-50"
-          placeholder="My Awesome Shop"
-        />
-      </div>
+    <div className="bg-white rounded-lg shadow-sm p-6 max-w-xl mx-auto mt-4">
+      <h2 className="text-xl font-serif font-bold text-center mb-6">Set Up Your Shop</h2>
       
-      <div>
-        <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
-          Shop Description
-        </label>
-        <textarea
-          id="description"
-          name="description"
-          required
-          value={formData.description}
-          onChange={handleChange}
-          rows={3}
-          className="w-full border-gray-300 rounded-md shadow-sm focus:border-haluna-primary focus:ring focus:ring-haluna-primary focus:ring-opacity-50"
-          placeholder="Tell customers about your shop..."
-        />
-      </div>
-      
-      <div>
-        <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
-          Shop Category
-        </label>
-        <select
-          id="category"
-          name="category"
-          required
-          value={formData.category}
-          onChange={handleChange}
-          className="w-full border-gray-300 rounded-md shadow-sm focus:border-haluna-primary focus:ring focus:ring-haluna-primary focus:ring-opacity-50"
-        >
-          <option value="Groceries">Groceries</option>
-          <option value="Restaurants">Restaurants</option>
-          <option value="Furniture">Furniture</option>
-          <option value="Halal Meat">Halal Meat</option>
-          <option value="Books">Books</option>
-          <option value="Clothing">Clothing</option>
-          <option value="Gifts">Gifts</option>
-          <option value="Decorations">Decorations</option>
-          <option value="Coffee Shops">Coffee Shops</option>
-          <option value="Online Shops">Online Shops</option>
-        </select>
-      </div>
-      
-      <div>
-        <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-1">
-          Shop Location
-        </label>
-        <input
-          id="location"
-          name="location"
-          type="text"
-          required
-          value={formData.location}
-          onChange={handleChange}
-          className="w-full border-gray-300 rounded-md shadow-sm focus:border-haluna-primary focus:ring focus:ring-haluna-primary focus:ring-opacity-50"
-          placeholder="123 Main St, City, Country"
-        />
-      </div>
-      
-      <div>
-        <label htmlFor="logo" className="block text-sm font-medium text-gray-700 mb-1">
-          Shop Logo URL
-        </label>
-        <input
-          id="logo"
-          name="logo"
-          type="text"
-          value={formData.logo}
-          onChange={handleChange}
-          className="w-full border-gray-300 rounded-md shadow-sm focus:border-haluna-primary focus:ring focus:ring-haluna-primary focus:ring-opacity-50"
-          placeholder="https://example.com/logo.png"
-        />
-        <p className="mt-1 text-xs text-gray-500">
-          Enter a URL for your shop logo (optional)
-        </p>
-      </div>
-      
-      <div className="flex gap-4">
-        {onSkip && (
-          <Button type="button" onClick={onSkip} variant="outline" className="w-full">
+      <form onSubmit={handleSubmit}>
+        <div className="mb-6">
+          <label htmlFor="shopLogo" className="block text-sm font-medium text-gray-700 mb-2">
+            Shop Logo
+          </label>
+          <div className="flex items-start space-x-4">
+            <div className="w-32 h-32 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden relative">
+              {logoPreview ? (
+                <>
+                  <img src={logoPreview} alt="Shop logo" className="w-full h-full object-contain" />
+                  <button
+                    type="button"
+                    onClick={removeLogo}
+                    className="absolute top-1 right-1 bg-white rounded-full p-1 shadow-sm"
+                  >
+                    <X className="h-4 w-4 text-red-500" />
+                  </button>
+                </>
+              ) : (
+                <div className="text-center">
+                  <Store className="h-10 w-10 mx-auto text-gray-400" />
+                  <p className="text-xs text-gray-500 mt-1">Upload logo</p>
+                </div>
+              )}
+            </div>
+            
+            <div className="flex-1">
+              <input 
+                type="file" 
+                id="shopLogo" 
+                className="hidden" 
+                accept="image/*"
+                onChange={handleLogoChange}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => document.getElementById('shopLogo')?.click()}
+                className="mb-2"
+              >
+                <Upload className="h-4 w-4 mr-2" />
+                {logoPreview ? 'Change Logo' : 'Upload Logo'}
+              </Button>
+              <p className="text-xs text-gray-500">
+                Upload a square image (recommended size: 500x500px). Max size: 2MB
+              </p>
+            </div>
+          </div>
+        </div>
+        
+        <div className="space-y-4">
+          <div>
+            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+              Shop Name *
+            </label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Store className="h-5 w-5 text-gray-400" />
+              </div>
+              <input
+                type="text"
+                id="name"
+                name="name"
+                required
+                value={shopData.name}
+                onChange={handleInputChange}
+                className="pl-10 w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                placeholder="Enter your shop name"
+              />
+            </div>
+          </div>
+          
+          <div>
+            <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
+              Category *
+            </label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Tag className="h-5 w-5 text-gray-400" />
+              </div>
+              <select
+                id="category"
+                name="category"
+                required
+                value={shopData.category}
+                onChange={handleInputChange}
+                className="pl-10 w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-green-500 focus:border-green-500 appearance-none"
+              >
+                <option value="" disabled>Select a category</option>
+                {shopCategories.map(category => (
+                  <option key={category} value={category}>{category}</option>
+                ))}
+              </select>
+              <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                <div className="h-2 w-2 border-b-2 border-r-2 border-gray-400 transform rotate-45"></div>
+              </div>
+            </div>
+          </div>
+          
+          <div>
+            <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-1">
+              Location *
+            </label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <MapPin className="h-5 w-5 text-gray-400" />
+              </div>
+              <input
+                type="text"
+                id="location"
+                name="location"
+                required
+                value={shopData.location}
+                onChange={handleInputChange}
+                className="pl-10 w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                placeholder="City, State"
+              />
+            </div>
+          </div>
+          
+          <div>
+            <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
+              Description *
+            </label>
+            <div className="relative">
+              <div className="absolute top-3 left-3 flex items-start pointer-events-none">
+                <FileText className="h-5 w-5 text-gray-400" />
+              </div>
+              <textarea
+                id="description"
+                name="description"
+                required
+                value={shopData.description}
+                onChange={handleInputChange}
+                rows={4}
+                className="pl-10 w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                placeholder="Describe your shop and what makes it unique"
+              />
+            </div>
+            <p className="text-xs text-gray-500 mt-1">
+              Describe your shop and what makes it unique (up to 250 characters)
+            </p>
+          </div>
+        </div>
+        
+        <div className="mt-8 flex justify-between">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onSkip}
+            disabled={isLoading}
+          >
             Skip for Now
           </Button>
-        )}
-        <Button type="submit" disabled={isLoading} className="w-full">
-          {isLoading ? "Setting Up Your Shop..." : "Create My Shop"}
-        </Button>
-      </div>
-    </form>
+          
+          <Button
+            type="submit"
+            disabled={isLoading}
+            className="bg-green-600 hover:bg-green-700 text-white"
+          >
+            {isLoading ? (
+              <>
+                <span className="animate-spin mr-2">◌</span>
+                Creating...
+              </>
+            ) : (
+              'Create Shop'
+            )}
+          </Button>
+        </div>
+      </form>
+    </div>
   );
-};
-
-export default ShopSetupForm;
+}

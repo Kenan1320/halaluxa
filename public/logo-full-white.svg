@@ -5,15 +5,15 @@
       font-family: 'Playfair Display', serif;
       font-size: 100px;
       font-weight: 700;
-      fill: #2A866A;
+      fill: white;
     }
     .tagline {
       font-family: 'Playfair Display', serif;
       font-size: 30px;
-      fill: #2A866A;
+      fill: white;
     }
     .building {
-      fill: #2A866A;
+      fill: white;
     }
   </style>
   
@@ -23,9 +23,9 @@
   <!-- Building Icon -->
   <g transform="translate(157, 36) scale(0.3)">
     <rect x="0" y="0" width="80" height="80" class="building"/>
-    <rect x="10" y="10" width="60" height="60" fill="white"/>
+    <rect x="10" y="10" width="60" height="60" fill="black"/>
     <rect x="20" y="20" width="40" height="40" class="building"/>
-    <rect x="30" y="30" width="20" height="50" fill="white"/>
+    <rect x="30" y="30" width="20" height="50" fill="black"/>
   </g>
   
   <!-- Tagline -->

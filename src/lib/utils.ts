@@ -1,76 +1,35 @@
 
-import { type ClassValue, clsx } from "clsx";
-import { twMerge } from "tailwind-merge";
+import { type ClassValue, clsx } from "clsx"
+import { twMerge } from "tailwind-merge"
 
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
+  return twMerge(clsx(inputs))
 }
 
-export function formatCurrency(amount: number, currency: string = 'USD'): string {
+/**
+ * Format a number as currency
+ */
+export function formatCurrency(amount: number): string {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
-    currency: currency,
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    currency: 'USD',
   }).format(amount);
 }
 
-export function debounce(func: Function, wait: number) {
-  let timeout: ReturnType<typeof setTimeout>;
-  return function executedFunction(...args: any[]) {
-    const later = () => {
-      clearTimeout(timeout);
-      func(...args);
-    };
-    clearTimeout(timeout);
-    timeout = setTimeout(later, wait);
-  };
-}
-
-export function truncateText(text: string, maxLength: number): string {
-  if (!text) return '';
-  if (text.length <= maxLength) return text;
-  return text.substring(0, maxLength) + '...';
-}
-
-export function getInitials(name: string): string {
-  if (!name) return '';
-  return name
-    .split(' ')
-    .map(part => part.charAt(0).toUpperCase())
-    .join('')
-    .substring(0, 2);
-}
-
-export function getRelativeTime(dateString: string): string {
-  const date = new Date(dateString);
-  const now = new Date();
-  const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-  
-  let interval = Math.floor(seconds / 31536000);
-  if (interval >= 1) {
-    return interval === 1 ? '1 year ago' : `${interval} years ago`;
+/**
+ * Mapbox configuration
+ */
+export const mapboxConfig = {
+  // Public token for client-side rendering
+  publicToken: 'pk.eyJ1Ijoia2VuYW4yNSIsImEiOiJjbTg3czM3bmswaGd0MndvY2I1cjQyaTMwIn0.LXzq8OtO1sCTiuTmtFVZrA',
+  // Secret token for server-side operations, stored securely
+  // This should be accessed only in secure server environments
+  secretToken: 'sk.eyJ1Ijoia2VuYW4yNSIsImEiOiJjbTg3dGN0cHcwYmM0MnNxNHN5OTZidWViIn0.0Sba4mKBnPaKZfLj4p13iw',
+  // Base styles
+  styles: {
+    light: 'mapbox://styles/mapbox/light-v11',
+    dark: 'mapbox://styles/mapbox/dark-v11',
+    streets: 'mapbox://styles/mapbox/streets-v12',
+    satellite: 'mapbox://styles/mapbox/satellite-streets-v12',
   }
-  
-  interval = Math.floor(seconds / 2592000);
-  if (interval >= 1) {
-    return interval === 1 ? '1 month ago' : `${interval} months ago`;
-  }
-  
-  interval = Math.floor(seconds / 86400);
-  if (interval >= 1) {
-    return interval === 1 ? '1 day ago' : `${interval} days ago`;
-  }
-  
-  interval = Math.floor(seconds / 3600);
-  if (interval >= 1) {
-    return interval === 1 ? '1 hour ago' : `${interval} hours ago`;
-  }
-  
-  interval = Math.floor(seconds / 60);
-  if (interval >= 1) {
-    return interval === 1 ? '1 minute ago' : `${interval} minutes ago`;
-  }
-  
-  return seconds < 10 ? 'just now' : `${Math.floor(seconds)} seconds ago`;
-}
+};

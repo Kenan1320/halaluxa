@@ -1,84 +1,71 @@
 
-import { productCategories } from '@/models/product';
+import { supabase } from '@/integrations/supabase/client';
 
-// Simple Category interface
 export interface Category {
   id: string;
   name: string;
-  icon?: string;
   description?: string;
-  slug?: string;
+  icon?: string;
+  created_at: string;
+  group?: 'nearby' | 'online'; // Adding group to categorize for Halvi't Nearby or Halvi Mall
 }
 
-// This is a simple mock implementation to avoid the database errors
-// We'll use the product categories from the model
+// Mock categories data since 'categories' table doesn't appear to exist
+const mockCategories: Category[] = [
+  { id: '1', name: 'Groceries', description: 'Fresh food and groceries', icon: 'grocery', created_at: new Date().toISOString(), group: 'nearby' },
+  { id: '2', name: 'Restaurants', description: 'Restaurants and food delivery', icon: 'restaurant', created_at: new Date().toISOString(), group: 'nearby' },
+  { id: '3', name: 'Halal Meat', description: 'Certified halal meat', icon: 'meat', created_at: new Date().toISOString(), group: 'nearby' },
+  { id: '4', name: 'Coffee Shops', description: 'Coffee and tea shops', icon: 'coffee', created_at: new Date().toISOString(), group: 'nearby' },
+  { id: '5', name: 'Furniture', description: 'Home furniture and decor', icon: 'furniture', created_at: new Date().toISOString(), group: 'nearby' },
+  { id: '6', name: 'Fashion', description: 'Clothing and accessories', icon: 'fashion', created_at: new Date().toISOString(), group: 'online' },
+  { id: '7', name: 'Electronics', description: 'Gadgets and electronics', icon: 'electronics', created_at: new Date().toISOString(), group: 'online' },
+  { id: '8', name: 'Books', description: 'Books and stationery', icon: 'books', created_at: new Date().toISOString(), group: 'online' },
+  { id: '9', name: 'Toys', description: 'Toys and games', icon: 'toys', created_at: new Date().toISOString(), group: 'online' },
+  { id: '10', name: 'Health', description: 'Health and wellness products', icon: 'health', created_at: new Date().toISOString(), group: 'nearby' },
+  { id: '11', name: 'Online Shops', description: 'Online stores', icon: 'shop', created_at: new Date().toISOString(), group: 'online' },
+  { id: '12', name: 'Gifts', description: 'Gift items', icon: 'gift', created_at: new Date().toISOString(), group: 'online' },
+  { id: '13', name: 'Hoodies', description: 'Hoodies and sweatshirts', icon: 'clothing', created_at: new Date().toISOString(), group: 'online' }
+];
+
 export const getCategories = async (): Promise<Category[]> => {
   try {
-    // Return categories based on productCategories array
-    return productCategories.map(category => ({
-      id: category.toLowerCase().replace(/\s+/g, '-'),
-      name: category,
-      description: `Products in the ${category} category`,
-      slug: category.toLowerCase().replace(/\s+/g, '-')
-    }));
+    // Return mock data since the categories table doesn't exist
+    return mockCategories;
   } catch (error) {
     console.error('Error fetching categories:', error);
     return [];
   }
 };
 
-// Get categories by group - this is a mock implementation
-export const getCategoriesByGroup = async (group: string): Promise<Category[]> => {
-  // Filter categories based on the group
-  const allCategories = await getCategories();
-
-  // Simulate different groups - in a real app, you'd have actual groupings in the database
-  if (group === 'nearby') {
-    return allCategories.filter(cat => 
-      ['Groceries', 'Restaurants', 'Halal Meat', 'Coffee Shops'].includes(cat.name)
-    );
-  } else if (group === 'online') {
-    return allCategories.filter(cat => 
-      ['Online Shops', 'Thobes', 'Hijab', 'Abaya', 'Hoodies'].includes(cat.name)
-    );
+// Get categories by group (for Halvi't Nearby or Halvi Mall)
+export const getCategoriesByGroup = async (group: 'nearby' | 'online'): Promise<Category[]> => {
+  try {
+    return mockCategories.filter(cat => cat.group === group);
+  } catch (error) {
+    console.error(`Error fetching ${group} categories:`, error);
+    return [];
   }
-  
-  // Default to all categories
-  return allCategories;
 };
 
-// Get featured categories
-export const getFeaturedCategories = async (): Promise<Category[]> => {
-  // In this mock implementation, we'll return the first 6 categories
-  const allCategories = await getCategories();
-  return allCategories.slice(0, 6);
-};
-
-// A function to get a mapping between category names and icons
-export const getCategoryIconMapping = () => {
-  const iconMapping: Record<string, string> = {
-    'Groceries': '/icons/grocery.png',
-    'Restaurants': '/icons/restaurant.png',
-    'Furniture': '/icons/home.png',
-    'Halal Meat': '/icons/grocery.png',
-    'Books': '/icons/home.png',
-    'Thobes': '/icons/clothing.png',
-    'Hijab': '/icons/clothing.png',
-    'Decorations': '/icons/home.png',
-    'Abaya': '/icons/clothing.png',
-    'Online Shops': '/icons/grocery.png',
-    'Gifts': '/icons/grocery.png',
-    'Arabic Calligraphy': '/icons/home.png',
-    'Muslim Therapists': '/icons/services.png',
-    'Coffee Shops': '/icons/restaurant.png',
-    'Hoodies': '/icons/clothing.png',
-    'Pets': '/icons/pets.png',
-    'Toys': '/icons/toys.png',
-    'Electronics': '/icons/electronics.png',
-  };
-
-  return iconMapping;
-};
-
-// Alias for getCategories for backward compatibility
+// Alias for getCategories to support existing code
 export const listCategories = getCategories;
+
+export const getCategoryById = async (id: string): Promise<Category | null> => {
+  try {
+    const category = mockCategories.find(cat => cat.id === id);
+    return category || null;
+  } catch (error) {
+    console.error('Error in getCategoryById:', error);
+    return null;
+  }
+};
+
+// Get category names only for dropdown lists
+export const getCategoryNames = async (): Promise<string[]> => {
+  try {
+    return mockCategories.map(cat => cat.name);
+  } catch (error) {
+    console.error('Error fetching category names:', error);
+    return [];
+  }
+};

@@ -115,7 +115,7 @@ export default function CategorySuggestions() {
   }, []);
   
   return (
-    <div className="py-4 bg-white rounded-xl shadow-sm">
+    <div className="py-4">
       <div className="flex border-b border-gray-200 dark:border-gray-800 mb-6">
         <TabItem
           isActive={activeTab === 'nearby'}
