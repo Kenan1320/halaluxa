@@ -60,7 +60,7 @@ export function ShopHeader({ shop }: ShopHeaderProps) {
           alt={shop.name}
           className="w-full h-full object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/50 to-black/80" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#0F1B44]/70 to-[#0F1B44]/90" />
         
         {/* Top Navigation */}
         <div className="absolute top-0 w-full p-4 flex items-center justify-between">

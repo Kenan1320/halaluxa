@@ -123,6 +123,15 @@
   .text-balance {
     text-wrap: balance;
   }
+  
+  /* Deep night blue gradients for header */
+  .deep-night-blue-gradient {
+    @apply bg-gradient-to-r from-[#0F1B44] via-[#132054] to-[#183080];
+  }
+  
+  .deep-night-blue-gradient-vertical {
+    @apply bg-gradient-to-b from-[#0F1B44] via-[#132054] to-[#183080];
+  }
 }
 
 /* Animations */

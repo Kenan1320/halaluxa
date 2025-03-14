@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X, Search, ShoppingCart, User, MapPin, Store, AlertCircle, Home, Package, CreditCard, Settings, LogOut, Info, HelpCircle, Moon, Sun } from 'lucide-react';
@@ -89,8 +88,8 @@ const Navbar = () => {
     <header 
       className={`fixed top-0 w-full z-50 transition-all duration-300 
         ${mode === 'dark' 
-          ? 'bg-[#1C2526] text-white border-b border-gray-800' 
-          : 'bg-[#E4F5F0]'}`}
+          ? 'bg-gradient-to-r from-[#0F1B44] via-[#132054] to-[#183080] text-white border-b border-gray-800' 
+          : 'bg-gradient-to-r from-[#0F1B44] via-[#132054] to-[#183080] text-white'}`}
       style={{ height: '70px' }}
     >
       <div className="container mx-auto px-4 h-full flex justify-between items-center">
@@ -99,8 +98,8 @@ const Navbar = () => {
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           className={`p-2 rounded-full ${
             mode === 'dark' 
-              ? 'text-white hover:bg-gray-700' 
-              : 'text-[#2A866A] hover:bg-[#d5efe8]'
+              ? 'text-white hover:bg-gray-700/30' 
+              : 'text-white hover:bg-white/10'
           } transition-all duration-200`}
           aria-label="Toggle menu"
         >
@@ -114,7 +113,7 @@ const Navbar = () => {
         {/* Logo - with advanced animation */}
         <div className="flex items-center ml-3 mr-auto">
           <Link to="/" className="flex items-center">
-            <span className={`text-lg font-serif font-bold ${mode === 'dark' ? 'text-white' : 'text-[#2A866A]'}`}
+            <span className="text-lg font-serif font-bold text-white"
                   style={{ fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}>
               Haluna
             </span>
@@ -136,7 +135,7 @@ const Navbar = () => {
               
               {/* Orbiting green ball */}
               <motion.div
-                className={`w-2 h-2 ${mode === 'dark' ? 'bg-[#3AA88C]' : 'bg-[#2A866B]'} rounded-full absolute`}
+                className="w-2 h-2 bg-[#3AA88C] rounded-full absolute"
                 animate={{
                   x: [2, 1.5, 0, -1.5, -2, -1.5, 0, 1.5, 2],
                   y: [0, 1.5, 2, 1.5, 0, -1.5, -2, -1.5, 0],
@@ -156,11 +155,7 @@ const Navbar = () => {
           {/* Location Button */}
           <motion.button 
             onClick={requestLocation}
-            className={`p-2 rounded-full ${
-              mode === 'dark' 
-                ? 'text-white hover:bg-gray-700' 
-                : 'text-[#2A866A] hover:bg-[#d5efe8]'
-            } transition-colors`}
+            className="p-2 rounded-full text-white hover:bg-white/10 transition-colors"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
@@ -170,11 +165,7 @@ const Navbar = () => {
           {/* Main Shop Button - Only main shop left */}
           <motion.button 
             onClick={handleMainShopClick}
-            className={`relative p-2 rounded-full ${
-              mode === 'dark' 
-                ? 'text-white hover:bg-gray-700' 
-                : 'text-[#2A866A] hover:bg-[#d5efe8]'
-            } transition-colors shadow-sm`}
+            className="relative p-2 rounded-full text-white hover:bg-white/10 transition-colors shadow-sm"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
