@@ -22,6 +22,8 @@ export interface Shop {
   ownerId?: string; // Alias for owner_id
   productCount?: number; // Alias for product_count
   isVerified?: boolean; // Alias for is_verified
+  createdAt?: string; // Alias for created_at
+  updatedAt?: string; // Alias for updated_at
 }
 
 export interface ShopProduct {

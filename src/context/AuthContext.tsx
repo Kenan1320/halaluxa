@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
@@ -298,7 +297,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       setIsLoading(true);
       
-      // Extract only the shop-related fields and ensure they're valid profile fields
+      // Make sure we're using the proper field names for the database
       const shopUpdate = {
         shop_name: businessProfile.shop_name,
         shop_description: businessProfile.shop_description,
@@ -373,15 +372,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         title: "Profile updated",
         description: "Your profile has been updated successfully",
       });
-      
-      return true;
     } catch (error: any) {
       toast({
         title: "Update failed",
         description: error.message || "An error occurred while updating your profile",
         variant: "destructive",
       });
-      return false;
     } finally {
       setIsLoading(false);
     }

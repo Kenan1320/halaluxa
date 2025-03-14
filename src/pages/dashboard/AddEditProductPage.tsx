@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useForm, SubmitHandler, Controller } from 'react-hook-form';
@@ -22,7 +23,13 @@ import {
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { createProduct, updateProduct, getProductById } from '@/services/productService';
 import { listCategories } from '@/services/categoryService';
-import { Product } from '@/models/product';
+import { Product, productCategories } from '@/models/product';
+
+// Define Category interface to match what listCategories returns
+interface Category {
+  id: string;
+  name: string;
+}
 
 const productFormSchema = z.object({
   name: z.string().min(2, {
@@ -70,14 +77,30 @@ const AddEditProductPage: React.FC = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
+        // Try to get categories from the service
         const categoryList = await listCategories();
-        setCategories(categoryList);
+        
+        // If categoryList returns Category objects, extract just the names
+        if (Array.isArray(categoryList) && categoryList.length > 0 && typeof categoryList[0] === 'object') {
+          // Convert Category objects to strings
+          const categoryNames = (categoryList as Category[]).map(cat => cat.name);
+          setCategories(categoryNames);
+        } else {
+          // If it's already a string array, use it directly
+          setCategories(categoryList as string[]);
+        }
+        
+        // Fallback to hardcoded categories if the service fails or returns empty
+        if (categories.length === 0) {
+          setCategories(productCategories);
+        }
       } catch (error) {
         console.error("Error fetching categories:", error);
+        // Fallback to hardcoded product categories
+        setCategories(productCategories);
         toast({
-          title: "Error",
-          description: "Failed to load categories.",
-          variant: "destructive",
+          title: "Notice",
+          description: "Using default categories",
         });
       }
     };

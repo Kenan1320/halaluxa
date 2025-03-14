@@ -49,6 +49,8 @@ export interface Shop {
   ownerId?: string;
   productCount?: number;
   isVerified?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Product {

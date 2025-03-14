@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { ShoppingBag, Phone, Mail, MapPin, Navigation, Star, Calendar, Clock, Info } from 'lucide-react';
 import { ShopDetails, ShopCategory } from '@/types/shop';
+import { normalizeShop, normalizeProduct } from '@/lib/normalizeData';
 
 const ShopDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -41,27 +42,10 @@ const ShopDetail: React.FC = () => {
           return;
         }
         
-        // Convert database Shop to ModelShop
-        const modelShop: ModelShop = {
-          id: shopData.id,
-          name: shopData.name,
-          description: shopData.description,
-          location: shopData.location,
-          rating: shopData.rating || 0,
-          productCount: shopData.product_count || 0,
-          isVerified: shopData.is_verified || false,
-          category: shopData.category || '',
-          logo: shopData.logo_url || null,
-          coverImage: shopData.cover_image || null,
-          ownerId: shopData.owner_id || '',
-          latitude: shopData.latitude || null,
-          longitude: shopData.longitude || null,
-          distance: shopData.distance || null
-        };
+        const normalizedShop = normalizeShop(shopData);
         
-        setShop(modelShop);
+        setShop(normalizedShop);
         
-        // Fetch products for this shop
         const shopProducts = await getShopProducts(id);
         setProducts(shopProducts);
       } catch (err) {
@@ -104,21 +88,22 @@ const ShopDetail: React.FC = () => {
   }
   
   const convertToProduct = (shopProduct: ShopProduct): Product => {
-    return {
+    return normalizeProduct({
       id: shopProduct.id,
       name: shopProduct.name,
       description: shopProduct.description,
       price: shopProduct.price,
       category: shopProduct.category,
       images: shopProduct.images,
-      shopId: shop.id,
-      isHalalCertified: true,
-      createdAt: new Date().toISOString(),
-      sellerId: shopProduct.sellerId,
-      sellerName: shopProduct.sellerName,
-      rating: shopProduct.rating,
-      inStock: true
-    };
+      shop_id: shop.id,
+      is_halal_certified: true,
+      in_stock: true,
+      created_at: shopProduct.created_at || new Date().toISOString(),
+      updated_at: shopProduct.updated_at || new Date().toISOString(),
+      seller_id: shopProduct.seller_id || shopProduct.sellerId,
+      seller_name: shopProduct.seller_name || shopProduct.sellerName,
+      rating: shopProduct.rating
+    });
   };
   
   const shopCategories: ShopCategory[] = [];
