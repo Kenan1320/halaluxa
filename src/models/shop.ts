@@ -8,7 +8,7 @@ export interface Shop {
   description: string;
   location: string;
   category: string;
-  rating: number;
+  rating: number | Rating;
   productCount: number;
   isVerified: boolean;
   logo: string | null;
@@ -89,14 +89,17 @@ export const adaptDbShopToModelShop = (dbShop: DBShop): Shop => {
     logo: dbShop.logo_url,
     category: dbShop.category,
     location: dbShop.location,
-    rating: dbShop.rating || 0,
+    rating: {
+      average: dbShop.rating || 0,
+      count: 0 // Default, can be updated if available
+    },
     productCount: dbShop.product_count || 0,
     isVerified: dbShop.is_verified || false,
     ownerId: dbShop.owner_id,
     latitude: dbShop.latitude,
     longitude: dbShop.longitude,
     coverImage: dbShop.cover_image,
-    distance: dbShop.distance || 0,
+    distance: dbShop.distance || null,
     deliveryAvailable: dbShop.delivery_available,
     pickupAvailable: dbShop.pickup_available,
     isHalalCertified: dbShop.is_halal_certified,
@@ -120,6 +123,10 @@ export const adaptDbShopToModelShop = (dbShop: DBShop): Shop => {
 };
 
 export const adaptModelShopToDBShop = (modelShop: Shop): DBShop => {
+  const rating = typeof modelShop.rating === 'object' 
+    ? modelShop.rating.average 
+    : modelShop.rating;
+    
   return {
     id: modelShop.id,
     name: modelShop.name,
@@ -127,7 +134,7 @@ export const adaptModelShopToDBShop = (modelShop: Shop): DBShop => {
     logo_url: modelShop.logo || modelShop.logo_url,
     category: modelShop.category,
     location: modelShop.location,
-    rating: modelShop.rating,
+    rating: rating || 0,
     product_count: modelShop.productCount || modelShop.product_count || 0,
     is_verified: modelShop.isVerified || modelShop.is_verified || false,
     owner_id: modelShop.ownerId || modelShop.owner_id || '',

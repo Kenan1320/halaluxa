@@ -67,7 +67,7 @@ export interface DBShop {
   created_at?: Timestamp;
   updated_at?: Timestamp;
   address?: string;
-  display_mode?: 'online' | 'local_pickup' | 'local_delivery';
+  display_mode?: DeliveryMode;
 }
 
 export interface Category {
@@ -79,4 +79,32 @@ export interface Category {
   image_url?: string | null;
   count?: number;
   group?: string;
+}
+
+export interface ShopDetails {
+  id: UUID;
+  name: string;
+  description: string;
+  location: string;
+  logo: string | null;
+  cover_image: string | null;
+  rating: Rating;
+  isVerified: boolean;
+  categories?: Category[];
+  deliveryInfo: {
+    deliveryFee: number;
+    estimatedTime: string;
+  };
+  isGroupOrderEnabled?: boolean;
+}
+
+export interface PaymentMethod {
+  id: UUID;
+  shop_id: UUID;
+  name: string;
+  is_enabled: boolean;
+  provider: string;
+  details?: any;
+  created_at?: Timestamp;
+  updated_at?: Timestamp;
 }
