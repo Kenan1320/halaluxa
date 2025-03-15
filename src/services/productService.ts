@@ -1,298 +1,247 @@
 
-import { supabase } from '@/integrations/supabase/client';
-import { Product as DatabaseProduct } from '@/types/database';
-import { Product as ModelProduct } from '@/models/product';
+import { db } from '@/integrations/supabase/client';
+import { Product, ProductFilter, ProductResponse } from '@/models/product';
 import { normalizeProduct, prepareProductForUpdate } from '@/lib/productUtils';
 
-// Convert database product to model product
-const convertToModelProduct = (product: any): ModelProduct => {
-  return normalizeProduct(product);
-};
-
-// Add getFeaturedProducts function
-export const getFeaturedProducts = async (): Promise<ModelProduct[]> => {
+export const getProducts = async (filter?: ProductFilter): Promise<ProductResponse> => {
   try {
-    const { data, error } = await supabase
-      .from('products')
-      .select('*')
-      .limit(6)
-      .order('created_at', { ascending: false });
+    let query = db.from('products').select('*');
 
-    if (error) {
-      console.error('Error fetching featured products:', error);
-      return [];
+    if (filter) {
+      if (filter.category) {
+        query = query.eq('category', filter.category);
+      }
+      
+      if (filter.min_price) {
+        query = query.gte('price', filter.min_price);
+      }
+      
+      if (filter.max_price) {
+        query = query.lte('price', filter.max_price);
+      }
+      
+      if (filter.is_halal_certified !== undefined) {
+        query = query.eq('is_halal_certified', filter.is_halal_certified);
+      }
+      
+      if (filter.in_stock !== undefined) {
+        query = query.eq('in_stock', filter.in_stock);
+      }
+      
+      if (filter.shop_id) {
+        query = query.eq('shop_id', filter.shop_id);
+      }
+      
+      if (filter.search) {
+        query = query.ilike('name', `%${filter.search}%`);
+      }
+      
+      if (filter.sort_by) {
+        switch (filter.sort_by) {
+          case 'price_asc':
+            query = query.order('price', { ascending: true });
+            break;
+          case 'price_desc':
+            query = query.order('price', { ascending: false });
+            break;
+          case 'newest':
+            query = query.order('created_at', { ascending: false });
+            break;
+          case 'popular':
+            // Assuming there's a 'popularity' or similar field
+            query = query.order('created_at', { ascending: false });
+            break;
+        }
+      }
     }
 
-    // Convert to model products and ensure in_stock field
-    return data.map(product => convertToModelProduct({
-      ...product,
-      in_stock: product.in_stock !== undefined ? product.in_stock : true
-    }));
-  } catch (error) {
-    console.error('Error in getFeaturedProducts:', error);
-    return [];
-  }
-};
-
-// Image upload function
-export const uploadImage = async (file: File): Promise<string> => {
-  try {
-    const fileName = `${Date.now()}-${file.name}`;
-    const { data, error } = await supabase.storage
-      .from('product-images')
-      .upload(fileName, file, {
-        cacheControl: '3600',
-        upsert: false
-      });
+    const { data, error } = await query;
     
-    if (error) {
-      throw error;
-    }
+    if (error) throw error;
     
-    // Get the public URL
-    const { data: publicUrlData } = supabase.storage
-      .from('product-images')
-      .getPublicUrl(data.path);
-    
-    return publicUrlData.publicUrl;
-  } catch (error) {
-    console.error('Error uploading image:', error);
-    throw error;
-  }
-};
-
-// Update the createProduct function to ensure in_stock is always included
-export const createProduct = async (productData: Partial<ModelProduct>): Promise<ModelProduct | null> => {
-  try {
-    // Ensure required fields are present
-    if (!productData.name || !productData.description || !productData.price || 
-        !productData.shop_id || !productData.category) {
-      console.error('Missing required fields for product creation');
-      return null;
-    }
-    
-    // Prepare product data with all required fields
-    const productToCreate = {
-      name: productData.name,
-      description: productData.description,
-      price: productData.price,
-      shop_id: productData.shop_id || productData.shopId,
-      category: productData.category,
-      in_stock: productData.in_stock !== undefined ? productData.in_stock : 
-               (productData.inStock !== undefined ? productData.inStock : true),
-      is_halal_certified: productData.is_halal_certified || productData.isHalalCertified || false,
-      images: productData.images || [],
-      details: productData.details || {},
-      long_description: productData.long_description || '',
-      is_published: productData.is_published || false,
-      stock: productData.stock || 0,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+    return { 
+      data: data ? data.map(normalizeProduct) : null, 
+      error: null 
     };
-    
-    const { data, error } = await supabase
-      .from('products')
-      .insert(productToCreate)
-      .select()
-      .single();
-    
-    if (error) {
-      console.error('Error creating product:', error);
-      return null;
-    }
-    
-    return convertToModelProduct({
-      ...data,
-      in_stock: data.in_stock !== undefined ? data.in_stock : true
-    });
   } catch (error) {
-    console.error('Error in createProduct:', error);
-    return null;
+    console.error('Error fetching products:', error);
+    return { data: null, error };
   }
 };
 
-export const getProducts = async (): Promise<ModelProduct[]> => {
+export const getProductById = async (id: string): Promise<Product | null> => {
   try {
-    const { data, error } = await supabase
-      .from('products')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Error fetching products:', error);
-      return [];
-    }
-
-    // Process raw data to ensure in_stock field exists
-    return data.map(product => convertToModelProduct({
-      ...product,
-      in_stock: product.in_stock !== undefined ? product.in_stock : true
-    }));
-  } catch (error) {
-    console.error('Error in getProducts:', error);
-    return [];
-  }
-};
-
-export const getProductById = async (id: string): Promise<ModelProduct | null> => {
-  try {
-    const { data, error } = await supabase
+    const { data, error } = await db
       .from('products')
       .select('*')
       .eq('id', id)
       .single();
-
-    if (error) {
-      console.error('Error fetching product:', error);
-      return null;
-    }
-
-    // Ensure the product has the required in_stock field
-    return convertToModelProduct({
-      ...data,
-      in_stock: data.in_stock !== undefined ? data.in_stock : true
-    });
+    
+    if (error) throw error;
+    
+    return data ? normalizeProduct(data) : null;
   } catch (error) {
-    console.error('Error in getProductById:', error);
+    console.error(`Error fetching product with ID ${id}:`, error);
     return null;
   }
 };
 
-export const getProductsByShopId = async (shopId: string): Promise<ModelProduct[]> => {
+export const createProduct = async (product: Partial<Product>): Promise<Product | null> => {
   try {
-    const { data, error } = await supabase
+    // Prepare the product data for the database
+    const productData = {
+      name: product.name,
+      description: product.description,
+      long_description: product.long_description || '',
+      price: product.price,
+      shop_id: product.shop_id,
+      images: product.images || [],
+      category: product.category || '',
+      stock: product.stock || 0,
+      is_published: product.is_published ?? true,
+      is_halal_certified: product.is_halal_certified ?? false,
+      details: product.details || {},
+      in_stock: product.in_stock ?? true,
+      delivery_mode: product.delivery_mode || 'pickup',
+      pickup_options: product.pickup_options || { store: true, curbside: false }
+    };
+
+    const { data, error } = await db
       .from('products')
-      .select('*')
-      .eq('shop_id', shopId)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Error fetching products by shop ID:', error);
-      return [];
-    }
-
-    // Process raw data to ensure in_stock field exists
-    return data.map(product => convertToModelProduct({
-      ...product,
-      in_stock: product.in_stock !== undefined ? product.in_stock : true
-    }));
-  } catch (error) {
-    console.error('Error in getProductsByShopId:', error);
-    return [];
-  }
-};
-
-export const getProductsByCategory = async (category: string): Promise<ModelProduct[]> => {
-  try {
-    const { data, error } = await supabase
-      .from('products')
-      .select('*')
-      .eq('category', category)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Error fetching products by category:', error);
-      return [];
-    }
-
-    // Process raw data to ensure in_stock field exists
-    return data.map(product => convertToModelProduct({
-      ...product,
-      in_stock: product.in_stock !== undefined ? product.in_stock : true
-    }));
-  } catch (error) {
-    console.error('Error in getProductsByCategory:', error);
-    return [];
-  }
-};
-
-export const updateProduct = async (id: string, updates: Partial<ModelProduct>): Promise<ModelProduct | null> => {
-  try {
-    // Prepare product data for update, ensuring types are correct
-    const preparedUpdates = prepareProductForUpdate(updates);
+      .insert(productData)
+      .select()
+      .single();
     
-    const { data, error } = await supabase
+    if (error) throw error;
+    
+    return data ? normalizeProduct(data) : null;
+  } catch (error) {
+    console.error('Error creating product:', error);
+    return null;
+  }
+};
+
+export const updateProduct = async (id: string, product: Partial<Product>): Promise<Product | null> => {
+  try {
+    // Prepare the product data for the database
+    const productData = prepareProductForUpdate(product);
+
+    const { data, error } = await db
       .from('products')
-      .update(preparedUpdates)
+      .update(productData)
       .eq('id', id)
       .select()
       .single();
-
-    if (error) {
-      console.error('Error updating product:', error);
-      return null;
-    }
-
-    return convertToModelProduct({
-      ...data,
-      in_stock: data.in_stock !== undefined ? data.in_stock : true
-    });
+    
+    if (error) throw error;
+    
+    return data ? normalizeProduct(data) : null;
   } catch (error) {
-    console.error('Error in updateProduct:', error);
+    console.error(`Error updating product with ID ${id}:`, error);
     return null;
   }
 };
 
 export const deleteProduct = async (id: string): Promise<boolean> => {
   try {
-    const { error } = await supabase
+    const { error } = await db
       .from('products')
       .delete()
       .eq('id', id);
-
-    if (error) {
-      console.error('Error deleting product:', error);
-      return false;
-    }
-
+    
+    if (error) throw error;
+    
     return true;
   } catch (error) {
-    console.error('Error in deleteProduct:', error);
+    console.error(`Error deleting product with ID ${id}:`, error);
     return false;
   }
 };
 
-export const searchProducts = async (query: string): Promise<ModelProduct[]> => {
+export const getFeaturedProducts = async (limit = 10): Promise<Product[]> => {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await db
       .from('products')
       .select('*')
-      .or(`name.ilike.%${query}%,description.ilike.%${query}%`)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Error searching products:', error);
-      return [];
-    }
-
-    // Process raw data to ensure in_stock field exists
-    return data.map(product => convertToModelProduct({
-      ...product,
-      in_stock: product.in_stock !== undefined ? product.in_stock : true
-    }));
+      .eq('is_published', true)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+    
+    if (error) throw error;
+    
+    return data ? data.map(normalizeProduct) : [];
   } catch (error) {
-    console.error('Error in searchProducts:', error);
+    console.error('Error fetching featured products:', error);
     return [];
   }
 };
 
-// Update the normalize function to handle the in_stock field
-export const normalizeProductData = (product: any): DatabaseProduct => {
-  return {
-    id: product.id || '',
-    name: product.name || '',
-    description: product.description || '',
-    price: product.price || 0,
-    shop_id: product.shop_id || '',
-    category: product.category || '',
-    images: product.images || [],
-    created_at: product.created_at || new Date().toISOString(),
-    updated_at: product.updated_at || new Date().toISOString(),
-    is_halal_certified: product.is_halal_certified || false,
-    in_stock: product.in_stock !== undefined ? product.in_stock : true,
-    details: product.details || {},
-    long_description: product.long_description || '',
-    is_published: product.is_published || true,
-    stock: product.stock || 0
-  };
+export const getRelatedProducts = async (productId: string, category: string, limit = 4): Promise<Product[]> => {
+  try {
+    const { data, error } = await db
+      .from('products')
+      .select('*')
+      .eq('category', category)
+      .eq('is_published', true)
+      .neq('id', productId)
+      .limit(limit);
+    
+    if (error) throw error;
+    
+    return data ? data.map(normalizeProduct) : [];
+  } catch (error) {
+    console.error(`Error fetching related products for ${productId}:`, error);
+    return [];
+  }
+};
+
+export const getProductsByShop = async (shopId: string): Promise<Product[]> => {
+  try {
+    const { data, error } = await db
+      .from('products')
+      .select('*')
+      .eq('shop_id', shopId)
+      .eq('is_published', true);
+    
+    if (error) throw error;
+    
+    return data ? data.map(normalizeProduct) : [];
+  } catch (error) {
+    console.error(`Error fetching products for shop ${shopId}:`, error);
+    return [];
+  }
+};
+
+export const getProductsByCategory = async (category: string): Promise<Product[]> => {
+  try {
+    const { data, error } = await db
+      .from('products')
+      .select('*')
+      .eq('category', category)
+      .eq('is_published', true);
+    
+    if (error) throw error;
+    
+    return data ? data.map(normalizeProduct) : [];
+  } catch (error) {
+    console.error(`Error fetching products in category ${category}:`, error);
+    return [];
+  }
+};
+
+export const searchProducts = async (query: string): Promise<Product[]> => {
+  try {
+    const { data, error } = await db
+      .from('products')
+      .select('*')
+      .eq('is_published', true)
+      .ilike('name', `%${query}%`);
+    
+    if (error) throw error;
+    
+    return data ? data.map(normalizeProduct) : [];
+  } catch (error) {
+    console.error(`Error searching products with query ${query}:`, error);
+    return [];
+  }
 };

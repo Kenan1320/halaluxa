@@ -49,6 +49,7 @@ export interface Shop {
   product_count?: number;
   latitude?: number;
   longitude?: number;
+  distance?: number;
 }
 
 export interface Product {
@@ -141,4 +142,35 @@ export interface PaymentMethod {
   };
   is_default: boolean;
   created_at: string;
+}
+
+export interface DatabaseProfile {
+  id: string;
+  created_at: string;
+  updated_at?: string;
+  email: string;
+  name?: string;
+  role: 'shopper' | 'business' | 'admin';
+  avatar_url?: string;
+  address?: UserAddress;
+  phone?: string;
+  preferences?: UserPreferences;
+  shop_name?: string;
+}
+
+export interface SellerAccount {
+  id: string;
+  user_id: string;
+  shop_id: string;
+  account_type: 'individual' | 'business';
+  account_status: 'pending' | 'active' | 'suspended';
+  payout_details: {
+    bank_name?: string;
+    account_holder?: string;
+    account_number_last4?: string;
+    routing_number_last4?: string;
+    paypal_email?: string;
+  };
+  created_at: string;
+  updated_at: string;
 }

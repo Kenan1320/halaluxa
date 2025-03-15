@@ -1,22 +1,10 @@
 
 import { db } from '@/integrations/supabase/client';
-import { Shop as DatabaseShop } from '@/types/database';
-import { getDistance } from 'geolib';
+import { Shop } from '@/types/database';
 import { normalizeShop } from '@/lib/utils';
-
-export interface Shop extends DatabaseShop {
-  distance?: number;
-  product_count?: number;
-}
-
-export interface Category {
-  id: string;
-  name: string;
-  description?: string;
-  image?: string;
-  group?: 'featured' | 'nearby' | 'online' | 'popular';
-  parent_id?: string;
-}
+import { getDistance } from 'geolib';
+import { Product } from '@/models/product';
+import { normalizeProduct } from '@/lib/productUtils';
 
 export const getShops = async (): Promise<Shop[]> => {
   try {
@@ -32,6 +20,9 @@ export const getShops = async (): Promise<Shop[]> => {
     return [];
   }
 };
+
+// This is an alias for getShops to maintain compatibility
+export const getAllShops = getShops;
 
 export const getShopById = async (id: string): Promise<Shop | null> => {
   try {
@@ -94,7 +85,7 @@ export const getNearbyShops = async (
   }
 };
 
-export const createShop = async (shop: Partial<DatabaseShop>): Promise<Shop | null> => {
+export const createShop = async (shop: Partial<Shop>): Promise<Shop | null> => {
   try {
     // Ensure required fields are present
     if (!shop.name || !shop.description || !shop.category || !shop.location) {
@@ -114,7 +105,9 @@ export const createShop = async (shop: Partial<DatabaseShop>): Promise<Shop | nu
         owner_id: shop.owner_id,
         latitude: shop.latitude,
         longitude: shop.longitude,
-        is_verified: shop.is_verified || false
+        is_verified: shop.is_verified || false,
+        rating: shop.rating || 0,
+        product_count: shop.product_count || 0
       })
       .select()
       .single();
@@ -194,3 +187,24 @@ export const subscribeToShops = (callback: (shops: Shop[]) => void) => {
   
   return channel;
 };
+
+// Function to get products from a specific shop
+export const getShopProducts = async (shopId: string): Promise<Product[]> => {
+  try {
+    const { data, error } = await db
+      .from('products')
+      .select('*')
+      .eq('shop_id', shopId)
+      .eq('is_published', true);
+    
+    if (error) throw error;
+    
+    return data?.map(normalizeProduct) || [];
+  } catch (error) {
+    console.error(`Error fetching products for shop ${shopId}:`, error);
+    return [];
+  }
+};
+
+// Helper function to convert database product to model product
+export const convertToModelProduct = normalizeProduct;

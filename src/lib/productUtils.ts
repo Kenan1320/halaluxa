@@ -34,7 +34,10 @@ export const normalizeProduct = (product: any): Product => {
     pickup_options: product.pickup_options || {
       store: true,
       curbside: false
-    }
+    },
+    seller_id: product.seller_id,
+    seller_name: product.seller_name,
+    rating: product.rating || 0
   };
 };
 
@@ -71,4 +74,19 @@ export const ensurePickupOptions = (pickupOptions: any): { store: boolean; curbs
     store: typeof pickupOptions.store === 'boolean' ? pickupOptions.store : true,
     curbside: typeof pickupOptions.curbside === 'boolean' ? pickupOptions.curbside : false
   };
+};
+
+export const prepareProductForUpdate = (product: Partial<Product>): any => {
+  const updatedProduct: any = { ...product };
+  
+  // Convert camelCase to snake_case for database
+  if (product.is_halal_certified !== undefined) {
+    updatedProduct.is_halal_certified = product.is_halal_certified;
+  }
+  
+  if (product.in_stock !== undefined) {
+    updatedProduct.in_stock = product.in_stock;
+  }
+  
+  return updatedProduct;
 };

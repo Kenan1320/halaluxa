@@ -2,6 +2,8 @@
 import { db } from '@/integrations/supabase/client';
 import { Category } from '@/types/database';
 
+export { Category };
+
 export const getCategories = async (): Promise<Category[]> => {
   try {
     const { data, error } = await db

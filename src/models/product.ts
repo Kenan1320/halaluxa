@@ -22,6 +22,10 @@ export interface Product {
     store: boolean;
     curbside: boolean;
   };
+  // Additional fields for UI/display
+  seller_id?: string;
+  seller_name?: string;
+  rating?: number;
 }
 
 export interface ProductFilter {
@@ -39,3 +43,20 @@ export interface ProductResponse {
   data: Product[] | null;
   error: any;
 }
+
+// Common product categories for UI selection
+export const productCategories = [
+  "Electronics", 
+  "Clothing", 
+  "Food", 
+  "Home", 
+  "Beauty", 
+  "Books", 
+  "Sports", 
+  "Toys", 
+  "Health", 
+  "Grocery", 
+  "Jewelry", 
+  "Automotive", 
+  "Garden"
+];

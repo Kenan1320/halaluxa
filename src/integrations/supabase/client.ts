@@ -20,3 +20,6 @@ export const supabase = createClient<Database>(
     },
   }
 );
+
+// Alias for database operations
+export const db = supabase;
