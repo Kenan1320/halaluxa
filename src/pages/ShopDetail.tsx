@@ -1,223 +1,159 @@
-import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { getShopById } from '@/services/shopService';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+
+import React, { useState, useEffect } from 'react';
+import { useParams, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MapPin, Clock, CheckCircle, Star, Store, ShoppingBag } from 'lucide-react';
+import { ShopProductList } from '@/components/shop/ShopProductList';
+import { ReviewList } from '@/components/shop/ReviewList';
 import { ShopHeader } from '@/components/shop/ShopHeader';
-import { Shop, ShopDetails, Category } from '@/types/shop';
+import { ShopDetails } from '@/types/shop';
+import { getShopById } from '@/services/shopService';
+import { getShopReviews } from '@/services/reviewService';
 
 const ShopDetail = () => {
-  const { id } = useParams();
-  const navigate = useNavigate();
+  const { shopId } = useParams<{ shopId: string }>();
   const [shop, setShop] = useState<ShopDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  
+  const [activeTab, setActiveTab] = useState('menu');
+  const [isFollowing, setIsFollowing] = useState(false);
+
   useEffect(() => {
     const fetchShopDetails = async () => {
-      if (!id) {
-        navigate('/shops');
-        return;
-      }
-      
       setIsLoading(true);
       try {
-        const shopData = await getShopById(id);
-        if (!shopData) {
-          navigate('/shops');
-          return;
+        if (shopId) {
+          const shopData = await getShopById(shopId);
+          
+          if (shopData) {
+            // Mock additional ShopDetails data not available in the Shop model
+            const shopDetails: ShopDetails = {
+              ...shopData,
+              products: 42,
+              followers: 1240,
+              reviews: 158,
+              rating: { average: 4.7, count: 158 },
+              deliveryInfo: {
+                fee: 2.99,
+                minOrder: 15.00,
+                estimatedTime: '30-45 min'
+              },
+              isGroupOrderEnabled: true
+            };
+            
+            setShop(shopDetails);
+          }
         }
-        
-        const shopDetails: ShopDetails = {
-          ...shopData,
-          products: Math.floor(Math.random() * 100) + 20,
-          followers: Math.floor(Math.random() * 1000) + 50,
-          reviews: Math.floor(Math.random() * 500) + 10,
-        };
-        
-        setShop(shopDetails);
       } catch (error) {
         console.error('Error fetching shop details:', error);
       } finally {
         setIsLoading(false);
       }
     };
-    
+
     fetchShopDetails();
-  }, [id, navigate]);
-  
+  }, [shopId]);
+
+  const handleFollow = () => {
+    setIsFollowing(!isFollowing);
+    // In a real app, you would call an API to follow/unfollow
+  };
+
   if (isLoading) {
     return (
       <div className="container mx-auto py-8 px-4">
         <div className="animate-pulse">
-          <div className="h-48 bg-gray-200 rounded-xl mb-6"></div>
-          <div className="h-8 bg-gray-200 w-1/4 rounded mb-4"></div>
-          <div className="h-4 bg-gray-200 w-1/2 rounded mb-8"></div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="h-64 bg-gray-200 rounded-xl"></div>
-            <div className="h-64 bg-gray-200 rounded-xl"></div>
-            <div className="h-64 bg-gray-200 rounded-xl"></div>
+          <div className="h-48 md:h-64 bg-gray-200 mb-16"></div>
+          <div className="h-8 bg-gray-200 mb-4 w-1/3"></div>
+          <div className="h-4 bg-gray-200 mb-2 w-1/4"></div>
+          <div className="h-4 bg-gray-200 mb-6 w-1/2"></div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="h-20 bg-gray-200 rounded"></div>
+            <div className="h-20 bg-gray-200 rounded"></div>
+            <div className="h-20 bg-gray-200 rounded"></div>
           </div>
         </div>
       </div>
     );
   }
-  
+
   if (!shop) {
     return (
       <div className="container mx-auto py-8 px-4 text-center">
-        <h1 className="text-2xl font-semibold mb-4">Shop Not Found</h1>
-        <p className="text-gray-500 mb-6">The shop you're looking for doesn't exist or may have been removed.</p>
-        <Button onClick={() => navigate('/shops')}>Browse Shops</Button>
+        <h2 className="text-2xl font-bold">Shop not found</h2>
+        <p className="mt-2 text-gray-600">The shop you're looking for doesn't exist or has been removed.</p>
+        <Link to="/shops">
+          <Button className="mt-4">Browse Other Shops</Button>
+        </Link>
       </div>
     );
   }
-  
-  const shopCategories: Category[] = [
-    { id: '1', name: 'Popular Items', group: 'popular', created_at: '', updated_at: '' },
-    { id: '2', name: 'New Arrivals', group: 'featured', created_at: '', updated_at: '' },
-    { id: '3', name: 'Discounted', group: 'featured', created_at: '', updated_at: '' },
-    { id: '4', name: 'Seasonal', group: 'featured', created_at: '', updated_at: '' },
-  ];
-  
+
   return (
-    <div className="container mx-auto py-8 px-4">
-      <ShopHeader shop={shop} />
+    <div className="min-h-screen bg-gray-50">
+      <ShopHeader 
+        shop={shop} 
+        onFollow={handleFollow}
+        isFollowing={isFollowing}
+      />
       
-      <div className="mt-8">
-        <Tabs defaultValue="products">
+      <div className="container mx-auto px-4 py-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="mb-6">
-            <TabsTrigger value="products">Products</TabsTrigger>
-            <TabsTrigger value="about">About</TabsTrigger>
+            <TabsTrigger value="menu">Menu</TabsTrigger>
             <TabsTrigger value="reviews">Reviews</TabsTrigger>
+            <TabsTrigger value="info">Info</TabsTrigger>
           </TabsList>
           
-          <TabsContent value="products" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {shopCategories.map((category) => (
-                <Card key={category.id} className="overflow-hidden hover:shadow-md transition-shadow">
-                  <div className="aspect-video bg-gray-100 relative">
-                    <div className="absolute inset-0 flex items-center justify-center text-4xl text-gray-300">
-                      <ShoppingBag size={48} />
-                    </div>
-                  </div>
-                  <CardHeader className="p-4">
-                    <CardTitle className="text-lg">{category.name}</CardTitle>
-                    <CardDescription>Browse all {category.name.toLowerCase()}</CardDescription>
-                  </CardHeader>
-                  <CardContent className="p-4 pt-0">
-                    <Button variant="outline" className="w-full" onClick={() => navigate(`/shop/${shop.id}?category=${category.id}`)}>
-                      View Products
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-            
-            <div className="text-center mt-8">
-              <Button onClick={() => navigate(`/shop/${shop.id}`)}>
-                View All Products
-              </Button>
+          <TabsContent value="menu" className="space-y-6">
+            <ShopProductList shopId={shop.id} />
+          </TabsContent>
+          
+          <TabsContent value="reviews" className="space-y-6">
+            <div className="bg-white p-6 rounded-lg shadow-sm">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h3 className="text-xl font-bold">Customer Reviews</h3>
+                  <p className="text-gray-600">
+                    {typeof shop.rating === 'object' ? 
+                      `${shop.rating.average.toFixed(1)} out of 5 (${shop.rating.count} reviews)` : 
+                      'No reviews yet'
+                    }
+                  </p>
+                </div>
+                <Button variant="outline">Write a Review</Button>
+              </div>
+              <ReviewList shopId={shop.id} />
             </div>
           </TabsContent>
           
-          <TabsContent value="about">
-            <Card>
-              <CardHeader>
-                <CardTitle>About {shop.name}</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Description</h3>
-                  <p className="text-gray-700">{shop.description}</p>
+          <TabsContent value="info" className="space-y-6">
+            <div className="bg-white p-6 rounded-lg shadow-sm">
+              <h3 className="text-xl font-bold mb-4">Shop Information</h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <h4 className="font-medium text-gray-700 mb-2">Address</h4>
+                  <p className="text-gray-600">{shop.address || shop.location}</p>
+                  
+                  <h4 className="font-medium text-gray-700 mb-2 mt-4">Delivery Information</h4>
+                  <ul className="text-gray-600 space-y-1">
+                    <li>Delivery Fee: ${shop.deliveryInfo.fee.toFixed(2)}</li>
+                    <li>Minimum Order: ${shop.deliveryInfo.minOrder.toFixed(2)}</li>
+                    <li>Estimated Delivery Time: {shop.deliveryInfo.estimatedTime}</li>
+                  </ul>
                 </div>
                 
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Details</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="flex items-start">
-                      <MapPin className="h-5 w-5 text-gray-500 mt-0.5 mr-2" />
-                      <div>
-                        <h4 className="font-medium">Location</h4>
-                        <p className="text-gray-600">{shop.location}</p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-start">
-                      <Clock className="h-5 w-5 text-gray-500 mt-0.5 mr-2" />
-                      <div>
-                        <h4 className="font-medium">Joined</h4>
-                        <p className="text-gray-600">
-                          {new Date(shop.created_at).toLocaleDateString('en-US', {
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric'
-                          })}
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-start">
-                      <Store className="h-5 w-5 text-gray-500 mt-0.5 mr-2" />
-                      <div>
-                        <h4 className="font-medium">Category</h4>
-                        <p className="text-gray-600">{shop.category}</p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-start">
-                      <CheckCircle className="h-5 w-5 text-gray-500 mt-0.5 mr-2" />
-                      <div>
-                        <h4 className="font-medium">Verification</h4>
-                        <div>
-                          <Badge variant="outline" className="bg-green-100 text-green-800 border-green-300">Verified Shop</Badge>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                <div>
+                  <h4 className="font-medium text-gray-700 mb-2">Shop Details</h4>
+                  <ul className="text-gray-600 space-y-1">
+                    <li>Category: {shop.category}</li>
+                    <li>Verified: {shop.is_verified ? 'Yes' : 'No'}</li>
+                    <li>Products: {shop.products}</li>
+                    <li>Followers: {shop.followers}</li>
+                  </ul>
                 </div>
-                
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Stats</h3>
-                  <div className="grid grid-cols-3 md:grid-cols-3 gap-4 text-center">
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                      <p className="text-2xl font-bold text-primary">{shop.products}</p>
-                      <p className="text-sm text-gray-500">Products</p>
-                    </div>
-                    
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                      <div className="flex items-center justify-center">
-                        <p className="text-2xl font-bold text-primary mr-1">{shop.rating?.toFixed(1) || "0.0"}</p>
-                        <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" />
-                      </div>
-                      <p className="text-sm text-gray-500">Rating</p>
-                    </div>
-                    
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                      <p className="text-2xl font-bold text-primary">{shop.followers}</p>
-                      <p className="text-sm text-gray-500">Followers</p>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="reviews">
-            <Card>
-              <CardHeader>
-                <CardTitle>Customer Reviews</CardTitle>
-                <CardDescription>See what customers are saying about {shop.name}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8">
-                  <p className="text-gray-500 mb-4">No reviews yet. Be the first to review!</p>
-                  <Button>Write a Review</Button>
-                </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </TabsContent>
         </Tabs>
       </div>

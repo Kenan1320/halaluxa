@@ -46,7 +46,7 @@ const mockProducts: Product[] = [
     stock: 15,
     is_published: true,
     long_description: 'Premium quality halal beef from grass-fed cows, processed according to Islamic standards.',
-    delivery_mode: 'both',
+    delivery_mode: 'pickup',
     pickup_options: { store: true, curbside: true }
   }
 ];
@@ -65,7 +65,6 @@ export const searchProducts = async (searchTerm: string, filter?: ProductFilter)
       );
     });
 
-    // Fix the deep type instantiation by simplifying the return type:
     const response: ProductResponse = {
       data: filteredProducts,
       error: null,
@@ -129,5 +128,82 @@ export const getProducts = async (filter?: ProductFilter): Promise<ProductRespon
       error: 'Failed to fetch products',
       filter: (predicate) => [].filter(predicate)
     };
+  }
+};
+
+// For dashboard functionality
+export const createProduct = async (product: Partial<Product>): Promise<Product | null> => {
+  try {
+    const newProduct: Product = {
+      id: `prod_${Date.now()}`,
+      name: product.name || 'Untitled Product',
+      description: product.description || '',
+      price: product.price || 0,
+      category: product.category || 'Uncategorized',
+      shop_id: product.shop_id || '',
+      seller_id: product.seller_id || '',
+      seller_name: product.seller_name || '',
+      images: product.images || [],
+      is_halal_certified: product.is_halal_certified || false,
+      in_stock: product.in_stock !== undefined ? product.in_stock : true,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      rating: product.rating || 0,
+      details: product.details || {},
+      stock: product.stock || 0,
+      is_published: product.is_published !== undefined ? product.is_published : false,
+      long_description: product.long_description || '',
+      delivery_mode: product.delivery_mode || 'pickup',
+      pickup_options: product.pickup_options || { store: true, curbside: false }
+    };
+    
+    // In a real app, we would save to Supabase
+    mockProducts.push(newProduct);
+    
+    return newProduct;
+  } catch (error) {
+    console.error('Error creating product:', error);
+    return null;
+  }
+};
+
+export const updateProduct = async (id: string, updates: Partial<Product>): Promise<Product | null> => {
+  try {
+    const index = mockProducts.findIndex(p => p.id === id);
+    if (index === -1) return null;
+    
+    mockProducts[index] = {
+      ...mockProducts[index],
+      ...updates,
+      updated_at: new Date().toISOString()
+    };
+    
+    return mockProducts[index];
+  } catch (error) {
+    console.error('Error updating product:', error);
+    return null;
+  }
+};
+
+export const deleteProduct = async (id: string): Promise<boolean> => {
+  try {
+    const index = mockProducts.findIndex(p => p.id === id);
+    if (index === -1) return false;
+    
+    mockProducts.splice(index, 1);
+    return true;
+  } catch (error) {
+    console.error('Error deleting product:', error);
+    return false;
+  }
+};
+
+export const getFeaturedProducts = async (): Promise<Product[]> => {
+  try {
+    // For now, just return the first few products
+    return mockProducts.slice(0, 4);
+  } catch (error) {
+    console.error('Error fetching featured products:', error);
+    return [];
   }
 };

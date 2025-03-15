@@ -1,72 +1,44 @@
 
-import { Json } from '@/integrations/supabase/types';
-
 export interface Product {
   id: string;
   name: string;
   description: string;
-  long_description: string;
   price: number;
-  shop_id: string;
   images: string[];
   category: string;
-  stock: number;
+  shop_id: string;
+  is_halal_certified: boolean;
+  in_stock: boolean;
   created_at: string;
   updated_at: string;
-  is_published: boolean;
-  is_halal_certified: boolean;
-  details: Json;
-  in_stock: boolean;
-  delivery_mode?: 'online' | 'pickup' | 'local_delivery';
-  pickup_options: {
+  seller_id: string;
+  seller_name: string;
+  rating?: number;
+  details?: Record<string, any>;
+  stock?: number;
+  is_published?: boolean;
+  long_description?: string;
+  delivery_mode?: 'pickup' | 'online' | 'local_delivery' | 'both';
+  pickup_options?: {
     store: boolean;
     curbside: boolean;
   };
-  // Additional fields for UI/display
-  seller_id?: string;
-  seller_name?: string;
-  rating?: number;
-  
-  // Frontend aliases for backward compatibility
-  shopId?: string;
-  isHalalCertified?: boolean;
-  inStock?: boolean;
-  createdAt?: string;
-  updatedAt?: string;
-  sellerId?: string;
-  sellerName?: string;
 }
 
 export interface ProductFilter {
+  search?: string;
   category?: string;
+  shop_id?: string;
+  seller_id?: string;
   min_price?: number;
   max_price?: number;
   is_halal_certified?: boolean;
   in_stock?: boolean;
-  shop_id?: string;
-  search?: string;
-  sort_by?: 'price_asc' | 'price_desc' | 'newest' | 'popular';
+  sort_by?: 'price_asc' | 'price_desc' | 'newest' | 'rating';
 }
 
 export interface ProductResponse {
-  data: Product[] | null;
-  error: any;
-  filter?: (predicate: (value: Product, index: number, array: Product[]) => unknown) => Product[];
+  data: Product[];
+  error: string | null;
+  filter: (predicate: (product: Product) => boolean) => Product[];
 }
-
-// Common product categories for UI selection
-export const productCategories = [
-  "Electronics", 
-  "Clothing", 
-  "Food", 
-  "Home", 
-  "Beauty", 
-  "Books", 
-  "Sports", 
-  "Toys", 
-  "Health", 
-  "Grocery", 
-  "Jewelry", 
-  "Automotive", 
-  "Garden"
-];

@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Product, ProductFilter, ProductResponse } from '@/models/product';
 import { searchProducts } from '@/services/productService';
-import ProductCard from '@/components/product/ProductCard';
+import ProductCard from '@/components/shop/ProductCard';
 import { useDebounce } from '@/hooks/useDebounce';
 
 const Search = () => {

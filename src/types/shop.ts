@@ -1,4 +1,6 @@
 
+import { type } from "os";
+
 export interface Shop {
   id: string;
   name: string;
@@ -8,41 +10,65 @@ export interface Shop {
   logo_url?: string;
   cover_image?: string;
   owner_id: string;
-  created_at: string;
-  updated_at: string;
-  category: string;
   is_verified?: boolean;
+  category: string;
   rating?: number;
   product_count?: number;
+  created_at?: string;
+  updated_at?: string;
   latitude?: number;
   longitude?: number;
   distance?: number;
+  logo?: string;
 }
 
-// Use 'export type' when re-exporting types with isolatedModules enabled
-export type { Category } from '@/types/database';
-
-// Add ShopDetails interface used in ShopHeader and ShopDetail
-export interface ShopDetails extends Shop {
-  products?: number;
-  followers?: number;
-  reviews?: number;
-  logo?: string; // Alias for logo_url
-  rating: {
-    average: number;
-    count: number;
-  };
+export interface ShopDetails extends Omit<Shop, 'rating'> {
+  products: number;
+  followers: number;
+  reviews: number;
+  rating: { average: number; count: number };
+  categories?: string[];
   deliveryInfo: {
-    deliveryFee: number;
+    fee: number;
+    minOrder: number;
     estimatedTime: string;
   };
-  isGroupOrderEnabled?: boolean;
-  categories?: ShopCategory[];
+  isGroupOrderEnabled: boolean;
 }
 
-// Add ShopCategory for ShopDetail page
-export interface ShopCategory {
+export type ShopCategory = {
   id: string;
   name: string;
-  count: number;
-}
+  icon?: string;
+  count?: number;
+};
+
+export type Category = {
+  id: string;
+  name: string;
+  slug?: string;
+  icon?: string;
+  parent_id?: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type FeaturedShop = {
+  id: string;
+  name: string;
+  logo_url?: string;
+  cover_image?: string;
+  category: string;
+  rating?: number;
+  distance?: string;
+  is_favorite?: boolean;
+};
+
+export type UserShopPreference = {
+  user_id: string;
+  shop_id: string;
+  is_favorite: boolean;
+  last_visited?: string;
+  created_at: string;
+  updated_at: string;
+};
