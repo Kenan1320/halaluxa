@@ -36,3 +36,14 @@ export interface ShopCategory {
   name: string;
   products: any[];
 }
+
+export interface Category {
+  id: string;
+  name: string;
+  description?: string;
+  image?: string;
+  slug?: string;
+  parent_id?: string;
+  created_at?: string;
+  updated_at?: string;
+}

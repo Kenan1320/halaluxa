@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import { DatabaseProfile, Product } from '@/types/database';
 import { useToast } from '@/hooks/use-toast';
 
@@ -8,11 +8,14 @@ interface AuthContextType {
   user: DatabaseProfile | null;
   isLoggedIn: boolean;
   isLoading: boolean;
+  isInitializing: boolean;
   login: (email: string) => Promise<void>;
   signUp: (email: string, name: string) => Promise<void>;
+  signup: (email: string, password: string, name: string, role: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
   updateUser: (updates: any) => Promise<boolean>;
+  updateUserProfile: (updates: any) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -24,7 +27,8 @@ interface AuthProviderProps {
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<DatabaseProfile | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -113,6 +117,37 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
+  const signup = async (email: string, password: string, name: string, role: string) => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            name,
+            role,
+          },
+        },
+      });
+      if (error) throw error;
+
+      toast({
+        title: 'Account created',
+        description: 'Your account has been created successfully.',
+      });
+    } catch (error) {
+      console.error('Signup error:', error);
+      toast({
+        title: 'Signup failed',
+        description: 'There was an error signing up. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const logout = async () => {
     setIsLoading(true);
     try {
@@ -169,119 +204,54 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
-  // Update these functions to properly handle shop fields
-const updateUser = async (updates: any): Promise<boolean> => {
-  if (!user) return false;
-  
-  try {
-    const { data, error } = await supabase
-      .from('profiles')
-      .update({
-        ...updates,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', user.id);
+  const updateUser = async (updates: any): Promise<boolean> => {
+    if (!user) return false;
     
-    if (error) throw error;
-    
-    if (updates.shop_name || updates.shop_description || updates.shop_category || 
-        updates.shop_location || updates.shop_logo) {
-      // If shop fields are included, we need to update those separately
-      await updateShopFields({
-        shop_name: updates.shop_name,
-        shop_description: updates.shop_description,
-        shop_category: updates.shop_category,
-        shop_location: updates.shop_location,
-        shop_logo: updates.shop_logo
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .update({
+          ...updates,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', user.id);
+      
+      if (error) throw error;
+      
+      // Refresh user data
+      await refreshUser();
+      
+      toast({
+        title: 'Profile updated',
+        description: 'Your profile has been successfully updated.',
       });
-    }
-    
-    // Refresh user data
-    await refreshUser();
-    
-    toast({
-      title: 'Profile updated',
-      description: 'Your profile has been successfully updated.',
-    });
-    
-    return true;
-  } catch (error) {
-    console.error('Error updating user:', error);
-    toast({
-      title: 'Update failed',
-      description: 'There was an error updating your profile. Please try again.',
-      variant: 'destructive',
-    });
-    return false;
-  }
-};
-
-const updateShopFields = async (shopUpdates: {
-  shop_name?: string;
-  shop_description?: string;
-  shop_category?: string;
-  shop_location?: string;
-  shop_logo?: string;
-}): Promise<boolean> => {
-  if (!user) return false;
-  
-  try {
-    const { data, error } = await supabase
-      .from('shop_fields')
-      .upsert({
-        user_id: user.id,
-        ...shopUpdates,
-        updated_at: new Date().toISOString(),
-      }, {
-        onConflict: 'user_id'
+      
+      return true;
+    } catch (error) {
+      console.error('Error updating user:', error);
+      toast({
+        title: 'Update failed',
+        description: 'There was an error updating your profile. Please try again.',
+        variant: 'destructive',
       });
-    
-    if (error) throw error;
-    return true;
-  } catch (error) {
-    console.error('Error updating shop fields:', error);
-    return false;
-  }
-};
-
-// Helper function to transform product data
-const normalizeProduct = (product: any): Product => {
-  return {
-    id: product.id,
-    name: product.name,
-    description: product.description,
-    price: product.price,
-    shop_id: product.shop_id,
-    category: product.category,
-    images: product.images || [],
-    created_at: product.created_at,
-    updated_at: product.updated_at,
-    is_halal_certified: product.is_halal_certified || false,
-    in_stock: product.in_stock || true,
-    details: product.details || {},
-    long_description: product.long_description || '',
-    is_published: product.is_published || true,
-    stock: product.stock || 10,
-    seller_id: product.seller_id || '',
-    rating: product.rating || 0,
-    shop_name: product.shop_name || '',
-    delivery_mode: product.delivery_mode || 'online',
-    pickup_options: product.pickup_options || {
-      store: true,
-      curbside: false
+      return false;
     }
   };
-};
+
+  const updateUserProfile = updateUser;
 
   const value: AuthContextType = {
     user,
     isLoggedIn,
     isLoading,
+    isInitializing,
     login,
     signUp,
+    signup,
     logout,
     refreshUser,
     updateUser,
+    updateUserProfile,
   };
 
   return (

@@ -20,10 +20,8 @@ const LoginPage = () => {
   const [loading, setLoading] = useState(false);
   const [userType, setUserType] = useState<'shopper' | 'business' | null>(null);
 
-  // Get the intended destination, if any
   const from = location.state?.from?.pathname || '/';
   
-  // If already logged in, redirect to appropriate page
   useEffect(() => {
     if (isLoggedIn) {
       if (user?.role === 'business') {
@@ -54,10 +52,7 @@ const LoginPage = () => {
     setLoading(true);
     
     try {
-      // Attempt to login
-      await login(formData.email, formData.password);
-      
-      // The auth context will handle redirects after login
+      await login(formData.email);
     } catch (error) {
       toast({
         title: "Error",
@@ -80,7 +75,6 @@ const LoginPage = () => {
     }
     
     try {
-      // Store the selected user type in localStorage temporarily
       localStorage.setItem('signupUserType', userType);
       
       const { data, error } = await supabase.auth.signInWithOAuth({
@@ -97,8 +91,6 @@ const LoginPage = () => {
       if (error) {
         throw error;
       }
-      
-      // The redirect will happen automatically
     } catch (error) {
       console.error('Error signing in with Google:', error);
       toast({
@@ -109,7 +101,6 @@ const LoginPage = () => {
     }
   };
 
-  // Animation variants
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: { 
@@ -150,7 +141,6 @@ const LoginPage = () => {
           <LoginSelector onSelect={setUserType} selectedType={userType} />
         </motion.div>
         
-        {/* Google Sign In Button */}
         <motion.div variants={itemVariants} className="mb-6">
           <Button 
             type="button" 

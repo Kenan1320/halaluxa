@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import type { Shop } from '@/types/database';
 import { 
@@ -9,6 +8,8 @@ import {
   uploadProductImage,
   dbShopToModel
 } from './shopServiceHelpers';
+import { Category } from '@/types/shop';
+import { productCategories } from '@/models/product';
 
 // Export types and helper functions from shopServiceHelpers
 export type { Shop };
@@ -79,25 +80,67 @@ export const getShopById = async (id: string): Promise<Shop | null> => {
 // Function to get nearby shops based on user's location
 export const getNearbyShops = async (latitude?: number, longitude?: number): Promise<Shop[]> => {
   try {
-    // Use passed coordinates or default to a fallback if not provided
-    const userLatitude = latitude || 37.7749;  // Default latitude
-    const userLongitude = longitude || -122.4194; // Default longitude
-
-    // For now, return all shops as a mock
-    const { data: shops, error } = await supabase
-      .from('shops')
-      .select('*');
-
+    let query = supabase.from('shops').select('*');
+    
+    // If coordinates are provided, we can calculate distance
+    // This would usually be done with a database function
+    // but for simplicity, we'll just fetch all shops and calculate distance client-side
+    const { data, error } = await query;
+    
     if (error) {
       throw error;
     }
-
-    return shops as Shop[];
+    
+    let shops = data as Shop[];
+    
+    if (latitude && longitude) {
+      // Calculate distance for each shop
+      shops = shops.map(shop => {
+        if (shop.latitude && shop.longitude) {
+          const distance = calculateDistance(
+            latitude, 
+            longitude, 
+            shop.latitude, 
+            shop.longitude
+          );
+          return {
+            ...shop,
+            distance
+          };
+        }
+        return shop;
+      });
+      
+      // Sort by distance
+      shops = shops.sort((a, b) => {
+        return (a.distance || Infinity) - (b.distance || Infinity);
+      });
+    }
+    
+    return shops;
   } catch (error) {
     console.error('Error fetching nearby shops:', error);
     return [];
   }
 };
+
+// Helper function to calculate distance between two points using Haversine formula
+function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371; // Radius of the Earth in km
+  const dLat = deg2rad(lat2 - lat1);
+  const dLon = deg2rad(lon2 - lon1);
+  const a = 
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * 
+    Math.sin(dLon/2) * Math.sin(dLon/2); 
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+  const distance = R * c; // Distance in km
+  return distance;
+}
+
+function deg2rad(deg: number): number {
+  return deg * (Math.PI/180);
+}
 
 // Function to get the main shop ID from localStorage
 export const getMainShopId = (): string | null => {
@@ -219,5 +262,20 @@ export const deleteShop = async (id: string): Promise<boolean> => {
   } catch (error) {
     console.error(`Error deleting shop with ID ${id}:`, error);
     return false;
+  }
+};
+
+// Function to get categories
+export const getCategories = async (): Promise<Category[]> => {
+  try {
+    // If needed, fetch categories from database
+    // For now, we'll use the static productCategories array to create Category objects
+    return productCategories.map((name, index) => ({
+      id: index.toString(),
+      name
+    }));
+  } catch (error) {
+    console.error('Error fetching categories:', error);
+    return [];
   }
 };

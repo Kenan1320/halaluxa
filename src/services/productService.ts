@@ -43,14 +43,14 @@ export const getFeaturedProducts = async (): Promise<ModelProduct[]> => {
       return [];
     }
 
-    // Ensure each product has the required in_stock field
-    const productsWithInStock = (data || []).map(product => ({
+    // Process raw data to ensure in_stock field exists
+    const processedData = data.map(product => ({
       ...product,
       in_stock: product.in_stock !== undefined ? product.in_stock : true
     }));
 
     // Convert to model products
-    return productsWithInStock.map(product => convertToModelProduct(product as Product));
+    return processedData.map(product => convertToModelProduct(product as Product));
   } catch (error) {
     console.error('Error in getFeaturedProducts:', error);
     return [];
@@ -67,17 +67,23 @@ export const createProduct = async (productData: Partial<Product>): Promise<Prod
       return null;
     }
     
-    // Ensure in_stock is set
-    const dataWithInStock = {
-      ...productData,
+    // Ensure all required fields are set
+    const productToCreate = {
+      name: productData.name,
+      description: productData.description,
+      price: productData.price,
+      shop_id: productData.shop_id,
+      category: productData.category,
       in_stock: productData.in_stock !== undefined ? productData.in_stock : true,
+      is_halal_certified: productData.is_halal_certified || false,
+      images: productData.images || [],
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
     
     const { data, error } = await supabase
       .from('products')
-      .insert(dataWithInStock)
+      .insert(productToCreate)
       .select()
       .single();
     
@@ -105,13 +111,13 @@ export const getProducts = async (): Promise<ModelProduct[]> => {
       return [];
     }
 
-    // Ensure each product has the required in_stock field
-    const productsWithInStock = (data || []).map(product => ({
+    // Process raw data to ensure in_stock field exists
+    const processedData = data.map(product => ({
       ...product,
       in_stock: product.in_stock !== undefined ? product.in_stock : true
     }));
 
-    return productsWithInStock.map(product => convertToModelProduct(product as Product));
+    return processedData.map(product => convertToModelProduct(product as Product));
   } catch (error) {
     console.error('Error in getProducts:', error);
     return [];
@@ -157,13 +163,13 @@ export const getProductsByShopId = async (shopId: string): Promise<ModelProduct[
       return [];
     }
 
-    // Ensure each product has the required in_stock field
-    const productsWithInStock = (data || []).map(product => ({
+    // Process raw data to ensure in_stock field exists
+    const processedData = data.map(product => ({
       ...product,
       in_stock: product.in_stock !== undefined ? product.in_stock : true
     }));
 
-    return productsWithInStock.map(product => convertToModelProduct(product as Product));
+    return processedData.map(product => convertToModelProduct(product as Product));
   } catch (error) {
     console.error('Error in getProductsByShopId:', error);
     return [];
@@ -183,13 +189,13 @@ export const getProductsByCategory = async (category: string): Promise<ModelProd
       return [];
     }
 
-    // Ensure each product has the required in_stock field
-    const productsWithInStock = (data || []).map(product => ({
+    // Process raw data to ensure in_stock field exists
+    const processedData = data.map(product => ({
       ...product,
       in_stock: product.in_stock !== undefined ? product.in_stock : true
     }));
 
-    return productsWithInStock.map(product => convertToModelProduct(product as Product));
+    return processedData.map(product => convertToModelProduct(product as Product));
   } catch (error) {
     console.error('Error in getProductsByCategory:', error);
     return [];
@@ -254,16 +260,43 @@ export const searchProducts = async (query: string): Promise<ModelProduct[]> => 
       return [];
     }
 
-    // Ensure each product has the required in_stock field
-    const productsWithInStock = (data || []).map(product => ({
+    // Process raw data to ensure in_stock field exists
+    const processedData = data.map(product => ({
       ...product,
       in_stock: product.in_stock !== undefined ? product.in_stock : true
     }));
 
-    return productsWithInStock.map(product => convertToModelProduct(product as Product));
+    return processedData.map(product => convertToModelProduct(product as Product));
   } catch (error) {
     console.error('Error in searchProducts:', error);
     return [];
+  }
+};
+
+// Image upload function
+export const uploadImage = async (file: File): Promise<string> => {
+  try {
+    const fileName = `${Date.now()}-${file.name}`;
+    const { data, error } = await supabase.storage
+      .from('product-images')
+      .upload(fileName, file, {
+        cacheControl: '3600',
+        upsert: false
+      });
+    
+    if (error) {
+      throw error;
+    }
+    
+    // Get the public URL
+    const { data: publicUrlData } = supabase.storage
+      .from('product-images')
+      .getPublicUrl(data.path);
+    
+    return publicUrlData.publicUrl;
+  } catch (error) {
+    console.error('Error uploading image:', error);
+    throw error;
   }
 };
 
