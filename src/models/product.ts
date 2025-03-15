@@ -26,6 +26,11 @@ export interface Product {
   stock?: number;
   long_description?: string;
   is_published?: boolean;
+  delivery_mode?: 'online' | 'local_pickup' | 'local_delivery';
+  pickup_options?: {
+    store: boolean;
+    curbside: boolean;
+  };
   
   // Frontend aliases for database fields (camelCase versions)
   shopId?: string; // Alias for shop_id

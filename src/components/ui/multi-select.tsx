@@ -1,23 +1,21 @@
 
-import * as React from "react"
-import { X } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
-import { Command, CommandGroup, CommandItem } from "@/components/ui/command"
-import { Command as CommandPrimitive } from "cmdk"
+import * as React from "react";
+import { X } from "lucide-react";
+import { Command as CommandPrimitive } from "cmdk";
+import { Badge } from "@/components/ui/badge";
+import { Command, CommandGroup, CommandItem } from "@/components/ui/command";
 
-type Option = {
-  label: string
-  value: string
-  id?: string
-  name?: string
-}
+export type OptionType = {
+  label: string;
+  value: string;
+};
 
 interface MultiSelectProps {
-  options: Option[]
-  selected: Option[]
-  onChange: (options: Option[]) => void
-  placeholder?: string
-  className?: string
+  options: OptionType[];
+  selected: string[];
+  onChange: (selected: string[]) => void;
+  placeholder?: string;
+  className?: string;
 }
 
 export function MultiSelect({
@@ -27,84 +25,76 @@ export function MultiSelect({
   placeholder = "Select options",
   className,
 }: MultiSelectProps) {
-  const inputRef = React.useRef<HTMLInputElement>(null)
-  const [open, setOpen] = React.useState(false)
-  const [inputValue, setInputValue] = React.useState("")
+  const [open, setOpen] = React.useState(false);
+  const [inputValue, setInputValue] = React.useState("");
 
-  const handleUnselect = (option: Option) => {
-    onChange(selected.filter((s) => s.value !== option.value))
-  }
+  const handleUnselect = (option: string) => {
+    onChange(selected.filter((s) => s !== option));
+  };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    const input = inputRef.current
-    if (input) {
-      if (e.key === "Delete" || e.key === "Backspace") {
-        if (input.value === "" && selected.length > 0) {
-          onChange(selected.slice(0, -1))
-        }
-      }
-      if (e.key === "Escape") {
-        input.blur()
+    const input = e.target as HTMLInputElement;
+    if (e.key === "Delete" || e.key === "Backspace") {
+      if (input.value === "" && selected.length > 0) {
+        handleUnselect(selected[selected.length - 1]);
       }
     }
-  }
+    if (e.key === "Escape") {
+      setOpen(false);
+    }
+  };
 
   const selectables = options.filter(
-    (option) => !selected.some((s) => s.value === option.value)
-  )
+    (option) => !selected.includes(option.value)
+  );
 
   return (
     <Command
       onKeyDown={handleKeyDown}
       className={`overflow-visible bg-transparent ${className}`}
     >
-      <div className="group border border-input px-3 py-2 text-sm rounded-md focus-within:ring-1 focus-within:ring-ring">
-        <div className="flex gap-1 flex-wrap">
-          {selected.map((option) => (
-            <Badge key={option.value} variant="secondary" className="mb-1">
-              {option.label}
+      <div className="border border-input rounded-md px-3 py-2 flex flex-wrap gap-1 items-center">
+        {selected.map((selectedValue) => {
+          const option = options.find((o) => o.value === selectedValue);
+          return (
+            <Badge key={selectedValue} variant="secondary">
+              {option?.label || selectedValue}
               <button
-                className="ml-1 rounded-full outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    handleUnselect(option)
-                  }
-                }}
+                className="ml-1 rounded-full outline-none"
                 onMouseDown={(e) => {
-                  e.preventDefault()
-                  e.stopPropagation()
+                  e.preventDefault();
+                  e.stopPropagation();
                 }}
-                onClick={() => handleUnselect(option)}
+                onClick={() => handleUnselect(selectedValue)}
               >
                 <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
               </button>
             </Badge>
-          ))}
-          <CommandPrimitive.Input
-            ref={inputRef}
-            value={inputValue}
-            onValueChange={setInputValue}
-            onBlur={() => setOpen(false)}
-            onFocus={() => setOpen(true)}
-            placeholder={selected.length === 0 ? placeholder : ""}
-            className="ml-2 bg-transparent outline-none placeholder:text-muted-foreground flex-1"
-          />
-        </div>
+          );
+        })}
+        <CommandPrimitive.Input
+          value={inputValue}
+          onValueChange={setInputValue}
+          onBlur={() => setOpen(false)}
+          onFocus={() => setOpen(true)}
+          placeholder={selected.length === 0 ? placeholder : ""}
+          className="ml-1 flex-1 bg-transparent outline-none placeholder:text-muted-foreground h-8"
+        />
       </div>
       <div className="relative">
         {open && selectables.length > 0 ? (
-          <div className="absolute w-full z-10 top-0 rounded-md border bg-popover text-popover-foreground shadow-md outline-none animate-in">
-            <CommandGroup className="h-full overflow-auto max-h-[200px]">
+          <div className="absolute w-full z-10 top-1 rounded-md border bg-popover text-popover-foreground shadow-md outline-none">
+            <CommandGroup className="h-full overflow-auto max-h-60">
               {selectables.map((option) => (
                 <CommandItem
                   key={option.value}
                   onMouseDown={(e) => {
-                    e.preventDefault()
-                    e.stopPropagation()
+                    e.preventDefault();
+                    e.stopPropagation();
                   }}
                   onSelect={() => {
-                    setInputValue("")
-                    onChange([...selected, option])
+                    onChange([...selected, option.value]);
+                    setInputValue("");
                   }}
                   className="cursor-pointer"
                 >
@@ -116,5 +106,5 @@ export function MultiSelect({
         ) : null}
       </div>
     </Command>
-  )
+  );
 }

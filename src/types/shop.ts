@@ -1,3 +1,4 @@
+
 export interface ShopDetails {
   id: string;
   name: string;

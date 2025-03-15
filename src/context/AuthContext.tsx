@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -49,6 +50,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         console.error('Error loading session:', error);
       } finally {
         setIsLoading(false);
+        setIsInitializing(false);
       }
     };
 
@@ -90,8 +92,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const signUp = async (email: string, name: string) => {
     setIsLoading(true);
     try {
+      // Creating a temporary password for signup that meets requirements
+      const tempPassword = `Temp${Math.random().toString(36).substring(2, 10)}!`;
+      
       const { data, error } = await supabase.auth.signUp({
         email,
+        password: tempPassword,
         options: {
           data: {
             name,
@@ -99,6 +105,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           },
         },
       });
+      
       if (error) throw error;
 
       toast({
