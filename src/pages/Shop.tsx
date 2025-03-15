@@ -1,265 +1,270 @@
 
-import { useEffect, useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import Navbar from '@/components/layout/Navbar';
-import Footer from '@/components/layout/Footer';
-import { Product, productCategories } from '@/models/product';
-import { useCart } from '@/context/CartContext';
-import { Search, ShoppingBag, Filter, Heart, Star, ChevronDown } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import React, { useEffect, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { getShopById } from '@/services/shopService';
 import { getProducts } from '@/services/productService';
+import { Product } from '@/models/product';
+import { formatPrice } from '@/lib/productUtils';
 import { useToast } from '@/hooks/use-toast';
-import { motion } from 'framer-motion';
-import { getCategoryIcon } from '@/components/icons/CategoryIcons';
+import { Button } from '@/components/ui/button';
+import { Shop } from '@/types/shop';
 
-const Shop = () => {
-  const location = useLocation();
+function ShopPage() {
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [products, setProducts] = useState<Product[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState<string>('');
-  const [isLoading, setIsLoading] = useState(true);
-  const { addToCart } = useCart();
   const { toast } = useToast();
+  const [shop, setShop] = useState<Shop | null>(null);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
   
+  // Fetch shop details
   useEffect(() => {
-    const queryParams = new URLSearchParams(location.search);
-    const category = queryParams.get('category');
-    if (category) {
-      setCategoryFilter(category);
-    }
-  }, [location.search]);
-  
-  useEffect(() => {
-    window.scrollTo(0, 0);
-    
-    const fetchProducts = async () => {
+    async function fetchShopData() {
+      if (!id) return;
+      
       setIsLoading(true);
-      const fetchedProducts = await getProducts();
-      setProducts(fetchedProducts);
-      setIsLoading(false);
-    };
-    
-    fetchProducts();
-  }, []);
-  
-  useEffect(() => {
-    const queryParams = new URLSearchParams();
-    if (categoryFilter) {
-      queryParams.set('category', categoryFilter);
+      try {
+        const shopData = await getShopById(id);
+        if (!shopData) {
+          toast({
+            title: "Shop not found",
+            description: "The requested shop could not be found.",
+            variant: "destructive"
+          });
+          navigate('/shops');
+          return;
+        }
+        
+        setShop(shopData);
+        
+        // Fetch products for this shop
+        const productsResponse = await getProducts({ shop_id: id });
+        if (productsResponse.data) {
+          setProducts(productsResponse.data);
+        }
+      } catch (error) {
+        console.error('Error fetching shop data:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load shop information.",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoading(false);
+      }
     }
-    navigate({ search: queryParams.toString() }, { replace: true });
-  }, [categoryFilter, navigate]);
-  
-  const filteredProducts = products.filter(product => {
-    const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          product.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = categoryFilter === '' || product.category === categoryFilter;
     
-    return matchesSearch && matchesCategory;
-  });
+    fetchShopData();
+  }, [id, navigate, toast]);
   
-  const handleAddToCart = (product: Product) => {
-    addToCart(product);
-    toast({
-      title: "Added to cart",
-      description: `${product.name} added to your cart`,
-    });
-  };
+  // Get unique categories from products
+  const categories = [...new Set(products.map(product => product.category))];
+  
+  // Filter products by active category
+  const filteredProducts = activeCategory 
+    ? products.filter(product => product.category === activeCategory)
+    : products;
+  
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="animate-pulse">
+          <div className="h-64 bg-gray-300 rounded-lg mb-6"></div>
+          <div className="h-8 bg-gray-300 rounded w-1/3 mb-4"></div>
+          <div className="h-4 bg-gray-300 rounded w-2/3 mb-8"></div>
+          
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+              <div key={i} className="h-64 bg-gray-300 rounded-lg"></div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
+  if (!shop) {
+    return (
+      <div className="container mx-auto px-4 py-8 text-center">
+        <h1 className="text-2xl font-bold mb-4">Shop Not Found</h1>
+        <p className="mb-6">The shop you're looking for doesn't exist or may have been removed.</p>
+        <Button onClick={() => navigate('/shops')}>Browse Shops</Button>
+      </div>
+    );
+  }
   
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900">
-      <Navbar />
-      
-      <main className="pt-28 pb-20">
-        <div className="container mx-auto px-4">
-          <motion.div 
-            className="mb-10"
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            <h1 className="text-4xl md:text-5xl font-serif font-bold mb-4 text-center text-black dark:text-white">Shop Halal Products</h1>
-            <p className="text-gray-500 dark:text-gray-400 text-lg mb-8 text-center max-w-3xl mx-auto">
-              Browse our collection of halal products from verified Muslim businesses.
-            </p>
-            
-            <div className="max-w-2xl mx-auto">
-              <div className="relative mb-6">
-                <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
-                  <Search className="h-5 w-5 text-gray-400" />
-                </div>
-                <input
-                  type="text"
-                  className="pl-12 pr-4 py-3 w-full border dark:border-gray-700 rounded-full shadow-sm focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-black dark:focus:border-white transition bg-white dark:bg-gray-800 text-black dark:text-white"
-                  placeholder="Search for halal products..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-              
-              {/* Category Dropdown */}
-              <div className="mb-6">
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button 
-                      variant="outline" 
-                      className="w-full border border-gray-200 dark:border-gray-700 flex justify-between items-center py-6 px-4 rounded-xl bg-white dark:bg-gray-800"
-                    >
-                      <div className="flex items-center gap-2">
-                        {categoryFilter ? (
-                          <>
-                            <div className="h-6 w-6">
-                              {getCategoryIcon(categoryFilter)}
-                            </div>
-                            <span className="text-black dark:text-white">
-                              {categoryFilter}
-                            </span>
-                          </>
-                        ) : (
-                          <span className="text-gray-500 dark:text-gray-400">
-                            All Categories
-                          </span>
-                        )}
-                      </div>
-                      <ChevronDown className="h-4 w-4 text-gray-500 dark:text-gray-400" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-64 p-0 border-none shadow-lg" align="center">
-                    <div className="max-h-80 overflow-y-auto py-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
-                      <button
-                        onClick={() => setCategoryFilter('')}
-                        className={`w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 ${
-                          categoryFilter === '' ? 'bg-gray-100 dark:bg-gray-700' : ''
-                        }`}
-                      >
-                        <span className="text-black dark:text-white">All Categories</span>
-                      </button>
-                      
-                      {productCategories.map(category => (
-                        <button
-                          key={category}
-                          onClick={() => setCategoryFilter(category)}
-                          className={`w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 ${
-                            categoryFilter === category ? 'bg-gray-100 dark:bg-gray-700' : ''
-                          } flex items-center gap-2`}
-                        >
-                          <div className="h-5 w-5">
-                            {getCategoryIcon(category, "h-5 w-5")}
-                          </div>
-                          <span className="text-black dark:text-white">{category}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </PopoverContent>
-                </Popover>
-              </div>
-            </div>
-          </motion.div>
-          
-          {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {[...Array(8)].map((_, index) => (
-                <div key={index} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden animate-pulse">
-                  <div className="h-48 bg-gray-200 dark:bg-gray-700"></div>
-                  <div className="p-4">
-                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-2"></div>
-                    <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2 mb-4"></div>
-                    <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-full mb-4"></div>
-                    <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/3"></div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : filteredProducts.length === 0 ? (
-            <div className="text-center py-16">
-              <ShoppingBag className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-xl font-medium mb-2 text-black dark:text-white">No products found</h3>
-              <p className="text-gray-500 dark:text-gray-400 mb-4">
-                Try adjusting your search or filters to find what you're looking for.
-              </p>
-              {products.length === 0 && (
-                <p className="text-gray-500 dark:text-gray-400">
-                  Looks like there are no products available yet. Check back soon!
-                </p>
-              )}
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {filteredProducts.map((product, index) => (
-                <motion.div 
-                  key={product.id} 
-                  className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden group hover:shadow-md transition-shadow duration-300"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: index * 0.1 }}
-                >
-                  <Link to={`/product/${product.id}`} className="block relative h-48 overflow-hidden">
-                    <img
-                      src={product.images[0] || '/placeholder.svg'}
-                      alt={product.name}
-                      className="w-full h-full object-cover transition-transform group-hover:scale-105"
-                    />
-                    <div className="absolute top-3 right-3 flex gap-2">
-                      <button className="bg-white dark:bg-gray-800 p-2 rounded-full shadow-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition">
-                        <Heart className="h-4 w-4 text-black dark:text-white" />
-                      </button>
-                    </div>
-                    {product.isHalalCertified && (
-                      <div className="absolute top-3 left-3 bg-black text-white text-xs px-2 py-1 rounded-full">
-                        Halal Certified
-                      </div>
-                    )}
-                  </Link>
-                  
-                  <div className="p-4">
-                    <div className="flex justify-between items-start mb-2">
-                      <div>
-                        <Link to={`/product/${product.id}`} className="font-medium text-black dark:text-white hover:text-gray-800 dark:hover:text-gray-200 transition-colors">
-                          {product.name}
-                        </Link>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">{product.category}</p>
-                      </div>
-                      <p className="font-bold text-black dark:text-white">${product.price.toFixed(2)}</p>
-                    </div>
-                    
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-2 line-clamp-2">
-                      {product.description}
-                    </p>
-                    
-                    <Link to={`/shop/${product.sellerId}`} className="text-xs text-black dark:text-white hover:underline mb-3 inline-block">
-                      {product.sellerName || "Seller"}
-                    </Link>
-                    
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center text-yellow-400">
-                        {[...Array(5)].map((_, i) => (
-                          <Star key={i} className="h-4 w-4 fill-current" />
-                        ))}
-                        <span className="text-xs text-gray-500 dark:text-gray-400 ml-1">{product.rating || 5.0}</span>
-                      </div>
-                      
-                      <Button 
-                        size="sm"
-                        onClick={() => handleAddToCart(product)}
-                        disabled={!product.inStock}
-                        className="transition-transform hover:scale-105 bg-black text-white dark:bg-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200"
-                      >
-                        {product.inStock ? 'Add to Cart' : 'Out of Stock'}
-                      </Button>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
+    <div className="container mx-auto px-4 py-8">
+      {/* Shop Header */}
+      <div className="relative rounded-lg overflow-hidden mb-8">
+        <div className="h-64 bg-gradient-to-r from-blue-500 to-purple-600">
+          {shop.cover_image && (
+            <img 
+              src={shop.cover_image} 
+              alt={`${shop.name} cover`} 
+              className="w-full h-full object-cover"
+            />
           )}
         </div>
-      </main>
+        
+        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-6">
+          <div className="flex items-center">
+            <div className="w-24 h-24 bg-white rounded-full overflow-hidden border-4 border-white shadow-lg mr-4">
+              {shop.logo_url ? (
+                <img 
+                  src={shop.logo_url} 
+                  alt={`${shop.name} logo`} 
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-blue-100 flex items-center justify-center">
+                  <span className="text-xl font-bold text-blue-500">
+                    {shop.name.charAt(0)}
+                  </span>
+                </div>
+              )}
+            </div>
+            
+            <div className="text-white">
+              <h1 className="text-3xl font-bold">{shop.name}</h1>
+              <div className="flex items-center mt-1">
+                <span className="mr-3">{shop.location}</span>
+                {shop.is_verified && (
+                  <span className="bg-blue-500 text-white text-xs px-2 py-1 rounded-full">Verified</span>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
       
-      <Footer />
+      {/* Shop Description */}
+      <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
+        <h2 className="text-xl font-semibold mb-4">About {shop.name}</h2>
+        <p className="text-gray-700">{shop.description}</p>
+        
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+          <div className="text-center">
+            <div className="text-2xl font-bold text-blue-600">{products.length}</div>
+            <div className="text-sm text-gray-500">Products</div>
+          </div>
+          
+          <div className="text-center">
+            <div className="text-2xl font-bold text-blue-600">{shop.rating?.toFixed(1) || '0.0'}</div>
+            <div className="text-sm text-gray-500">Rating</div>
+          </div>
+          
+          <div className="text-center">
+            <div className="text-2xl font-bold text-blue-600">
+              {shop.category}
+            </div>
+            <div className="text-sm text-gray-500">Category</div>
+          </div>
+          
+          <div className="text-center">
+            <div className="text-2xl font-bold text-blue-600">
+              {shop.is_verified ? 'Yes' : 'No'}
+            </div>
+            <div className="text-sm text-gray-500">Verified</div>
+          </div>
+        </div>
+      </div>
+      
+      {/* Category Filter */}
+      {categories.length > 0 && (
+        <div className="bg-white rounded-lg shadow-sm p-4 mb-6 overflow-x-auto">
+          <div className="flex space-x-2">
+            <button
+              className={`px-4 py-2 text-sm rounded-full whitespace-nowrap ${
+                activeCategory === null
+                  ? 'bg-blue-500 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+              onClick={() => setActiveCategory(null)}
+            >
+              All Products
+            </button>
+            
+            {categories.map(category => (
+              <button
+                key={category}
+                className={`px-4 py-2 text-sm rounded-full whitespace-nowrap ${
+                  activeCategory === category
+                    ? 'bg-blue-500 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+                onClick={() => setActiveCategory(category)}
+              >
+                {category}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+      
+      {/* Products Grid */}
+      <div className="mb-8">
+        <h2 className="text-xl font-semibold mb-4">Products</h2>
+        
+        {filteredProducts.length === 0 ? (
+          <div className="bg-white rounded-lg shadow-sm p-8 text-center">
+            <h3 className="text-lg font-medium mb-2">No products available</h3>
+            <p className="text-gray-500">
+              {products.length === 0
+                ? "This shop hasn't added any products yet."
+                : "No products found in this category."}
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {filteredProducts.map(product => (
+              <div 
+                key={product.id}
+                className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+                onClick={() => navigate(`/product/${product.id}`)}
+              >
+                <div className="h-48 bg-gray-100">
+                  {product.images && product.images[0] ? (
+                    <img 
+                      src={product.images[0]} 
+                      alt={product.name} 
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gray-400">
+                      No Image
+                    </div>
+                  )}
+                </div>
+                
+                <div className="p-4">
+                  <h3 className="font-medium text-gray-900 truncate">{product.name}</h3>
+                  <p className="text-sm text-gray-500 line-clamp-2 h-10 mb-2">{product.description}</p>
+                  
+                  <div className="flex justify-between items-center">
+                    <div className="font-bold">{formatPrice(product.price)}</div>
+                    
+                    <div className="flex items-center space-x-1">
+                      {product.is_halal_certified && (
+                        <span className="bg-green-100 text-green-800 text-xs px-2 py-0.5 rounded">Halal</span>
+                      )}
+                      
+                      {product.in_stock ? (
+                        <span className="bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded">In Stock</span>
+                      ) : (
+                        <span className="bg-red-100 text-red-800 text-xs px-2 py-0.5 rounded">Out of Stock</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
-};
+}
 
-export default Shop;
+export default ShopPage;

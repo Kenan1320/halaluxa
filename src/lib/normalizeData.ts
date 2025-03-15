@@ -1,5 +1,5 @@
 
-import { Shop } from '@/models/shop';
+import { Shop } from '@/types/shop';
 import { Product } from '@/models/product';
 
 /**
@@ -25,15 +25,7 @@ export const normalizeShop = (shop: any): Shop => {
     longitude: shop.longitude,
     created_at: shop.created_at || shop.createdAt,
     updated_at: shop.updated_at || shop.updatedAt,
-    distance: shop.distance,
-    // Frontend aliases
-    logo: shop.logo_url || shop.logo,
-    coverImage: shop.cover_image || shop.coverImage,
-    ownerId: shop.owner_id || shop.ownerId,
-    productCount: shop.product_count || shop.productCount,
-    isVerified: shop.is_verified || shop.isVerified,
-    createdAt: shop.created_at || shop.createdAt,
-    updatedAt: shop.updated_at || shop.updatedAt,
+    distance: shop.distance
   };
 };
 
@@ -43,7 +35,7 @@ export const normalizeShop = (shop: any): Shop => {
 export const normalizeProduct = (product: any): Product => {
   if (!product) return {} as Product;
   
-  return {
+  const normalized: Product = {
     id: product.id,
     name: product.name,
     description: product.description,
@@ -62,13 +54,18 @@ export const normalizeProduct = (product: any): Product => {
     long_description: product.long_description,
     is_published: product.is_published,
     stock: product.stock,
-    // Frontend aliases
+    pickup_options: product.pickup_options || { store: true, curbside: false },
+    delivery_mode: product.delivery_mode || 'pickup',
+    
+    // Set frontend aliases
     shopId: product.shop_id || product.shopId,
     isHalalCertified: product.is_halal_certified || product.isHalalCertified,
     inStock: product.in_stock ?? product.inStock ?? true,
     createdAt: product.created_at || product.createdAt,
     updatedAt: product.updated_at || product.updatedAt,
     sellerId: product.seller_id || product.sellerId,
-    sellerName: product.seller_name || product.sellerName,
+    sellerName: product.seller_name || product.sellerName
   };
+  
+  return normalized;
 };

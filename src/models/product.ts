@@ -26,6 +26,15 @@ export interface Product {
   seller_id?: string;
   seller_name?: string;
   rating?: number;
+  
+  // Frontend aliases for backward compatibility
+  shopId?: string;
+  isHalalCertified?: boolean;
+  inStock?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+  sellerId?: string;
+  sellerName?: string;
 }
 
 export interface ProductFilter {
@@ -42,6 +51,7 @@ export interface ProductFilter {
 export interface ProductResponse {
   data: Product[] | null;
   error: any;
+  filter?: (predicate: (value: Product, index: number, array: Product[]) => unknown) => Product[];
 }
 
 // Common product categories for UI selection

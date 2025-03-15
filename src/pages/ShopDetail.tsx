@@ -1,284 +1,232 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useLocation } from '@/context/LocationContext';
-import { getShopProducts } from '@/services/shopServiceHelpers';
-import { getShopById } from '@/services/shopService';
-import { Shop } from '@/types/database';
-import { Shop as ModelShop, ShopProduct } from '@/models/shop';
-import { Product } from '@/models/product';
-import { ProductCard } from '@/components/cards/ProductCard';
-import { ShopHeader } from '@/components/shop/ShopHeader';
-import { useToast } from '@/hooks/use-toast';
-import { Button } from '@/components/ui/button';
-import { ShoppingBag, Phone, Mail, MapPin, Navigation, Star, Calendar, Clock, Info } from 'lucide-react';
-import { ShopDetails, ShopCategory } from '@/types/shop';
-import { normalizeShop, normalizeProduct } from '@/lib/normalizeData';
 
-const ShopDetail: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { getShopById } from '@/services/shopService';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { MapPin, Clock, CheckCircle, Star, Store, ShoppingBag } from 'lucide-react';
+import ShopHeader from '@/components/shop/ShopHeader';
+import { Shop, ShopDetails, Category } from '@/types/shop';
+
+const ShopDetail = () => {
+  const { id } = useParams();
   const navigate = useNavigate();
-  const { isLocationEnabled, enableLocation } = useLocation();
-  const { toast } = useToast();
-  
-  const [shop, setShop] = useState<ModelShop | null>(null);
-  const [products, setProducts] = useState<ShopProduct[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  const [shop, setShop] = useState<ShopDetails | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
     const fetchShopDetails = async () => {
       if (!id) {
-        setError('Shop ID is missing');
-        setLoading(false);
+        navigate('/shops');
         return;
       }
       
+      setIsLoading(true);
       try {
         const shopData = await getShopById(id);
-        
         if (!shopData) {
-          setError('Shop not found');
-          setLoading(false);
+          navigate('/shops');
           return;
         }
         
-        const normalizedShop = normalizeShop(shopData);
+        // Convert to ShopDetails with additional fields
+        const shopDetails: ShopDetails = {
+          ...shopData,
+          products: Math.floor(Math.random() * 100) + 20, // Mock data
+          followers: Math.floor(Math.random() * 1000) + 50, // Mock data
+          reviews: Math.floor(Math.random() * 500) + 10, // Mock data
+        };
         
-        setShop(normalizedShop);
-        
-        const shopProducts = await getShopProducts(id);
-        setProducts(shopProducts);
-      } catch (err) {
-        console.error('Error fetching shop details:', err);
-        setError('Failed to load shop details');
+        setShop(shopDetails);
+      } catch (error) {
+        console.error('Error fetching shop details:', error);
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
     
     fetchShopDetails();
-  }, [id]);
+  }, [id, navigate]);
   
-  if (loading) {
+  if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto py-8 px-4">
         <div className="animate-pulse">
-          <div className="h-40 bg-gray-200 rounded-xl mb-6"></div>
-          <div className="flex flex-col gap-4">
-            <div className="h-8 bg-gray-200 rounded w-1/3"></div>
-            <div className="h-4 bg-gray-200 rounded w-2/3"></div>
-            <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+          <div className="h-48 bg-gray-200 rounded-xl mb-6"></div>
+          <div className="h-8 bg-gray-200 w-1/4 rounded mb-4"></div>
+          <div className="h-4 bg-gray-200 w-1/2 rounded mb-8"></div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="h-64 bg-gray-200 rounded-xl"></div>
+            <div className="h-64 bg-gray-200 rounded-xl"></div>
+            <div className="h-64 bg-gray-200 rounded-xl"></div>
           </div>
         </div>
       </div>
     );
   }
   
-  if (error || !shop) {
+  if (!shop) {
     return (
-      <div className="container mx-auto px-4 py-8 text-center">
-        <Info className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-        <h1 className="text-2xl font-bold mb-2">Something went wrong</h1>
-        <p className="text-gray-500 mb-6">{error || 'Failed to load shop details'}</p>
-        <Button onClick={() => navigate('/shops')}>
-          Browse Other Shops
-        </Button>
+      <div className="container mx-auto py-8 px-4 text-center">
+        <h1 className="text-2xl font-semibold mb-4">Shop Not Found</h1>
+        <p className="text-gray-500 mb-6">The shop you're looking for doesn't exist or may have been removed.</p>
+        <Button onClick={() => navigate('/shops')}>Browse Shops</Button>
       </div>
     );
   }
   
-  const convertToProduct = (shopProduct: ShopProduct): Product => {
-    return normalizeProduct({
-      id: shopProduct.id,
-      name: shopProduct.name,
-      description: shopProduct.description,
-      price: shopProduct.price,
-      category: shopProduct.category,
-      images: shopProduct.images,
-      shop_id: shop.id,
-      is_halal_certified: true,
-      in_stock: true,
-      created_at: shopProduct.created_at || new Date().toISOString(),
-      updated_at: shopProduct.updated_at || new Date().toISOString(),
-      seller_id: shopProduct.seller_id || shopProduct.sellerId,
-      seller_name: shopProduct.seller_name || shopProduct.sellerName,
-      rating: shopProduct.rating
-    });
-  };
-  
-  const shopCategories: ShopCategory[] = [];
-  const categoryMap = new Map<string, Product[]>();
-  
-  products.forEach(product => {
-    const category = product.category;
-    if (!categoryMap.has(category)) {
-      categoryMap.set(category, []);
-    }
-    categoryMap.get(category)?.push(convertToProduct(product));
-  });
-  
-  categoryMap.forEach((products, name) => {
-    shopCategories.push({
-      id: name.toLowerCase().replace(/\s+/g, '-'),
-      name,
-      products
-    });
-  });
-  
-  if (shopCategories.length === 0) {
-    const defaultCategories = ['Popular Items', 'Featured', 'New Arrivals'];
-    defaultCategories.forEach((name, index) => {
-      shopCategories.push({
-        id: `default-${index}`,
-        name,
-        products: []
-      });
-    });
-  }
-  
-  const shopDetails: ShopDetails = {
-    id: shop?.id || '',
-    name: shop?.name || '',
-    description: shop?.description || '',
-    location: shop?.location || '',
-    categories: shopCategories,
-    cover_image: shop?.coverImage || undefined,
-    logo: shop?.logo || undefined,
-    deliveryInfo: {
-      isDeliveryAvailable: true,
-      isPickupAvailable: true,
-      deliveryFee: 2.99,
-      estimatedTime: '30-45 min',
-      minOrder: 10
-    },
-    workingHours: {
-      open: '9:00 AM',
-      close: '9:00 PM'
-    },
-    isGroupOrderEnabled: true,
-    rating: {
-      average: shop?.rating || 0,
-      count: 25
-    },
-    product_count: shop?.productCount || 0,
-    is_verified: shop?.isVerified || false,
-    category: shop?.category || '',
-    owner_id: shop?.ownerId || '',
-    latitude: shop?.latitude,
-    longitude: shop?.longitude,
-    distance: shop?.distance
-  };
+  // Mocked categories for this shop
+  const shopCategories: Category[] = [
+    { id: '1', name: 'Popular Items', group: 'popular', created_at: '', updated_at: '' },
+    { id: '2', name: 'New Arrivals', group: 'featured', created_at: '', updated_at: '' },
+    { id: '3', name: 'Discounted', group: 'featured', created_at: '', updated_at: '' },
+    { id: '4', name: 'Seasonal', group: 'featured', created_at: '', updated_at: '' },
+  ];
   
   return (
-    <div className="container mx-auto px-4 py-6">
-      <ShopHeader shop={shopDetails} />
+    <div className="container mx-auto py-8 px-4">
+      <ShopHeader shop={shop} />
       
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8">
-        <div className="lg:col-span-2">
-          <h2 className="text-xl font-semibold mb-4">Products</h2>
+      <div className="mt-8">
+        <Tabs defaultValue="products">
+          <TabsList className="mb-6">
+            <TabsTrigger value="products">Products</TabsTrigger>
+            <TabsTrigger value="about">About</TabsTrigger>
+            <TabsTrigger value="reviews">Reviews</TabsTrigger>
+          </TabsList>
           
-          {products.length === 0 ? (
-            <div className="bg-gray-50 rounded-lg p-8 text-center">
-              <ShoppingBag className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-              <h3 className="text-lg font-medium mb-2">No products available</h3>
-              <p className="text-gray-500">This shop hasn't added any products yet.</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {products.map((product) => (
-                <ProductCard key={product.id} product={convertToProduct(product)} />
+          <TabsContent value="products" className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {shopCategories.map((category) => (
+                <Card key={category.id} className="overflow-hidden hover:shadow-md transition-shadow">
+                  <div className="aspect-video bg-gray-100 relative">
+                    <div className="absolute inset-0 flex items-center justify-center text-4xl text-gray-300">
+                      <ShoppingBag size={48} />
+                    </div>
+                  </div>
+                  <CardHeader className="p-4">
+                    <CardTitle className="text-lg">{category.name}</CardTitle>
+                    <CardDescription>Browse all {category.name.toLowerCase()}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="p-4 pt-0">
+                    <Button variant="outline" className="w-full" onClick={() => navigate(`/shop/${shop.id}?category=${category.id}`)}>
+                      View Products
+                    </Button>
+                  </CardContent>
+                </Card>
               ))}
             </div>
-          )}
-        </div>
-        
-        <div>
-          <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-            <h3 className="text-lg font-semibold mb-4">Shop Information</h3>
             
-            <div className="space-y-4">
-              <div className="flex items-start">
-                <MapPin className="h-5 w-5 text-haluna-primary mt-0.5 mr-3 flex-shrink-0" />
-                <div>
-                  <h4 className="font-medium text-sm">Location</h4>
-                  <p className="text-gray-600">{shop.location}</p>
-                  
-                  {shop.latitude && shop.longitude && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="mt-2 text-xs"
-                      onClick={() => {
-                        if (!isLocationEnabled) {
-                          enableLocation().then(success => {
-                            if (success) {
-                              window.open(`https://maps.google.com/?q=${shop.latitude},${shop.longitude}`, '_blank');
-                            }
-                          });
-                        } else {
-                          window.open(`https://maps.google.com/?q=${shop.latitude},${shop.longitude}`, '_blank');
-                        }
-                      }}
-                    >
-                      <Navigation className="h-3 w-3 mr-1" />
-                      Get Directions
-                    </Button>
-                  )}
-                </div>
-              </div>
-              
-              <div className="flex items-start">
-                <Star className="h-5 w-5 text-haluna-primary mt-0.5 mr-3 flex-shrink-0" />
-                <div>
-                  <h4 className="font-medium text-sm">Rating</h4>
-                  <p className="text-gray-600">{shop.rating.toFixed(1)} out of 5</p>
-                </div>
-              </div>
-              
-              <div className="flex items-start">
-                <Calendar className="h-5 w-5 text-haluna-primary mt-0.5 mr-3 flex-shrink-0" />
-                <div>
-                  <h4 className="font-medium text-sm">Category</h4>
-                  <p className="text-gray-600">{shop.category}</p>
-                </div>
-              </div>
-              
-              <div className="flex items-start">
-                <Clock className="h-5 w-5 text-haluna-primary mt-0.5 mr-3 flex-shrink-0" />
-                <div>
-                  <h4 className="font-medium text-sm">Availability</h4>
-                  <p className="text-gray-600">Shop is currently open</p>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <h3 className="text-lg font-semibold mb-4">Contact Information</h3>
-            
-            <div className="space-y-4">
-              <div className="flex items-start">
-                <Phone className="h-5 w-5 text-haluna-primary mt-0.5 mr-3 flex-shrink-0" />
-                <div>
-                  <h4 className="font-medium text-sm">Phone</h4>
-                  <p className="text-gray-600">(123) 456-7890</p>
-                </div>
-              </div>
-              
-              <div className="flex items-start">
-                <Mail className="h-5 w-5 text-haluna-primary mt-0.5 mr-3 flex-shrink-0" />
-                <div>
-                  <h4 className="font-medium text-sm">Email</h4>
-                  <p className="text-gray-600">contact@{shop.name.toLowerCase().replace(/\s+/g, '')}.com</p>
-                </div>
-              </div>
-              
-              <Button className="w-full mt-2">
-                Contact Shop
+            <div className="text-center mt-8">
+              <Button onClick={() => navigate(`/shop/${shop.id}`)}>
+                View All Products
               </Button>
             </div>
-          </div>
-        </div>
+          </TabsContent>
+          
+          <TabsContent value="about">
+            <Card>
+              <CardHeader>
+                <CardTitle>About {shop.name}</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold">Description</h3>
+                  <p className="text-gray-700">{shop.description}</p>
+                </div>
+                
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold">Details</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex items-start">
+                      <MapPin className="h-5 w-5 text-gray-500 mt-0.5 mr-2" />
+                      <div>
+                        <h4 className="font-medium">Location</h4>
+                        <p className="text-gray-600">{shop.location}</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-start">
+                      <Clock className="h-5 w-5 text-gray-500 mt-0.5 mr-2" />
+                      <div>
+                        <h4 className="font-medium">Joined</h4>
+                        <p className="text-gray-600">
+                          {new Date(shop.created_at).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-start">
+                      <Store className="h-5 w-5 text-gray-500 mt-0.5 mr-2" />
+                      <div>
+                        <h4 className="font-medium">Category</h4>
+                        <p className="text-gray-600">{shop.category}</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-start">
+                      <CheckCircle className="h-5 w-5 text-gray-500 mt-0.5 mr-2" />
+                      <div>
+                        <h4 className="font-medium">Verification</h4>
+                        <div>
+                          {shop.is_verified ? (
+                            <Badge variant="success">Verified Shop</Badge>
+                          ) : (
+                            <Badge variant="outline">Not Verified</Badge>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold">Stats</h3>
+                  <div className="grid grid-cols-3 md:grid-cols-3 gap-4 text-center">
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <p className="text-2xl font-bold text-primary">{shop.products}</p>
+                      <p className="text-sm text-gray-500">Products</p>
+                    </div>
+                    
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <div className="flex items-center justify-center">
+                        <p className="text-2xl font-bold text-primary mr-1">{shop.rating?.toFixed(1) || "0.0"}</p>
+                        <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" />
+                      </div>
+                      <p className="text-sm text-gray-500">Rating</p>
+                    </div>
+                    
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <p className="text-2xl font-bold text-primary">{shop.followers}</p>
+                      <p className="text-sm text-gray-500">Followers</p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="reviews">
+            <Card>
+              <CardHeader>
+                <CardTitle>Customer Reviews</CardTitle>
+                <CardDescription>See what customers are saying about {shop.name}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-8">
+                  <p className="text-gray-500 mb-4">No reviews yet. Be the first to review!</p>
+                  <Button>Write a Review</Button>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

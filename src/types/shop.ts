@@ -1,6 +1,4 @@
 
-import { Category } from '@/types/database';
-
 export interface Shop {
   id: string;
   name: string;
@@ -21,4 +19,19 @@ export interface Shop {
   distance?: number;
 }
 
-export { Category };
+// Use 'export type' when re-exporting types with isolatedModules enabled
+export type { Category } from '@/types/database';
+
+// Add ShopDetails interface used in ShopHeader and ShopDetail
+export interface ShopDetails extends Shop {
+  products?: number;
+  followers?: number;
+  reviews?: number;
+}
+
+// Add ShopCategory for ShopDetail page
+export interface ShopCategory {
+  id: string;
+  name: string;
+  count: number;
+}

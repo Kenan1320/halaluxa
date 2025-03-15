@@ -152,17 +152,27 @@ export interface DatabaseProfile {
   name?: string;
   role: 'shopper' | 'business' | 'admin';
   avatar_url?: string;
-  address?: UserAddress;
+  address?: string | UserAddress; // Allow both string and UserAddress for flexibility
   phone?: string;
   preferences?: UserPreferences;
+  // Shop-related fields
+  shop_id?: string;
   shop_name?: string;
+  shop_description?: string;
+  shop_category?: string;
+  shop_location?: string;
+  shop_logo?: string;
+  // Simple address fields
+  city?: string;
+  state?: string;
+  zip?: string;
 }
 
 export interface SellerAccount {
   id: string;
   user_id: string;
   shop_id: string;
-  account_type: 'individual' | 'business';
+  account_type: 'individual' | 'business' | 'bank' | 'paypal' | 'stripe' | 'applepay'; // Extended account types
   account_status: 'pending' | 'active' | 'suspended';
   payout_details: {
     bank_name?: string;
@@ -173,4 +183,12 @@ export interface SellerAccount {
   };
   created_at: string;
   updated_at: string;
+  // Additional fields needed for payment accounts
+  account_name?: string;
+  account_number?: string;
+  bank_name?: string;
+  paypal_email?: string;
+  stripe_account_id?: string;
+  applepay_merchant_id?: string;
+  routing_number?: string;
 }

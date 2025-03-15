@@ -17,12 +17,12 @@ import {
   saveSellerAccount,
   formatPaymentMethod
 } from '@/services/paymentService';
-import { SellerAccount } from '@/types/database';
+import { PaymentAccount } from '@/types/payment';
 
 const PaymentAccountPage = () => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
-  const [accountDetails, setAccountDetails] = useState<SellerAccount | null>(null);
+  const [accountDetails, setAccountDetails] = useState<PaymentAccount | null>(null);
   const [accountType, setAccountType] = useState('bank');
   
   // Form fields
@@ -71,7 +71,7 @@ const PaymentAccountPage = () => {
       // Create an object with only the properties that exist in SellerAccount type
       const updatedAccount = await saveSellerAccount({
         ...accountDetails,
-        account_type: accountType,
+        account_type: accountType as any,
         account_number: accountNumber,
         bank_name: bankName,
         // Use added fields from our updated SellerAccount type

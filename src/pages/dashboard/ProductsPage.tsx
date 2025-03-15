@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { getProducts, deleteProduct } from '@/services/productService';
@@ -21,11 +22,12 @@ const ProductsPage = () => {
   const loadProducts = async () => {
     setIsLoading(true);
     try {
-      const allProducts = await getProducts();
+      const response = await getProducts();
+      const allProducts = response.data || [];
       
       // Only show products for the current seller
       if (user) {
-        const sellerProducts = allProducts.filter(product => product.sellerId === user.id);
+        const sellerProducts = allProducts.filter(product => product.seller_id === user.id);
         setProducts(sellerProducts);
       } else {
         setProducts([]);
@@ -186,10 +188,10 @@ const ProductsPage = () => {
                       ${product.price.toFixed(2)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-haluna-text">
-                      {product.inStock ? 'In Stock' : 'Out of Stock'}
+                      {product.in_stock ? 'In Stock' : 'Out of Stock'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      {product.inStock ? (
+                      {product.in_stock ? (
                         <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">
                           In Stock
                         </span>

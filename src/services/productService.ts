@@ -1,4 +1,3 @@
-
 import { db } from '@/integrations/supabase/client';
 import { Product, ProductFilter, ProductResponse } from '@/models/product';
 import { normalizeProduct, prepareProductForUpdate } from '@/lib/productUtils';
@@ -59,13 +58,22 @@ export const getProducts = async (filter?: ProductFilter): Promise<ProductRespon
     
     if (error) throw error;
     
-    return { 
-      data: data ? data.map(normalizeProduct) : null, 
-      error: null 
+    const normalizedData = data ? data.map(normalizeProduct) : [];
+    
+    const response: ProductResponse = { 
+      data: normalizedData, 
+      error: null,
+      filter: (predicate) => normalizedData.filter(predicate)
     };
+    
+    return response;
   } catch (error) {
     console.error('Error fetching products:', error);
-    return { data: null, error };
+    return { 
+      data: [], 
+      error,
+      filter: () => []
+    };
   }
 };
 
