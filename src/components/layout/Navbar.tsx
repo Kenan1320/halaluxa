@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, Search, ShoppingCart, User, MapPin, Store, AlertCircle, Home, Package, CreditCard, Settings, LogOut, Info, HelpCircle, Moon, Sun } from 'lucide-react';
+import { Menu, X, Search, ShoppingCart, User, MapPin, Store, AlertCircle, Home, Package, CreditCard, Settings, LogOut, Info, HelpCircle, Moon, Sun, Flame } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/context/AuthContext';
@@ -108,37 +108,10 @@ const Navbar = () => {
         
         <div className="flex items-center ml-3 mr-auto">
           <Link to="/" className="flex items-center">
-            <span className="text-xl font-serif font-bold text-white"
+            <span className="text-xl font-serif font-bold text-white italic"
                   style={{ fontFamily: "'Playfair Display', serif" }}>
               Halvi
             </span>
-            
-            <div className="relative ml-1">
-              <motion.div 
-                className="w-5 h-5 bg-[#E4875E] rounded-full"
-                animate={{
-                  scale: [1, 1.1, 1],
-                }}
-                transition={{
-                  duration: 6,
-                  repeat: Infinity,
-                  repeatType: "reverse"
-                }}
-              />
-              
-              <motion.div
-                className="w-2 h-2 bg-[#3AA88C] rounded-full absolute"
-                animate={{
-                  x: [2, 1.5, 0, -1.5, -2, -1.5, 0, 1.5, 2],
-                  y: [0, 1.5, 2, 1.5, 0, -1.5, -2, -1.5, 0],
-                }}
-                transition={{
-                  duration: 8,
-                  repeat: Infinity,
-                  ease: "linear"
-                }}
-              />
-            </div>
           </Link>
         </div>
         
@@ -315,6 +288,13 @@ const Navbar = () => {
                   >
                     {item.icon}
                     <span className="text-sm">{item.label}</span>
+                    
+                    {item.label === "Affiliate & Drivers" && (
+                      <span className="ml-auto bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full flex items-center">
+                        <Flame className="h-3 w-3 mr-0.5" />
+                        <span>New</span>
+                      </span>
+                    )}
                   </Link>
                 ))}
                 

@@ -40,6 +40,7 @@ import TrendingPage from "./pages/trending";
 import PopularSearchesPage from "./pages/popular-searches";
 import OrderDeliveryPage from "./pages/order-delivery";
 import AffiliatePage from "./pages/affiliate";
+import AffiliateProgramPage from "./pages/affiliate-program";
 
 // Dashboard imports
 import DashboardLayout from "./components/layout/DashboardLayout";
@@ -96,6 +97,7 @@ const AppRoutes = () => {
         <Route path="/popular-searches" element={<PopularSearchesPage />} />
         <Route path="/order-delivery" element={<OrderDeliveryPage />} />
         <Route path="/affiliate" element={<AffiliatePage />} />
+        <Route path="/affiliate-program" element={<AffiliateProgramPage />} />
         
         {/* Protected shopper routes - explicitly disallow business users */}
         <Route 
