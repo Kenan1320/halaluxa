@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -22,8 +23,9 @@ const Search = () => {
       setIsLoading(true);
       try {
         const filter: ProductFilter = { search: debouncedSearchTerm };
-        const { data, error } = await searchProducts(searchTerm, filter);
-        setSearchResults(data || []);
+        const response = await searchProducts(searchTerm, filter);
+        // Fix: Ensure we're setting an array from the response
+        setSearchResults(response.data || []);
       } catch (error) {
         console.error('Search failed:', error);
       } finally {
