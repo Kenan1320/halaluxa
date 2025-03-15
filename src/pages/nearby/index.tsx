@@ -13,7 +13,7 @@ import { MapPin, ArrowRight } from 'lucide-react';
 const NearbyPage: React.FC = () => {
   const [shops, setShops] = useState<Shop[]>([]);
   const [loading, setLoading] = useState(true);
-  const { location, requestLocation } = useLocation();
+  const { currentLocation, requestLocation } = useLocation();
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -22,10 +22,10 @@ const NearbyPage: React.FC = () => {
       setLoading(true);
       try {
         // Get user's location 
-        if (location && location.coordinates) {
+        if (currentLocation && 'coords' in currentLocation) {
           const nearbyShops = await getNearbyShops(
-            location.coordinates.latitude,
-            location.coordinates.longitude
+            currentLocation.coords.latitude,
+            currentLocation.coords.longitude
           );
           setShops(nearbyShops);
         } else {
@@ -46,7 +46,7 @@ const NearbyPage: React.FC = () => {
     };
 
     fetchNearbyShops();
-  }, [location, toast]);
+  }, [currentLocation, toast]);
 
   const handleEnableLocation = async () => {
     await requestLocation();
@@ -57,7 +57,7 @@ const NearbyPage: React.FC = () => {
       <div className="py-6">
         <h1 className="text-2xl font-bold mb-2">Nearby Shops</h1>
         
-        {!location && (
+        {!currentLocation && (
           <div className="bg-gray-50 rounded-xl p-4 mb-6 flex items-center justify-between">
             <div className="flex items-center">
               <MapPin className="h-5 w-5 text-gray-500 mr-2" />

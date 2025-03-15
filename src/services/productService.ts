@@ -57,7 +57,7 @@ export const getFeaturedProducts = async (): Promise<ModelProduct[]> => {
   }
 };
 
-// Add createProduct function
+// Update the createProduct function to ensure in_stock is always included
 export const createProduct = async (productData: Partial<Product>): Promise<Product | null> => {
   try {
     // Ensure required fields are present
@@ -70,7 +70,9 @@ export const createProduct = async (productData: Partial<Product>): Promise<Prod
     // Ensure in_stock is set
     const dataWithInStock = {
       ...productData,
-      in_stock: productData.in_stock !== undefined ? productData.in_stock : true
+      in_stock: productData.in_stock !== undefined ? productData.in_stock : true,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     };
     
     const { data, error } = await supabase
@@ -84,7 +86,7 @@ export const createProduct = async (productData: Partial<Product>): Promise<Prod
       return null;
     }
     
-    return data as Product;
+    return normalizeProductData(data as Product);
   } catch (error) {
     console.error('Error in createProduct:', error);
     return null;
@@ -263,4 +265,30 @@ export const searchProducts = async (query: string): Promise<ModelProduct[]> => 
     console.error('Error in searchProducts:', error);
     return [];
   }
+};
+
+// Update the normalize function to handle the in_stock field
+export const normalizeProductData = (product: any): Product => {
+  return {
+    id: product.id || '',
+    name: product.name || '',
+    description: product.description || '',
+    price: product.price || 0,
+    shop_id: product.shop_id || '',
+    category: product.category || '',
+    images: product.images || [],
+    created_at: product.created_at || new Date().toISOString(),
+    updated_at: product.updated_at || new Date().toISOString(),
+    is_halal_certified: product.is_halal_certified || false,
+    in_stock: product.in_stock !== undefined ? product.in_stock : true,
+    details: product.details || {},
+    long_description: product.long_description || '',
+    is_published: product.is_published || true,
+    stock: product.stock || 0,
+    seller_id: product.seller_id || '',
+    rating: product.rating || 0,
+    shop_name: product.shop_name || '',
+    delivery_mode: product.delivery_mode || 'online',
+    pickup_options: product.pickup_options || { store: true, curbside: false }
+  };
 };

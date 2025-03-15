@@ -17,7 +17,6 @@ interface NavButton {
   label: string;
   icon: JSX.Element;
   path: string;
-  position?: 'primary' | 'secondary';
   isNew?: boolean;
 }
 
@@ -34,8 +33,7 @@ const ScrollableNavigation = () => {
       id: 'your-shops',
       label: 'Your Shops',
       icon: <Store className="h-4 w-4" />,
-      path: '/select-shops',
-      position: 'primary'
+      path: '/select-shops'
     },
     {
       id: 'nearby',
@@ -127,40 +125,22 @@ const ScrollableNavigation = () => {
 
   return (
     <div className="relative w-full">
-      {/* Main button container with primary button and scrollable area */}
-      <div className="flex items-start relative">
-        {/* Primary button (Your Shops) positioned slightly higher */}
-        {navButtons.filter(btn => btn.position === 'primary').map(button => (
-          <motion.button
-            key={button.id}
-            className={`flex items-center px-4 py-2 rounded-full mr-2 -mt-1 z-10 ${
-              activeButton === button.id
-                ? 'bg-[#0F1B44] text-white'
-                : 'bg-white/90 text-[#0F1B44] border border-gray-200'
-            } shadow-sm hover:shadow transition-all`}
-            whileHover={{ y: -2 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => handleButtonClick(button)}
-          >
-            <span className="flex items-center">
-              {button.icon}
-              <span className="ml-2 font-medium text-sm">{button.label}</span>
-            </span>
-          </motion.button>
-        ))}
-        
-        {/* Scroll container for secondary buttons */}
+      {/* Main navigation row */}
+      <div className="flex items-center relative">
+        {/* Scroll container for all buttons */}
         <div className="relative flex-1 overflow-hidden">
           {/* Left scroll button - only shown when not at start */}
           {scrollPosition > 0 && (
-            <button 
-              className="absolute left-0 top-1/2 transform -translate-y-1/2 z-10 bg-white/80 rounded-full p-1 shadow-sm"
+            <motion.button 
+              className="absolute left-0 top-1/2 transform -translate-y-1/2 z-10 bg-white/80 rounded-full p-1.5 shadow-sm"
               onClick={() => scroll('left')}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
             >
               <svg className="w-4 h-4 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
-            </button>
+            </motion.button>
           )}
           
           {/* Scrollable container for buttons */}
@@ -169,16 +149,16 @@ const ScrollableNavigation = () => {
             className="flex overflow-x-auto hide-scrollbar py-2 pl-0 pr-8"
             style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
           >
-            <div className="flex space-x-2">
-              {navButtons.filter(btn => btn.position !== 'primary').map(button => (
+            <div className="flex space-x-3">
+              {navButtons.map((button) => (
                 <motion.button
                   key={button.id}
-                  className={`flex items-center px-4 py-2 rounded-full whitespace-nowrap ${
+                  className={`flex items-center px-4 py-2.5 rounded-full whitespace-nowrap ${
                     activeButton === button.id
                       ? 'bg-[#0F1B44] text-white'
                       : 'bg-gray-100 text-[#0F1B44] hover:bg-gray-200'
-                  } transition-all relative`}
-                  whileHover={{ y: -2 }}
+                  } transition-all shadow-sm relative`}
+                  whileHover={{ y: -2, boxShadow: "0 4px 8px rgba(0,0,0,0.1)" }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => handleButtonClick(button)}
                 >
@@ -199,14 +179,16 @@ const ScrollableNavigation = () => {
           </div>
           
           {/* Right scroll button - only shown when not at end */}
-          <button 
-            className="absolute right-0 top-1/2 transform -translate-y-1/2 z-10 bg-white/80 rounded-full p-1 shadow-sm"
+          <motion.button 
+            className="absolute right-0 top-1/2 transform -translate-y-1/2 z-10 bg-white/80 rounded-full p-1.5 shadow-sm"
             onClick={() => scroll('right')}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.95 }}
           >
             <svg className="w-4 h-4 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
-          </button>
+          </motion.button>
         </div>
       </div>
       
@@ -222,7 +204,7 @@ const ScrollableNavigation = () => {
         </div>
       )}
       
-      {/* Fix style tag syntax - remove jsx prop */}
+      {/* Style for hiding scrollbar */}
       <style>
         {`.hide-scrollbar::-webkit-scrollbar {
           display: none;

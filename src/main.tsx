@@ -10,10 +10,10 @@ const Root = () => {
   const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
-    // Simulate initialization time
+    // Longer view of the splash screen for brand recognition
     const timer = setTimeout(() => {
       setIsLoading(false);
-    }, 800);
+    }, 2000);
     
     return () => clearTimeout(timer);
   }, []);

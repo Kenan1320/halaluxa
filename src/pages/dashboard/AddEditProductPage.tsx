@@ -1,111 +1,78 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useForm, SubmitHandler, Controller } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { useForm, Controller } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import * as yup from 'yup';
 import { useToast } from '@/hooks/use-toast';
-import { Button } from '@/components/ui/button';
+import { Product } from '@/types/database';
+import { createProduct, updateProduct, getProductById, uploadImage } from '@/services/productService';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { createProduct, updateProduct, getProductById } from '@/services/productService';
-import { listCategories } from '@/services/categoryService';
-import { Product, productCategories } from '@/models/product';
+import { Switch } from '@/components/ui/switch';
+import { Input as FormInput } from '@/components/ui/input';
+import { FormLabel, FormControl, FormDescription, FormField, FormItem, FormMessage } from "@/components/ui/form"
+import { MultiSelect } from "@/components/ui/multi-select"
+import { Category } from '@/types/shop';
+import { getCategories } from '@/services/shopService';
 
-// Define Category interface to match what listCategories returns
-interface Category {
-  id: string;
-  name: string;
-}
-
-const productFormSchema = z.object({
-  name: z.string().min(2, {
-    message: "Product name must be at least 2 characters.",
-  }),
-  description: z.string().min(10, {
-    message: "Description must be at least 10 characters.",
-  }),
-  price: z.number().min(0.01, {
-    message: "Price must be greater than 0.",
-  }),
-  category: z.string().min(1, {
-    message: "Please select a category.",
-  }),
-  images: z.string().url({
-    message: "Please enter a valid image URL.",
-  }),
-  isHalalCertified: z.boolean().default(false),
-  inStock: z.boolean().default(true),
-});
-
-type ProductFormData = z.infer<typeof productFormSchema>;
+const productSchema = yup.object({
+  name: yup.string().required('Product name is required'),
+  description: yup.string().required('Description is required'),
+  price: yup.number().required('Price is required').positive('Price must be positive'),
+  category: yup.string().required('Category is required'),
+  images: yup.array().of(yup.string()).min(1, 'At least one image is required'),
+  is_halal_certified: yup.boolean().default(false),
+  in_stock: yup.boolean().default(true),
+  long_description: yup.string(),
+  is_published: yup.boolean().default(false),
+  stock: yup.number().integer('Stock must be an integer').min(0, 'Stock cannot be negative').default(1),
+  delivery_mode: yup.string().oneOf(['online', 'local_pickup', 'local_delivery']).default('online'),
+  pickup_options: yup.object().shape({
+    store: yup.boolean().default(true),
+    curbside: yup.boolean().default(false),
+  }).default({ store: true, curbside: false }),
+}).required();
 
 const AddEditProductPage: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [categories, setCategories] = useState<string[]>([]);
-  const [loading, setLoading] = useState(false);
+  const { id } = useParams<{ id: string }>();
   const [product, setProduct] = useState<Product | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [availableCategories, setAvailableCategories] = useState<Category[]>([]);
+  const [selectedImages, setSelectedImages] = useState<File[]>([]);
 
-  const form = useForm<ProductFormData>({
-    resolver: zodResolver(productFormSchema),
+  const {
+    control,
+    handleSubmit,
+    setValue,
+    formState: { errors },
+  } = useForm<yup.InferType<typeof productSchema>>({
+    resolver: yupResolver(productSchema),
     defaultValues: {
-      name: "",
-      description: "",
+      name: '',
+      description: '',
       price: 0,
-      category: "",
-      images: "",
-      isHalalCertified: false,
-      inStock: true,
+      category: '',
+      images: [],
+      is_halal_certified: false,
+      in_stock: true,
+      long_description: '',
+      is_published: false,
+      stock: 1,
+      delivery_mode: 'online',
+      pickup_options: {
+        store: true,
+        curbside: false,
+      },
     },
   });
-
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        // Try to get categories from the service
-        const categoryList = await listCategories();
-        
-        // If categoryList returns Category objects, extract just the names
-        if (Array.isArray(categoryList) && categoryList.length > 0 && typeof categoryList[0] === 'object') {
-          // Extract only the names from the category objects
-          const categoryNames = (categoryList as Category[]).map(cat => cat.name);
-          setCategories(categoryNames);
-        } else {
-          // If it's already a string array, use it directly
-          setCategories(categoryList as string[]);
-        }
-        
-        // Fallback to hardcoded categories if the service fails or returns empty
-        if (categories.length === 0) {
-          setCategories(productCategories);
-        }
-      } catch (error) {
-        console.error("Error fetching categories:", error);
-        // Fallback to hardcoded product categories
-        setCategories(productCategories);
-        toast({
-          title: "Notice",
-          description: "Using default categories",
-        });
-      }
-    };
-
-    fetchCategories();
-  }, [toast]);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -115,29 +82,33 @@ const AddEditProductPage: React.FC = () => {
           const productData = await getProductById(id);
           if (productData) {
             setProduct(productData);
-            form.reset({
-              name: productData.name,
-              description: productData.description,
-              price: productData.price,
-              category: productData.category,
-              images: productData.images[0], // Assuming single image for simplicity
-              isHalalCertified: productData.isHalalCertified,
-              inStock: productData.inStock ?? true,
-            });
+            setValue('name', productData.name);
+            setValue('description', productData.description);
+            setValue('price', productData.price);
+            setValue('category', productData.category);
+            setValue('images', productData.images);
+            setValue('is_halal_certified', productData.is_halal_certified);
+            setValue('in_stock', productData.in_stock);
+            setValue('long_description', productData.long_description || '');
+            setValue('is_published', productData.is_published);
+            setValue('stock', productData.stock);
+            setValue('delivery_mode', productData.delivery_mode);
+            setValue('pickup_options', productData.pickup_options);
+            setImagePreviews(productData.images);
           } else {
             toast({
-              title: "Error",
-              description: "Product not found.",
-              variant: "destructive",
+              title: 'Error',
+              description: 'Product not found',
+              variant: 'destructive',
             });
-            navigate("/dashboard/products");
+            navigate('/dashboard/products');
           }
         } catch (error) {
-          console.error("Error fetching product:", error);
+          console.error('Error fetching product:', error);
           toast({
-            title: "Error",
-            description: "Failed to load product details.",
-            variant: "destructive",
+            title: 'Error',
+            description: 'Failed to load product',
+            variant: 'destructive',
           });
         } finally {
           setLoading(false);
@@ -146,192 +117,379 @@ const AddEditProductPage: React.FC = () => {
     };
 
     fetchProduct();
-  }, [id, navigate, toast, form]);
+  }, [id, navigate, setValue, toast]);
 
-  const handleSubmit: SubmitHandler<ProductFormData> = async (data) => {
-    setLoading(true);
-
-    try {
-      const productData = {
-        ...data,
-        price: parseFloat(data.price.toString()),
-        images: [data.images],
-        // Convert to snake_case for the API
-        is_halal_certified: data.isHalalCertified,
-        in_stock: data.inStock
-      };
-
-      if (id) {
-        // Update existing product
-        await updateProduct(id, productData);
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const categories = await getCategories();
+        setAvailableCategories(categories);
+      } catch (error) {
+        console.error('Error fetching categories:', error);
         toast({
-          title: "Success",
-          description: "Product updated successfully.",
-        });
-      } else {
-        // Create new product
-        await createProduct(productData);
-        toast({
-          title: "Success",
-          description: "Product created successfully.",
+          title: 'Error',
+          description: 'Failed to load categories',
+          variant: 'destructive',
         });
       }
-      navigate("/dashboard/products");
+    };
+
+    fetchCategories();
+  }, [toast]);
+
+  const onSubmit = async (data: yup.InferType<typeof productSchema>) => {
+    setLoading(true);
+    try {
+      // Upload new images
+      const uploadedImageUrls = await Promise.all(
+        selectedImages.map(async (image) => {
+          const url = await uploadImage(image);
+          return url;
+        })
+      );
+  
+      // Combine existing image URLs with newly uploaded image URLs
+      const allImageUrls = [...imagePreviews, ...uploadedImageUrls];
+  
+      const productData = {
+        ...data,
+        images: allImageUrls,
+      };
+  
+      let result: Product | null;
+      if (id && product) {
+        result = await updateProduct(id, productData);
+      } else {
+        result = await createProduct(productData);
+      }
+  
+      if (result) {
+        toast({
+          title: 'Success',
+          description: `Product ${id ? 'updated' : 'created'} successfully`,
+        });
+        navigate('/dashboard/products');
+      } else {
+        toast({
+          title: 'Error',
+          description: `Failed to ${id ? 'update' : 'create'} product`,
+          variant: 'destructive',
+        });
+      }
     } catch (error) {
-      console.error("Error creating/updating product:", error);
+      console.error('Error submitting form:', error);
       toast({
-        title: "Error",
-        description: "Failed to save product.",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to submit form',
+        variant: 'destructive',
       });
     } finally {
       setLoading(false);
     }
   };
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const files = Array.from(e.target.files);
+      setSelectedImages(files);
+  
+      // Create previews for new images
+      const newImagePreviews = files.map(file => URL.createObjectURL(file));
+      setImagePreviews(prev => [...prev, ...newImagePreviews]);
+    }
+  };
+
+  const handleRemoveImage = (index: number) => {
+    const updatedImages = [...imagePreviews];
+    updatedImages.splice(index, 1);
+    setImagePreviews(updatedImages);
+  };
+
+  // Update the handleCategoryChange function to handle Category objects
+  const handleCategoryChange = (newCategories: Category[]) => {
+    // Map Category objects to their name strings
+    const categoryNames = newCategories.map(cat => cat.name);
+    setSelectedCategories(categoryNames);
+  };
+
   return (
-    <div className="container mx-auto py-10">
-      <Card>
-        <CardHeader>
-          <CardTitle>{id ? "Edit Product" : "Add Product"}</CardTitle>
-          <CardDescription>
-            {id ? "Edit an existing product." : "Add a new product to your store."}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Product Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Product Name" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Description</FormLabel>
-                    <FormControl>
-                      <Textarea placeholder="Description" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="price"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Price</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        placeholder="Price"
-                        {...field}
-                        onChange={(e) => {
-                          const value = parseFloat(e.target.value);
-                          field.onChange(value);
-                        }}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="category"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Category</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a category" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {categories.map((category) => (
-                          <SelectItem key={category} value={category}>
-                            {category}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="images"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Image URL</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Image URL" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="isHalalCertified"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-md border px-3 py-2 text-sm ring-offset-background focus:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50">
-                    <div className="space-y-0.5">
-                      <FormLabel>Halal Certified</FormLabel>
-                      <FormDescription>
-                        Check if the product is Halal certified.
-                      </FormDescription>
-                    </div>
-                    <FormControl>
+    <div className="container mx-auto py-8">
+      <h1 className="text-2xl font-bold mb-4">{id ? 'Edit Product' : 'Add Product'}</h1>
+      {loading ? (
+        <p>Loading...</p>
+      ) : (
+        <form onSubmit={handleSubmit(onSubmit)} className="max-w-lg">
+          <div className="mb-4">
+            <Label htmlFor="name" className="block text-sm font-medium text-gray-700">
+              Product Name
+            </Label>
+            <Controller
+              name="name"
+              control={control}
+              render={({ field }) => (
+                <Input
+                  type="text"
+                  id="name"
+                  className="mt-1 block w-full"
+                  {...field}
+                />
+              )}
+            />
+            {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name.message}</p>}
+          </div>
+
+          <div className="mb-4">
+            <Label htmlFor="description" className="block text-sm font-medium text-gray-700">
+              Description
+            </Label>
+            <Controller
+              name="description"
+              control={control}
+              render={({ field }) => (
+                <Textarea
+                  id="description"
+                  className="mt-1 block w-full"
+                  {...field}
+                />
+              )}
+            />
+            {errors.description && <p className="text-red-500 text-xs mt-1">{errors.description.message}</p>}
+          </div>
+
+          <div className="mb-4">
+            <Label htmlFor="price" className="block text-sm font-medium text-gray-700">
+              Price
+            </Label>
+            <Controller
+              name="price"
+              control={control}
+              render={({ field }) => (
+                <Input
+                  type="number"
+                  id="price"
+                  className="mt-1 block w-full"
+                  {...field}
+                />
+              )}
+            />
+            {errors.price && <p className="text-red-500 text-xs mt-1">{errors.price.message}</p>}
+          </div>
+
+          <div className="mb-4">
+            <Label htmlFor="category" className="block text-sm font-medium text-gray-700">
+              Category
+            </Label>
+            <Controller
+              name="category"
+              control={control}
+              render={({ field }) => (
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select a category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableCategories.map((category) => (
+                      <SelectItem key={category.id} value={category.name}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+            {errors.category && <p className="text-red-500 text-xs mt-1">{errors.category.message}</p>}
+          </div>
+
+          <div className="mb-4">
+            <Label className="block text-sm font-medium text-gray-700">
+              Images
+            </Label>
+            <Input
+              type="file"
+              multiple
+              onChange={handleImageChange}
+              className="mt-1 block w-full"
+            />
+            {errors.images && <p className="text-red-500 text-xs mt-1">{errors.images.message}</p>}
+            <div className="mt-2 flex space-x-2">
+              {imagePreviews.map((image, index) => (
+                <div key={index} className="relative">
+                  <img
+                    src={image}
+                    alt={`Product image ${index}`}
+                    className="w-20 h-20 object-cover rounded"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveImage(index)}
+                    className="absolute top-0 right-0 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center"
+                  >
+                    X
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="mb-4">
+            <Label htmlFor="long_description" className="block text-sm font-medium text-gray-700">
+              Long Description
+            </Label>
+            <Controller
+              name="long_description"
+              control={control}
+              render={({ field }) => (
+                <Textarea
+                  id="long_description"
+                  className="mt-1 block w-full"
+                  {...field}
+                />
+              )}
+            />
+            {errors.long_description && <p className="text-red-500 text-xs mt-1">{errors.long_description.message}</p>}
+          </div>
+
+          <div className="mb-4 flex items-center space-x-2">
+            <Label htmlFor="is_halal_certified" className="block text-sm font-medium text-gray-700">
+              Halal Certified
+            </Label>
+            <Controller
+              name="is_halal_certified"
+              control={control}
+              render={({ field }) => (
+                <Checkbox
+                  id="is_halal_certified"
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              )}
+            />
+            {errors.is_halal_certified && <p className="text-red-500 text-xs mt-1">{errors.is_halal_certified.message}</p>}
+          </div>
+
+          <div className="mb-4 flex items-center space-x-2">
+            <Label htmlFor="in_stock" className="block text-sm font-medium text-gray-700">
+              In Stock
+            </Label>
+            <Controller
+              name="in_stock"
+              control={control}
+              render={({ field }) => (
+                <Checkbox
+                  id="in_stock"
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              )}
+            />
+             {errors.in_stock && <p className="text-red-500 text-xs mt-1">{errors.in_stock.message}</p>}
+          </div>
+
+          <div className="mb-4">
+            <Label htmlFor="stock" className="block text-sm font-medium text-gray-700">
+              Stock
+            </Label>
+            <Controller
+              name="stock"
+              control={control}
+              render={({ field }) => (
+                <Input
+                  type="number"
+                  id="stock"
+                  className="mt-1 block w-full"
+                  {...field}
+                />
+              )}
+            />
+            {errors.stock && <p className="text-red-500 text-xs mt-1">{errors.stock.message}</p>}
+          </div>
+
+          <div className="mb-4">
+            <Label htmlFor="delivery_mode" className="block text-sm font-medium text-gray-700">
+              Delivery Mode
+            </Label>
+            <Controller
+              name="delivery_mode"
+              control={control}
+              render={({ field }) => (
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select a delivery mode" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="online">Online</SelectItem>
+                    <SelectItem value="local_pickup">Local Pickup</SelectItem>
+                    <SelectItem value="local_delivery">Local Delivery</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
+            />
+            {errors.delivery_mode && <p className="text-red-500 text-xs mt-1">{errors.delivery_mode.message}</p>}
+          </div>
+
+          <div className="mb-4">
+            <Label className="block text-sm font-medium text-gray-700">Pickup Options</Label>
+            <div className="flex items-center space-x-4">
+              <div>
+                <Label htmlFor="store" className="inline-flex items-center space-x-2">
+                  <Controller
+                    name="pickup_options.store"
+                    control={control}
+                    render={({ field }) => (
                       <Checkbox
+                        id="store"
                         checked={field.value}
                         onCheckedChange={field.onChange}
                       />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="inStock"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-md border px-3 py-2 text-sm ring-offset-background focus:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50">
-                    <div className="space-y-0.5">
-                      <FormLabel>In Stock</FormLabel>
-                      <FormDescription>
-                        Check if the product is currently in stock.
-                      </FormDescription>
-                    </div>
-                    <FormControl>
+                    )}
+                  />
+                  <span>Store</span>
+                </Label>
+              </div>
+              <div>
+                <Label htmlFor="curbside" className="inline-flex items-center space-x-2">
+                  <Controller
+                    name="pickup_options.curbside"
+                    control={control}
+                    render={({ field }) => (
                       <Checkbox
+                        id="curbside"
                         checked={field.value}
                         onCheckedChange={field.onChange}
                       />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              <Button type="submit" disabled={loading}>
-                {loading ? "Saving..." : "Save Product"}
-              </Button>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
+                    )}
+                  />
+                  <span>Curbside</span>
+                </Label>
+              </div>
+            </div>
+          </div>
+
+          <div className="mb-4 flex items-center space-x-2">
+            <Label htmlFor="is_published" className="block text-sm font-medium text-gray-700">
+              Published
+            </Label>
+            <Controller
+              name="is_published"
+              control={control}
+              render={({ field }) => (
+                <Switch
+                  id="is_published"
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              )}
+            />
+            {errors.is_published && <p className="text-red-500 text-xs mt-1">{errors.is_published.message}</p>}
+          </div>
+
+          <div>
+            <Button type="submit" disabled={loading}>
+              {id ? 'Update Product' : 'Create Product'}
+            </Button>
+          </div>
+        </form>
+      )}
     </div>
   );
 };

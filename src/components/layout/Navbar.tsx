@@ -26,12 +26,10 @@ const Navbar = () => {
   const { toast } = useToast();
   const { mode, toggleMode } = useTheme();
   
-  // Close mobile menu when route changes
   useEffect(() => {
     setMobileMenuOpen(false);
   }, [location]);
   
-  // Handle scroll for navbar styles
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
@@ -41,7 +39,6 @@ const Navbar = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
   
-  // Load main shop from localStorage
   useEffect(() => {
     const loadMainShop = async () => {
       try {
@@ -93,7 +90,6 @@ const Navbar = () => {
       style={{ height: '70px' }}
     >
       <div className="container mx-auto px-4 h-full flex justify-between items-center">
-        {/* Menu Button - simplified to a dropdown */}
         <button
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           className={`p-2 rounded-full ${
@@ -110,17 +106,14 @@ const Navbar = () => {
           )}
         </button>
         
-        {/* Logo - with advanced animation */}
         <div className="flex items-center ml-3 mr-auto">
           <Link to="/" className="flex items-center">
-            <span className="text-lg font-serif font-bold text-white"
-                  style={{ fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}>
-              Haluna
+            <span className="text-xl font-serif font-bold text-white"
+                  style={{ fontFamily: "'Playfair Display', serif" }}>
+              Halvi
             </span>
             
-            {/* Advanced animated logo design */}
             <div className="relative ml-1">
-              {/* Main orange ball */}
               <motion.div 
                 className="w-5 h-5 bg-[#E4875E] rounded-full"
                 animate={{
@@ -133,7 +126,6 @@ const Navbar = () => {
                 }}
               />
               
-              {/* Orbiting green ball */}
               <motion.div
                 className="w-2 h-2 bg-[#3AA88C] rounded-full absolute"
                 animate={{
@@ -150,9 +142,7 @@ const Navbar = () => {
           </Link>
         </div>
         
-        {/* Right side buttons */}
         <div className="flex items-center gap-3">
-          {/* Location Button */}
           <motion.button 
             onClick={requestLocation}
             className="p-2 rounded-full text-white hover:bg-white/10 transition-colors"
@@ -162,7 +152,6 @@ const Navbar = () => {
             <MapPin className="h-6 w-6" />
           </motion.button>
           
-          {/* Main Shop Button - Only main shop left */}
           <motion.button 
             onClick={handleMainShopClick}
             className="relative p-2 rounded-full text-white hover:bg-white/10 transition-colors shadow-sm"
@@ -207,7 +196,6 @@ const Navbar = () => {
             )}
           </motion.button>
           
-          {/* Cart Button - Modernized */}
           <motion.div
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -225,7 +213,6 @@ const Navbar = () => {
             </Link>
           </motion.div>
           
-          {/* User Profile - Modernized */}
           <motion.div
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -240,7 +227,6 @@ const Navbar = () => {
         </div>
       </div>
       
-      {/* Mobile menu - Simplified dropdown menu */}
       <AnimatePresence>
         {mobileMenuOpen && (
           <motion.div 
@@ -262,7 +248,6 @@ const Navbar = () => {
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
               onClick={(e) => e.stopPropagation()}
             >
-              {/* User info section */}
               <div className={`p-4 mb-4 rounded-lg ${
                 mode === 'dark' ? 'bg-gray-800' : 'bg-[#E4F5F0]'
               }`}>
@@ -292,7 +277,6 @@ const Navbar = () => {
                 )}
               </div>
               
-              {/* Theme toggle button in menu */}
               <button
                 onClick={toggleMode}
                 className={`flex items-center gap-4 p-3 rounded-lg transition w-full text-left mb-3 ${
@@ -314,7 +298,6 @@ const Navbar = () => {
                 )}
               </button>
               
-              {/* Menu navigation - simple dropdown buttons */}
               <div className="space-y-1">
                 {menuItems.map((item) => (
                   <Link
@@ -353,7 +336,6 @@ const Navbar = () => {
                 )}
               </div>
               
-              {/* App version */}
               <div className="mt-8 pt-4 border-t border-gray-200 dark:border-gray-700">
                 <p className="text-xs text-gray-500 text-center">
                   Version 1.0.0

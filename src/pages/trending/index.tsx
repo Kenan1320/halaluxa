@@ -6,8 +6,8 @@ import { getShops } from '@/services/shopService';
 import { useToast } from '@/hooks/use-toast';
 import ProductGrid from '@/components/home/ProductGrid';
 import { Button } from '@/components/ui/button';
-import { Shop } from '@/types/database';
 import { TrendingUp, ArrowRight } from 'lucide-react';
+import { Shop } from '@/types/database';
 
 const TrendingPage: React.FC = () => {
   const [shops, setShops] = useState<Shop[]>([]);
@@ -23,7 +23,7 @@ const TrendingPage: React.FC = () => {
         const trendingShops = await getShops();
         // Sort by rating for demo purposes
         const sortedShops = [...trendingShops].sort((a, b) => 
-          (b.rating || 0) - (a.rating || 0)
+          ((b.rating as number) || 0) - ((a.rating as number) || 0)
         );
         setShops(sortedShops);
       } catch (error) {
@@ -81,7 +81,7 @@ const TrendingPage: React.FC = () => {
                   <h3 className="text-sm font-medium">{shop.name}</h3>
                   <div className="flex items-center justify-center text-xs text-gray-500">
                     <TrendingUp className="h-3 w-3 mr-1 text-green-500" />
-                    <span>{shop.rating ? `${shop.rating.toFixed(1)}★` : 'Trending'}</span>
+                    <span>{shop.rating ? `${(shop.rating as number).toFixed(1)}★` : 'Trending'}</span>
                   </div>
                 </div>
               ))}

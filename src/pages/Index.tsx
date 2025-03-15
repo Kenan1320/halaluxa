@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useLocation } from '@/context/LocationContext';
@@ -26,19 +25,16 @@ const Index = () => {
   const [activeTab, setActiveTab] = useState('online');
   const { mode } = useTheme();
 
-  // Scroll to top on page load
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
 
-  // Automatically request location on first load
   useEffect(() => {
     if (!isLocationEnabled) {
       requestLocation();
     }
   }, [isLocationEnabled, requestLocation]);
 
-  // Load selected shops from localStorage
   const loadSelectedShops = useCallback(async () => {
     try {
       const savedShopIds = localStorage.getItem('selectedShops');
@@ -53,24 +49,20 @@ const Index = () => {
     }
   }, []);
 
-  // Subscribe to real-time shop updates and load selected shops
   useEffect(() => {
     setIsLoadingShops(true);
     
-    // Always load shops regardless of location status
     const loadAllShops = async () => {
       try {
         const allShops = await getShops();
         setNearbyShops(allShops);
         
-        // If no selected shops, use 5 shops as default
         if ((!localStorage.getItem('selectedShops') || 
              JSON.parse(localStorage.getItem('selectedShops') || '[]').length === 0) && 
              allShops.length > 0) {
           setSelectedShops(allShops.slice(0, 5));
           localStorage.setItem('selectedShops', JSON.stringify(allShops.slice(0, 5).map(s => s.id)));
           
-          // Set the first shop as main if none is set
           if (!localStorage.getItem('mainShopId')) {
             localStorage.setItem('mainShopId', allShops[0].id);
           }
@@ -83,19 +75,13 @@ const Index = () => {
       }
     };
     
-    // Setup real-time subscription for shops
     const channel = subscribeToShops((shops) => {
-      // If we received real-time shops and have no selected shops yet,
-      // use the first 5 as the default selection
       if (shops.length > 0 && selectedShops.length === 0) {
-        // Sort by product count (popularity) first
         const sortedShops = [...shops].sort((a, b) => (b.product_count || 0) - (a.product_count || 0));
         setSelectedShops(sortedShops.slice(0, 5));
         
-        // Also update localStorage
         localStorage.setItem('selectedShops', JSON.stringify(sortedShops.slice(0, 5).map(s => s.id)));
         
-        // Set the first shop as main if none is set
         if (!localStorage.getItem('mainShopId')) {
           localStorage.setItem('mainShopId', sortedShops[0].id);
         }
@@ -105,7 +91,6 @@ const Index = () => {
       setIsLoadingShops(false);
     });
     
-    // Load selected shops and all shops initially
     const initialLoad = async () => {
       await loadSelectedShops();
       await loadAllShops();
@@ -113,13 +98,11 @@ const Index = () => {
     
     initialLoad();
     
-    // Cleanup subscription on unmount
     return () => {
       channel.unsubscribe();
     };
   }, [loadSelectedShops]);
 
-  // Cycling shop index animation effect with more efficient interval
   useEffect(() => {
     if (selectedShops.length === 0) return;
     
@@ -130,7 +113,6 @@ const Index = () => {
     return () => clearInterval(interval);
   }, [selectedShops.length]);
 
-  // Get current hour to determine greeting
   const greeting = useMemo(() => {
     const currentHour = new Date().getHours();
     if (currentHour < 12) return "Good morning";
@@ -138,7 +120,6 @@ const Index = () => {
     return "Good evening";
   }, []);
 
-  // Heading style for section titles - made bolder
   const SectionHeading = ({ children }: { children: React.ReactNode }) => (
     <h2 className={`text-sm font-bold tracking-wide ${
       mode === 'dark'
@@ -152,15 +133,12 @@ const Index = () => {
 
   return (
     <div className="min-h-screen pt-16 pb-20 bg-white dark:bg-gray-900">
-      {/* Top container with deep night blue background instead of mint */}
-      <div className="deep-night-blue-gradient text-white pt-2 pb-3">
+      <div className="deep-night-blue-gradient text-white pt-3 pb-4">
         <div className="container mx-auto px-4">
-          {/* Search bar */}
-          <div className="mb-2">
+          <div className="mb-3">
             <SearchBar />
           </div>
           
-          {/* Personalized greeting for user - smaller text */}
           <motion.div
             className="mb-1"
             initial={{ opacity: 0, y: -10 }}
@@ -171,181 +149,109 @@ const Index = () => {
             </h2>
           </motion.div>
           
-          {/* Category scroll inside blue gradient background */}
           <div className="mt-1">
             <CategoryScroll />
           </div>
         </div>
       </div>
       
-      {/* New scrollable navigation section */}
-      <div className="bg-white dark:bg-gray-900 py-2 shadow-sm border-b border-gray-100 dark:border-gray-800">
+      <div className="bg-white dark:bg-gray-900 py-3 shadow-sm border-b border-gray-100 dark:border-gray-800">
         <div className="container mx-auto px-4">
           <ScrollableNavigation />
         </div>
       </div>
       
-      {/* Main content with white background */}
-      <div className="container mx-auto px-4 pt-3 bg-white dark:bg-gray-900">
-        {/* Selected/Featured Shops Section - Always visible */}
-        <section className="mt-3 mb-5">
-          <div className="flex justify-between items-center mb-2">
-            <SectionHeading>Your Shops</SectionHeading>
-            <Link 
-              to="/select-shops" 
-              className="bg-gray-100 hover:bg-gray-200 transition-colors duration-200 rounded-full px-4 py-1 text-xs text-gray-800 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700 dark:border dark:border-gray-700"
-            >
-              Edit Selection
-            </Link>
-          </div>
+      <div className="container mx-auto px-4 pt-5 bg-white dark:bg-gray-900">
+        <section className="mt-3 mb-8">
+          <SectionHeading>Your Shops</SectionHeading>
           
-          {/* Shop carousel */}
-          <div ref={shopScrollRef} className="relative h-28 overflow-hidden">
+          <div className="relative h-28 mt-4 overflow-hidden">
             {selectedShops.length > 0 && (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-full h-full flex items-center">
-                  {/* Create a continuous flow of logos - first set */}
-                  <motion.div
-                    className="flex absolute"
-                    initial={{ x: "0%" }}
-                    animate={{ x: "-100%" }}
-                    transition={{
-                      repeat: Infinity,
-                      duration: 20,
-                      ease: "linear",
-                      repeatType: "loop"
-                    }}
-                  >
-                    {/* Double the shops array for continuous animation */}
-                    {[...selectedShops, ...selectedShops, ...selectedShops].map((shop, index) => (
-                      <motion.div
-                        key={`${shop.id}-flow1-${index}`}
-                        className="flex flex-col items-center mx-6 relative"
-                        animate={{
-                          scale: activeShopIndex % selectedShops.length === index % selectedShops.length ? 1.15 : 1,
-                          y: activeShopIndex % selectedShops.length === index % selectedShops.length ? -5 : 0,
-                          zIndex: activeShopIndex % selectedShops.length === index % selectedShops.length ? 10 : 1,
-                        }}
-                        transition={{
-                          duration: 0.5,
-                          ease: "easeInOut"
-                        }}
-                      >
-                        <Link to={`/shop/${shop.id}`}>
-                          <motion.div 
-                            className="w-14 h-14 rounded-full bg-white shadow-sm flex items-center justify-center overflow-hidden"
-                            whileHover={{ scale: 1.1, boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}
-                            transition={{ type: "spring", stiffness: 400, damping: 10 }}
-                          >
-                            {shop.logo_url ? (
-                              <img src={shop.logo_url} alt={shop.name} className="w-10 h-10 object-contain" />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center bg-[#F9F5EB] text-[#29866B] font-semibold">
-                                {shop.name.charAt(0)}
-                              </div>
-                            )}
-                          </motion.div>
-                          <motion.span 
-                            className="text-xs text-center mt-1 block font-medium tracking-tight"
-                            initial={{ opacity: 0.8 }}
-                            whileHover={{ opacity: 1, scale: 1.05, color: "#29866B" }}
-                            animate={{
-                              y: [0, -2, 0],
-                              color: activeShopIndex % selectedShops.length === index % selectedShops.length 
-                                ? ["#000000", "#29866B", "#000000"] 
-                                : "#000000",
-                              transition: {
-                                duration: 2,
-                                repeat: Infinity,
-                                repeatType: "mirror",
-                                ease: "easeInOut",
-                                delay: index * 0.2 % 1,
-                              }
-                            }}
-                          >
-                            {shop.name.length > 10 ? `${shop.name.substring(0, 10)}...` : shop.name}
-                          </motion.span>
-                        </Link>
-                      </motion.div>
-                    ))}
-                  </motion.div>
+              <div className="absolute inset-0 w-full h-full">
+                <motion.div
+                  className="flex absolute"
+                  initial={{ x: "0%" }}
+                  animate={{ x: "-100%" }}
+                  transition={{
+                    repeat: Infinity,
+                    duration: 20,
+                    ease: "linear",
+                    repeatType: "loop"
+                  }}
+                >
+                  {[...selectedShops, ...selectedShops, ...selectedShops].map((shop, index) => (
+                    <motion.div
+                      key={`${shop.id}-flow1-${index}`}
+                      className="mx-6 relative"
+                      whileHover={{ scale: 1.1, y: -5 }}
+                    >
+                      <Link to={`/shop/${shop.id}`}>
+                        <motion.div 
+                          className="w-16 h-16 rounded-full bg-white shadow-md flex items-center justify-center overflow-hidden border-2 border-gray-100"
+                          whileHover={{ 
+                            boxShadow: "0 8px 16px rgba(0,0,0,0.1)",
+                            borderColor: "#0F1B44" 
+                          }}
+                        >
+                          {shop.logo_url ? (
+                            <img src={shop.logo_url} alt={shop.name} className="w-12 h-12 object-contain" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-[#F9F5EB] text-[#29866B] font-semibold">
+                              {shop.name.charAt(0)}
+                            </div>
+                          )}
+                        </motion.div>
+                      </Link>
+                    </motion.div>
+                  ))}
+                </motion.div>
 
-                  {/* Second identical motion div that follows the first to create seamless transition */}
-                  <motion.div
-                    className="flex absolute"
-                    initial={{ x: "100%" }}
-                    animate={{ x: "0%" }}
-                    transition={{
-                      repeat: Infinity,
-                      duration: 20,
-                      ease: "linear",
-                      repeatType: "loop"
-                    }}
-                  >
-                    {[...selectedShops, ...selectedShops, ...selectedShops].map((shop, index) => (
-                      <motion.div
-                        key={`${shop.id}-flow2-${index}`}
-                        className="flex flex-col items-center mx-6 relative"
-                        animate={{
-                          scale: activeShopIndex % selectedShops.length === index % selectedShops.length ? 1.15 : 1,
-                          y: activeShopIndex % selectedShops.length === index % selectedShops.length ? -5 : 0,
-                          zIndex: activeShopIndex % selectedShops.length === index % selectedShops.length ? 10 : 1,
-                        }}
-                        transition={{
-                          duration: 0.5,
-                          ease: "easeInOut"
-                        }}
-                      >
-                        <Link to={`/shop/${shop.id}`}>
-                          <motion.div 
-                            className="w-14 h-14 rounded-full bg-white shadow-sm flex items-center justify-center overflow-hidden"
-                            whileHover={{ scale: 1.1, boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}
-                            transition={{ type: "spring", stiffness: 400, damping: 10 }}
-                          >
-                            {shop.logo_url ? (
-                              <img src={shop.logo_url} alt={shop.name} className="w-10 h-10 object-contain" />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center bg-[#F9F5EB] text-[#29866B] font-semibold">
-                                {shop.name.charAt(0)}
-                              </div>
-                            )}
-                          </motion.div>
-                          <motion.span 
-                            className="text-xs text-center mt-1 block font-medium tracking-tight"
-                            initial={{ opacity: 0.8 }}
-                            whileHover={{ opacity: 1, scale: 1.05, color: "#29866B" }}
-                            animate={{
-                              y: [0, -2, 0],
-                              color: activeShopIndex % selectedShops.length === index % selectedShops.length 
-                                ? ["#000000", "#29866B", "#000000"] 
-                                : "#000000",
-                              transition: {
-                                duration: 2,
-                                repeat: Infinity,
-                                repeatType: "mirror",
-                                ease: "easeInOut",
-                                delay: index * 0.2 % 1,
-                              }
-                            }}
-                          >
-                            {shop.name.length > 10 ? `${shop.name.substring(0, 10)}...` : shop.name}
-                          </motion.span>
-                        </Link>
-                      </motion.div>
-                    ))}
-                  </motion.div>
-                </div>
+                <motion.div
+                  className="flex absolute"
+                  initial={{ x: "100%" }}
+                  animate={{ x: "0%" }}
+                  transition={{
+                    repeat: Infinity,
+                    duration: 20,
+                    ease: "linear",
+                    repeatType: "loop"
+                  }}
+                >
+                  {[...selectedShops, ...selectedShops, ...selectedShops].map((shop, index) => (
+                    <motion.div
+                      key={`${shop.id}-flow2-${index}`}
+                      className="mx-6 relative"
+                      whileHover={{ scale: 1.1, y: -5 }}
+                    >
+                      <Link to={`/shop/${shop.id}`}>
+                        <motion.div 
+                          className="w-16 h-16 rounded-full bg-white shadow-md flex items-center justify-center overflow-hidden border-2 border-gray-100"
+                          whileHover={{ 
+                            boxShadow: "0 8px 16px rgba(0,0,0,0.1)",
+                            borderColor: "#0F1B44" 
+                          }}
+                        >
+                          {shop.logo_url ? (
+                            <img src={shop.logo_url} alt={shop.name} className="w-12 h-12 object-contain" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-[#F9F5EB] text-[#29866B] font-semibold">
+                              {shop.name.charAt(0)}
+                            </div>
+                          )}
+                        </motion.div>
+                      </Link>
+                    </motion.div>
+                  ))}
+                </motion.div>
               </div>
             )}
           </div>
         </section>
         
-        {/* Category Suggestions - NEW SECTION */}
         <section className="mt-4 mb-6">
           <CategorySuggestions />
         </section>
         
-        {/* Nearby Shops Section */}
         <section className="mt-1">
           <SectionHeading>
             {activeTab === 'online' ? 'Shops' : 'Nearby Shops'}
@@ -354,7 +260,6 @@ const Index = () => {
           <NearbyShops />
         </section>
         
-        {/* Featured Products Section */}
         <section className="mt-4">
           <SectionHeading>Featured Products</SectionHeading>
           <ProductGrid />
