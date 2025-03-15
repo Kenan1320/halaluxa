@@ -1,8 +1,9 @@
 import { supabase } from '@/integrations/supabase/client';
-import { Shop } from '@/types/database';
+import { Shop as DatabaseShop } from '@/types/database';
 import { Category } from '@/types/shop';
+import { normalizeShop } from '@/lib/utils';
 
-export interface Shop {
+export type Shop = {
   id: string;
   name: string;
   description: string;
@@ -34,7 +35,7 @@ export interface Shop {
   isVerified?: boolean;
   createdAt?: string;
   updatedAt?: string;
-}
+};
 
 export const getAllShops = async (): Promise<Shop[]> => {
   try {
@@ -97,9 +98,27 @@ export const getShopsByOwnerId = async (ownerId: string): Promise<Shop[]> => {
 
 export const createShop = async (shopData: Partial<Shop>): Promise<Shop | null> => {
   try {
+    if (!shopData.name || !shopData.description || !shopData.location || !shopData.category) {
+      console.error('Error creating shop: Missing required fields');
+      return null;
+    }
+
+    const shopToCreate = {
+      name: shopData.name,
+      description: shopData.description,
+      location: shopData.location,
+      category: shopData.category,
+      owner_id: shopData.owner_id || shopData.ownerId,
+      logo_url: shopData.logo_url || shopData.logo,
+      cover_image: shopData.cover_image || shopData.coverImage,
+      is_verified: shopData.is_verified || shopData.isVerified || false,
+      latitude: shopData.latitude,
+      longitude: shopData.longitude,
+    };
+
     const { data, error } = await supabase
       .from('shops')
-      .insert(shopData)
+      .insert(shopToCreate)
       .select()
       .single();
 
@@ -108,7 +127,7 @@ export const createShop = async (shopData: Partial<Shop>): Promise<Shop | null> 
       return null;
     }
 
-    return data as Shop;
+    return normalizeShop(data) as Shop;
   } catch (error) {
     console.error('Error in createShop:', error);
     return null;
@@ -277,4 +296,57 @@ export const getCategories = async (): Promise<Category[]> => {
     console.error('Error fetching categories:', error);
     return [];
   }
+};
+
+export const getNearbyShops = async (latitude?: number, longitude?: number): Promise<Shop[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('shops')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching nearby shops:', error);
+      return [];
+    }
+
+    if (latitude && longitude) {
+      return data.map((shop) => ({
+        ...shop,
+        distance: Math.random() * 10, // Random distance in km for demo
+      })) as Shop[];
+    }
+
+    return data as Shop[];
+  } catch (error) {
+    console.error('Error in getNearbyShops:', error);
+    return [];
+  }
+};
+
+export const getMainShop = async (): Promise<Shop | null> => {
+  try {
+    const mainShopId = localStorage.getItem('mainShopId');
+    
+    if (!mainShopId) {
+      return null;
+    }
+    
+    return await getShopById(mainShopId);
+  } catch (error) {
+    console.error('Error in getMainShop:', error);
+    return null;
+  }
+};
+
+export const subscribeToShops = (callback: (shops: Shop[]) => void) => {
+  getShops().then((shops) => {
+    callback(shops as Shop[]);
+  });
+  
+  return {
+    unsubscribe: () => {
+      console.log('Unsubscribed from shops');
+    }
+  };
 };
