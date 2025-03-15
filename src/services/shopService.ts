@@ -1,352 +1,196 @@
-import { supabase } from '@/integrations/supabase/client';
+
+import { db } from '@/integrations/supabase/client';
 import { Shop as DatabaseShop } from '@/types/database';
-import { Category } from '@/types/shop';
+import { getDistance } from 'geolib';
 import { normalizeShop } from '@/lib/utils';
 
-export type Shop = {
+export interface Shop extends DatabaseShop {
+  distance?: number;
+  product_count?: number;
+}
+
+export interface Category {
   id: string;
   name: string;
-  description: string;
-  owner_id: string;
-  category: string;
-  location: string;
-  cover_image?: string;
-  logo_url?: string;
-  created_at: string;
-  updated_at: string;
-  is_verified: boolean;
-  product_count?: number;
-  rating?: number;
-  latitude?: number;
-  longitude?: number;
-  distance?: number;
-  address?: string;
-  // For product display mode
-  display_mode?: 'online' | 'local_pickup' | 'local_delivery';
-  pickup_options?: {
-    store: boolean;
-    curbside: boolean;
-  };
-  // Frontend aliases
-  logo?: string;
-  coverImage?: string;
-  ownerId?: string;
-  productCount?: number;
-  isVerified?: boolean;
-  createdAt?: string;
-  updatedAt?: string;
-};
+  description?: string;
+  image?: string;
+  group?: 'featured' | 'nearby' | 'online' | 'popular';
+  parent_id?: string;
+}
 
-export const getAllShops = async (): Promise<Shop[]> => {
+export const getShops = async (): Promise<Shop[]> => {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await db
       .from('shops')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Error fetching shops:', error);
-      return [];
-    }
-
-    return data as Shop[];
+      .select('*');
+    
+    if (error) throw error;
+    
+    return data?.map(normalizeShop) || [];
   } catch (error) {
-    console.error('Error in getAllShops:', error);
+    console.error('Error fetching shops:', error);
     return [];
   }
 };
 
 export const getShopById = async (id: string): Promise<Shop | null> => {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await db
       .from('shops')
       .select('*')
       .eq('id', id)
       .single();
-
-    if (error) {
-      console.error('Error fetching shop:', error);
-      return null;
-    }
-
-    return data as Shop;
+    
+    if (error) throw error;
+    
+    return data ? normalizeShop(data) : null;
   } catch (error) {
-    console.error('Error in getShopById:', error);
+    console.error(`Error fetching shop with ID ${id}:`, error);
     return null;
   }
 };
 
-export const getShopsByOwnerId = async (ownerId: string): Promise<Shop[]> => {
+export const getNearbyShops = async (
+  latitude?: number,
+  longitude?: number,
+  radius = 10 // km
+): Promise<Shop[]> => {
   try {
-    const { data, error } = await supabase
+    // Get all shops if no location is provided
+    const { data, error } = await db
       .from('shops')
-      .select('*')
-      .eq('owner_id', ownerId)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Error fetching shops by owner ID:', error);
-      return [];
+      .select('*');
+    
+    if (error) throw error;
+    
+    if (!data) return [];
+    
+    // If no location is provided, return all shops without distance
+    if (!latitude || !longitude) {
+      return data.map(normalizeShop);
     }
-
-    return data as Shop[];
+    
+    // Calculate distance for each shop
+    const shopsWithDistance = data
+      .filter(shop => shop.latitude && shop.longitude)
+      .map(shop => {
+        const distance = getDistance(
+          { latitude, longitude },
+          { latitude: shop.latitude!, longitude: shop.longitude! }
+        ) / 1000; // Convert to km
+        
+        return {
+          ...normalizeShop(shop),
+          distance
+        };
+      })
+      .filter(shop => shop.distance <= radius)
+      .sort((a, b) => (a.distance || 0) - (b.distance || 0));
+    
+    return shopsWithDistance;
   } catch (error) {
-    console.error('Error in getShopsByOwnerId:', error);
+    console.error('Error fetching nearby shops:', error);
     return [];
   }
 };
 
-export const createShop = async (shopData: Partial<Shop>): Promise<Shop | null> => {
+export const createShop = async (shop: Partial<DatabaseShop>): Promise<Shop | null> => {
   try {
-    if (!shopData.name || !shopData.description || !shopData.location || !shopData.category) {
-      console.error('Error creating shop: Missing required fields');
-      return null;
+    // Ensure required fields are present
+    if (!shop.name || !shop.description || !shop.category || !shop.location) {
+      throw new Error('Missing required fields for shop creation');
     }
 
-    const shopToCreate = {
-      name: shopData.name,
-      description: shopData.description,
-      location: shopData.location,
-      category: shopData.category,
-      owner_id: shopData.owner_id || shopData.ownerId,
-      logo_url: shopData.logo_url || shopData.logo,
-      cover_image: shopData.cover_image || shopData.coverImage,
-      is_verified: shopData.is_verified || shopData.isVerified || false,
-      latitude: shopData.latitude,
-      longitude: shopData.longitude,
-    };
-
-    const { data, error } = await supabase
+    const { data, error } = await db
       .from('shops')
-      .insert(shopToCreate)
+      .insert({
+        name: shop.name,
+        description: shop.description,
+        location: shop.location,
+        category: shop.category,
+        address: shop.address,
+        logo_url: shop.logo_url,
+        cover_image: shop.cover_image,
+        owner_id: shop.owner_id,
+        latitude: shop.latitude,
+        longitude: shop.longitude,
+        is_verified: shop.is_verified || false
+      })
       .select()
       .single();
-
-    if (error) {
-      console.error('Error creating shop:', error);
-      return null;
-    }
-
-    return normalizeShop(data) as Shop;
+    
+    if (error) throw error;
+    
+    return data ? normalizeShop(data) : null;
   } catch (error) {
-    console.error('Error in createShop:', error);
+    console.error('Error creating shop:', error);
     return null;
   }
 };
 
 export const updateShop = async (id: string, updates: Partial<Shop>): Promise<Shop | null> => {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await db
       .from('shops')
       .update(updates)
       .eq('id', id)
       .select()
       .single();
-
-    if (error) {
-      console.error('Error updating shop:', error);
-      return null;
-    }
-
-    return data as Shop;
+    
+    if (error) throw error;
+    
+    return data ? normalizeShop(data) : null;
   } catch (error) {
-    console.error('Error in updateShop:', error);
+    console.error(`Error updating shop with ID ${id}:`, error);
     return null;
   }
 };
 
 export const deleteShop = async (id: string): Promise<boolean> => {
   try {
-    const { error } = await supabase
+    const { error } = await db
       .from('shops')
       .delete()
       .eq('id', id);
-
-    if (error) {
-      console.error('Error deleting shop:', error);
-      return false;
-    }
-
+    
+    if (error) throw error;
+    
     return true;
   } catch (error) {
-    console.error('Error in deleteShop:', error);
+    console.error(`Error deleting shop with ID ${id}:`, error);
     return false;
   }
 };
 
-export const searchShops = async (query: string): Promise<Shop[]> => {
-  try {
-    const { data, error } = await supabase
-      .from('shops')
-      .select('*')
-      .or(`name.ilike.%${query}%,description.ilike.%${query}%,category.ilike.%${query}%`)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Error searching shops:', error);
-      return [];
-    }
-
-    return data as Shop[];
-  } catch (error) {
-    console.error('Error in searchShops:', error);
-    return [];
-  }
-};
-
-export const getShopsByCategory = async (category: string): Promise<Shop[]> => {
-  try {
-    const { data, error } = await supabase
-      .from('shops')
-      .select('*')
-      .eq('category', category)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Error fetching shops by category:', error);
-      return [];
-    }
-
-    return data as Shop[];
-  } catch (error) {
-    console.error('Error in getShopsByCategory:', error);
-    return [];
-  }
-};
-
-export const getShopProducts = async (shopId: string) => {
-  try {
-    const { data, error } = await supabase
-      .from('products')
-      .select('*')
-      .eq('shop_id', shopId)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Error fetching shop products:', error);
-      return [];
-    }
-
-    return data;
-  } catch (error) {
-    console.error('Error in getShopProducts:', error);
-    return [];
-  }
-};
-
-export const getShops = async () => {
-  try {
-    const { data, error } = await supabase
-      .from('shops')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Error fetching shops:', error);
-      return [];
-    }
-
-    return data;
-  } catch (error) {
-    console.error('Error in getShops:', error);
-    return [];
-  }
-};
-
-export const convertToModelProduct = (product: any) => {
-  return {
-    id: product.id,
-    name: product.name,
-    description: product.description,
-    price: product.price,
-    shop_id: product.shop_id,
-    shopId: product.shop_id,
-    category: product.category,
-    images: product.images || [],
-    is_halal_certified: product.is_halal_certified,
-    isHalalCertified: product.is_halal_certified,
-    in_stock: product.in_stock !== undefined ? product.in_stock : true,
-    inStock: product.in_stock !== undefined ? product.in_stock : true,
-    created_at: product.created_at,
-    createdAt: product.created_at,
-    updated_at: product.updated_at,
-    updatedAt: product.updated_at,
-    seller_id: product.seller_id || product.shop_id,
-    sellerId: product.seller_id || product.shop_id,
-    sellerName: product.shop_name || '', // This would typically come from a join
-    rating: product.rating || 0, // Default rating
-    details: product.details || {}
-  };
-};
-
-export const getCategories = async (): Promise<Category[]> => {
-  try {
-    // Mocked categories for now
-    return [
-      { id: '1', name: 'Groceries' },
-      { id: '2', name: 'Clothing' },
-      { id: '3', name: 'Home' },
-      { id: '4', name: 'Electronics' },
-      { id: '5', name: 'Books' },
-      { id: '6', name: 'Toys' },
-      { id: '7', name: 'Beauty' },
-      { id: '8', name: 'Health' },
-    ];
-  } catch (error) {
-    console.error('Error fetching categories:', error);
-    return [];
-  }
-};
-
-export const getNearbyShops = async (latitude?: number, longitude?: number): Promise<Shop[]> => {
-  try {
-    const { data, error } = await supabase
-      .from('shops')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Error fetching nearby shops:', error);
-      return [];
-    }
-
-    if (latitude && longitude) {
-      return data.map((shop) => ({
-        ...shop,
-        distance: Math.random() * 10, // Random distance in km for demo
-      })) as Shop[];
-    }
-
-    return data as Shop[];
-  } catch (error) {
-    console.error('Error in getNearbyShops:', error);
-    return [];
-  }
-};
-
+// Function to get a user's main shop
 export const getMainShop = async (): Promise<Shop | null> => {
   try {
     const mainShopId = localStorage.getItem('mainShopId');
-    
-    if (!mainShopId) {
-      return null;
-    }
+    if (!mainShopId) return null;
     
     return await getShopById(mainShopId);
   } catch (error) {
-    console.error('Error in getMainShop:', error);
+    console.error('Error getting main shop:', error);
     return null;
   }
 };
 
+// Subscribe to shop updates
 export const subscribeToShops = (callback: (shops: Shop[]) => void) => {
-  getShops().then((shops) => {
-    callback(shops as Shop[]);
+  // Set up initial fetch
+  getShops().then(shops => {
+    callback(shops);
   });
   
-  return {
-    unsubscribe: () => {
-      console.log('Unsubscribed from shops');
-    }
-  };
+  // Set up realtime subscription
+  const channel = db
+    .channel('shops-changes')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'shops' }, async () => {
+      // Refetch shops when changes occur
+      const shops = await getShops();
+      callback(shops);
+    })
+    .subscribe();
+  
+  return channel;
 };

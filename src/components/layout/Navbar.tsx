@@ -81,6 +81,21 @@ const Navbar = () => {
     { icon: <Settings size={20} />, label: 'Settings', path: '/settings' },
   ];
 
+  const NavLogo = () => (
+    <Link to="/" className="flex items-center">
+      <h1 
+        className="text-xl font-serif font-bold text-white italic"
+        style={{ 
+          fontFamily: "'Playfair Display', serif", 
+          textShadow: "0 1px 2px rgba(0,0,0,0.1)",
+          letterSpacing: "0.02em"
+        }}
+      >
+        Halvi
+      </h1>
+    </Link>
+  );
+
   return (
     <header 
       className={`fixed top-0 w-full z-50 transition-all duration-300 
@@ -107,12 +122,7 @@ const Navbar = () => {
         </button>
         
         <div className="flex items-center ml-3 mr-auto">
-          <Link to="/" className="flex items-center">
-            <span className="text-xl font-serif font-bold text-white italic"
-                  style={{ fontFamily: "'Playfair Display', serif" }}>
-              Halvi
-            </span>
-          </Link>
+          <NavLogo />
         </div>
         
         <div className="flex items-center gap-3">

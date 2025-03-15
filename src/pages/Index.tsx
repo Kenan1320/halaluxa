@@ -14,6 +14,7 @@ import { motion, useAnimationControls } from 'framer-motion';
 import { getShopById, subscribeToShops, getShops, Shop } from '@/services/shopService';
 import { useTheme } from '@/context/ThemeContext';
 import { normalizeShop } from '@/lib/utils';
+import ShopLogoScroller from '@/components/home/ShopLogoScroller';
 
 const Index = () => {
   const { isLoggedIn, user } = useAuth();
@@ -21,8 +22,6 @@ const Index = () => {
   const [selectedShops, setSelectedShops] = useState<Shop[]>([]);
   const [nearbyShops, setNearbyShops] = useState<Shop[]>([]);
   const [isLoadingShops, setIsLoadingShops] = useState(false);
-  const [activeShopIndex, setActiveShopIndex] = useState(0);
-  const shopScrollRef = useRef<HTMLDivElement>(null);
   const [activeTab, setActiveTab] = useState('online');
   const { mode } = useTheme();
 
@@ -104,16 +103,6 @@ const Index = () => {
     };
   }, [loadSelectedShops]);
 
-  useEffect(() => {
-    if (selectedShops.length === 0) return;
-    
-    const interval = setInterval(() => {
-      setActiveShopIndex(prev => (prev + 1) % selectedShops.length);
-    }, 3000);
-    
-    return () => clearInterval(interval);
-  }, [selectedShops.length]);
-
   const greeting = useMemo(() => {
     const currentHour = new Date().getHours();
     if (currentHour < 12) return "Good morning";
@@ -163,99 +152,8 @@ const Index = () => {
       </div>
       
       <div className="container mx-auto px-4 pt-5 bg-white dark:bg-gray-900">
-        <section className="mt-3 mb-8">
-          <div className="relative h-36 mt-4 overflow-hidden">
-            {selectedShops.length > 0 && (
-              <div className="absolute inset-0 w-full h-full">
-                <motion.div
-                  className="flex absolute"
-                  initial={{ x: "0%" }}
-                  animate={{ x: "-100%" }}
-                  transition={{
-                    repeat: Infinity,
-                    duration: 20,
-                    ease: "linear",
-                    repeatType: "loop"
-                  }}
-                >
-                  {[...selectedShops, ...selectedShops, ...selectedShops].map((shop, index) => (
-                    <motion.div
-                      key={`${shop.id}-flow1-${index}`}
-                      className="mx-8 relative"
-                      whileHover={{ scale: 1.1, y: -5 }}
-                    >
-                      <Link to={`/shop/${shop.id}`}>
-                        <motion.div 
-                          className="w-24 h-24 rounded-full bg-white shadow-md flex items-center justify-center overflow-hidden border-2 border-gray-100"
-                          whileHover={{ 
-                            boxShadow: "0 8px 16px rgba(0,0,0,0.1)",
-                            borderColor: "#0F1B44" 
-                          }}
-                        >
-                          {shop.logo_url ? (
-                            <img src={shop.logo_url} alt={shop.name} className="w-20 h-20 object-contain" />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center bg-[#F9F5EB] text-[#29866B] font-semibold text-xl">
-                              {shop.name.charAt(0)}
-                            </div>
-                          )}
-                        </motion.div>
-                        <div className="mt-2 text-center w-24">
-                          {shop.name.split(' ').map((word, i) => (
-                            <div key={i} className="text-sm font-medium truncate">{word}</div>
-                          ))}
-                        </div>
-                      </Link>
-                    </motion.div>
-                  ))}
-                </motion.div>
-
-                <motion.div
-                  className="flex absolute"
-                  initial={{ x: "100%" }}
-                  animate={{ x: "0%" }}
-                  transition={{
-                    repeat: Infinity,
-                    duration: 20,
-                    ease: "linear",
-                    repeatType: "loop"
-                  }}
-                >
-                  {[...selectedShops, ...selectedShops, ...selectedShops].map((shop, index) => (
-                    <motion.div
-                      key={`${shop.id}-flow2-${index}`}
-                      className="mx-8 relative"
-                      whileHover={{ scale: 1.1, y: -5 }}
-                    >
-                      <Link to={`/shop/${shop.id}`}>
-                        <motion.div 
-                          className="w-24 h-24 rounded-full bg-white shadow-md flex items-center justify-center overflow-hidden border-2 border-gray-100"
-                          whileHover={{ 
-                            boxShadow: "0 8px 16px rgba(0,0,0,0.1)",
-                            borderColor: "#0F1B44" 
-                          }}
-                        >
-                          {shop.logo_url ? (
-                            <img src={shop.logo_url} alt={shop.name} className="w-20 h-20 object-contain" />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center bg-[#F9F5EB] text-[#29866B] font-semibold text-xl">
-                              {shop.name.charAt(0)}
-                            </div>
-                          )}
-                        </motion.div>
-                        <div className="mt-2 text-center w-24">
-                          {shop.name.split(' ').map((word, i) => (
-                            <div key={i} className="text-sm font-medium truncate">{word}</div>
-                          ))}
-                        </div>
-                      </Link>
-                    </motion.div>
-                  ))}
-                </motion.div>
-              </div>
-            )}
-          </div>
-        </section>
+        {/* Shop Logo Scroller Section */}
+        <ShopLogoScroller shops={selectedShops} />
         
         <section className="mt-4 mb-6">
           <CategorySuggestions />

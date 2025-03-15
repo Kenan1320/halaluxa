@@ -1,57 +1,74 @@
 
 import { Product } from '@/models/product';
+import { Json } from '@/integrations/supabase/types';
 
-// This utility function ensures that any product object has all the required fields
+export const formatPrice = (price: number): string => {
+  return `$${price.toFixed(2)}`;
+};
+
+export const formatStock = (stock: number): string => {
+  if (stock <= 0) return 'Out of stock';
+  if (stock < 5) return `Only ${stock} left!`;
+  if (stock < 10) return `${stock} in stock`;
+  return 'In stock';
+};
+
 export const normalizeProduct = (product: any): Product => {
   return {
-    id: product.id || '',
-    name: product.name || '',
+    id: product.id,
+    name: product.name,
     description: product.description || '',
-    price: product.price || 0,
-    shop_id: product.shop_id || '',
-    category: product.category || '',
-    images: product.images || [],
-    created_at: product.created_at || new Date().toISOString(),
-    updated_at: product.updated_at || new Date().toISOString(),
-    is_halal_certified: product.is_halal_certified || false,
-    in_stock: product.in_stock !== undefined ? product.in_stock : true,
-    details: product.details || {},
     long_description: product.long_description || '',
-    is_published: product.is_published || true,
+    price: parseFloat(product.price) || 0,
+    shop_id: product.shop_id,
+    images: product.images || [],
+    category: product.category || '',
     stock: product.stock || 0,
-    seller_id: product.seller_id || '',
-    rating: product.rating || 0,
-    seller_name: product.seller_name || '',
-    delivery_mode: product.delivery_mode || 'online',
-    pickup_options: product.pickup_options || { store: true, curbside: false },
-    
-    // Set aliased properties
-    shopId: product.shop_id || product.shopId || '',
-    isHalalCertified: product.is_halal_certified || product.isHalalCertified || false,
-    inStock: product.in_stock !== undefined ? product.in_stock : (product.inStock !== undefined ? product.inStock : true),
-    createdAt: product.created_at || product.createdAt || new Date().toISOString(),
-    updatedAt: product.updated_at || product.updatedAt || new Date().toISOString(),
-    sellerId: product.seller_id || product.sellerId || '',
-    sellerName: product.seller_name || product.sellerName || '',
+    created_at: product.created_at,
+    updated_at: product.updated_at,
+    is_published: product.is_published ?? true,
+    is_halal_certified: product.is_halal_certified ?? false,
+    details: product.details as Json || {},
+    in_stock: product.in_stock ?? (product.stock > 0),
+    delivery_mode: product.delivery_mode || 'pickup',
+    pickup_options: product.pickup_options || {
+      store: true,
+      curbside: false
+    }
   };
 };
 
-// Use this function when updating products to ensure all required fields are set
-export const prepareProductForUpdate = (product: Partial<Product>): any => {
-  const updatedProduct: any = { ...product };
+export const generateProductSlug = (product: Product): string => {
+  return `${product.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${product.id.substring(0, 8)}`;
+};
+
+export const getCategoryIcon = (category: string): string => {
+  const categoryIcons: Record<string, string> = {
+    'Electronics': '📱',
+    'Clothing': '👕',
+    'Food': '🍔',
+    'Home': '🏠',
+    'Beauty': '💄',
+    'Books': '📚',
+    'Sports': '⚽',
+    'Toys': '🧸',
+    'Health': '💊',
+    'Grocery': '🛒',
+    'Jewelry': '💍',
+    'Automotive': '🚗',
+    'Garden': '🌱',
+  };
   
-  // Ensure in_stock is always set
-  if (updatedProduct.in_stock === undefined && updatedProduct.inStock !== undefined) {
-    updatedProduct.in_stock = updatedProduct.inStock;
+  return categoryIcons[category] || '🛍️';
+};
+
+export const ensurePickupOptions = (pickupOptions: any): { store: boolean; curbside: boolean } => {
+  if (!pickupOptions) {
+    return { store: true, curbside: false };
   }
   
-  // Ensure pickup_options has required fields if present
-  if (updatedProduct.pickup_options) {
-    updatedProduct.pickup_options = {
-      store: updatedProduct.pickup_options.store !== undefined ? updatedProduct.pickup_options.store : true,
-      curbside: updatedProduct.pickup_options.curbside !== undefined ? updatedProduct.pickup_options.curbside : false
-    };
-  }
-  
-  return updatedProduct;
+  return {
+    store: typeof pickupOptions.store === 'boolean' ? pickupOptions.store : true,
+    curbside: typeof pickupOptions.curbside === 'boolean' ? pickupOptions.curbside : false
+  };
 };

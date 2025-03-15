@@ -1,102 +1,144 @@
 
-export interface DatabaseProfile {
+import { Json } from '@/integrations/supabase/types';
+
+export interface User {
   id: string;
-  name: string;
+  created_at: string;
   email: string;
-  phone: string;
-  address: string;
+  name: string;
+  role: 'shopper' | 'business' | 'admin';
+  avatar_url?: string;
+  address?: UserAddress;
+  phone?: string;
+  preferences?: UserPreferences;
+}
+
+export interface UserAddress {
+  street: string;
   city: string;
   state: string;
   zip: string;
-  role: string;
-  avatar_url: string;
-  created_at: string;
-  updated_at: string;
-  // Shop-related fields
-  shop_name?: string;
-  shop_description?: string;
-  shop_category?: string;
-  shop_location?: string;
-  shop_logo?: string;
+  country: string;
+  is_default: boolean;
+}
+
+export interface UserPreferences {
+  notifications: {
+    email: boolean;
+    push: boolean;
+    sms: boolean;
+  };
+  language: string;
+  theme: 'light' | 'dark' | 'system';
 }
 
 export interface Shop {
   id: string;
   name: string;
   description: string;
-  owner_id: string;
-  category: string;
   location: string;
-  cover_image?: string;
+  address?: string;
   logo_url?: string;
+  cover_image?: string;
+  owner_id: string;
   created_at: string;
   updated_at: string;
-  is_verified: boolean;
-  product_count?: number;
+  category: string;
+  is_verified?: boolean;
   rating?: number;
+  product_count?: number;
   latitude?: number;
   longitude?: number;
-  distance?: number;
-  address?: string;
-  // For product display mode
-  display_mode?: 'online' | 'local_pickup' | 'local_delivery';
-  pickup_options?: {
-    store: boolean;
-    curbside: boolean;
-  };
-  // Frontend aliases
-  logo?: string;
-  coverImage?: string;
-  ownerId?: string;
-  productCount?: number;
-  isVerified?: boolean;
-  createdAt?: string;
-  updatedAt?: string;
 }
 
 export interface Product {
   id: string;
   name: string;
   description: string;
+  long_description: string;
   price: number;
   shop_id: string;
-  category: string;
   images: string[];
+  category: string;
+  stock: number;
   created_at: string;
   updated_at: string;
+  is_published: boolean;
   is_halal_certified: boolean;
-  in_stock: boolean; // Required field
-  details?: Record<string, any>;
-  long_description?: string;
-  is_published?: boolean;
-  stock?: number;
-  seller_id?: string;
-  rating?: number;
-  shop_name?: string;
-  // Product delivery options
-  delivery_mode?: 'online' | 'local_pickup' | 'local_delivery';
-  pickup_options?: {
+  details: Json;
+  in_stock: boolean;
+  delivery_mode?: 'online' | 'pickup' | 'local_delivery';
+  pickup_options: {
     store: boolean;
     curbside: boolean;
   };
 }
 
-export interface SellerAccount {
+export interface Order {
   id: string;
   user_id: string;
-  account_number: string;
-  routing_number?: string;
-  bank_name: string;
-  account_type: string;
-  is_verified: boolean;
+  shop_id: string;
+  items: OrderItem[];
+  total: number;
+  status: OrderStatus;
   created_at: string;
   updated_at: string;
-  balance: number;
-  currency: string;
-  shop_id?: string;
-  paypal_email?: string;
-  stripe_account_id?: string;
-  applepay_merchant_id?: string;
-  account_name?: string;
-  is_active?: boolean;
+  shipping_address: UserAddress;
+  payment_method: string;
+  payment_status: PaymentStatus;
+  delivery_date?: string;
+  notes?: string;
+}
+
+export type OrderStatus = 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded';
+
+export interface OrderItem {
+  product_id: string;
+  name: string;
+  price: number;
+  quantity: number;
+  image?: string;
+}
+
+export interface Review {
+  id: string;
+  user_id: string;
+  product_id: string;
+  shop_id: string;
+  rating: number;
+  comment: string;
+  created_at: string;
+  updated_at: string;
+  user_name: string;
+  user_avatar?: string;
+}
+
+export interface Category {
+  id: string;
+  name: string;
+  description?: string;
+  image?: string;
+  parent_id?: string;
+  created_at: string;
+  updated_at: string;
+  group?: 'featured' | 'nearby' | 'online' | 'popular';
+}
+
+export interface PaymentMethod {
+  id: string;
+  user_id: string;
+  type: 'card' | 'paypal' | 'bank_transfer';
+  details: {
+    last4?: string;
+    brand?: string;
+    exp_month?: number;
+    exp_year?: number;
+    name?: string;
+    email?: string;
+    bank_name?: string;
+    account_number_last4?: string;
+  };
+  is_default: boolean;
+  created_at: string;
 }

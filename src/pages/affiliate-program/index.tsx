@@ -1,823 +1,655 @@
 
-import { useState, useRef, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { 
-  ArrowUpRight, 
-  Badge, 
-  Car, 
-  CheckCircle, 
-  Copy, 
-  Flame, 
-  MapPin, 
-  Smartphone, 
-  Star, 
-  Store, 
-  Truck, 
-  Users, 
-  Wallet 
-} from 'lucide-react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  Rocket, 
+  Car, 
+  Link as LinkIcon, 
+  DollarSign, 
+  Clock, 
+  Users, 
+  Check, 
+  Star, 
+  Clipboard, 
+  ChevronRight, 
+  ShieldCheck, 
+  Award, 
+  Truck,
+  PhoneCall,
+  UserCheck,
+  ChevronDown,
+  ChevronUp,
+  Calendar,
+  Smartphone
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useAuth } from '@/context/AuthContext';
+import { useTheme } from '@/context/ThemeContext';
 import { useToast } from '@/hooks/use-toast';
 import Footer from '@/components/layout/Footer';
 
+type UserType = {
+  id: string;
+  name: string;
+  email: string;
+  avatar?: string;
+};
+
+// Dummy data for UI demonstration
+const testimonialsData = [
+  {
+    id: 1,
+    name: "Sarah M.",
+    role: "Affiliate",
+    comment: "I've earned over $2,000 in passive income just by referring local restaurants to Halvi. The commission structure is really generous!",
+    avatar: "https://i.pravatar.cc/150?img=32"
+  },
+  {
+    id: 2,
+    name: "Ahmed K.",
+    role: "Driver",
+    comment: "The flexible hours are perfect for my schedule. I can work when I want and the app makes it easy to track deliveries and earnings.",
+    avatar: "https://i.pravatar.cc/150?img=59"
+  },
+  {
+    id: 3,
+    name: "Jessica T.",
+    role: "Affiliate",
+    comment: "As a food blogger, partnering with Halvi was a natural fit. My audience loves the service and I earn commissions on every order they place.",
+    avatar: "https://i.pravatar.cc/150?img=5"
+  }
+];
+
+const faqData = [
+  {
+    id: 1,
+    question: "How do I join the affiliate program?",
+    answer: "Click on the 'Join as an Affiliate' button on this page. You'll need to complete a brief application form. Once approved, you'll receive your unique referral link."
+  },
+  {
+    id: 2,
+    question: "How much can I earn as an affiliate?",
+    answer: "You earn 50% of Halvi's revenue from each order placed through stores you've referred. This continues until the store reaches $70,000 in total sales."
+  },
+  {
+    id: 3,
+    question: "When and how do I get paid?",
+    answer: "Payments are processed monthly for all earnings over $50. You can choose to receive payments via direct deposit, PayPal, or store credit."
+  },
+  {
+    id: 4,
+    question: "What are the requirements to become a driver?",
+    answer: "You must be at least 21 years old, have a valid driver's license, vehicle insurance, and pass a background check. You'll also need a smartphone to use the Halvi Driver app."
+  },
+  {
+    id: 5,
+    question: "How flexible are the driving hours?",
+    answer: "Completely flexible! You can choose when to go online and accept deliveries. There are no minimum hour requirements."
+  }
+];
+
 const AffiliateProgram = () => {
+  const { isLoggedIn, user } = useAuth();
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('affiliate');
   const [referralLink, setReferralLink] = useState('');
-  const [referralLinkCopied, setReferralLinkCopied] = useState(false);
-  const affiliateSectionRef = useRef<HTMLDivElement>(null);
-  const driverSectionRef = useRef<HTMLDivElement>(null);
-  const { toast } = useToast();
+  const { mode } = useTheme();
+  const [expandedFAQ, setExpandedFAQ] = useState<number | null>(null);
+  
+  const isDark = mode === 'dark';
 
+  // Generate a random referral link when the component mounts
   useEffect(() => {
-    // Generate a random referral link for demo purposes
-    const generateReferralLink = () => {
-      const randomId = Math.random().toString(36).substring(2, 15);
-      setReferralLink(`https://halvi.com/ref/${randomId}`);
-    };
-    
-    generateReferralLink();
-  }, []);
+    if (isLoggedIn && user) {
+      setReferralLink(`https://halvi.app/ref/${user.id.substring(0, 8)}`);
+    }
+  }, [isLoggedIn, user]);
 
   const handleCopyReferralLink = () => {
-    navigator.clipboard.writeText(referralLink);
-    setReferralLinkCopied(true);
-    
-    toast({
-      title: "Referral link copied!",
-      description: "Your unique referral link has been copied to clipboard.",
-    });
-    
-    setTimeout(() => {
-      setReferralLinkCopied(false);
-    }, 3000);
+    if (referralLink) {
+      navigator.clipboard.writeText(referralLink);
+      toast({
+        title: "Link copied!",
+        description: "Your referral link has been copied to clipboard.",
+        variant: "success",
+      });
+    } else {
+      toast({
+        title: "Sign in required",
+        description: "Please sign in to generate your unique referral link.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleGenerateReferralLink = () => {
-    // Generate a new random referral link
-    const randomId = Math.random().toString(36).substring(2, 15);
-    setReferralLink(`https://halvi.com/ref/${randomId}`);
+  const handleApplyAsDriver = () => {
+    if (!isLoggedIn) {
+      toast({
+        title: "Sign in required",
+        description: "Please sign in to apply as a driver.",
+        variant: "destructive",
+      });
+      return;
+    }
     
     toast({
-      title: "New referral link generated!",
-      description: "Your new unique referral link is ready to share.",
+      title: "Application received!",
+      description: "Your driver application has been submitted. We'll review it and get back to you soon.",
+      variant: "success",
     });
   };
 
   const handleJoinAffiliate = () => {
-    handleGenerateReferralLink();
+    if (!isLoggedIn) {
+      toast({
+        title: "Sign in required",
+        description: "Please sign in to join our affiliate program.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Generate the referral link
+    setReferralLink(`https://halvi.app/ref/${user?.id.substring(0, 8)}`);
     
     toast({
-      title: "Welcome to Halvi Affiliate Program!",
-      description: "Your application has been submitted for review.",
+      title: "Welcome to our affiliate program!",
+      description: "Your referral link has been generated. Start sharing to earn!",
+      variant: "success",
     });
   };
 
-  const handleApplyAsDriver = () => {
-    toast({
-      title: "Driver application submitted!",
-      description: "We'll review your application and get back to you soon.",
-    });
+  const toggleFAQ = (id: number) => {
+    setExpandedFAQ(expandedFAQ === id ? null : id);
   };
 
   return (
-    <div className="min-h-screen pt-20 bg-white dark:bg-gray-900">
-      <div className="container mx-auto px-4">
-        <div className="flex justify-center mb-8">
-          <Tabs defaultValue="affiliate" className="w-full max-w-5xl" onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-2 mb-12">
-              <TabsTrigger value="affiliate" className="text-lg py-3 data-[state=active]:bg-[#0F1B44] data-[state=active]:text-white relative">
+    <div className={`min-h-screen pt-16 pb-20 ${isDark ? 'bg-gray-900 text-white' : 'bg-white'}`}>
+      {/* Hero Section */}
+      <section className={`py-16 ${isDark ? 'bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900' : 'bg-gradient-to-b from-blue-50 via-white to-blue-50'}`}>
+        <div className="container mx-auto px-4 text-center">
+          <h1 className={`text-4xl md:text-5xl font-serif font-bold mb-6 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+            Earn With Halvi
+          </h1>
+          <p className={`text-xl max-w-2xl mx-auto mb-8 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+            Join our growing community of affiliates and drivers to start earning with flexible options that fit your lifestyle.
+          </p>
+          
+          <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="max-w-4xl mx-auto">
+            <TabsList className={`grid w-full grid-cols-2 mb-8 ${isDark ? 'bg-gray-800' : 'bg-gray-100'}`}>
+              <TabsTrigger value="affiliate" className="text-base py-3">
+                <Rocket className="mr-2 h-5 w-5" />
                 Affiliate Program
-                {activeTab !== 'affiliate' && (
-                  <motion.span 
-                    className="absolute -top-2 -right-2 bg-red-500 px-1.5 py-0.5 rounded-full text-xs text-white flex items-center"
-                    animate={{ scale: [1, 1.2, 1] }}
-                    transition={{ repeat: Infinity, duration: 2 }}
-                  >
-                    <Flame className="h-3 w-3 mr-0.5" />
-                    Hot
-                  </motion.span>
-                )}
               </TabsTrigger>
-              <TabsTrigger value="driver" className="text-lg py-3 data-[state=active]:bg-[#0F1B44] data-[state=active]:text-white relative">
+              <TabsTrigger value="driver" className="text-base py-3">
+                <Car className="mr-2 h-5 w-5" />
                 Driver Program
-                {activeTab !== 'driver' && (
-                  <motion.span 
-                    className="absolute -top-2 -right-2 bg-red-500 px-1.5 py-0.5 rounded-full text-xs text-white flex items-center"
-                    animate={{ scale: [1, 1.2, 1] }}
-                    transition={{ repeat: Infinity, duration: 2 }}
-                  >
-                    <Flame className="h-3 w-3 mr-0.5" />
-                    Hot
-                  </motion.span>
-                )}
               </TabsTrigger>
             </TabsList>
             
-            <TabsContent value="affiliate" ref={affiliateSectionRef}>
-              <div className="bg-gradient-to-br from-[#0F1B44] to-[#183080] rounded-xl p-8 mb-12 text-white">
-                <div className="flex flex-col md:flex-row items-center justify-between">
-                  <div className="mb-8 md:mb-0 md:mr-8">
-                    <h1 className="text-3xl md:text-4xl font-serif font-bold mb-4">
-                      Earn by Referring Businesses to Halvi!
-                    </h1>
-                    <p className="text-lg text-white/80 mb-6">
-                      Refer Muslim businesses to Halvi and earn up to 50% commission on every order they process through our platform.
-                    </p>
-                    <Button 
-                      onClick={handleJoinAffiliate} 
-                      className="bg-white text-[#0F1B44] hover:bg-gray-100 text-lg px-8 py-6"
-                      size="lg"
-                    >
-                      Join as an Affiliate
-                    </Button>
-                  </div>
-                  
-                  <div className="w-full md:w-1/3 relative">
-                    <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
-                      <div className="flex justify-between items-center mb-4">
-                        <h3 className="text-xl font-medium">Your Referral Link</h3>
-                        <Badge className="bg-green-500 text-white">Active</Badge>
-                      </div>
-                      
-                      <div className="flex mb-6">
-                        <input
-                          type="text"
-                          value={referralLink}
-                          readOnly
-                          className="flex-grow bg-white/10 border border-white/20 rounded-l-lg px-4 py-3 text-white"
-                        />
-                        <button
-                          onClick={handleCopyReferralLink}
-                          className="bg-white text-[#0F1B44] px-4 py-3 rounded-r-lg hover:bg-white/90 transition-colors flex items-center"
-                        >
-                          {referralLinkCopied ? (
-                            <>
-                              <CheckCircle className="h-5 w-5 mr-2" />
-                              <span>Copied</span>
-                            </>
-                          ) : (
-                            <>
-                              <Copy className="h-5 w-5 mr-2" />
-                              <span>Copy</span>
-                            </>
+            <TabsContent value="affiliate" className="mt-0">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key="affiliate"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <Card className={`shadow-lg ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white'}`}>
+                    <CardHeader className="text-center">
+                      <CardTitle className="text-2xl">Earn by Referring Businesses to Halvi!</CardTitle>
+                      <CardDescription className={isDark ? 'text-gray-400' : 'text-gray-600'}>
+                        Share Halvi with businesses and earn 50% commission on every order they process
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="space-y-6">
+                        <div className={`p-4 rounded-lg ${isDark ? 'bg-gray-700' : 'bg-blue-50'}`}>
+                          <h3 className="font-medium text-lg mb-2 flex items-center">
+                            <LinkIcon className="mr-2 h-5 w-5 text-blue-500" />
+                            Get Your Referral Link
+                          </h3>
+                          <p className={`text-sm mb-4 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                            Click "Join as an Affiliate" to generate a unique referral link that can be shared with business owners.
+                          </p>
+                          
+                          {referralLink && (
+                            <div className="flex items-center">
+                              <input
+                                type="text"
+                                value={referralLink}
+                                readOnly
+                                className={`flex-1 p-2 text-sm rounded-l-md border ${
+                                  isDark ? 'bg-gray-800 border-gray-600 text-gray-200' : 'bg-white border-gray-300'
+                                }`}
+                              />
+                              <button
+                                onClick={handleCopyReferralLink}
+                                className="p-2 rounded-r-md bg-blue-600 text-white"
+                              >
+                                <Clipboard className="h-5 w-5" />
+                              </button>
+                            </div>
                           )}
-                        </button>
-                      </div>
-                      
-                      <div className="text-center text-white/60 text-sm">
-                        Share this link with business owners to earn commissions!
-                      </div>
-                    </div>
-                    
-                    <motion.div 
-                      className="absolute -top-6 -right-6 bg-red-500 rounded-full h-16 w-16 flex items-center justify-center"
-                      animate={{ 
-                        rotate: [0, 10, 0, -10, 0],
-                        scale: [1, 1.05, 1, 1.05, 1]
-                      }}
-                      transition={{ 
-                        repeat: Infinity, 
-                        duration: 5
-                      }}
-                    >
-                      <div className="text-center">
-                        <div className="text-xs font-bold">EARN</div>
-                        <div className="text-lg font-bold">50%</div>
-                      </div>
-                    </motion.div>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="mb-16">
-                <h2 className="text-2xl font-serif font-bold mb-8 text-center text-[#0F1B44] dark:text-white">
-                  How the Affiliate Program Works
-                </h2>
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 border border-gray-100 dark:border-gray-700">
-                    <div className="w-12 h-12 rounded-full bg-[#0F1B44]/10 flex items-center justify-center mb-4 dark:bg-[#0F1B44]/30">
-                      <Users className="h-6 w-6 text-[#0F1B44] dark:text-white" />
-                    </div>
-                    <h3 className="text-lg font-medium mb-2 text-[#0F1B44] dark:text-white">
-                      1. Get Your Referral Link
-                    </h3>
-                    <p className="text-gray-600 dark:text-gray-300">
-                      Click "Join as an Affiliate" to generate a unique referral link that you can share with business owners.
-                    </p>
-                  </div>
-                  
-                  <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 border border-gray-100 dark:border-gray-700">
-                    <div className="w-12 h-12 rounded-full bg-[#0F1B44]/10 flex items-center justify-center mb-4 dark:bg-[#0F1B44]/30">
-                      <Store className="h-6 w-6 text-[#0F1B44] dark:text-white" />
-                    </div>
-                    <h3 className="text-lg font-medium mb-2 text-[#0F1B44] dark:text-white">
-                      2. Refer a Business
-                    </h3>
-                    <p className="text-gray-600 dark:text-gray-300">
-                      When a business owner signs up using your referral link, you are automatically enrolled in the program.
-                    </p>
-                  </div>
-                  
-                  <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 border border-gray-100 dark:border-gray-700">
-                    <div className="w-12 h-12 rounded-full bg-[#0F1B44]/10 flex items-center justify-center mb-4 dark:bg-[#0F1B44]/30">
-                      <Wallet className="h-6 w-6 text-[#0F1B44] dark:text-white" />
-                    </div>
-                    <h3 className="text-lg font-medium mb-2 text-[#0F1B44] dark:text-white">
-                      3. Earn Commission
-                    </h3>
-                    <p className="text-gray-600 dark:text-gray-300">
-                      You will receive 50% of Halvi's earnings per order from the referred store, continuing until they reach $70,000 in sales.
-                    </p>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="mb-16 bg-gray-50 dark:bg-gray-800 rounded-xl p-8">
-                <h2 className="text-2xl font-serif font-bold mb-6 text-[#0F1B44] dark:text-white">
-                  Lifetime Earnings Formula
-                </h2>
-                
-                <div className="flex flex-col md:flex-row">
-                  <div className="md:w-1/2 md:pr-8 mb-6 md:mb-0">
-                    <p className="text-gray-700 dark:text-gray-300 mb-4">
-                      Your commission continues until the referred store reaches $70,000 in total sales on Halvi.
-                    </p>
-                    <p className="text-gray-700 dark:text-gray-300 mb-4">
-                      The guaranteed earnings are dynamically calculated using this formula:
-                    </p>
-                    
-                    <div className="bg-white dark:bg-gray-700 p-4 rounded-lg text-center mb-4">
-                      <span className="text-lg font-medium text-[#0F1B44] dark:text-white">
-                        G = (R × 1.5) × (M + 0.1)
-                      </span>
-                    </div>
-                    
-                    <ul className="space-y-2 text-gray-700 dark:text-gray-300">
-                      <li>• R = Store's monthly revenue</li>
-                      <li>• M = Store's profit margin</li>
-                      <li>• G = Guaranteed sales target</li>
-                    </ul>
-                  </div>
-                  
-                  <div className="md:w-1/2 bg-white dark:bg-gray-700 rounded-lg p-6">
-                    <h3 className="text-lg font-medium mb-4 text-[#0F1B44] dark:text-white">
-                      Example Calculation
-                    </h3>
-                    
-                    <div className="space-y-4">
-                      <div>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          Store's Monthly Revenue (R)
-                        </p>
-                        <p className="text-lg font-medium text-[#0F1B44] dark:text-white">
-                          $5,000
-                        </p>
-                      </div>
-                      
-                      <div>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          Store's Profit Margin (M)
-                        </p>
-                        <p className="text-lg font-medium text-[#0F1B44] dark:text-white">
-                          30% (0.3)
-                        </p>
-                      </div>
-                      
-                      <div>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          Calculation
-                        </p>
-                        <p className="text-gray-700 dark:text-gray-300">
-                          G = ($5,000 × 1.5) × (0.3 + 0.1)
-                        </p>
-                        <p className="text-gray-700 dark:text-gray-300">
-                          G = $7,500 × 0.4
-                        </p>
-                        <p className="text-lg font-medium text-[#0F1B44] dark:text-white">
-                          G = $3,000 monthly
-                        </p>
-                      </div>
-                      
-                      <div className="pt-4 border-t border-gray-200 dark:border-gray-600">
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          Your Potential Monthly Commission (50%)
-                        </p>
-                        <p className="text-xl font-bold text-green-600 dark:text-green-400">
-                          $1,500
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="mb-16">
-                <h2 className="text-2xl font-serif font-bold mb-8 text-center text-[#0F1B44] dark:text-white">
-                  Why Join as an Affiliate?
-                </h2>
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-100 dark:border-gray-700">
-                    <CheckCircle className="h-8 w-8 text-green-500 mb-4" />
-                    <h3 className="text-lg font-medium mb-2 text-[#0F1B44] dark:text-white">
-                      Passive Income
-                    </h3>
-                    <p className="text-gray-600 dark:text-gray-300">
-                      Earn without managing a store yourself. Simply refer businesses and earn from their success.
-                    </p>
-                  </div>
-                  
-                  <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-100 dark:border-gray-700">
-                    <CheckCircle className="h-8 w-8 text-green-500 mb-4" />
-                    <h3 className="text-lg font-medium mb-2 text-[#0F1B44] dark:text-white">
-                      Unlimited Referrals
-                    </h3>
-                    <p className="text-gray-600 dark:text-gray-300">
-                      There's no cap on the number of businesses you can invite, meaning unlimited earning potential.
-                    </p>
-                  </div>
-                  
-                  <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-100 dark:border-gray-700">
-                    <CheckCircle className="h-8 w-8 text-green-500 mb-4" />
-                    <h3 className="text-lg font-medium mb-2 text-[#0F1B44] dark:text-white">
-                      Long-Term Commissions
-                    </h3>
-                    <p className="text-gray-600 dark:text-gray-300">
-                      Continue earning until your referred store reaches its $70,000 sales threshold.
-                    </p>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="mb-16 text-center">
-                <div className="bg-[#0F1B44] rounded-xl p-8 text-white">
-                  <h2 className="text-2xl font-serif font-bold mb-4">
-                    Ready to Start?
-                  </h2>
-                  <p className="text-lg mb-8 max-w-2xl mx-auto">
-                    Become a Halvi Affiliate today and start earning commissions by helping Muslim businesses grow online.
-                  </p>
-                  <Button 
-                    onClick={handleJoinAffiliate} 
-                    className="bg-white text-[#0F1B44] hover:bg-gray-100"
-                    size="lg"
-                  >
-                    Join as an Affiliate
-                  </Button>
-                </div>
-              </div>
-              
-              <div className="mb-16">
-                <h2 className="text-2xl font-serif font-bold mb-8 text-center text-[#0F1B44] dark:text-white">
-                  Affiliate Program Demo
-                </h2>
-                
-                <div className="flex flex-col md:flex-row items-center justify-center">
-                  <div className="md:w-1/2 md:pr-8 mb-8 md:mb-0">
-                    <h3 className="text-xl font-medium mb-4 text-[#0F1B44] dark:text-white">
-                      Complete Walkthrough
-                    </h3>
-                    <p className="text-gray-600 dark:text-gray-300 mb-4">
-                      Our intuitive affiliate dashboard makes it easy to track your earnings, referred businesses, and payment history.
-                    </p>
-                    <ul className="space-y-3">
-                      <li className="flex items-start">
-                        <CheckCircle className="h-5 w-5 text-green-500 mr-2 mt-0.5" />
-                        <span className="text-gray-600 dark:text-gray-300">Generate and share your unique referral link</span>
-                      </li>
-                      <li className="flex items-start">
-                        <CheckCircle className="h-5 w-5 text-green-500 mr-2 mt-0.5" />
-                        <span className="text-gray-600 dark:text-gray-300">Track business sign-ups in real-time</span>
-                      </li>
-                      <li className="flex items-start">
-                        <CheckCircle className="h-5 w-5 text-green-500 mr-2 mt-0.5" />
-                        <span className="text-gray-600 dark:text-gray-300">Monitor commission earnings with detailed analytics</span>
-                      </li>
-                      <li className="flex items-start">
-                        <CheckCircle className="h-5 w-5 text-green-500 mr-2 mt-0.5" />
-                        <span className="text-gray-600 dark:text-gray-300">Multiple payout options for easy withdrawals</span>
-                      </li>
-                    </ul>
-                  </div>
-                  
-                  <div className="md:w-1/2 flex justify-center">
-                    <div className="relative">
-                      <div className="w-80 h-[500px] bg-black rounded-[40px] p-4 relative overflow-hidden shadow-xl">
-                        <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-40 h-6 bg-black rounded-b-xl"></div>
-                        <div className="w-full h-full bg-white rounded-[32px] overflow-hidden">
-                          <div className="h-14 bg-[#0F1B44] text-white flex items-center justify-center">
-                            <h4 className="font-medium">Halvi Affiliate Dashboard</h4>
-                          </div>
-                          <div className="p-4">
-                            <div className="bg-[#F8F9FA] rounded-lg p-4 mb-4">
-                              <div className="text-sm text-gray-500 mb-1">Total Earnings</div>
-                              <div className="text-2xl font-bold text-[#0F1B44]">$4,253.86</div>
-                              <div className="mt-2 text-xs text-green-600 flex items-center">
-                                <ArrowUpRight className="h-3 w-3 mr-1" />
-                                <span>+18% from last month</span>
-                              </div>
-                            </div>
-                            
-                            <div className="grid grid-cols-2 gap-3 mb-4">
-                              <div className="bg-[#F8F9FA] rounded-lg p-3">
-                                <div className="text-xs text-gray-500 mb-1">Referred Shops</div>
-                                <div className="text-lg font-bold text-[#0F1B44]">12</div>
-                              </div>
-                              <div className="bg-[#F8F9FA] rounded-lg p-3">
-                                <div className="text-xs text-gray-500 mb-1">Active Shops</div>
-                                <div className="text-lg font-bold text-[#0F1B44]">9</div>
-                              </div>
-                            </div>
-                            
-                            <div className="mb-4">
-                              <div className="text-sm font-medium mb-2">Recent Referrals</div>
-                              <div className="space-y-3">
-                                <div className="bg-[#F8F9FA] rounded-lg p-3 flex items-center">
-                                  <div className="w-8 h-8 rounded-full bg-[#E6F2FF] flex items-center justify-center mr-3">
-                                    <Store className="h-4 w-4 text-[#0F1B44]" />
-                                  </div>
-                                  <div className="flex-grow">
-                                    <div className="text-sm font-medium">Halal Fresh Market</div>
-                                    <div className="text-xs text-gray-500">Signed up 2 days ago</div>
-                                  </div>
-                                </div>
-                                <div className="bg-[#F8F9FA] rounded-lg p-3 flex items-center">
-                                  <div className="w-8 h-8 rounded-full bg-[#E6F2FF] flex items-center justify-center mr-3">
-                                    <Store className="h-4 w-4 text-[#0F1B44]" />
-                                  </div>
-                                  <div className="flex-grow">
-                                    <div className="text-sm font-medium">Baraka Bakery</div>
-                                    <div className="text-xs text-gray-500">Signed up 1 week ago</div>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                            
-                            <div className="mb-4">
-                              <div className="text-sm font-medium mb-2">Commission Breakdown</div>
-                              <div className="bg-[#F8F9FA] rounded-lg p-3">
-                                <div className="h-32 flex items-end justify-between">
-                                  <div className="w-1/6 h-[60%] bg-[#0F1B44] rounded-t-md"></div>
-                                  <div className="w-1/6 h-[80%] bg-[#0F1B44] rounded-t-md"></div>
-                                  <div className="w-1/6 h-[40%] bg-[#0F1B44] rounded-t-md"></div>
-                                  <div className="w-1/6 h-[90%] bg-[#0F1B44] rounded-t-md"></div>
-                                  <div className="w-1/6 h-[70%] bg-[#0F1B44] rounded-t-md"></div>
-                                  <div className="w-1/6 h-[50%] bg-[#0F1B44] rounded-t-md"></div>
-                                </div>
-                                <div className="flex justify-between mt-2 text-xs text-gray-500">
-                                  <span>May</span>
-                                  <span>Jun</span>
-                                  <span>Jul</span>
-                                  <span>Aug</span>
-                                  <span>Sep</span>
-                                  <span>Oct</span>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="driver" ref={driverSectionRef}>
-              <div className="bg-gradient-to-br from-[#0F1B44] to-[#183080] rounded-xl p-8 mb-12 text-white">
-                <div className="flex flex-col md:flex-row items-center justify-between">
-                  <div className="mb-8 md:mb-0 md:mr-8">
-                    <h1 className="text-3xl md:text-4xl font-serif font-bold mb-4">
-                      Halvi Driver Program
-                    </h1>
-                    <p className="text-lg text-white/80 mb-6">
-                      Drive, deliver and earn! Become part of our network delivering quality products to the Muslim community.
-                    </p>
-                    <Button 
-                      onClick={handleApplyAsDriver} 
-                      className="bg-white text-[#0F1B44] hover:bg-gray-100 text-lg px-8 py-6"
-                      size="lg"
-                    >
-                      Apply as a Driver
-                    </Button>
-                  </div>
-                  
-                  <div className="w-full md:w-1/3">
-                    <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 relative overflow-hidden">
-                      <div className="mb-4 flex items-center">
-                        <Truck className="h-8 w-8 mr-2" />
-                        <h3 className="text-xl font-medium">Halvi Dash</h3>
-                      </div>
-                      
-                      <div className="space-y-3 relative z-10">
-                        <div className="bg-white/10 p-3 rounded-lg">
-                          <p className="text-sm text-white/70">Average Earnings</p>
-                          <p className="text-2xl font-bold">$25-35/hr</p>
                         </div>
                         
-                        <div className="flex gap-3">
-                          <div className="bg-white/10 p-3 rounded-lg flex-1">
-                            <p className="text-sm text-white/70">Flexible Hours</p>
-                            <p className="text-xl font-medium">24/7</p>
+                        <div className="grid md:grid-cols-2 gap-4">
+                          <div className={`p-4 rounded-lg ${isDark ? 'bg-gray-700' : 'bg-green-50'}`}>
+                            <h3 className="font-medium text-lg mb-2 flex items-center">
+                              <DollarSign className="mr-2 h-5 w-5 text-green-500" />
+                              Earn Commission
+                            </h3>
+                            <p className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                              You will receive 50% of Halvi's earnings per order from stores you refer.
+                            </p>
                           </div>
-                          <div className="bg-white/10 p-3 rounded-lg flex-1">
-                            <p className="text-sm text-white/70">Instant Pay</p>
-                            <p className="text-xl font-medium">Daily</p>
+                          
+                          <div className={`p-4 rounded-lg ${isDark ? 'bg-gray-700' : 'bg-purple-50'}`}>
+                            <h3 className="font-medium text-lg mb-2 flex items-center">
+                              <Clock className="mr-2 h-5 w-5 text-purple-500" />
+                              Lifetime Earnings
+                            </h3>
+                            <p className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                              Keep earning until your referred shop reaches $70,000 in total sales on Halvi.
+                            </p>
                           </div>
                         </div>
-                      </div>
-                      
-                      <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-white/5 rounded-full"></div>
-                      <div className="absolute -bottom-5 -right-5 w-20 h-20 bg-white/5 rounded-full"></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="mb-16">
-                <h2 className="text-2xl font-serif font-bold mb-8 text-center text-[#0F1B44] dark:text-white">
-                  Driver Requirements
-                </h2>
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 border border-gray-100 dark:border-gray-700">
-                    <div className="w-12 h-12 rounded-full bg-[#0F1B44]/10 flex items-center justify-center mb-4 dark:bg-[#0F1B44]/30">
-                      <User className="h-6 w-6 text-[#0F1B44] dark:text-white" />
-                    </div>
-                    <h3 className="text-lg font-medium mb-2 text-[#0F1B44] dark:text-white">
-                      Basic Requirements
-                    </h3>
-                    <ul className="space-y-2 text-gray-600 dark:text-gray-300">
-                      <li className="flex items-start">
-                        <CheckCircle className="h-5 w-5 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                        <span>Must be 21 years or older</span>
-                      </li>
-                      <li className="flex items-start">
-                        <CheckCircle className="h-5 w-5 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                        <span>Hold a valid driver's license</span>
-                      </li>
-                      <li className="flex items-start">
-                        <CheckCircle className="h-5 w-5 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                        <span>Pass a background check</span>
-                      </li>
-                    </ul>
-                  </div>
-                  
-                  <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 border border-gray-100 dark:border-gray-700">
-                    <div className="w-12 h-12 rounded-full bg-[#0F1B44]/10 flex items-center justify-center mb-4 dark:bg-[#0F1B44]/30">
-                      <Car className="h-6 w-6 text-[#0F1B44] dark:text-white" />
-                    </div>
-                    <h3 className="text-lg font-medium mb-2 text-[#0F1B44] dark:text-white">
-                      Vehicle Requirements
-                    </h3>
-                    <ul className="space-y-2 text-gray-600 dark:text-gray-300">
-                      <li className="flex items-start">
-                        <CheckCircle className="h-5 w-5 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                        <span>Valid vehicle registration</span>
-                      </li>
-                      <li className="flex items-start">
-                        <CheckCircle className="h-5 w-5 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                        <span>Proof of insurance</span>
-                      </li>
-                      <li className="flex items-start">
-                        <CheckCircle className="h-5 w-5 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                        <span>Vehicle in good condition</span>
-                      </li>
-                    </ul>
-                  </div>
-                  
-                  <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 border border-gray-100 dark:border-gray-700">
-                    <div className="w-12 h-12 rounded-full bg-[#0F1B44]/10 flex items-center justify-center mb-4 dark:bg-[#0F1B44]/30">
-                      <Smartphone className="h-6 w-6 text-[#0F1B44] dark:text-white" />
-                    </div>
-                    <h3 className="text-lg font-medium mb-2 text-[#0F1B44] dark:text-white">
-                      Technical Requirements
-                    </h3>
-                    <ul className="space-y-2 text-gray-600 dark:text-gray-300">
-                      <li className="flex items-start">
-                        <CheckCircle className="h-5 w-5 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                        <span>Smartphone with iOS 13+ or Android 8+</span>
-                      </li>
-                      <li className="flex items-start">
-                        <CheckCircle className="h-5 w-5 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                        <span>Reliable data connection</span>
-                      </li>
-                      <li className="flex items-start">
-                        <CheckCircle className="h-5 w-5 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                        <span>Halvi Driver App (provided after approval)</span>
-                      </li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="mb-16">
-                <h2 className="text-2xl font-serif font-bold mb-8 text-center text-[#0F1B44] dark:text-white">
-                  How to Become a Halvi Driver
-                </h2>
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-100 dark:border-gray-700 relative">
-                    <div className="absolute -top-4 -left-4 w-10 h-10 rounded-full bg-[#0F1B44] text-white flex items-center justify-center font-bold text-lg">
-                      1
-                    </div>
-                    <h3 className="text-lg font-medium mb-2 text-[#0F1B44] dark:text-white mt-2">
-                      Apply Online
-                    </h3>
-                    <p className="text-gray-600 dark:text-gray-300">
-                      Click "Apply as a Driver" and complete the online application form with your personal and vehicle information.
-                    </p>
-                  </div>
-                  
-                  <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-100 dark:border-gray-700 relative">
-                    <div className="absolute -top-4 -left-4 w-10 h-10 rounded-full bg-[#0F1B44] text-white flex items-center justify-center font-bold text-lg">
-                      2
-                    </div>
-                    <h3 className="text-lg font-medium mb-2 text-[#0F1B44] dark:text-white mt-2">
-                      Verification & Approval
-                    </h3>
-                    <p className="text-gray-600 dark:text-gray-300">
-                      Our admin team will review your application, perform background checks, and approve qualified drivers.
-                    </p>
-                  </div>
-                  
-                  <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-100 dark:border-gray-700 relative">
-                    <div className="absolute -top-4 -left-4 w-10 h-10 rounded-full bg-[#0F1B44] text-white flex items-center justify-center font-bold text-lg">
-                      3
-                    </div>
-                    <h3 className="text-lg font-medium mb-2 text-[#0F1B44] dark:text-white mt-2">
-                      Start Driving
-                    </h3>
-                    <p className="text-gray-600 dark:text-gray-300">
-                      Once verified, download the Halvi Driver app, set your availability, and start accepting delivery requests.
-                    </p>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="mb-16">
-                <h2 className="text-2xl font-serif font-bold mb-8 text-center text-[#0F1B44] dark:text-white">
-                  Earnings & Benefits
-                </h2>
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-100 dark:border-gray-700">
-                    <CheckCircle className="h-8 w-8 text-green-500 mb-4" />
-                    <h3 className="text-lg font-medium mb-2 text-[#0F1B44] dark:text-white">
-                      Flexible Hours
-                    </h3>
-                    <p className="text-gray-600 dark:text-gray-300">
-                      Drive whenever you want with no fixed schedule. Set your own hours and work as much or as little as you prefer.
-                    </p>
-                  </div>
-                  
-                  <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-100 dark:border-gray-700">
-                    <CheckCircle className="h-8 w-8 text-green-500 mb-4" />
-                    <h3 className="text-lg font-medium mb-2 text-[#0F1B44] dark:text-white">
-                      Competitive Pay
-                    </h3>
-                    <p className="text-gray-600 dark:text-gray-300">
-                      Earn per delivery with bonuses for high performance, busy hours, and peak demand periods.
-                    </p>
-                  </div>
-                  
-                  <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-100 dark:border-gray-700">
-                    <CheckCircle className="h-8 w-8 text-green-500 mb-4" />
-                    <h3 className="text-lg font-medium mb-2 text-[#0F1B44] dark:text-white">
-                      Instant Payouts
-                    </h3>
-                    <p className="text-gray-600 dark:text-gray-300">
-                      Get paid fast through Halvi's driver system with options for daily deposits straight to your bank account.
-                    </p>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="mb-16 text-center">
-                <div className="bg-[#0F1B44] rounded-xl p-8 text-white">
-                  <h2 className="text-2xl font-serif font-bold mb-4">
-                    Ready to Drive?
-                  </h2>
-                  <p className="text-lg mb-8 max-w-2xl mx-auto">
-                    Join our team of Halvi drivers today and start earning while providing an essential service to the Muslim community.
-                  </p>
-                  <Button 
-                    onClick={handleApplyAsDriver} 
-                    className="bg-white text-[#0F1B44] hover:bg-gray-100"
-                    size="lg"
-                  >
-                    Apply as a Driver
-                  </Button>
-                </div>
-              </div>
-              
-              <div className="mb-16">
-                <h2 className="text-2xl font-serif font-bold mb-8 text-center text-[#0F1B44] dark:text-white">
-                  Driver App Demo
-                </h2>
-                
-                <div className="flex flex-col md:flex-row items-center justify-center">
-                  <div className="md:w-1/2 md:pr-8 mb-8 md:mb-0">
-                    <h3 className="text-xl font-medium mb-4 text-[#0F1B44] dark:text-white">
-                      Seamless Delivery Experience
-                    </h3>
-                    <p className="text-gray-600 dark:text-gray-300 mb-4">
-                      Our driver app provides a smooth, intuitive experience designed to maximize your earnings while delivering quality service.
-                    </p>
-                    <ul className="space-y-3">
-                      <li className="flex items-start">
-                        <CheckCircle className="h-5 w-5 text-green-500 mr-2 mt-0.5" />
-                        <span className="text-gray-600 dark:text-gray-300">Real-time order notifications and map navigation</span>
-                      </li>
-                      <li className="flex items-start">
-                        <CheckCircle className="h-5 w-5 text-green-500 mr-2 mt-0.5" />
-                        <span className="text-gray-600 dark:text-gray-300">Easy communication with customers</span>
-                      </li>
-                      <li className="flex items-start">
-                        <CheckCircle className="h-5 w-5 text-green-500 mr-2 mt-0.5" />
-                        <span className="text-gray-600 dark:text-gray-300">Track earnings and tips in real-time</span>
-                      </li>
-                      <li className="flex items-start">
-                        <CheckCircle className="h-5 w-5 text-green-500 mr-2 mt-0.5" />
-                        <span className="text-gray-600 dark:text-gray-300">Instant payout options</span>
-                      </li>
-                    </ul>
-                  </div>
-                  
-                  <div className="md:w-1/2 flex justify-center">
-                    <div className="relative">
-                      <div className="w-80 h-[500px] bg-black rounded-[40px] p-4 relative overflow-hidden shadow-xl">
-                        <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-40 h-6 bg-black rounded-b-xl"></div>
-                        <div className="w-full h-full bg-white rounded-[32px] overflow-hidden">
-                          <div className="h-14 bg-[#0F1B44] text-white flex items-center justify-center">
-                            <h4 className="font-medium">Halvi Driver</h4>
-                          </div>
-                          <div className="relative h-[calc(100%-56px)]">
-                            <div className="absolute inset-0 bg-gray-100">
-                              <div className="h-full w-full" style={{ backgroundImage: "url('https://api.mapbox.com/styles/v1/mapbox/streets-v11/static/-73.935242,40.730610,13,0/500x500?access_token=pk.dummy')", backgroundSize: "cover" }}>
-                                <div className="absolute inset-0 flex items-center justify-center">
-                                  <div className="w-12 h-12 rounded-full bg-[#0F1B44] border-4 border-white flex items-center justify-center">
-                                    <Truck className="h-6 w-6 text-white" />
-                                  </div>
-                                </div>
-                                <div className="absolute bottom-0 left-0 right-0">
-                                  <div className="bg-white rounded-t-2xl p-4">
-                                    <div className="flex justify-between items-center mb-4">
-                                      <div>
-                                        <div className="text-sm font-medium">New Delivery Request</div>
-                                        <div className="text-xs text-gray-500">2.3 miles away</div>
-                                      </div>
-                                      <div className="text-lg font-bold text-[#0F1B44]">$12.50</div>
-                                    </div>
-                                    
-                                    <div className="bg-gray-100 rounded-lg p-3 mb-4">
-                                      <div className="flex items-start">
-                                        <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center mt-1 mr-2">
-                                          <Store className="h-3 w-3 text-green-600" />
-                                        </div>
-                                        <div>
-                                          <div className="text-sm font-medium">Pickup</div>
-                                          <div className="text-xs">Halal Fresh Market - 123 Main St</div>
-                                        </div>
-                                      </div>
-                                      <div className="border-l-2 border-dashed border-gray-300 h-4 ml-3 my-1"></div>
-                                      <div className="flex items-start">
-                                        <div className="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center mt-1 mr-2">
-                                          <MapPin className="h-3 w-3 text-red-600" />
-                                        </div>
-                                        <div>
-                                          <div className="text-sm font-medium">Dropoff</div>
-                                          <div className="text-xs">456 Pine Avenue, Apt 3B</div>
-                                        </div>
-                                      </div>
-                                    </div>
-                                    
-                                    <div className="flex gap-3">
-                                      <button className="flex-1 bg-gray-200 text-gray-700 py-3 rounded-lg font-medium">
-                                        Decline
-                                      </button>
-                                      <button className="flex-1 bg-[#0F1B44] text-white py-3 rounded-lg font-medium">
-                                        Accept
-                                      </button>
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
+                        
+                        <div className={`p-4 rounded-lg ${isDark ? 'bg-gray-700/50' : 'bg-gray-50'}`}>
+                          <h3 className="font-medium text-lg mb-3">Why Join as an Affiliate?</h3>
+                          <ul className="space-y-2">
+                            <li className="flex items-start">
+                              <Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
+                              <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                                <span className="font-medium">Passive Income</span> – Earn without managing a store yourself.
+                              </span>
+                            </li>
+                            <li className="flex items-start">
+                              <Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
+                              <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                                <span className="font-medium">Unlimited Referrals</span> – No cap on the number of businesses you can invite.
+                              </span>
+                            </li>
+                            <li className="flex items-start">
+                              <Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
+                              <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                                <span className="font-medium">Long-Term Commissions</span> – Continue earning until the shop reaches its threshold.
+                              </span>
+                            </li>
+                          </ul>
+                        </div>
+                        
+                        <div className={`p-4 rounded-lg ${isDark ? 'bg-blue-900/20' : 'bg-blue-50'}`}>
+                          <h3 className="font-medium text-lg mb-2">Earnings Formula</h3>
+                          <p className={`text-sm mb-3 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                            Your guaranteed earnings are calculated using:
+                          </p>
+                          <div className={`p-3 rounded text-center ${isDark ? 'bg-gray-800' : 'bg-white'}`}>
+                            <p className="font-mono text-lg">G = (R × 1.5) × (M + 0.1)</p>
+                            <div className={`text-xs mt-2 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                              <p>R = Store's monthly revenue</p>
+                              <p>M = Store's profit margin</p>
+                              <p>G = Guaranteed sales target</p>
                             </div>
                           </div>
                         </div>
                       </div>
+                    </CardContent>
+                    <CardFooter>
+                      <Button 
+                        onClick={handleJoinAffiliate} 
+                        className="w-full py-6 text-lg bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600"
+                      >
+                        <Rocket className="mr-2 h-5 w-5" />
+                        Join as an Affiliate
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                  
+                  {/* Affiliate Dashboard Preview */}
+                  <div className="mt-12">
+                    <h2 className={`text-2xl font-bold text-center mb-6 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                      Your Affiliate Dashboard
+                    </h2>
+                    <div className="relative mx-auto max-w-xl">
+                      <div className={`p-3 rounded-xl border-8 ${isDark ? 'border-gray-800 bg-gray-900' : 'border-gray-200 bg-white'} shadow-2xl mx-auto`} style={{maxWidth: '300px'}}>
+                        <div className={`h-16 rounded-t-lg ${isDark ? 'bg-gray-800' : 'bg-blue-600'} flex items-center justify-between px-4`}>
+                          <span className="text-white font-medium">Affiliate Dashboard</span>
+                          <span className="text-white text-sm">2:30 PM</span>
+                        </div>
+                        <div className={`rounded-b-lg overflow-hidden ${isDark ? 'bg-gray-800' : 'bg-white'}`}>
+                          <div className={`p-4 border-b ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+                            <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Total Earnings</div>
+                            <div className={`text-xl font-bold ${isDark ? 'text-green-400' : 'text-green-600'}`}>$1,240.50</div>
+                          </div>
+                          <div className="p-4 space-y-3">
+                            <div className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>Your Referrals</div>
+                            <div className={`p-2 rounded-lg ${isDark ? 'bg-gray-700' : 'bg-gray-100'} flex justify-between items-center`}>
+                              <span className={`${isDark ? 'text-white' : 'text-gray-900'}`}>Express Café</span>
+                              <span className={`text-xs ${isDark ? 'text-green-400' : 'text-green-600'}`}>$534.25</span>
+                            </div>
+                            <div className={`p-2 rounded-lg ${isDark ? 'bg-gray-700' : 'bg-gray-100'} flex justify-between items-center`}>
+                              <span className={`${isDark ? 'text-white' : 'text-gray-900'}`}>Fresh Grocery</span>
+                              <span className={`text-xs ${isDark ? 'text-green-400' : 'text-green-600'}`}>$421.75</span>
+                            </div>
+                            <div className={`p-2 rounded-lg ${isDark ? 'bg-gray-700' : 'bg-gray-100'} flex justify-between items-center`}>
+                              <span className={`${isDark ? 'text-white' : 'text-gray-900'}`}>Urban Kitchen</span>
+                              <span className={`text-xs ${isDark ? 'text-green-400' : 'text-green-600'}`}>$284.50</span>
+                            </div>
+                          </div>
+                          <div className={`p-4 border-t ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+                            <button className={`w-full py-2 rounded-lg text-sm ${isDark ? 'bg-blue-600' : 'bg-blue-600'} text-white`}>
+                              View Full Dashboard
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 w-32 h-2 bg-black rounded-full"></div>
                     </div>
                   </div>
-                </div>
-              </div>
+                </motion.div>
+              </AnimatePresence>
+            </TabsContent>
+            
+            <TabsContent value="driver" className="mt-0">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key="driver"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <Card className={`shadow-lg ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white'}`}>
+                    <CardHeader className="text-center">
+                      <CardTitle className="text-2xl">Halvi Dash & Driver Program</CardTitle>
+                      <CardDescription className={isDark ? 'text-gray-400' : 'text-gray-600'}>
+                        Drive, Deliver & Earn – Flexible hours and competitive pay
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                      <div className={`p-4 rounded-lg ${isDark ? 'bg-gray-700' : 'bg-yellow-50'}`}>
+                        <h3 className="font-medium text-lg mb-3">Driver Requirements</h3>
+                        <ul className="space-y-2 text-sm">
+                          <li className="flex items-start">
+                            <Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
+                            <span className={isDark ? 'text-gray-300' : 'text-gray-700'}>Must be 21 years or older</span>
+                          </li>
+                          <li className="flex items-start">
+                            <Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
+                            <span className={isDark ? 'text-gray-300' : 'text-gray-700'}>Hold a valid driver's license</span>
+                          </li>
+                          <li className="flex items-start">
+                            <Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
+                            <span className={isDark ? 'text-gray-300' : 'text-gray-700'}>Provide proof of insurance and vehicle registration</span>
+                          </li>
+                          <li className="flex items-start">
+                            <Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
+                            <span className={isDark ? 'text-gray-300' : 'text-gray-700'}>Own a smartphone to use the Halvi Driver App</span>
+                          </li>
+                          <li className="flex items-start">
+                            <Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
+                            <span className={isDark ? 'text-gray-300' : 'text-gray-700'}>Pass a background check and driving history review</span>
+                          </li>
+                        </ul>
+                      </div>
+                      
+                      <div className={`p-4 rounded-lg ${isDark ? 'bg-gray-700' : 'bg-blue-50'}`}>
+                        <h3 className="font-medium text-lg mb-3">How to Become a Halvi Driver</h3>
+                        <ol className="space-y-4">
+                          <li className="flex">
+                            <div className={`flex-shrink-0 w-8 h-8 rounded-full ${isDark ? 'bg-blue-800 text-white' : 'bg-blue-600 text-white'} flex items-center justify-center font-bold mr-3`}>1</div>
+                            <div>
+                              <h4 className="font-medium">Apply Online</h4>
+                              <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                                Click "Apply as a Driver" and complete the online application form.
+                              </p>
+                            </div>
+                          </li>
+                          <li className="flex">
+                            <div className={`flex-shrink-0 w-8 h-8 rounded-full ${isDark ? 'bg-blue-800 text-white' : 'bg-blue-600 text-white'} flex items-center justify-center font-bold mr-3`}>2</div>
+                            <div>
+                              <h4 className="font-medium">Verification & Approval</h4>
+                              <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                                The Halvi admin team will review applications and perform background checks.
+                              </p>
+                              <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                                Approved drivers will receive login credentials for the driver dashboard.
+                              </p>
+                            </div>
+                          </li>
+                          <li className="flex">
+                            <div className={`flex-shrink-0 w-8 h-8 rounded-full ${isDark ? 'bg-blue-800 text-white' : 'bg-blue-600 text-white'} flex items-center justify-center font-bold mr-3`}>3</div>
+                            <div>
+                              <h4 className="font-medium">Start Driving</h4>
+                              <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                                Once verified, drivers can accept delivery requests and start earning.
+                              </p>
+                            </div>
+                          </li>
+                        </ol>
+                      </div>
+                      
+                      <div className={`p-4 rounded-lg ${isDark ? 'bg-gray-700/50' : 'bg-gray-50'}`}>
+                        <h3 className="font-medium text-lg mb-3">Earnings & Benefits</h3>
+                        <ul className="space-y-2">
+                          <li className="flex items-start">
+                            <Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
+                            <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                              <span className="font-medium">Flexible Hours</span> – Drive whenever you want; no fixed schedule.
+                            </span>
+                          </li>
+                          <li className="flex items-start">
+                            <Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
+                            <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                              <span className="font-medium">Competitive Pay</span> – Earn per delivery with bonuses for high performance.
+                            </span>
+                          </li>
+                          <li className="flex items-start">
+                            <Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
+                            <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                              <span className="font-medium">Instant Payouts</span> – Get paid fast through Halvi's driver system.
+                            </span>
+                          </li>
+                        </ul>
+                      </div>
+                    </CardContent>
+                    <CardFooter>
+                      <Button 
+                        onClick={handleApplyAsDriver} 
+                        className="w-full py-6 text-lg bg-gradient-to-r from-green-600 to-green-700 hover:from-green-500 hover:to-green-600"
+                      >
+                        <Car className="mr-2 h-5 w-5" />
+                        Apply as a Driver
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                  
+                  {/* Driver App Preview */}
+                  <div className="mt-12">
+                    <h2 className={`text-2xl font-bold text-center mb-6 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                      Halvi Driver App
+                    </h2>
+                    <div className="relative mx-auto max-w-xl">
+                      <div className={`p-3 rounded-xl border-8 ${isDark ? 'border-gray-800 bg-gray-900' : 'border-gray-200 bg-white'} shadow-2xl mx-auto`} style={{maxWidth: '300px'}}>
+                        <div className={`h-16 rounded-t-lg ${isDark ? 'bg-gray-800' : 'bg-green-600'} flex items-center justify-between px-4`}>
+                          <div>
+                            <div className="text-white font-medium">Halvi Driver</div>
+                            <div className="text-white/80 text-xs">Online - Accepting Orders</div>
+                          </div>
+                          <span className="text-white text-sm">3:45 PM</span>
+                        </div>
+                        <div className={`rounded-b-lg overflow-hidden ${isDark ? 'bg-gray-800' : 'bg-white'}`}>
+                          <div className={`p-3 border-b ${isDark ? 'border-gray-700' : 'border-gray-200'} flex justify-between items-center`}>
+                            <div>
+                              <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Today's Earnings</div>
+                              <div className={`text-xl font-bold ${isDark ? 'text-green-400' : 'text-green-600'}`}>$87.50</div>
+                            </div>
+                            <div>
+                              <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Deliveries</div>
+                              <div className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} text-center`}>6</div>
+                            </div>
+                          </div>
+                          <div className={`p-3 ${isDark ? 'bg-blue-900/20' : 'bg-blue-50'} border-b ${isDark ? 'border-gray-700' : 'border-gray-200'} flex items-center`}>
+                            <div className={`mr-3 p-2 rounded-full ${isDark ? 'bg-blue-800' : 'bg-blue-100'}`}>
+                              <Truck className={`h-6 w-6 ${isDark ? 'text-blue-200' : 'text-blue-600'}`} />
+                            </div>
+                            <div>
+                              <div className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>New Delivery Request</div>
+                              <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>2.3 miles - $8.75</div>
+                            </div>
+                            <div className="ml-auto flex space-x-2">
+                              <button className="p-2 bg-red-500 text-white rounded-full">✕</button>
+                              <button className="p-2 bg-green-500 text-white rounded-full">✓</button>
+                            </div>
+                          </div>
+                          <div className="p-3 space-y-3">
+                            <div className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                              Upcoming Scheduled Deliveries
+                            </div>
+                            <div className={`p-2 rounded-lg ${isDark ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                              <div className="flex justify-between">
+                                <span className={`${isDark ? 'text-white' : 'text-gray-900'}`}>Daily Treats Bakery</span>
+                                <span className={`text-xs ${isDark ? 'text-green-400' : 'text-green-600'}`}>$10.25</span>
+                              </div>
+                              <div className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'} mt-1`}>
+                                5:30 PM - 1.8 miles
+                              </div>
+                            </div>
+                          </div>
+                          <div className={`p-3 border-t ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+                            <button className={`w-full py-2 rounded-lg text-sm ${isDark ? 'bg-green-600' : 'bg-green-600'} text-white`}>
+                              Go to Navigation
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 w-32 h-2 bg-black rounded-full"></div>
+                    </div>
+                  </div>
+                </motion.div>
+              </AnimatePresence>
             </TabsContent>
           </Tabs>
         </div>
-      </div>
+      </section>
+      
+      {/* Testimonials Section */}
+      <section className={`py-16 ${isDark ? 'bg-gray-900' : 'bg-white'}`}>
+        <div className="container mx-auto px-4">
+          <h2 className={`text-3xl font-serif font-bold text-center mb-12 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+            Success Stories
+          </h2>
+          <div className="grid md:grid-cols-3 gap-8">
+            {testimonialsData.map((testimonial) => (
+              <Card key={testimonial.id} className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white'}`}>
+                <CardContent className="pt-6">
+                  <div className="flex items-center mb-4">
+                    <div className="w-12 h-12 rounded-full overflow-hidden mr-4">
+                      <img 
+                        src={testimonial.avatar} 
+                        alt={testimonial.name} 
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div>
+                      <h3 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{testimonial.name}</h3>
+                      <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{testimonial.role}</p>
+                    </div>
+                  </div>
+                  <div className="flex mb-4">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Star key={star} className="h-4 w-4 text-yellow-500 fill-current" />
+                    ))}
+                  </div>
+                  <p className={`text-sm italic ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                    "{testimonial.comment}"
+                  </p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+      
+      {/* FAQ Section */}
+      <section className={`py-16 ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
+        <div className="container mx-auto px-4">
+          <h2 className={`text-3xl font-serif font-bold text-center mb-12 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+            Frequently Asked Questions
+          </h2>
+          <div className="max-w-3xl mx-auto space-y-4">
+            {faqData.map((faq) => (
+              <div 
+                key={faq.id} 
+                className={`rounded-lg overflow-hidden ${
+                  isDark 
+                    ? 'bg-gray-700 border border-gray-600' 
+                    : 'bg-white border border-gray-200'
+                }`}
+              >
+                <button
+                  className="w-full text-left p-4 flex justify-between items-center"
+                  onClick={() => toggleFAQ(faq.id)}
+                >
+                  <span className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                    {faq.question}
+                  </span>
+                  {expandedFAQ === faq.id ? (
+                    <ChevronUp className={`h-5 w-5 ${isDark ? 'text-gray-300' : 'text-gray-600'}`} />
+                  ) : (
+                    <ChevronDown className={`h-5 w-5 ${isDark ? 'text-gray-300' : 'text-gray-600'}`} />
+                  )}
+                </button>
+                {expandedFAQ === faq.id && (
+                  <div className={`p-4 pt-0 border-t ${isDark ? 'border-gray-600' : 'border-gray-200'}`}>
+                    <p className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                      {faq.answer}
+                    </p>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+      
+      {/* CTA Section */}
+      <section className={`py-16 ${isDark ? 'bg-gray-900' : 'bg-white'}`}>
+        <div className="container mx-auto px-4">
+          <div className={`max-w-4xl mx-auto rounded-xl overflow-hidden shadow-xl ${
+            isDark 
+              ? 'bg-gradient-to-r from-blue-900 to-purple-900' 
+              : 'bg-gradient-to-r from-blue-600 to-purple-700'
+          }`}>
+            <div className="p-8 md:p-12 text-white text-center">
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">Ready to Start Earning with Halvi?</h2>
+              <p className="text-lg mb-8 opacity-90">
+                Join our community today and start earning on your own schedule.
+              </p>
+              <div className="flex flex-col sm:flex-row justify-center gap-4">
+                <Button 
+                  onClick={() => setActiveTab('affiliate')}
+                  className="py-6 px-8 text-lg bg-white text-blue-700 hover:bg-gray-100"
+                >
+                  <Rocket className="mr-2 h-5 w-5" />
+                  Become an Affiliate
+                </Button>
+                <Button 
+                  onClick={() => setActiveTab('driver')}
+                  className="py-6 px-8 text-lg bg-white text-purple-700 hover:bg-gray-100"
+                >
+                  <Car className="mr-2 h-5 w-5" />
+                  Apply as a Driver
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
       
       <Footer />
     </div>
