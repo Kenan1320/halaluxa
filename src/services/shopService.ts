@@ -1,10 +1,11 @@
-
 import { db } from '@/integrations/supabase/client';
-import { Shop } from '@/types/database';
+import { Shop } from '@/types/shop';
 import { normalizeShop } from '@/lib/utils';
 import { getDistance } from 'geolib';
 import { Product } from '@/models/product';
 import { normalizeProduct } from '@/lib/productUtils';
+
+export type { Shop };
 
 export const getShops = async (): Promise<Shop[]> => {
   try {
@@ -21,7 +22,6 @@ export const getShops = async (): Promise<Shop[]> => {
   }
 };
 
-// This is an alias for getShops to maintain compatibility
 export const getAllShops = getShops;
 
 export const getShopById = async (id: string): Promise<Shop | null> => {
@@ -47,7 +47,6 @@ export const getNearbyShops = async (
   radius = 10 // km
 ): Promise<Shop[]> => {
   try {
-    // Get all shops if no location is provided
     const { data, error } = await db
       .from('shops')
       .select('*');
@@ -56,19 +55,17 @@ export const getNearbyShops = async (
     
     if (!data) return [];
     
-    // If no location is provided, return all shops without distance
     if (!latitude || !longitude) {
       return data.map(normalizeShop);
     }
     
-    // Calculate distance for each shop
     const shopsWithDistance = data
       .filter(shop => shop.latitude && shop.longitude)
       .map(shop => {
         const distance = getDistance(
           { latitude, longitude },
           { latitude: shop.latitude!, longitude: shop.longitude! }
-        ) / 1000; // Convert to km
+        ) / 1000;
         
         return {
           ...normalizeShop(shop),
@@ -87,7 +84,6 @@ export const getNearbyShops = async (
 
 export const createShop = async (shop: Partial<Shop>): Promise<Shop | null> => {
   try {
-    // Ensure required fields are present
     if (!shop.name || !shop.description || !shop.category || !shop.location) {
       throw new Error('Missing required fields for shop creation');
     }
@@ -155,7 +151,6 @@ export const deleteShop = async (id: string): Promise<boolean> => {
   }
 };
 
-// Function to get a user's main shop
 export const getMainShop = async (): Promise<Shop | null> => {
   try {
     const mainShopId = localStorage.getItem('mainShopId');
@@ -168,18 +163,14 @@ export const getMainShop = async (): Promise<Shop | null> => {
   }
 };
 
-// Subscribe to shop updates
 export const subscribeToShops = (callback: (shops: Shop[]) => void) => {
-  // Set up initial fetch
   getShops().then(shops => {
     callback(shops);
   });
   
-  // Set up realtime subscription
   const channel = db
     .channel('shops-changes')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'shops' }, async () => {
-      // Refetch shops when changes occur
       const shops = await getShops();
       callback(shops);
     })
@@ -188,7 +179,6 @@ export const subscribeToShops = (callback: (shops: Shop[]) => void) => {
   return channel;
 };
 
-// Function to get products from a specific shop
 export const getShopProducts = async (shopId: string): Promise<Product[]> => {
   try {
     const { data, error } = await db
@@ -206,5 +196,4 @@ export const getShopProducts = async (shopId: string): Promise<Product[]> => {
   }
 };
 
-// Helper function to convert database product to model product
 export const convertToModelProduct = normalizeProduct;

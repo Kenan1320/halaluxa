@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { CartItem } from '@/models/cart';
 import { Product } from '@/models/product';
@@ -124,20 +123,23 @@ export const createSellerAccount = async (
       id: 'mock-id',
       user_id: user.user.id,
       shop_id: accountData.shop_id || 'mock-shop-id',
-      account_type: accountData.account_type || 'bank',
+      account_type: accountData.account_type as 'bank' | 'paypal' | 'stripe' | 'applepay' | 'individual' | 'business',
       account_name: accountData.account_name || 'Default Account',
       account_number: accountData.account_number || 'N/A',
       bank_name: accountData.bank_name || 'N/A',
       paypal_email: accountData.paypal_email || '',
       stripe_account_id: accountData.stripe_account_id || '',
       applepay_merchant_id: accountData.applepay_merchant_id || '',
-      is_active: true,
+      account_status: 'pending',
+      payout_details: {
+        bank_name: '',
+        account_holder: '',
+        account_number_last4: '',
+        routing_number_last4: '',
+        paypal_email: ''
+      },
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-      is_verified: false,
-      balance: 0,
-      currency: 'USD',
-      routing_number: accountData.routing_number || ''
     };
   } catch (error) {
     console.error('Error creating seller account:', error);
@@ -169,13 +171,16 @@ export const getSellerAccount = async (): Promise<SellerAccount | null> => {
       paypal_email: '',
       stripe_account_id: '',
       applepay_merchant_id: '',
-      is_active: true,
+      account_status: 'pending',
+      payout_details: {
+        bank_name: '',
+        account_holder: '',
+        account_number_last4: '',
+        routing_number_last4: '',
+        paypal_email: ''
+      },
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-      is_verified: false,
-      balance: 0,
-      currency: 'USD',
-      routing_number: ''
     };
   } catch (error) {
     console.error('Error fetching seller account:', error);
@@ -207,13 +212,16 @@ export const getAllSellerAccounts = async (): Promise<SellerAccount[]> => {
       paypal_email: '',
       stripe_account_id: '',
       applepay_merchant_id: '',
-      is_active: true,
+      account_status: 'pending',
+      payout_details: {
+        bank_name: '',
+        account_holder: '',
+        account_number_last4: '',
+        routing_number_last4: '',
+        paypal_email: ''
+      },
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-      is_verified: false,
-      balance: 0,
-      currency: 'USD',
-      routing_number: ''
     }];
   } catch (error) {
     console.error('Error fetching seller accounts:', error);
@@ -259,20 +267,23 @@ export const updateSellerAccount = async (
       id: accountData.id,
       user_id: user.user.id,
       shop_id: accountData.shop_id || 'mock-shop-id',
-      account_type: accountData.account_type || 'bank',
+      account_type: accountData.account_type as 'bank' | 'paypal' | 'stripe' | 'applepay' | 'individual' | 'business',
       account_name: accountData.account_name || 'Updated Account',
       account_number: accountData.account_number || '****5678',
       bank_name: accountData.bank_name || 'Updated Bank',
       paypal_email: accountData.paypal_email || '',
       stripe_account_id: accountData.stripe_account_id || '',
       applepay_merchant_id: accountData.applepay_merchant_id || '',
-      is_active: true,
+      account_status: 'pending',
+      payout_details: {
+        bank_name: '',
+        account_holder: '',
+        account_number_last4: '',
+        routing_number_last4: '',
+        paypal_email: ''
+      },
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-      is_verified: false,
-      balance: 0,
-      currency: 'USD',
-      routing_number: accountData.routing_number || ''
     };
   } catch (error) {
     console.error('Error updating seller account:', error);
@@ -314,7 +325,7 @@ export const initializeSellerAccount = async (
       account_name: accountName,
       account_number: accountNumber,
       bank_name: bankName,
-      account_type: accountType,
+      account_type: accountType as 'bank' | 'paypal' | 'stripe' | 'applepay' | 'individual' | 'business',
       paypal_email: paypalEmail,
       stripe_account_id: stripeAccountId,
       applepay_merchant_id: applePayMerchantId

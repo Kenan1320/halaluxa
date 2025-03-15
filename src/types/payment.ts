@@ -5,7 +5,7 @@ export interface PaymentAccount {
   shop_id: string;
   account_type: 'individual' | 'business' | 'bank' | 'paypal' | 'stripe' | 'applepay';
   account_status: 'pending' | 'active' | 'suspended';
-  payout_details?: {
+  payout_details: {
     bank_name?: string;
     account_holder?: string;
     account_number_last4?: string;
@@ -22,4 +22,8 @@ export interface PaymentAccount {
   stripe_account_id?: string;
   applepay_merchant_id?: string;
   routing_number?: string;
+  is_active?: boolean;
+  is_verified?: boolean;
+  balance?: number;
+  currency?: string;
 }

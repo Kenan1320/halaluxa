@@ -27,6 +27,17 @@ export interface ShopDetails extends Shop {
   products?: number;
   followers?: number;
   reviews?: number;
+  logo?: string; // Alias for logo_url
+  rating: {
+    average: number;
+    count: number;
+  };
+  deliveryInfo: {
+    deliveryFee: number;
+    estimatedTime: string;
+  };
+  isGroupOrderEnabled?: boolean;
+  categories?: ShopCategory[];
 }
 
 // Add ShopCategory for ShopDetail page

@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from 'react';
 import { ArrowLeft, Heart, Search, MoreHorizontal, Clock, Users, Menu, X } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -44,11 +43,11 @@ export function ShopHeader({ shop }: ShopHeaderProps) {
   const shopCategories = shop.categories && shop.categories.length > 0
     ? shop.categories
     : [
-        { id: '1', name: 'Popular Items', products: [] },
-        { id: '2', name: 'Appetizers', products: [] },
-        { id: '3', name: 'Main Courses', products: [] },
-        { id: '4', name: 'Desserts', products: [] },
-        { id: '5', name: 'Beverages', products: [] },
+        { id: '1', name: 'Popular Items', count: 0 },
+        { id: '2', name: 'Appetizers', count: 0 },
+        { id: '3', name: 'Main Courses', count: 0 },
+        { id: '4', name: 'Desserts', count: 0 },
+        { id: '5', name: 'Beverages', count: 0 },
       ];
 
   return (
@@ -96,7 +95,7 @@ export function ShopHeader({ shop }: ShopHeaderProps) {
         <div className="absolute bottom-0 inset-x-0 flex flex-col items-center mb-4">
           <div className="w-20 h-20 rounded-full bg-white p-1 mb-2">
             <img 
-              src={shop.logo || '/placeholder.svg'} 
+              src={shop.logo_url || '/placeholder.svg'} 
               alt={shop.name} 
               className="w-full h-full object-cover rounded-full"
             />
@@ -104,9 +103,9 @@ export function ShopHeader({ shop }: ShopHeaderProps) {
           <div className="text-white text-center">
             <h1 className="text-2xl font-bold">{shop.name}</h1>
             <div className="flex items-center justify-center gap-2 text-sm">
-              <span>⭐ {shop.rating.average}</span>
+              <span>⭐ {shop.rating?.average || shop.rating || 0}</span>
               <span>•</span>
-              <span>({shop.rating.count}+ ratings)</span>
+              <span>({shop.rating?.count || '0'}+ ratings)</span>
             </div>
           </div>
         </div>
@@ -141,7 +140,7 @@ export function ShopHeader({ shop }: ShopHeaderProps) {
               Pickup
             </Toggle>
           </div>
-          {shop.isGroupOrderEnabled && (
+          {(shop.isGroupOrderEnabled === true) && (
             <Button 
               variant="outline" 
               className={`rounded-full gap-2 ${
@@ -159,7 +158,9 @@ export function ShopHeader({ shop }: ShopHeaderProps) {
             isDark ? 'bg-gray-800 border border-gray-700' : 'bg-card'
           }`}>
             <p className={`text-lg font-semibold ${isDark ? 'text-white' : ''}`}>
-              ${deliveryMode === 'delivery' ? shop.deliveryInfo.deliveryFee.toFixed(2) : '0.00'}
+              ${deliveryMode === 'delivery' ? 
+                shop.deliveryInfo?.deliveryFee.toFixed(2) || '0.00' : 
+                '0.00'}
             </p>
             <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-muted-foreground'}`}>
               {deliveryMode === 'delivery' ? 'Delivery fee' : 'No fee for pickup'}
@@ -170,7 +171,9 @@ export function ShopHeader({ shop }: ShopHeaderProps) {
           }`}>
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4 text-primary" />
-              <p className={`text-lg font-semibold ${isDark ? 'text-white' : ''}`}>{shop.deliveryInfo.estimatedTime}</p>
+              <p className={`text-lg font-semibold ${isDark ? 'text-white' : ''}`}>
+                {shop.deliveryInfo?.estimatedTime || '15-25 min'}
+              </p>
             </div>
             <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-muted-foreground'}`}>Earliest arrival</p>
           </div>

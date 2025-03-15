@@ -56,15 +56,6 @@ export const normalizeProduct = (product: any): Product => {
     stock: product.stock,
     pickup_options: product.pickup_options || { store: true, curbside: false },
     delivery_mode: product.delivery_mode || 'pickup',
-    
-    // Set frontend aliases
-    shopId: product.shop_id || product.shopId,
-    isHalalCertified: product.is_halal_certified || product.isHalalCertified,
-    inStock: product.in_stock ?? product.inStock ?? true,
-    createdAt: product.created_at || product.createdAt,
-    updatedAt: product.updated_at || product.updatedAt,
-    sellerId: product.seller_id || product.sellerId,
-    sellerName: product.seller_name || product.sellerName
   };
   
   return normalized;

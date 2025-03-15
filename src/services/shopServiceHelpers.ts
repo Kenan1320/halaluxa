@@ -1,6 +1,8 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { Shop, ShopProduct } from '@/models/shop';
+// Update import to use the same Shop type everywhere
+import { Shop } from '@/types/shop';
+import { ShopProduct } from '@/models/shop';
 import { Product } from '@/models/product';
 import { normalizeShop, normalizeProduct } from '@/lib/normalizeData';
 

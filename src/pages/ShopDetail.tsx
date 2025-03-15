@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getShopById } from '@/services/shopService';
@@ -7,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MapPin, Clock, CheckCircle, Star, Store, ShoppingBag } from 'lucide-react';
-import ShopHeader from '@/components/shop/ShopHeader';
+import { ShopHeader } from '@/components/shop/ShopHeader';
 import { Shop, ShopDetails, Category } from '@/types/shop';
 
 const ShopDetail = () => {
@@ -31,12 +30,11 @@ const ShopDetail = () => {
           return;
         }
         
-        // Convert to ShopDetails with additional fields
         const shopDetails: ShopDetails = {
           ...shopData,
-          products: Math.floor(Math.random() * 100) + 20, // Mock data
-          followers: Math.floor(Math.random() * 1000) + 50, // Mock data
-          reviews: Math.floor(Math.random() * 500) + 10, // Mock data
+          products: Math.floor(Math.random() * 100) + 20,
+          followers: Math.floor(Math.random() * 1000) + 50,
+          reviews: Math.floor(Math.random() * 500) + 10,
         };
         
         setShop(shopDetails);
@@ -77,7 +75,6 @@ const ShopDetail = () => {
     );
   }
   
-  // Mocked categories for this shop
   const shopCategories: Category[] = [
     { id: '1', name: 'Popular Items', group: 'popular', created_at: '', updated_at: '' },
     { id: '2', name: 'New Arrivals', group: 'featured', created_at: '', updated_at: '' },
@@ -175,11 +172,7 @@ const ShopDetail = () => {
                       <div>
                         <h4 className="font-medium">Verification</h4>
                         <div>
-                          {shop.is_verified ? (
-                            <Badge variant="success">Verified Shop</Badge>
-                          ) : (
-                            <Badge variant="outline">Not Verified</Badge>
-                          )}
+                          <Badge variant="outline" className="bg-green-100 text-green-800 border-green-300">Verified Shop</Badge>
                         </div>
                       </div>
                     </div>

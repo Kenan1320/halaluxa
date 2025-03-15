@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -10,7 +9,7 @@ const UserProfilePage = () => {
   const { user, updateUserProfile } = useAuth();
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState({
+  const [profile, setProfile] = useState({
     name: user?.name || '',
     email: user?.email || '',
     phone: user?.phone || '',
@@ -23,7 +22,7 @@ const UserProfilePage = () => {
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setProfile(prev => ({ ...prev, [name]: value }));
   };
   
   const handleSubmit = async (e: React.FormEvent) => {
@@ -32,12 +31,12 @@ const UserProfilePage = () => {
     
     try {
       await updateUserProfile({
-        name: formData.name,
-        phone: formData.phone,
-        address: formData.address,
-        city: formData.city,
-        state: formData.state,
-        zip: formData.zip,
+        name: profile.name,
+        phone: profile.phone,
+        address: profile.address,
+        city: profile.city,
+        state: profile.state,
+        zip: profile.zip,
       });
       
       setIsEditing(false);
@@ -78,7 +77,7 @@ const UserProfilePage = () => {
                 <Input
                   id="name"
                   name="name"
-                  value={formData.name}
+                  value={profile.name}
                   onChange={handleChange}
                   disabled={!isEditing || isSubmitting}
                 />
@@ -91,7 +90,7 @@ const UserProfilePage = () => {
                 <Input
                   id="email"
                   name="email"
-                  value={formData.email}
+                  value={profile.email}
                   disabled={true}
                   readOnly
                 />
@@ -104,7 +103,7 @@ const UserProfilePage = () => {
                 <Input
                   id="phone"
                   name="phone"
-                  value={formData.phone}
+                  value={profile.phone}
                   onChange={handleChange}
                   disabled={!isEditing || isSubmitting}
                 />
@@ -117,9 +116,11 @@ const UserProfilePage = () => {
                 <Input
                   id="address"
                   name="address"
-                  value={formData.address}
-                  onChange={handleChange}
-                  disabled={!isEditing || isSubmitting}
+                  type="text"
+                  value={typeof profile.address === 'string' ? profile.address : JSON.stringify(profile.address)}
+                  onChange={(e) => setProfile({ ...profile, address: e.target.value })}
+                  className="border rounded p-2 w-full"
+                  required
                 />
               </div>
               
@@ -131,7 +132,7 @@ const UserProfilePage = () => {
                   <Input
                     id="city"
                     name="city"
-                    value={formData.city}
+                    value={profile.city}
                     onChange={handleChange}
                     disabled={!isEditing || isSubmitting}
                   />
@@ -144,7 +145,7 @@ const UserProfilePage = () => {
                   <Input
                     id="state"
                     name="state"
-                    value={formData.state}
+                    value={profile.state}
                     onChange={handleChange}
                     disabled={!isEditing || isSubmitting}
                   />
@@ -158,7 +159,7 @@ const UserProfilePage = () => {
                 <Input
                   id="zip"
                   name="zip"
-                  value={formData.zip}
+                  value={profile.zip}
                   onChange={handleChange}
                   disabled={!isEditing || isSubmitting}
                 />
