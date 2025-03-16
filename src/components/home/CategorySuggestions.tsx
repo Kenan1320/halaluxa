@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import { useTheme } from '@/context/ThemeContext';
 import { getCategoryIcon } from '../icons/CategoryIcons';
 import { getCategoriesByGroup, Category } from '@/services/categoryService';
+import { MapPin, ShoppingBag } from 'lucide-react';
 
 const TabItem = ({ isActive, onClick, icon, children }: {
   isActive: boolean;
@@ -80,9 +81,9 @@ export default function CategorySuggestions() {
             setActiveTab('nearby');
             setSelectedCategory(null);
           }}
-          icon={getCategoryIcon('Groceries', 'w-5 h-5')}
+          icon={<MapPin className="w-5 h-5" />}
         >
-          Halvi't Nearby
+          Halvi Local
         </TabItem>
         <TabItem
           isActive={activeTab === 'online'}
@@ -90,7 +91,7 @@ export default function CategorySuggestions() {
             setActiveTab('online');
             setSelectedCategory(null);
           }}
-          icon={getCategoryIcon('Online Shops', 'w-5 h-5')}
+          icon={<ShoppingBag className="w-5 h-5" />}
         >
           Halvi Mall
         </TabItem>

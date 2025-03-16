@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X, Search, ShoppingCart, User, MapPin, Store, AlertCircle, Home, Package, CreditCard, Settings, LogOut, Info, HelpCircle, Moon, Sun, Flame } from 'lucide-react';
@@ -87,6 +88,7 @@ const Navbar = () => {
         className="text-xl font-serif font-bold text-white italic"
         style={{ 
           fontFamily: "'Playfair Display', serif", 
+          fontWeight: 600,
           textShadow: "0 1px 2px rgba(0,0,0,0.1)",
           letterSpacing: "0.02em"
         }}

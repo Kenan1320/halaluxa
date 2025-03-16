@@ -1,4 +1,3 @@
-
 export interface Shop {
   id: string;
   name: string;
@@ -71,4 +70,12 @@ export interface ReviewWithUser {
   created_at: string;
   user_name: string;
   user_avatar?: string;
+}
+
+export interface ShopDetails extends Shop {
+  products: any[];
+  followers: number;
+  reviews: any[];
+  deliveryInfo: any;
+  isGroupOrderEnabled: boolean;
 }

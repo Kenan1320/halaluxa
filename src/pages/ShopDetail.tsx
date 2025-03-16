@@ -3,19 +3,19 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTheme } from '@/context/ThemeContext';
 import { getShopById } from '@/services/shopService';
-import { ShopHeader } from '@/components/shop/ShopHeader'; // Updated import syntax
+import { ShopHeader } from '@/components/shop/ShopHeader';
 import ShopProductList from '@/components/shop/ShopProductList';
 import ReviewList from '@/components/shop/ReviewList';
-import { Shop, ShopDetails } from '@/types/shop';
+import { Shop, ShopDetails } from '@/models/shop';
 import { Product } from '@/models/product';
 import { getProducts } from '@/services/productService';
-import { getReviews } from '@/services/reviewService'; // Corrected import
+import { getReviews } from '@/services/reviewService';
 import { normalizeShop } from '@/utils/shopHelper';
 
 const ShopDetail = () => {
   const { shopId } = useParams<{ shopId: string }>();
   const { mode } = useTheme();
-  const [shop, setShop] = useState<Shop | null>(null);
+  const [shop, setShop] = useState<ShopDetails | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [reviews, setReviews] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -41,14 +41,25 @@ const ShopDetail = () => {
           return;
         }
 
-        setShop(normalizeShop(shopData));
+        // Convert normal Shop to ShopDetails
+        const normalizedShop = normalizeShop(shopData);
+        const shopDetails: ShopDetails = {
+          ...normalizedShop,
+          products: [],
+          followers: 0,
+          reviews: [],
+          deliveryInfo: {},
+          isGroupOrderEnabled: false
+        };
+        
+        setShop(shopDetails);
 
         // Fetch products for the shop
         const productsData = await getProducts({ shop_id: shopId });
         setProducts(productsData.data);
 
-        // Fetch reviews for the shop - removed the argument here
-        const reviewsData = await getReviews(); // Removed { shop_id: shopId }
+        // Fetch reviews for the shop
+        const reviewsData = await getReviews();
         setReviews(reviewsData);
       } catch (err: any) {
         setError(err.message || 'Failed to load shop details.');
