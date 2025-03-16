@@ -18,7 +18,7 @@ export interface Product {
   stock?: number;
   is_published?: boolean;
   long_description?: string;
-  delivery_mode?: 'pickup' | 'online' | 'local_delivery' | 'both';
+  delivery_mode?: 'pickup' | 'online' | 'local_delivery';
   pickup_options?: {
     store: boolean;
     curbside: boolean;
@@ -42,3 +42,22 @@ export interface ProductResponse {
   error: string | null;
   filter: (predicate: (product: Product) => boolean) => Product[];
 }
+
+// Adding productCategories for use in multiple components
+export const productCategories = [
+  'Clothing',
+  'Electronics',
+  'Grocery',
+  'Home',
+  'Beauty',
+  'Books',
+  'Toys',
+  'Sports',
+  'Health',
+  'Jewelry',
+  'Automotive',
+  'Garden',
+  'Food',
+  'Meat',
+  'Accessories'
+];

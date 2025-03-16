@@ -61,7 +61,7 @@ const formSchema = z.object({
   pickup_options: z.object({
     store: z.boolean().default(true),
     curbside: z.boolean().default(false),
-  }).optional(),
+  }),
 });
 
 const AddEditProductPage = () => {
@@ -187,7 +187,12 @@ const AddEditProductPage = () => {
         details: values.details,
         shop_id: shop.id,
         delivery_mode: values.delivery_mode,
-        pickup_options: values.pickup_options || { store: true, curbside: false },
+        pickup_options: {
+          store: values.pickup_options.store,
+          curbside: values.pickup_options.curbside
+        },
+        seller_id: shop.owner_id,
+        seller_name: shop.name,
       };
       
       if (isEditMode && id) {

@@ -1,4 +1,3 @@
-
 import { type } from "os";
 
 export interface Shop {
@@ -7,15 +6,15 @@ export interface Shop {
   description: string;
   location: string;
   address?: string;
-  logo_url?: string;
+  logo_url: string;
   cover_image?: string;
   owner_id: string;
   is_verified?: boolean;
   category: string;
   rating?: number;
   product_count?: number;
-  created_at?: string;
-  updated_at?: string;
+  created_at: string;
+  updated_at: string;
   latitude?: number;
   longitude?: number;
   distance?: number;

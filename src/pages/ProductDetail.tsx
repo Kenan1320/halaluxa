@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Navbar from '@/components/layout/Navbar';
@@ -189,7 +190,7 @@ const ProductDetail = () => {
 
               <div className="flex items-center justify-between mb-6">
                 <div className="text-2xl font-bold text-haluna-primary">${product.price.toFixed(2)}</div>
-                {product.isHalalCertified && (
+                {product.is_halal_certified && (
                   <span className="bg-haluna-primary text-white text-xs px-2 py-1 rounded-full">
                     Halal Certified
                   </span>
@@ -198,7 +199,7 @@ const ProductDetail = () => {
 
               <div className="flex items-center justify-between mb-8">
                 <span className="text-haluna-text">
-                  Availability: {product.inStock ? 'In Stock' : 'Out of Stock'}
+                  Availability: {product.in_stock ? 'In Stock' : 'Out of Stock'}
                 </span>
                 <span className="text-haluna-text">
                   Category: {product.category}
@@ -208,10 +209,10 @@ const ProductDetail = () => {
               <Button
                 size="lg"
                 onClick={() => handleAddToCart(product)}
-                disabled={!product.inStock}
+                disabled={!product.in_stock}
                 className="w-full flex items-center justify-center"
               >
-                {product.inStock ? (
+                {product.in_stock ? (
                   <>
                     Add to Cart <ShoppingBag className="ml-2" />
                   </>

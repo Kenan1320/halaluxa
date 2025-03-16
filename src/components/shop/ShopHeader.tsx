@@ -67,9 +67,9 @@ export const ShopHeader: React.FC<ShopHeaderProps> = ({
               <div className="flex items-center">
                 <StarIcon className="w-4 h-4 text-yellow-400" />
                 <span className="ml-1">
-                  {typeof shop.rating === 'object' ? shop.rating.average.toFixed(1) : '0.0'} 
+                  {shop.rating && typeof shop.rating === 'object' ? shop.rating.average.toFixed(1) : '0.0'} 
                   <span className="text-gray-500">
-                    ({typeof shop.rating === 'object' ? shop.rating.count : 0} reviews)
+                    ({shop.rating && typeof shop.rating === 'object' ? shop.rating.count : 0} reviews)
                   </span>
                 </span>
               </div>

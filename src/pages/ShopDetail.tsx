@@ -1,14 +1,13 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ShopProductList } from '@/components/shop/ShopProductList';
-import { ReviewList } from '@/components/shop/ReviewList';
+import ShopProductList from '@/components/shop/ShopProductList';
+import ReviewList from '@/components/shop/ReviewList';
 import { ShopHeader } from '@/components/shop/ShopHeader';
 import { ShopDetails } from '@/types/shop';
 import { getShopById } from '@/services/shopService';
-import { getShopReviews } from '@/services/reviewService';
+import { getReviews } from '@/services/reviewService';
 
 const ShopDetail = () => {
   const { shopId } = useParams<{ shopId: string }>();
@@ -25,7 +24,6 @@ const ShopDetail = () => {
           const shopData = await getShopById(shopId);
           
           if (shopData) {
-            // Mock additional ShopDetails data not available in the Shop model
             const shopDetails: ShopDetails = {
               ...shopData,
               products: 42,

@@ -14,6 +14,17 @@ export const formatStock = (stock: number): string => {
 };
 
 export const normalizeProduct = (product: any): Product => {
+  // Convert details to a proper Record<string, any> if it's not already
+  let normalizedDetails: Record<string, any> = {};
+  if (product.details) {
+    if (typeof product.details === 'object' && !Array.isArray(product.details)) {
+      normalizedDetails = product.details;
+    } else {
+      // If details is not an object, store it in a 'value' property
+      normalizedDetails = { value: product.details };
+    }
+  }
+
   return {
     id: product.id,
     name: product.name,
@@ -28,7 +39,7 @@ export const normalizeProduct = (product: any): Product => {
     updated_at: product.updated_at,
     is_published: product.is_published ?? true,
     is_halal_certified: product.is_halal_certified ?? false,
-    details: product.details as Json || {},
+    details: normalizedDetails,
     in_stock: product.in_stock ?? (product.stock > 0),
     delivery_mode: product.delivery_mode || 'pickup',
     pickup_options: product.pickup_options || {

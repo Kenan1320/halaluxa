@@ -32,20 +32,20 @@ const Cart = () => {
         const sellerGroups: Record<string, any[]> = {};
         
         cart.items.forEach(item => {
-          if (!sellerGroups[item.product.sellerId]) {
-            sellerGroups[item.product.sellerId] = [];
+          if (!sellerGroups[item.product.seller_id]) {
+            sellerGroups[item.product.seller_id] = [];
           }
-          sellerGroups[item.product.sellerId].push(item);
+          sellerGroups[item.product.seller_id].push(item);
         });
         
         // Then, fetch shop details for each seller
         await Promise.all(
-          Object.keys(sellerGroups).map(async (sellerId) => {
-            const shop = await getShopById(sellerId);
-            groups[sellerId] = {
+          Object.keys(sellerGroups).map(async (seller_id) => {
+            const shop = await getShopById(seller_id);
+            groups[seller_id] = {
               shop,
-              items: sellerGroups[sellerId],
-              subtotal: sellerGroups[sellerId].reduce(
+              items: sellerGroups[seller_id],
+              subtotal: sellerGroups[seller_id].reduce(
                 (sum, item) => sum + (item.product.price * item.quantity), 
                 0
               )
