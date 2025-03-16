@@ -1,10 +1,10 @@
-
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { InputWithIcon } from '@/components/ui/input-with-icon';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
@@ -152,7 +152,6 @@ const SettingsPage = () => {
         updated_at: new Date().toISOString()
       };
       
-      // Handle logo upload if changed
       if (logoFile) {
         const { data: logoData, error: logoError } = await supabase.storage
           .from('shop_logos')
@@ -167,7 +166,6 @@ const SettingsPage = () => {
         updates.logo_url = logoUrl.publicUrl;
       }
       
-      // Handle cover upload if changed
       if (coverFile) {
         const { data: coverData, error: coverError } = await supabase.storage
           .from('shop_covers')
@@ -182,7 +180,6 @@ const SettingsPage = () => {
         updates.cover_image = coverUrl.publicUrl;
       }
       
-      // Update shop data
       const { error } = await supabase
         .from('shops')
         .update(updates)
@@ -195,7 +192,6 @@ const SettingsPage = () => {
         description: 'Shop details updated successfully',
       });
       
-      // Update user profile with shop info if needed
       await updateUser({
         shop_name: updates.name,
         shop_category: updates.category,
@@ -343,7 +339,7 @@ const SettingsPage = () => {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="location">Location</Label>
-                      <Input 
+                      <InputWithIcon 
                         id="location" 
                         name="location"
                         placeholder="City, State" 
@@ -473,7 +469,7 @@ const SettingsPage = () => {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="phone">Phone Number</Label>
-                      <Input 
+                      <InputWithIcon 
                         id="phone" 
                         name="phone"
                         placeholder="(123) 456-7890" 
@@ -485,7 +481,7 @@ const SettingsPage = () => {
                     
                     <div className="space-y-2">
                       <Label htmlFor="email">Email</Label>
-                      <Input 
+                      <InputWithIcon 
                         id="email" 
                         name="email"
                         type="email"
@@ -499,7 +495,7 @@ const SettingsPage = () => {
                   
                   <div className="space-y-2">
                     <Label htmlFor="website">Website</Label>
-                    <Input 
+                    <InputWithIcon 
                       id="website" 
                       name="website"
                       placeholder="https://yourwebsite.com" 
@@ -556,3 +552,4 @@ const SettingsPage = () => {
 };
 
 export default SettingsPage;
+

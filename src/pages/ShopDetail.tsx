@@ -1,14 +1,15 @@
+
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTheme } from '@/context/ThemeContext';
 import { getShopById } from '@/services/shopService';
-import ShopHeader from '@/components/shop/ShopHeader';
+import { ShopHeader } from '@/components/shop/ShopHeader'; // Updated import syntax
 import ShopProductList from '@/components/shop/ShopProductList';
 import ReviewList from '@/components/shop/ReviewList';
 import { Shop, ShopDetails } from '@/types/shop';
 import { Product } from '@/models/product';
 import { getProducts } from '@/services/productService';
-import { getReviews } from '@/services/reviewService';
+import { getReviews } from '@/services/reviewService'; // Corrected import
 import { normalizeShop } from '@/utils/shopHelper';
 
 const ShopDetail = () => {
@@ -46,8 +47,8 @@ const ShopDetail = () => {
         const productsData = await getProducts({ shop_id: shopId });
         setProducts(productsData.data);
 
-        // Fetch reviews for the shop
-        const reviewsData = await getReviews({ shop_id: shopId });
+        // Fetch reviews for the shop - removed the argument here
+        const reviewsData = await getReviews(); // Removed { shop_id: shopId }
         setReviews(reviewsData);
       } catch (err: any) {
         setError(err.message || 'Failed to load shop details.');
@@ -84,7 +85,7 @@ const ShopDetail = () => {
       <ShopHeader shop={shop} />
 
       <div className="container mx-auto p-4">
-        <ShopProductList products={products} />
+        <ShopProductList products={products} shopId={shopId || ''} />
 
         <section className="mt-8">
           <h2 className="text-2xl font-bold mb-4">Customer Reviews</h2>
