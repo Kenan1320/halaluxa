@@ -14,6 +14,7 @@ import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import AuthMiddleware from "@/components/auth/AuthMiddleware";
 import Navbar from "@/components/layout/Navbar";
 import BottomNavigation from "@/components/layout/BottomNavigation";
+import { ensureBusinessAccount } from "@/utils/seedBusinessAccount";
 
 // Pages
 import Index from "./pages/Index";
@@ -62,6 +63,11 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+// Initialize the business test account
+if (import.meta.env.DEV) {
+  ensureBusinessAccount();
+}
 
 const AppRoutes = () => {
   const location = useLocation();

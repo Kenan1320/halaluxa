@@ -2,38 +2,55 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { Shop } from '@/services/shopService';
+import { Shop } from '@/types/shop';
 import { useTheme } from '@/context/ThemeContext';
+import { normalizeShop } from '@/utils/shopHelper';
 
 interface ShopLogoScrollerProps {
   shops: Shop[];
+  backgroundMode?: 'orange' | 'blue' | 'green';
 }
 
-const ShopLogoScroller = ({ shops }: ShopLogoScrollerProps) => {
+const ShopLogoScroller = ({ shops, backgroundMode: initialMode = 'orange' }: ShopLogoScrollerProps) => {
   const { mode } = useTheme();
-  const [backgroundMode, setBackgroundMode] = useState<'orange' | 'blue'>('orange');
+  const [backgroundMode, setBackgroundMode] = useState<'orange' | 'blue' | 'green'>(initialMode);
   
-  // Toggle between orange and blue backgrounds every 15 seconds
+  // Toggle between background colors every 15 seconds
   useEffect(() => {
     const interval = setInterval(() => {
-      setBackgroundMode(prev => prev === 'orange' ? 'blue' : 'orange');
+      setBackgroundMode(prev => {
+        if (prev === 'orange') return 'blue';
+        if (prev === 'blue') return 'green';
+        return 'orange';
+      });
     }, 15000);
     
     return () => clearInterval(interval);
   }, []);
   
-  if (shops.length === 0) return null;
+  if (!shops || shops.length === 0) return null;
+  
+  // Make sure we normalize all shops
+  const normalizedShops = shops.map(shop => normalizeShop(shop));
   
   return (
-    <div className="relative mt-6 mb-10 overflow-hidden">
+    <div className="relative mt-3 mb-6 overflow-hidden">
       {/* Dynamic gradient background that transitions */}
       <AnimatePresence mode="wait">
         <motion.div
           key={backgroundMode}
           className={`absolute inset-0 rounded-3xl ${
             mode === 'dark'
-              ? backgroundMode === 'orange' ? 'bg-gradient-to-r from-orange-900/30 via-orange-800/20 to-orange-900/30' : 'bg-gradient-to-r from-blue-900/30 via-blue-800/20 to-blue-900/30' 
-              : backgroundMode === 'orange' ? 'bg-gradient-to-r from-orange-100 via-orange-50 to-orange-100' : 'bg-gradient-to-r from-blue-100 via-blue-50 to-blue-100'
+              ? backgroundMode === 'orange' 
+                ? 'bg-gradient-to-r from-orange-900/30 via-orange-800/20 to-orange-900/30' 
+                : backgroundMode === 'blue' 
+                  ? 'bg-gradient-to-r from-blue-900/30 via-blue-800/20 to-blue-900/30'
+                  : 'bg-gradient-to-r from-green-900/30 via-green-800/20 to-green-900/30'
+              : backgroundMode === 'orange' 
+                ? 'bg-gradient-to-r from-orange-100 via-orange-50 to-orange-100' 
+                : backgroundMode === 'blue'
+                  ? 'bg-gradient-to-r from-blue-100 via-blue-50 to-blue-100'
+                  : 'bg-gradient-to-r from-green-100 via-green-50 to-green-100'
           }`}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -60,7 +77,7 @@ const ShopLogoScroller = ({ shops }: ShopLogoScrollerProps) => {
           repeatType: "loop"
         }}
       >
-        {[...shops, ...shops, ...shops].map((shop, index) => (
+        {[...normalizedShops, ...normalizedShops, ...normalizedShops].map((shop, index) => (
           <motion.div
             key={`${shop.id}-flow1-${index}`}
             className="mx-4 flex flex-col items-center"
@@ -110,7 +127,7 @@ const ShopLogoScroller = ({ shops }: ShopLogoScrollerProps) => {
           repeatType: "loop"
         }}
       >
-        {[...shops, ...shops, ...shops].map((shop, index) => (
+        {[...normalizedShops, ...normalizedShops, ...normalizedShops].map((shop, index) => (
           <motion.div
             key={`${shop.id}-flow2-${index}`}
             className="mx-4 flex flex-col items-center"

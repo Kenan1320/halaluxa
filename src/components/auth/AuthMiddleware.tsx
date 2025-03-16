@@ -2,7 +2,6 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
-import BusinessOnboarding from './BusinessOnboarding';
 
 export interface AuthMiddlewareProps {
   children: React.ReactNode;
@@ -10,33 +9,24 @@ export interface AuthMiddlewareProps {
 
 const AuthMiddleware = ({ children }: AuthMiddlewareProps) => {
   const { isInitializing, isLoggedIn, user } = useAuth();
-  const [needsOnboarding, setNeedsOnboarding] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Determine if business user needs onboarding
+  // Check if user is a business owner and redirect to dashboard
   useEffect(() => {
-    if (!isInitializing && isLoggedIn && user?.role === 'business' && !user?.shop_name) {
-      // If they don't have a shop name set, they need onboarding
-      setNeedsOnboarding(true);
-    } else {
-      setNeedsOnboarding(false);
+    if (!isInitializing && isLoggedIn && user?.role === 'business') {
+      // If they are on login/signup pages or at root, redirect to dashboard
+      if (location.pathname === '/' || 
+          location.pathname === '/login' || 
+          location.pathname === '/signup') {
+        navigate('/dashboard');
+      }
     }
-  }, [isInitializing, isLoggedIn, user]);
-
-  // Don't show the business onboarding if they're already in the onboarding flow
-  // or dashboard settings page where they can set up their shop
-  const isOnboardingOrSettings = 
-    location.pathname === '/business-onboarding' || 
-    location.pathname === '/dashboard/settings';
+  }, [isInitializing, isLoggedIn, user, location.pathname, navigate]);
 
   // Show a minimal loader only while auth is initializing
   if (isInitializing) {
     return null; // Return nothing while initializing to avoid any flash
-  }
-
-  if (needsOnboarding && !isOnboardingOrSettings) {
-    return <BusinessOnboarding />;
   }
 
   return <>{children}</>;

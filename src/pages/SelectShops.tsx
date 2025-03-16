@@ -4,8 +4,9 @@ import { useNavigate } from 'react-router-dom';
 import { CheckIcon } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Shop } from '@/models/shop';
+import { Shop } from '@/types/shop';
 import { getShops } from '@/services/shopService';
+import { normalizeShopArray } from '@/utils/shopHelper';
 
 const SelectShops = () => {
   const navigate = useNavigate();
@@ -20,8 +21,9 @@ const SelectShops = () => {
       setIsLoading(true);
       try {
         const shopsData = await getShops();
-        setShops(shopsData);
-        setFilteredShops(shopsData);
+        const normalizedShops = normalizeShopArray(shopsData);
+        setShops(normalizedShops);
+        setFilteredShops(normalizedShops);
       } catch (error) {
         console.error('Failed to load shops:', error);
       } finally {

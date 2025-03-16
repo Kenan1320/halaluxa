@@ -13,7 +13,7 @@ import CategorySuggestions from '@/components/home/CategorySuggestions';
 import { motion, useAnimationControls } from 'framer-motion';
 import { getShopById, subscribeToShops, getShops, Shop } from '@/services/shopService';
 import { useTheme } from '@/context/ThemeContext';
-import { normalizeShop } from '@/lib/utils';
+import { normalizeShop, normalizeShopArray } from '@/utils/shopHelper';
 import ShopLogoScroller from '@/components/home/ShopLogoScroller';
 
 const Index = () => {
@@ -21,6 +21,7 @@ const Index = () => {
   const { isLocationEnabled, requestLocation, location, getNearbyShops } = useLocation();
   const [selectedShops, setSelectedShops] = useState<Shop[]>([]);
   const [nearbyShops, setNearbyShops] = useState<Shop[]>([]);
+  const [onlineShops, setOnlineShops] = useState<Shop[]>([]);
   const [isLoadingShops, setIsLoadingShops] = useState(false);
   const [activeTab, setActiveTab] = useState('online');
   const { mode } = useTheme();
@@ -42,7 +43,7 @@ const Index = () => {
         const shopIds = JSON.parse(savedShopIds) as string[];
         const shopPromises = shopIds.map(id => getShopById(id));
         const shops = await Promise.all(shopPromises);
-        setSelectedShops(shops.filter((shop): shop is Shop => shop !== null));
+        setSelectedShops(normalizeShopArray(shops.filter(Boolean) as Shop[]));
       }
     } catch (error) {
       console.error('Error loading selected shops:', error);
@@ -55,16 +56,28 @@ const Index = () => {
     const loadAllShops = async () => {
       try {
         const allShops = await getShops();
-        setNearbyShops(allShops);
+        const normalizedShops = normalizeShopArray(allShops);
+        
+        // Split shops into nearby and online
+        const nearby = normalizedShops.filter(shop => 
+          shop.distance !== null && shop.distance < 10
+        ).slice(0, 10);
+        
+        const online = normalizedShops.filter(shop => 
+          shop.distance === null || shop.location === 'Online'
+        ).slice(0, 10);
+        
+        setNearbyShops(nearby);
+        setOnlineShops(online);
         
         if ((!localStorage.getItem('selectedShops') || 
              JSON.parse(localStorage.getItem('selectedShops') || '[]').length === 0) && 
-             allShops.length > 0) {
-          setSelectedShops(allShops.slice(0, 5));
-          localStorage.setItem('selectedShops', JSON.stringify(allShops.slice(0, 5).map(s => s.id)));
+             normalizedShops.length > 0) {
+          setSelectedShops(normalizedShops.slice(0, 5));
+          localStorage.setItem('selectedShops', JSON.stringify(normalizedShops.slice(0, 5).map(s => s.id)));
           
           if (!localStorage.getItem('mainShopId')) {
-            localStorage.setItem('mainShopId', allShops[0].id);
+            localStorage.setItem('mainShopId', normalizedShops[0].id);
           }
         }
         
@@ -76,8 +89,22 @@ const Index = () => {
     };
     
     const channel = subscribeToShops((shops) => {
-      if (shops.length > 0 && selectedShops.length === 0) {
-        const sortedShops = [...shops].sort((a, b) => (b.product_count || 0) - (a.product_count || 0));
+      const normalizedShops = normalizeShopArray(shops);
+      
+      // Split shops into nearby and online
+      const nearby = normalizedShops.filter(shop => 
+        shop.distance !== null && shop.distance < 10
+      ).slice(0, 10);
+      
+      const online = normalizedShops.filter(shop => 
+        shop.distance === null || shop.location === 'Online'
+      ).slice(0, 10);
+      
+      setNearbyShops(nearby);
+      setOnlineShops(online);
+      
+      if (normalizedShops.length > 0 && selectedShops.length === 0) {
+        const sortedShops = [...normalizedShops].sort((a, b) => (b.product_count || 0) - (a.product_count || 0));
         setSelectedShops(sortedShops.slice(0, 5));
         
         localStorage.setItem('selectedShops', JSON.stringify(sortedShops.slice(0, 5).map(s => s.id)));
@@ -87,7 +114,6 @@ const Index = () => {
         }
       }
       
-      setNearbyShops(shops);
       setIsLoadingShops(false);
     });
     
@@ -117,6 +143,14 @@ const Index = () => {
         : 'text-gray-700 bg-gray-100'
     } rounded-full px-4 py-1 inline-block`}
     style={{ fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}>
+      {children}
+    </h2>
+  );
+
+  const FlowTitle = ({ children }: { children: React.ReactNode }) => (
+    <h2 className={`text-lg font-bold ${
+      mode === 'dark' ? 'text-white' : 'text-gray-800'
+    } pl-4 mb-2 flex items-center gap-2`}>
       {children}
     </h2>
   );
@@ -152,9 +186,6 @@ const Index = () => {
       </div>
       
       <div className="container mx-auto px-4 pt-5 bg-white dark:bg-gray-900">
-        {/* Shop Logo Scroller Section */}
-        <ShopLogoScroller shops={selectedShops} />
-        
         <section className="mt-4 mb-6">
           <CategorySuggestions />
         </section>
@@ -167,7 +198,20 @@ const Index = () => {
           <NearbyShops />
         </section>
         
-        <section className="mt-4">
+        {/* Opened Nearby Shops Flow */}
+        <section className="mt-6 mb-8 relative">
+          <FlowTitle>Opened Nearby</FlowTitle>
+          <ShopLogoScroller shops={nearbyShops} />
+        </section>
+        
+        {/* Trusted Online Shops Flow */}
+        <section className="mt-6 mb-8 relative">
+          <FlowTitle>Trusted Online</FlowTitle>
+          <ShopLogoScroller shops={onlineShops} />
+        </section>
+        
+        {/* Featured Products section */}
+        <section className="mt-8">
           <SectionHeading>Featured Products</SectionHeading>
           <ProductGrid />
         </section>
