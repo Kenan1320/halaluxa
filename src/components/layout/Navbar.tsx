@@ -5,7 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useShop } from '@/context/ShopContext';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { ShoppingCart, User, Menu, MapPin, ChevronDown, Settings } from 'lucide-react';
+import { ShoppingCart, User, Menu, MapPin, ChevronDown, Settings, Store } from 'lucide-react';
 import { Shop } from '@/types/shop';
 import { getShopById } from '@/services/shopService';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
@@ -21,10 +21,10 @@ import {
   NavigationMenu,
   NavigationMenuContent,
   NavigationMenuItem,
-  NavigationMenuLink,
   NavigationMenuList,
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
+import { toast } from "sonner";
 
 const Navbar = () => {
   const { user, logout, isLoading } = useAuth();
@@ -34,30 +34,36 @@ const Navbar = () => {
   const [currentShop, setCurrentShop] = useState<Shop | null>(null);
   const navigate = useNavigate();
   
-  useEffect(() => {
-    // Load the main shop from localStorage if available
-    const loadMainShop = async () => {
-      const mainShopId = localStorage.getItem('mainShopId');
-      if (mainShopId) {
-        try {
-          const shop = await getShopById(mainShopId);
-          if (shop) {
-            setCurrentShop(shop);
-            if (setMainShop) setMainShop(shop);
-          }
-        } catch (error) {
-          console.error('Error loading main shop:', error);
-        }
-      }
-    };
+  // Auto-close the sheet when a menu item is clicked
+  const handleSheetItemClick = (path: string) => {
+    // Close the sheet (assuming it's open)
+    document.body.click(); // This will trigger a click outside the sheet
+    navigate(path);
+  };
+  
+  // Guest mode handlers
+  const handleGuestAccess = (role: 'business' | 'shopper' | 'admin') => {
+    // Generate a random guest username
+    const randomId = Math.floor(Math.random() * 10000);
+    const autoUsername = `Guest${randomId}`;
     
-    if (!currentShop && !mainShop) {
-      loadMainShop();
-    } else if (mainShop && !currentShop) {
-      setCurrentShop(mainShop);
+    sessionStorage.setItem('guestBusinessUsername', autoUsername);
+    sessionStorage.setItem('isGuestBusinessUser', 'true');
+    sessionStorage.setItem('guestRole', role);
+    
+    toast.success(`Guest mode activated as ${autoUsername}!`, {
+      description: `You're now viewing as a guest ${role}`,
+    });
+    
+    if (role === 'business') {
+      navigate('/dashboard');
+    } else if (role === 'admin') {
+      navigate('/admin');
+    } else {
+      navigate('/');
     }
-  }, [mainShop, setMainShop, currentShop]);
-
+  };
+  
   return (
     <div className="bg-[#0F1B44]">
       <nav className="text-white">
@@ -70,119 +76,58 @@ const Navbar = () => {
                   <Menu className="h-6 w-6" />
                 </button>
               </SheetTrigger>
-              <SheetContent side="left" className="w-[300px] bg-[#0F1B44] text-white border-r border-gray-800">
+              <SheetContent side="left" className="w-[300px] bg-white dark:bg-[#0F1B44] text-black dark:text-white border-r border-gray-200 dark:border-gray-800">
                 <SheetHeader>
-                  <SheetTitle className="text-white">Halvi</SheetTitle>
+                  <SheetTitle className="text-black dark:text-white">Halvi</SheetTitle>
                 </SheetHeader>
                 <div className="flex flex-col space-y-4 mt-6">
                   {/* Dark mode toggle in menu */}
-                  <div className="flex items-center justify-between px-4 py-3">
+                  <div className="flex items-center justify-between px-4 py-3 bg-gray-100 dark:bg-[#132054] rounded-lg">
                     <span>Dark Mode</span>
                     <ThemeToggle />
                   </div>
                   
-                  <SheetClose asChild>
-                    <Link to="/shops" className="flex items-center px-4 py-3 rounded-lg hover:bg-[#132054] transition-colors">
-                      <span className="text-lg">Select Your Shops</span>
-                    </Link>
-                  </SheetClose>
+                  <button onClick={() => handleSheetItemClick('/shops')} className="flex items-center px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-[#132054] transition-colors text-left">
+                    <span className="text-lg">Select Your Shops</span>
+                  </button>
                   
-                  <SheetClose asChild>
-                    <Link to="/explore" className="flex items-center px-4 py-3 rounded-lg hover:bg-[#132054] transition-colors">
-                      <span className="text-lg">Explore</span>
-                    </Link>
-                  </SheetClose>
+                  <button onClick={() => handleSheetItemClick('/explore')} className="flex items-center px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-[#132054] transition-colors text-left">
+                    <span className="text-lg">Explore</span>
+                  </button>
                   
-                  <SheetClose asChild>
-                    <Link to="/digital-mall" className="flex items-center px-4 py-3 rounded-lg hover:bg-[#132054] transition-colors">
-                      <span className="text-lg">Digital Mall</span>
-                    </Link>
-                  </SheetClose>
+                  <button onClick={() => handleSheetItemClick('/digital-mall')} className="flex items-center px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-[#132054] transition-colors text-left">
+                    <span className="text-lg">Digital Mall</span>
+                  </button>
                   
-                  <SheetClose asChild>
-                    <Link to="/nearby" className="flex items-center px-4 py-3 rounded-lg hover:bg-[#132054] transition-colors">
-                      <span className="text-lg">Nearby Shops</span>
-                    </Link>
-                  </SheetClose>
+                  <button onClick={() => handleSheetItemClick('/nearby')} className="flex items-center px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-[#132054] transition-colors text-left">
+                    <span className="text-lg">Nearby Shops</span>
+                  </button>
                   
-                  <SheetClose asChild>
-                    <Link to="/admin" className="flex items-center px-4 py-3 rounded-lg hover:bg-[#132054] transition-colors text-purple-400">
-                      <span className="text-lg">Admin Portal</span>
-                    </Link>
-                  </SheetClose>
-                  
-                  {!isAuthenticated ? (
-                    <SheetClose asChild>
-                      <Link to="/login" className="mt-4">
-                        <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">
-                          Login
-                        </Button>
-                      </Link>
-                    </SheetClose>
-                  ) : (
-                    <NavigationMenu>
-                      <NavigationMenuList>
-                        <NavigationMenuItem>
-                          <NavigationMenuTrigger className="bg-transparent text-white hover:bg-[#132054] hover:text-white">Settings</NavigationMenuTrigger>
-                          <NavigationMenuContent className="bg-[#0F1B44] text-white border border-gray-800 min-w-[250px]">
-                            <ul className="p-2 space-y-1">
-                              <li>
-                                <SheetClose asChild>
-                                  <Link to="/settings/account" className="block px-4 py-2 hover:bg-[#132054] rounded-md">
-                                    <span className="flex items-center">
-                                      <User className="mr-2 h-4 w-4" />
-                                      Account Settings
-                                    </span>
-                                  </Link>
-                                </SheetClose>
-                              </li>
-                              <li>
-                                <SheetClose asChild>
-                                  <Link to="/settings/orders" className="block px-4 py-2 hover:bg-[#132054] rounded-md">
-                                    <span className="flex items-center">
-                                      <ShoppingCart className="mr-2 h-4 w-4" />
-                                      Orders & Shopping
-                                    </span>
-                                  </Link>
-                                </SheetClose>
-                              </li>
-                              <li>
-                                <SheetClose asChild>
-                                  <Link to="/settings/security" className="block px-4 py-2 hover:bg-[#132054] rounded-md">
-                                    <span className="flex items-center">
-                                      <Settings className="mr-2 h-4 w-4" />
-                                      Security & Privacy
-                                    </span>
-                                  </Link>
-                                </SheetClose>
-                              </li>
-                            </ul>
-                          </NavigationMenuContent>
-                        </NavigationMenuItem>
-                      </NavigationMenuList>
-                    </NavigationMenu>
-                  )}
+                  <button onClick={() => handleSheetItemClick('/admin')} className="flex items-center px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-[#132054] transition-colors text-left text-purple-600 dark:text-purple-400">
+                    <span className="text-lg">Admin Portal</span>
+                  </button>
                   
                   {/* Guest sign in options */}
-                  <div className="border-t border-gray-700 pt-4 mt-4">
+                  <div className="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
                     <h3 className="px-4 text-sm font-medium mb-2">Quick Access Options:</h3>
-                    <SheetClose asChild>
-                      <Link to="/dashboard" className="flex items-center px-4 py-2 rounded-lg hover:bg-[#132054] transition-colors text-yellow-400">
-                        <span>Business Dashboard (Guest)</span>
-                      </Link>
-                    </SheetClose>
-                    <SheetClose asChild>
-                      <Link to="/admin" className="flex items-center px-4 py-2 rounded-lg hover:bg-[#132054] transition-colors text-purple-400">
-                        <span>Admin Portal (Guest)</span>
-                      </Link>
-                    </SheetClose>
+                    <button onClick={() => handleGuestAccess('business')} className="flex items-center w-full px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-[#132054] transition-colors text-blue-600 dark:text-blue-400 text-left">
+                      <span>Business Dashboard (Guest)</span>
+                    </button>
+                    <button onClick={() => handleGuestAccess('admin')} className="flex items-center w-full px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-[#132054] transition-colors text-purple-600 dark:text-purple-400 text-left">
+                      <span>Admin Portal (Guest)</span>
+                    </button>
+                    <button onClick={() => handleGuestAccess('shopper')} className="flex items-center w-full px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-[#132054] transition-colors text-green-600 dark:text-green-400 text-left">
+                      <span>Shop as Guest</span>
+                    </button>
                   </div>
                 </div>
               </SheetContent>
             </Sheet>
             
-            <Link to="/" className="text-xl font-bold text-white italic">
-              Halvi
+            <Link to="/" className="text-xl font-bold italic">
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-white via-orange-200 to-white animate-pulse">
+                Halvi
+              </span>
             </Link>
           </div>
           
@@ -200,12 +145,12 @@ const Navbar = () => {
             {/* Dark mode toggle button */}
             <ThemeToggle className="hidden md:flex" />
             
-            {/* Main Shop */}
-            {currentShop && (
-              <Link 
-                to={`/shop/${currentShop.id}`}
-                className="relative flex items-center justify-center"
-              >
+            {/* Main Shop - Don't auto-select, show empty shop icon with red pulse */}
+            <Link 
+              to="/shops"
+              className="relative flex items-center justify-center"
+            >
+              {currentShop ? (
                 <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center overflow-hidden">
                   {currentShop.logo || currentShop.cover_image ? (
                     <img 
@@ -219,8 +164,13 @@ const Navbar = () => {
                     </div>
                   )}
                 </div>
-              </Link>
-            )}
+              ) : (
+                <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center relative">
+                  <Store className="h-6 w-6 text-gray-700" />
+                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full animate-pulse"></span>
+                </div>
+              )}
+            </Link>
             
             {/* Cart icon with orange background */}
             <Link 

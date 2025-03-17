@@ -18,10 +18,11 @@ import {
 } from '@/components/ui/card';
 import { Store, MapPin, Tag, FileText, Upload, X } from 'lucide-react';
 import ShopSetupForm from './ShopSetupForm';
+import { toast } from "sonner";
 
 const BusinessOnboarding = () => {
   const { user, isLoggedIn } = useAuth();
-  const { toast } = useToast();
+  const { toast: hookToast } = useToast();
   const navigate = useNavigate();
   const [onboardingStep, setOnboardingStep] = useState(0);
   const [onboardingComplete, setOnboardingComplete] = useState(false);
@@ -35,12 +36,24 @@ const BusinessOnboarding = () => {
   useEffect(() => {
     const storedGuestStatus = sessionStorage.getItem('isGuestBusinessUser');
     const storedGuestUsername = sessionStorage.getItem('guestBusinessUsername');
+    const storedGuestRole = sessionStorage.getItem('guestRole');
     
     if (storedGuestStatus === 'true' && storedGuestUsername) {
       setIsGuest(true);
       setGuestUsername(storedGuestUsername);
+      
+      // Immediately navigate to the appropriate dashboard based on the role
+      const role = storedGuestRole as 'business' | 'shopper' | 'admin' || 'business';
+      
+      if (role === 'business') {
+        navigate('/dashboard');
+      } else if (role === 'admin') {
+        navigate('/admin');
+      } else {
+        navigate('/');
+      }
     }
-  }, []);
+  }, [navigate]);
   
   // Check if user already has a shop
   useEffect(() => {
@@ -58,7 +71,7 @@ const BusinessOnboarding = () => {
   }, [isLoggedIn, user, navigate]);
   
   const handleOnboardingComplete = () => {
-    toast({
+    hookToast({
       title: "Shop Created!",
       description: "Your shop has been created successfully.",
     });
@@ -67,7 +80,7 @@ const BusinessOnboarding = () => {
   };
   
   const handleSkip = () => {
-    toast({
+    hookToast({
       title: "Onboarding Skipped",
       description: "You can set up your shop later in Settings.",
     });
@@ -84,10 +97,10 @@ const BusinessOnboarding = () => {
         sessionStorage.setItem('isGuestBusinessUser', 'true');
         sessionStorage.setItem('guestRole', role);
         
-        toast({
-          title: "Guest Mode Activated",
-          description: `Welcome, ${guestUsername}! You're now viewing as a guest ${role}. Your username has been saved for this session.`,
+        toast.success(`Guest mode activated as ${guestUsername}!`, {
+          description: `You're now viewing as a guest ${role}.`,
         });
+        
         setIsGuest(true);
         
         if (role === 'business') {
@@ -98,10 +111,8 @@ const BusinessOnboarding = () => {
           navigate('/');
         }
       } else {
-        toast({
-          title: "Username Required",
-          description: "Please enter a username to continue as a guest.",
-          variant: "destructive"
+        toast.error("Username Required", {
+          description: "Please enter a username to continue as a guest."
         });
       }
     } else {
@@ -118,10 +129,10 @@ const BusinessOnboarding = () => {
     sessionStorage.setItem('isGuestBusinessUser', 'true');
     sessionStorage.setItem('guestRole', role);
     
-    toast({
-      title: "Guest Mode Activated",
-      description: `Welcome, ${autoUsername}! You're now viewing as a guest ${role}.`,
+    toast.success(`Guest mode activated as ${autoUsername}!`, {
+      description: `You're now viewing as a guest ${role}.`,
     });
+    
     setIsGuest(true);
     
     if (role === 'business') {
@@ -221,7 +232,7 @@ const BusinessOnboarding = () => {
               )}
               
               <div className="text-center pt-2">
-                <Link to="/auth/login" className="text-sm text-blue-600 dark:text-blue-400 hover:underline">
+                <Link to="/login" className="text-sm text-blue-600 dark:text-blue-400 hover:underline">
                   Sign in to your account
                 </Link>
               </div>

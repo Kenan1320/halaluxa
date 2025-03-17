@@ -159,14 +159,6 @@ const Index = () => {
     </h2>
   );
 
-  const FlowTitle = ({ children }: { children: React.ReactNode }) => (
-    <h2 className={`text-lg font-bold ${
-      mode === 'dark' ? 'text-white' : 'text-gray-800'
-    } pl-4 mb-2 flex items-center gap-2`}>
-      {children}
-    </h2>
-  );
-
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900">
       {/* Deep blue gradient header section with search and categories */}
@@ -199,32 +191,27 @@ const Index = () => {
       </div>
       
       <div className="container mx-auto px-4 pt-5 bg-white dark:bg-gray-900">
-        {/* Opened Nearby Section with TWO rows of flowing logos */}
-        <div className="my-4">
-          <FlowTitle>Opened Nearby</FlowTitle>
-          
-          {/* First row of shop logos */}
-          <div className="mt-2">
+        {/* Flowing logo sections - two rows of each type with minimal spacing */}
+        <div className="my-3">
+          {/* First row of nearby shop logos */}
+          <div className="mt-1">
             <ShopLogoScroller shops={nearbyShops} direction="left" />
           </div>
           
-          {/* Second row of shop logos (same shops, different direction) */}
-          <div className="mt-2 -my-4">
+          {/* Second row of nearby shop logos (same shops, different direction) */}
+          <div className="mt-1">
             <ShopLogoScroller shops={nearbyShops.slice(0).reverse()} direction="right" />
           </div>
         </div>
         
-        {/* Trusted Online Section with TWO rows of flowing logos */}
-        <div className="my-4">
-          <FlowTitle>Trusted Online</FlowTitle>
-          
-          {/* First row of shop logos */}
-          <div className="mt-2">
+        <div className="my-3">
+          {/* First row of online shop logos */}
+          <div className="mt-1">
             <ShopLogoScroller shops={onlineShops} direction="left" />
           </div>
           
-          {/* Second row of shop logos (same shops, different direction) */}
-          <div className="mt-2 -my-4">
+          {/* Second row of online shop logos (same shops, different direction) */}
+          <div className="mt-1">
             <ShopLogoScroller shops={onlineShops.slice(0).reverse()} direction="right" />
           </div>
         </div>

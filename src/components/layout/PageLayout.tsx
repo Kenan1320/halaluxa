@@ -5,6 +5,7 @@ import Navbar from './Navbar';
 import Footer from './Footer';
 import BottomNavigation from './BottomNavigation';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { ComingSoon } from '@/components/ui/ComingSoon';
 
 interface PageLayoutProps {
   children: React.ReactNode;
@@ -19,16 +20,29 @@ const PageLayout = ({
 }: PageLayoutProps) => {
   const isMobile = useIsMobile();
   
+  // Check if the page is under construction
+  const isPageUnderConstruction = (pathname: string) => {
+    const incompletePaths = [
+      '/services', 
+      '/dashboard/analytics', 
+      '/become-seller', 
+      '/help',
+      '/settings/account',
+      '/settings/orders',
+      '/settings/security'
+    ];
+    return incompletePaths.some(path => pathname === path);
+  };
+  
+  const pathname = window.location.pathname;
+  const isIncomplete = isPageUnderConstruction(pathname);
+  
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900 overflow-x-hidden">
-      {/* Header directly connected to content */}
-      {showHeader && (
-        <div className="sticky top-0 z-50">
-          <Navbar />
-        </div>
-      )}
+      {/* Header directly connected to content without gap */}
+      {showHeader && <Navbar />}
       
-      {/* Main content area - no top padding */}
+      {/* Main content area with no top padding to connect directly to navbar */}
       <main className="flex-1 pb-24 md:pb-6">
         <AnimatePresence mode="wait">
           <motion.div
@@ -37,16 +51,23 @@ const PageLayout = ({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -15 }}
             transition={{ duration: 0.3 }}
-            className="h-full w-full -mt-px" // Added negative margin to connect to navbar
+            className="h-full w-full"
           >
-            {children}
+            {isIncomplete ? (
+              <ComingSoon 
+                title={`${pathname.substring(1).charAt(0).toUpperCase() + pathname.substring(1).slice(1).replace('/', ' ')} Coming Soon`}
+                description="We're working hard to bring you this feature. Check back soon!"
+                showHomeButton={true}
+              />
+            ) : (
+              children
+            )}
           </motion.div>
         </AnimatePresence>
       </main>
       
-      {/* Only use the Advanced Bottom Navigation, not both */}
-      {/* Footer (hidden on mobile) */}
-      {showFooter && !isMobile && <Footer />}
+      {/* Footer (always show on all screens) */}
+      {showFooter && <Footer />}
     </div>
   );
 };

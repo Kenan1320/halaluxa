@@ -8,13 +8,11 @@ import { normalizeShop } from '@/utils/shopHelper';
 
 interface ShopLogoScrollerProps {
   shops: Shop[];
-  backgroundMode?: 'orange' | 'blue' | 'green';
   direction?: 'left' | 'right';
 }
 
 const ShopLogoScroller = ({ 
   shops, 
-  backgroundMode = 'orange', 
   direction = 'left' 
 }: ShopLogoScrollerProps) => {
   const { mode } = useTheme();
@@ -25,12 +23,12 @@ const ShopLogoScroller = ({
   const normalizedShops = shops.map(shop => normalizeShop(shop));
   
   return (
-    <div className="relative mt-3 mb-6 overflow-hidden">
+    <div className="relative overflow-hidden">
       {/* Static background instead of dynamic gradient */}
       <div className={`absolute inset-0 rounded-3xl ${
         mode === 'dark'
           ? 'bg-gray-800/30 border border-gray-700/50'
-          : 'bg-gray-100 border border-gray-200/50'
+          : 'bg-white border border-gray-200/50'
       }`} />
       
       {/* Top fade effect */}

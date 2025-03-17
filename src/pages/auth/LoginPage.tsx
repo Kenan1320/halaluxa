@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
@@ -7,12 +8,15 @@ import { LogIn, ArrowLeft, Lock, Mail } from 'lucide-react';
 import { motion } from 'framer-motion';
 import LoginSelector from './LoginSelector';
 import { supabase } from '@/integrations/supabase/client';
+import { useTheme } from '@/context/ThemeContext';
+import { toast } from "sonner";
 
 const LoginPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { login, isLoggedIn, user } = useAuth();
-  const { toast } = useToast();
+  const { toast: hookToast } = useToast();
+  const { mode } = useTheme();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -41,10 +45,8 @@ const LoginPage = () => {
     e.preventDefault();
     
     if (!userType) {
-      toast({
-        title: "Select Account Type",
+      toast.error("Select Account Type", {
         description: "Please select whether you are a shopper or business owner",
-        variant: "destructive",
       });
       return;
     }
@@ -54,10 +56,8 @@ const LoginPage = () => {
     try {
       await login(formData.email);
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to log in",
-        variant: "destructive",
+      toast.error("Login Failed", {
+        description: "Failed to log in. Please check your credentials."
       });
     } finally {
       setLoading(false);
@@ -66,10 +66,8 @@ const LoginPage = () => {
 
   const handleGoogleSignIn = async () => {
     if (!userType) {
-      toast({
-        title: "Select Account Type",
-        description: "Please select whether you are a shopper or business owner",
-        variant: "destructive",
+      toast.error("Select Account Type", {
+        description: "Please select whether you are a shopper or business owner"
       });
       return;
     }
@@ -93,11 +91,32 @@ const LoginPage = () => {
       }
     } catch (error) {
       console.error('Error signing in with Google:', error);
-      toast({
-        title: "Error",
-        description: "Failed to sign in with Google",
-        variant: "destructive",
+      toast.error("Google Sign In Failed", {
+        description: "Failed to sign in with Google"
       });
+    }
+  };
+  
+  // Guest mode handler
+  const handleGuestAccess = (role: 'business' | 'shopper' | 'admin') => {
+    // Generate a random guest username
+    const randomId = Math.floor(Math.random() * 10000);
+    const autoUsername = `Guest${randomId}`;
+    
+    sessionStorage.setItem('guestBusinessUsername', autoUsername);
+    sessionStorage.setItem('isGuestBusinessUser', 'true');
+    sessionStorage.setItem('guestRole', role);
+    
+    toast.success(`Guest mode activated as ${autoUsername}!`, {
+      description: `You're now viewing as a guest ${role}.`,
+    });
+    
+    if (role === 'business') {
+      navigate('/dashboard');
+    } else if (role === 'admin') {
+      navigate('/admin');
+    } else {
+      navigate('/');
     }
   };
 
@@ -118,23 +137,37 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-deep-night-blue to-white flex items-center justify-center p-4">
+    <div className={`min-h-screen flex items-center justify-center p-4 ${
+      mode === 'dark' 
+        ? 'bg-gradient-to-b from-[#0F1B44] to-gray-900' 
+        : 'bg-gradient-to-b from-deep-night-blue to-white'
+    }`}>
       <motion.div 
-        className="max-w-md w-full bg-white rounded-2xl shadow-lg p-6 md:p-8 overflow-hidden"
+        className={`max-w-md w-full rounded-2xl shadow-lg p-6 md:p-8 overflow-hidden ${
+          mode === 'dark' ? 'bg-gray-800 text-white' : 'bg-white'
+        }`}
         initial="hidden"
         animate="visible"
         variants={containerVariants}
       >
         <motion.div variants={itemVariants}>
-          <Link to="/" className="inline-flex items-center text-haluna-text-light hover:text-haluna-primary mb-6 transition-colors">
+          <Link to="/" className={`inline-flex items-center hover:text-haluna-primary mb-6 transition-colors ${
+            mode === 'dark' ? 'text-gray-300' : 'text-haluna-text-light'
+          }`}>
             <ArrowLeft size={16} className="mr-2" />
             Back to Home
           </Link>
         </motion.div>
         
         <motion.div className="text-center mb-8" variants={itemVariants}>
-          <h1 className="text-3xl font-serif font-bold text-haluna-text bg-clip-text text-transparent bg-gradient-to-r from-haluna-primary to-purple-600">Welcome Back</h1>
-          <p className="text-haluna-text-light mt-2">Log in to your Haluna account</p>
+          <h1 className={`text-3xl font-serif font-bold ${
+            mode === 'dark'
+              ? 'bg-clip-text text-transparent bg-gradient-to-r from-blue-300 to-purple-300'
+              : 'bg-clip-text text-transparent bg-gradient-to-r from-haluna-primary to-purple-600'
+          }`}>Welcome Back</h1>
+          <p className={mode === 'dark' ? 'text-gray-300 mt-2' : 'text-haluna-text-light mt-2'}>
+            Log in to your Haluna account
+          </p>
         </motion.div>
         
         <motion.div variants={itemVariants}>
@@ -145,7 +178,11 @@ const LoginPage = () => {
           <Button 
             type="button" 
             variant="outline" 
-            className="w-full flex items-center justify-center h-12 border-gray-300" 
+            className={`w-full flex items-center justify-center h-12 ${
+              mode === 'dark' 
+                ? 'border-gray-600 text-white' 
+                : 'border-gray-300'
+            }`}
             onClick={handleGoogleSignIn}
             disabled={!userType}
           >
@@ -156,21 +193,29 @@ const LoginPage = () => {
         
         <motion.div variants={itemVariants} className="relative my-6">
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-gray-200"></div>
+            <div className={`w-full border-t ${mode === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}></div>
           </div>
           <div className="relative flex justify-center text-sm">
-            <span className="px-2 bg-white text-gray-500">or log in with email</span>
+            <span className={`px-2 ${
+              mode === 'dark' 
+                ? 'bg-gray-800 text-gray-400' 
+                : 'bg-white text-gray-500'
+            }`}>or log in with email</span>
           </div>
         </motion.div>
         
         <form onSubmit={handleSubmit} className="space-y-5">
           <motion.div variants={itemVariants}>
-            <label htmlFor="email" className="block text-sm font-medium text-haluna-text mb-1">
+            <label htmlFor="email" className={`block text-sm font-medium mb-1 ${
+              mode === 'dark' ? 'text-gray-200' : 'text-haluna-text'
+            }`}>
               Email
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Mail className="h-5 w-5 text-haluna-text-light" />
+                <Mail className={`h-5 w-5 ${
+                  mode === 'dark' ? 'text-gray-400' : 'text-haluna-text-light'
+                }`} />
               </div>
               <input
                 type="email"
@@ -178,7 +223,11 @@ const LoginPage = () => {
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
-                className="pl-10 w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-haluna-primary focus:border-haluna-primary transition-all"
+                className={`pl-10 w-full rounded-lg p-3 ${
+                  mode === 'dark'
+                    ? 'bg-gray-700 border-gray-600 text-white focus:ring-blue-500 focus:border-blue-500'
+                    : 'border border-gray-300 focus:ring-2 focus:ring-haluna-primary focus:border-haluna-primary'
+                } transition-all`}
                 placeholder="you@example.com"
                 required
               />
@@ -187,16 +236,22 @@ const LoginPage = () => {
           
           <motion.div variants={itemVariants}>
             <div className="flex items-center justify-between mb-1">
-              <label htmlFor="password" className="block text-sm font-medium text-haluna-text">
+              <label htmlFor="password" className={`block text-sm font-medium ${
+                mode === 'dark' ? 'text-gray-200' : 'text-haluna-text'
+              }`}>
                 Password
               </label>
-              <a href="#" className="text-xs text-haluna-primary hover:underline transition-colors">
+              <a href="#" className={`text-xs hover:underline transition-colors ${
+                mode === 'dark' ? 'text-blue-400' : 'text-haluna-primary'
+              }`}>
                 Forgot password?
               </a>
             </div>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Lock className="h-5 w-5 text-haluna-text-light" />
+                <Lock className={`h-5 w-5 ${
+                  mode === 'dark' ? 'text-gray-400' : 'text-haluna-text-light'
+                }`} />
               </div>
               <input
                 type="password"
@@ -204,7 +259,11 @@ const LoginPage = () => {
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
-                className="pl-10 w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-haluna-primary focus:border-haluna-primary transition-all"
+                className={`pl-10 w-full rounded-lg p-3 ${
+                  mode === 'dark'
+                    ? 'bg-gray-700 border-gray-600 text-white focus:ring-blue-500 focus:border-blue-500'
+                    : 'border border-gray-300 focus:ring-2 focus:ring-haluna-primary focus:border-haluna-primary'
+                } transition-all`}
                 placeholder="••••••••"
                 required
               />
@@ -215,9 +274,15 @@ const LoginPage = () => {
             <input
               id="remember"
               type="checkbox"
-              className="w-4 h-4 text-haluna-primary border-haluna-text-light rounded focus:ring-haluna-primary focus:ring-1"
+              className={`w-4 h-4 rounded focus:ring-1 ${
+                mode === 'dark' 
+                  ? 'text-blue-500 border-gray-600 focus:ring-blue-500' 
+                  : 'text-haluna-primary border-haluna-text-light focus:ring-haluna-primary'
+              }`}
             />
-            <label htmlFor="remember" className="ml-2 text-sm text-haluna-text">
+            <label htmlFor="remember" className={`ml-2 text-sm ${
+              mode === 'dark' ? 'text-gray-300' : 'text-haluna-text'
+            }`}>
               Remember me
             </label>
           </motion.div>
@@ -225,7 +290,11 @@ const LoginPage = () => {
           <motion.div variants={itemVariants}>
             <Button 
               type="submit" 
-              className="w-full flex items-center justify-center bg-gradient-to-r from-haluna-primary to-purple-600 hover:from-haluna-primary hover:to-purple-700 transition-all duration-300 h-12" 
+              className={`w-full flex items-center justify-center transition-all duration-300 h-12 ${
+                mode === 'dark'
+                  ? 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700'
+                  : 'bg-gradient-to-r from-haluna-primary to-purple-600 hover:from-haluna-primary hover:to-purple-700'
+              }`}
               disabled={loading || !userType}
             >
               {loading ? (
@@ -245,17 +314,63 @@ const LoginPage = () => {
           </motion.div>
         </form>
         
+        {/* Quick guest access options */}
+        <motion.div variants={itemVariants} className="mt-6">
+          <div className={`relative my-6 ${mode === 'dark' ? 'text-gray-300' : ''}`}>
+            <div className="absolute inset-0 flex items-center">
+              <div className={`w-full border-t ${mode === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className={`px-2 ${
+                mode === 'dark' 
+                  ? 'bg-gray-800 text-gray-400' 
+                  : 'bg-white text-gray-500'
+              }`}>guest access options</span>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-3 gap-3">
+            <Button 
+              onClick={() => handleGuestAccess('shopper')} 
+              variant="outline" 
+              className={`text-xs ${mode === 'dark' ? 'border-gray-700 text-gray-300' : ''}`}
+            >
+              Guest Shopper
+            </Button>
+            <Button 
+              onClick={() => handleGuestAccess('business')} 
+              variant="outline" 
+              className={`text-xs ${mode === 'dark' ? 'border-gray-700 text-gray-300' : ''}`}
+            >
+              Guest Business
+            </Button>
+            <Button 
+              onClick={() => handleGuestAccess('admin')} 
+              variant="outline" 
+              className={`text-xs ${mode === 'dark' ? 'border-gray-700 text-gray-300' : ''}`}
+            >
+              Guest Admin
+            </Button>
+          </div>
+        </motion.div>
+        
         <motion.div className="mt-8 text-center" variants={itemVariants}>
-          <p className="text-haluna-text-light">
+          <p className={mode === 'dark' ? 'text-gray-400' : 'text-haluna-text-light'}>
             Don't have an account?{' '}
-            <Link to="/signup" className="text-haluna-primary font-medium hover:underline transition-colors">
+            <Link to="/signup" className={`font-medium hover:underline transition-colors ${
+              mode === 'dark' ? 'text-blue-400' : 'text-haluna-primary'
+            }`}>
               Sign Up
             </Link>
           </p>
         </motion.div>
         
         <motion.div 
-          className="mt-8 pt-6 border-t border-gray-100 text-center text-xs text-haluna-text-light"
+          className={`mt-8 pt-6 border-t text-center text-xs ${
+            mode === 'dark' 
+              ? 'border-gray-700 text-gray-400'
+              : 'border-gray-100 text-haluna-text-light'
+          }`}
           variants={itemVariants}
         >
           By logging in, you agree to our Terms of Service and Privacy Policy

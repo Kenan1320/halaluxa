@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Button } from './button';
 import { Container } from './container';
+import { useTheme } from '@/context/ThemeContext';
 
 interface ComingSoonProps {
   title: string;
@@ -18,6 +19,7 @@ export const ComingSoon = ({
   showHomeButton = true
 }: ComingSoonProps) => {
   const navigate = useNavigate();
+  const { mode } = useTheme();
   
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -60,12 +62,18 @@ export const ComingSoon = ({
     }
   };
   
-  const colors = [
-    "bg-blue-100 dark:bg-blue-900/30",
-    "bg-green-100 dark:bg-green-900/30",
-    "bg-purple-100 dark:bg-purple-900/30",
-    "bg-yellow-100 dark:bg-yellow-900/30",
-    "bg-pink-100 dark:bg-pink-900/30"
+  const colors = mode === 'dark' ? [
+    "bg-blue-900/30",
+    "bg-green-900/30",
+    "bg-purple-900/30",
+    "bg-yellow-900/30",
+    "bg-pink-900/30"
+  ] : [
+    "bg-blue-100",
+    "bg-green-100",
+    "bg-purple-100",
+    "bg-yellow-100",
+    "bg-pink-100"
   ];
 
   return (
@@ -113,7 +121,11 @@ export const ComingSoon = ({
             }}
           >
             {icon || (
-              <div className="h-20 w-20 bg-haluna-primary text-white rounded-2xl flex items-center justify-center text-2xl font-bold">
+              <div className={`h-20 w-20 rounded-2xl flex items-center justify-center text-2xl font-bold ${
+                mode === 'dark' 
+                  ? 'bg-[#0F1B44] text-white'
+                  : 'bg-[#0F1B44] text-white'
+              }`}>
                 {title.substring(0, 2)}
               </div>
             )}
@@ -122,14 +134,20 @@ export const ComingSoon = ({
         
         <motion.h1 
           variants={itemVariants}
-          className="text-3xl md:text-4xl font-serif font-bold mb-4 bg-gradient-to-r from-haluna-primary to-haluna-deepblue-light bg-clip-text text-transparent"
+          className={`text-3xl md:text-4xl font-serif font-bold mb-4 ${
+            mode === 'dark'
+              ? 'bg-gradient-to-r from-blue-300 to-purple-300 bg-clip-text text-transparent'
+              : 'bg-gradient-to-r from-[#0F1B44] to-purple-600 bg-clip-text text-transparent'
+          }`}
         >
           {title}
         </motion.h1>
         
         <motion.p 
           variants={itemVariants}
-          className="text-lg text-gray-600 dark:text-gray-300 max-w-xl mb-8"
+          className={`text-lg max-w-xl mb-8 ${
+            mode === 'dark' ? 'text-gray-300' : 'text-gray-600'
+          }`}
         >
           {description}
         </motion.p>
@@ -142,7 +160,9 @@ export const ComingSoon = ({
             <Button
               onClick={() => navigate('/')}
               variant="outline"
-              className="rounded-full"
+              className={`rounded-full ${
+                mode === 'dark' ? 'border-gray-700 text-gray-300' : ''
+              }`}
             >
               Return to Home
             </Button>
@@ -150,7 +170,11 @@ export const ComingSoon = ({
           
           <Button
             onClick={() => window.history.back()}
-            className="rounded-full"
+            className={`rounded-full ${
+              mode === 'dark' 
+                ? 'bg-gradient-to-r from-blue-600 to-purple-600'
+                : 'bg-gradient-to-r from-[#0F1B44] to-purple-600'
+            }`}
           >
             Go Back
           </Button>
