@@ -14,9 +14,26 @@ interface ShopContextType {
 const ShopContext = createContext<ShopContextType | undefined>(undefined);
 
 export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [mainShop, setMainShop] = useState<Shop | null>(null);
-  const [selectedShops, setSelectedShops] = useState<Shop[]>([]);
+  const [mainShop, setMainShopState] = useState<Shop | null>(null);
+  const [selectedShops, setSelectedShopsState] = useState<Shop[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Set main shop and persist to localStorage
+  const setMainShop = (shop: Shop | null) => {
+    setMainShopState(shop);
+    if (shop) {
+      localStorage.setItem('mainShopId', shop.id);
+    } else {
+      localStorage.removeItem('mainShopId');
+    }
+  };
+
+  // Set selected shops and persist to localStorage
+  const setSelectedShops = (shops: Shop[]) => {
+    setSelectedShopsState(shops);
+    const shopIds = shops.map(shop => shop.id);
+    localStorage.setItem('selectedShops', JSON.stringify(shopIds));
+  };
 
   useEffect(() => {
     const initializeShops = async () => {
@@ -24,19 +41,27 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Load main shop from localStorage
         const mainShopId = localStorage.getItem('mainShopId');
         if (mainShopId) {
-          const shop = await getShopById(mainShopId);
-          if (shop) {
-            setMainShop(shop);
+          try {
+            const shop = await getShopById(mainShopId);
+            if (shop) {
+              setMainShopState(shop);
+            }
+          } catch (error) {
+            console.error('Error loading main shop:', error);
           }
         }
 
         // Load selected shops from localStorage
         const selectedShopIds = localStorage.getItem('selectedShops');
         if (selectedShopIds) {
-          const shopIds = JSON.parse(selectedShopIds) as string[];
-          const shopPromises = shopIds.map(id => getShopById(id));
-          const shops = await Promise.all(shopPromises);
-          setSelectedShops(shops.filter(Boolean) as Shop[]);
+          try {
+            const shopIds = JSON.parse(selectedShopIds) as string[];
+            const shopPromises = shopIds.map(id => getShopById(id));
+            const shops = await Promise.all(shopPromises);
+            setSelectedShopsState(shops.filter(Boolean) as Shop[]);
+          } catch (error) {
+            console.error('Error loading selected shops:', error);
+          }
         }
       } catch (error) {
         console.error('Error initializing shops:', error);
@@ -47,21 +72,6 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     initializeShops();
   }, []);
-
-  // Save main shop to localStorage when it changes
-  useEffect(() => {
-    if (mainShop) {
-      localStorage.setItem('mainShopId', mainShop.id);
-    }
-  }, [mainShop]);
-
-  // Save selected shops to localStorage when they change
-  useEffect(() => {
-    if (selectedShops.length > 0) {
-      const shopIds = selectedShops.map(shop => shop.id);
-      localStorage.setItem('selectedShops', JSON.stringify(shopIds));
-    }
-  }, [selectedShops]);
 
   const value = {
     mainShop,

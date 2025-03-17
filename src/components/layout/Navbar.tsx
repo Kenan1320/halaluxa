@@ -5,9 +5,24 @@ import { useAuth } from '@/context/AuthContext';
 import { useShop } from '@/context/ShopContext';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { ShoppingCart, User, Menu, MapPin } from 'lucide-react';
+import { ShoppingCart, User, Menu, MapPin, ChevronDown, Settings } from 'lucide-react';
 import { Shop } from '@/types/shop';
 import { getShopById } from '@/services/shopService';
+import { 
+  Sheet, 
+  SheetContent, 
+  SheetHeader, 
+  SheetTitle, 
+  SheetTrigger 
+} from '@/components/ui/sheet';
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+} from "@/components/ui/navigation-menu";
 
 const Navbar = () => {
   const { user, logout, isLoading } = useAuth();
@@ -41,16 +56,80 @@ const Navbar = () => {
   }, [mainShop, setMainShop, currentShop]);
 
   return (
-    <nav className="bg-[#1A1F2C] text-white">
+    <nav className="bg-[#0F1B44] text-white">
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
         {/* Left side - Logo and menu */}
         <div className="flex items-center space-x-4">
-          <button 
-            onClick={() => setShowMobileMenu(!showMobileMenu)}
-            className="text-white hover:text-white/80 focus:outline-none"
-          >
-            <Menu className="h-6 w-6" />
-          </button>
+          <Sheet>
+            <SheetTrigger asChild>
+              <button className="text-white hover:text-white/80 focus:outline-none">
+                <Menu className="h-6 w-6" />
+              </button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-[300px] bg-[#0F1B44] text-white border-r border-gray-800">
+              <SheetHeader>
+                <SheetTitle className="text-white">Halvi</SheetTitle>
+              </SheetHeader>
+              <div className="flex flex-col space-y-4 mt-6">
+                <Link to="/shops" className="flex items-center px-4 py-3 rounded-lg hover:bg-[#132054] transition-colors">
+                  <span className="text-lg">Select Your Shops</span>
+                </Link>
+                <Link to="/explore" className="flex items-center px-4 py-3 rounded-lg hover:bg-[#132054] transition-colors">
+                  <span className="text-lg">Explore</span>
+                </Link>
+                <Link to="/digital-mall" className="flex items-center px-4 py-3 rounded-lg hover:bg-[#132054] transition-colors">
+                  <span className="text-lg">Digital Mall</span>
+                </Link>
+                <Link to="/nearby" className="flex items-center px-4 py-3 rounded-lg hover:bg-[#132054] transition-colors">
+                  <span className="text-lg">Nearby Shops</span>
+                </Link>
+                
+                {!isAuthenticated ? (
+                  <Link to="/login" className="mt-4">
+                    <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">
+                      Login
+                    </Button>
+                  </Link>
+                ) : (
+                  <NavigationMenu>
+                    <NavigationMenuList>
+                      <NavigationMenuItem>
+                        <NavigationMenuTrigger className="bg-transparent text-white hover:bg-[#132054] hover:text-white">Settings</NavigationMenuTrigger>
+                        <NavigationMenuContent className="bg-[#0F1B44] text-white border border-gray-800 min-w-[250px]">
+                          <ul className="p-2 space-y-1">
+                            <li>
+                              <Link to="/settings/account" className="block px-4 py-2 hover:bg-[#132054] rounded-md">
+                                <span className="flex items-center">
+                                  <User className="mr-2 h-4 w-4" />
+                                  Account Settings
+                                </span>
+                              </Link>
+                            </li>
+                            <li>
+                              <Link to="/settings/orders" className="block px-4 py-2 hover:bg-[#132054] rounded-md">
+                                <span className="flex items-center">
+                                  <ShoppingCart className="mr-2 h-4 w-4" />
+                                  Orders & Shopping
+                                </span>
+                              </Link>
+                            </li>
+                            <li>
+                              <Link to="/settings/security" className="block px-4 py-2 hover:bg-[#132054] rounded-md">
+                                <span className="flex items-center">
+                                  <Settings className="mr-2 h-4 w-4" />
+                                  Security & Privacy
+                                </span>
+                              </Link>
+                            </li>
+                          </ul>
+                        </NavigationMenuContent>
+                      </NavigationMenuItem>
+                    </NavigationMenuList>
+                  </NavigationMenu>
+                )}
+              </div>
+            </SheetContent>
+          </Sheet>
           
           <Link to="/" className="text-xl font-bold text-white italic">
             Halvi
@@ -62,6 +141,7 @@ const Navbar = () => {
           <button className="flex items-center text-white hover:text-white/80">
             <MapPin className="h-5 w-5 mr-1" />
             <span className="text-sm">New York</span>
+            <ChevronDown className="h-4 w-4 ml-1" />
           </button>
         </div>
 
@@ -121,52 +201,6 @@ const Navbar = () => {
           )}
         </div>
       </div>
-
-      {/* Mobile menu */}
-      {showMobileMenu && (
-        <div className="bg-[#1A1F2C]/90 py-3 border-t border-white/10">
-          <div className="container mx-auto px-4 flex flex-col items-center space-y-3">
-            <button className="flex items-center text-white hover:text-white/80 w-full justify-center py-2">
-              <MapPin className="h-5 w-5 mr-2" />
-              <span>New York</span>
-            </button>
-            
-            {isAuthenticated ? (
-              <>
-                <Link 
-                  to="/dashboard" 
-                  className="text-white hover:text-white/80 w-full text-center py-2"
-                >
-                  Dashboard
-                </Link>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={logout}
-                  className="text-white hover:bg-white/20 hover:text-white w-full"
-                >
-                  Logout
-                </Button>
-              </>
-            ) : (
-              <>
-                <Link 
-                  to="/login" 
-                  className="text-white hover:text-white/80 w-full text-center py-2"
-                >
-                  Login
-                </Link>
-                <Link 
-                  to="/register" 
-                  className="text-white hover:text-white/80 w-full text-center py-2"
-                >
-                  Register
-                </Link>
-              </>
-            )}
-          </div>
-        </div>
-      )}
     </nav>
   );
 };

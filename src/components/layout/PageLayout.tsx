@@ -18,39 +18,14 @@ const PageLayout = ({
   showHeader = true
 }: PageLayoutProps) => {
   const isMobile = useIsMobile();
-  const [prevScrollPos, setPrevScrollPos] = useState(0);
-  const [visible, setVisible] = useState(true);
   
-  useEffect(() => {
-    const handleScroll = () => {
-      const currentScrollPos = window.scrollY;
-      
-      // Make header visible when scrolling up or at the top
-      setVisible((prevScrollPos > currentScrollPos) || currentScrollPos < 10);
-      setPrevScrollPos(currentScrollPos);
-    };
-    
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [prevScrollPos]);
-
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900 overflow-x-hidden">
-      {/* Header - appears on scroll up or at top */}
+      {/* Header - now always visible without animation */}
       {showHeader && (
-        <AnimatePresence>
-          {visible && (
-            <motion.div 
-              className="sticky top-0 z-50"
-              initial={{ y: -100, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: -100, opacity: 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              <Navbar />
-            </motion.div>
-          )}
-        </AnimatePresence>
+        <div className="sticky top-0 z-50">
+          <Navbar />
+        </div>
       )}
       
       {/* Page content */}
@@ -68,6 +43,9 @@ const PageLayout = ({
           </motion.div>
         </AnimatePresence>
       </main>
+      
+      {/* Bottom navigation for mobile */}
+      {isMobile && <BottomNavigation />}
       
       {/* Footer (hidden on mobile) */}
       {showFooter && !isMobile && <Footer />}
