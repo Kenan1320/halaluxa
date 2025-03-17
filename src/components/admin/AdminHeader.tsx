@@ -5,7 +5,11 @@ import { Bell, Search, Moon, Sun } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const AdminHeader = () => {
-  const { mode, toggleTheme } = useTheme();
+  const { mode, setMode } = useTheme();
+  
+  const toggleTheme = () => {
+    setMode(mode === 'dark' ? 'light' : 'dark');
+  };
   
   return (
     <header className={`h-16 px-6 border-b flex items-center justify-between ${

@@ -97,7 +97,8 @@ export default function CategorySuggestions() {
       const createMockCategory = (name: string, group: string): Category => ({
         id: name.toLowerCase().replace(/\s+/g, '-'),
         name,
-        group,
+        // Cast group string to support group type
+        group: group as "nearby" | "online" | "featured" | "popular" | "transitional",
         icon: ''
       });
       

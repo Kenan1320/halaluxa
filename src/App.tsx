@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -33,8 +34,19 @@ import NotFound from "./pages/NotFound";
 import LoginPage from "./pages/auth/LoginPage";
 import SignUpPage from "./pages/auth/SignUpPage";
 import SelectShops from "./pages/SelectShops";
-import Help from "./pages/Help";
+import HelpPage from "./pages/HelpPage";
 import AdminDashboard from "./pages/admin/AdminDashboard";
+
+// Dashboard pages
+import { default as DashboardLayout } from "./components/layout/DashboardLayout";
+import { default as DashboardHome } from "./pages/dashboard/DashboardHome";
+import { default as ProductsPage } from "./pages/dashboard/ProductsPage";
+import { default as AddEditProductPage } from "./pages/dashboard/AddEditProductPage";
+import { default as OrdersPage } from "./pages/dashboard/OrdersPage";
+import { default as CustomersPage } from "./pages/dashboard/CustomersPage";
+import { default as SettingsPage } from "./pages/dashboard/SettingsPage";
+import { default as PaymentAccountPage } from "./pages/dashboard/PaymentAccountPage";
+import { default as UserProfilePage } from "./pages/profile/UserProfilePage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -79,7 +91,7 @@ const AppRoutes = () => {
         <Route path="/shop/:shopId" element={<ShopDetail />} />
         <Route path="/product/:productId" element={<ProductDetail />} />
         <Route path="/select-shops" element={<SelectShops />} />
-        <Route path="/help" element={<Help />} />
+        <Route path="/help" element={<HelpPage />} />
         <Route path="/admin" element={<AdminDashboard />} />
         
         {/* Protected shopper routes - explicitly disallow business users */}
