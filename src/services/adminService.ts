@@ -1,5 +1,5 @@
 
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 
 // Admin service functions
 export const getAdminStats = async () => {
@@ -81,7 +81,7 @@ export const getRecentOrders = async () => {
         date: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
         status: 'delivered',
         items: 3,
-        total: 89.97,
+        total: '89.97',
         shop: 'Organic Foods Co.'
       },
       {
@@ -90,7 +90,7 @@ export const getRecentOrders = async () => {
         date: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
         status: 'processing',
         items: 2,
-        total: 124.50,
+        total: '124.50',
         shop: 'Tech Gadgets Inc.'
       },
       {
@@ -99,7 +99,7 @@ export const getRecentOrders = async () => {
         date: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString(),
         status: 'shipped',
         items: 5,
-        total: 67.45,
+        total: '67.45',
         shop: 'Fashion Forward'
       },
       {
@@ -108,7 +108,7 @@ export const getRecentOrders = async () => {
         date: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(),
         status: 'pending',
         items: 1,
-        total: 34.99,
+        total: '34.99',
         shop: 'Book Lovers'
       },
       {
@@ -117,7 +117,7 @@ export const getRecentOrders = async () => {
         date: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
         status: 'delivered',
         items: 4,
-        total: 156.75,
+        total: '156.75',
         shop: 'Home Essentials'
       },
       {
@@ -126,16 +126,68 @@ export const getRecentOrders = async () => {
         date: new Date(Date.now() - 36 * 60 * 60 * 1000).toISOString(),
         status: 'cancelled',
         items: 2,
-        total: 59.90,
+        total: '59.90',
         shop: 'Beauty Supplies'
       }
-    ].map(order => ({
-      ...order,
-      // Convert the total to a string to fix the TypeScript error
-      total: order.total.toString()
-    }));
+    ];
   } catch (error) {
     console.error('Error fetching recent orders:', error);
     throw error;
+  }
+};
+
+// Adding missing functions
+export const getAdminUser = async () => {
+  try {
+    // Mock admin user data for development
+    return {
+      id: 'admin-1',
+      name: 'Admin User',
+      email: 'admin@example.com',
+      role: 'admin',
+      created_at: new Date().toISOString(),
+      permissions: {
+        shops: true,
+        products: true,
+        users: true,
+        orders: true
+      }
+    };
+  } catch (error) {
+    console.error('Error fetching admin user:', error);
+    return null;
+  }
+};
+
+export const isAdmin = async () => {
+  try {
+    // In a real app, this would check if the current user has admin privileges
+    // For development, return true
+    return true;
+  } catch (error) {
+    console.error('Error checking admin status:', error);
+    return false;
+  }
+};
+
+export const ensureAdminUser = async () => {
+  try {
+    // This would normally create a default admin user for development
+    // For now, just simulate a successful operation
+    console.log('Ensuring admin user exists for development...');
+    return true;
+  } catch (error) {
+    console.error('Error ensuring admin user:', error);
+    return false;
+  }
+};
+
+export const getAdminRole = async () => {
+  try {
+    // Mock admin role for development
+    return 'Super Admin';
+  } catch (error) {
+    console.error('Error getting admin role:', error);
+    return null;
   }
 };
