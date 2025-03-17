@@ -188,13 +188,12 @@ const Index = () => {
       </div>
       
       <div className="container mx-auto px-4 pt-5 bg-white dark:bg-gray-900">
-        {/* Opened Nearby Shops Flow */}
+        {/* Top Sections with Opened Nearby and Trusted Online */}
         <section className="mt-4 mb-6 relative">
           <FlowTitle icon={<Store className="h-5 w-5 text-[#2A866A]" />}>Opened Nearby</FlowTitle>
           <ShopLogoScroller shops={nearbyShops} backgroundMode="blue" />
         </section>
         
-        {/* Trusted Online Shops Flow */}
         <section className="mt-6 mb-8 relative">
           <FlowTitle icon={<ShoppingBag className="h-5 w-5 text-[#FF7A45]" />}>Trusted Online</FlowTitle>
           <ShopLogoScroller shops={onlineShops} backgroundMode="orange" />

@@ -54,6 +54,27 @@ const CategoryIcon = ({ category, onClick, isSelected }: {
   </div>
 );
 
+// Define local and online categories
+const localCategoryNames = [
+  'Groceries', 
+  'Restaurants', 
+  'Coffee Shops', 
+  'Bakeries', 
+  'Farmers Markets', 
+  'Local Crafts', 
+  'Service Providers'
+];
+
+const onlineCategoryNames = [
+  'Fashion', 
+  'Electronics', 
+  'Home Goods', 
+  'Beauty & Health', 
+  'Toys & Games',
+  'Books & Media',
+  'Digital Products'
+];
+
 export default function CategorySuggestions() {
   const { mode } = useTheme();
   const [activeTab, setActiveTab] = useState<'nearby' | 'online'>('nearby');
@@ -63,10 +84,25 @@ export default function CategorySuggestions() {
   
   useEffect(() => {
     const loadCategories = async () => {
+      // Get categories from service
       const nearby = await getCategoriesByGroup('nearby');
       const online = await getCategoriesByGroup('online');
-      setNearbyCategories(nearby);
-      setOnlineCategories(online);
+      
+      // Filter and sort categories based on predefined lists
+      const filteredNearby = nearby.filter(cat => 
+        localCategoryNames.includes(cat.name)
+      ).sort((a, b) => 
+        localCategoryNames.indexOf(a.name) - localCategoryNames.indexOf(b.name)
+      );
+      
+      const filteredOnline = online.filter(cat => 
+        onlineCategoryNames.includes(cat.name)
+      ).sort((a, b) => 
+        onlineCategoryNames.indexOf(a.name) - onlineCategoryNames.indexOf(b.name)
+      );
+      
+      setNearbyCategories(filteredNearby);
+      setOnlineCategories(filteredOnline);
     };
     
     loadCategories();

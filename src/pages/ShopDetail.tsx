@@ -49,7 +49,8 @@ const ShopDetail = () => {
           followers: 0,
           reviews: [],
           deliveryInfo: {},
-          isGroupOrderEnabled: false
+          isGroupOrderEnabled: false,
+          rating: normalizedShop.rating || 0 // Ensure rating is always set
         };
         
         setShop(shopDetails);
