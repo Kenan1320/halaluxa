@@ -1,6 +1,6 @@
 
 import { Link } from 'react-router-dom';
-import { Flame, Shield } from 'lucide-react';
+import { Flame } from 'lucide-react';
 
 const Footer = () => {
   return (
@@ -53,14 +53,6 @@ const Footer = () => {
               <li>
                 <Link to="/contact" className="text-sm text-gray-600 dark:text-gray-400 hover:text-[#2A866A] dark:hover:text-[#2A866A]">
                   Contact Us
-                </Link>
-              </li>
-              <li>
-                <Link to="/admin" className="text-sm text-gray-600 dark:text-gray-400 hover:text-[#2A866A] dark:hover:text-[#2A866A] flex items-center">
-                  Admin Dashboard
-                  <span className="ml-2 bg-blue-500 text-white text-[10px] px-1 py-0.5 rounded-full flex items-center">
-                    <Shield className="h-2 w-2 mr-0.5" />
-                  </span>
                 </Link>
               </li>
             </ul>

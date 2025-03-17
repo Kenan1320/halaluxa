@@ -12,8 +12,8 @@ import { LocationProvider } from "@/context/LocationContext";
 import { ThemeProvider } from "@/context/ThemeContext";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import AuthMiddleware from "@/components/auth/AuthMiddleware";
-import PageLayout from "@/components/layout/PageLayout";
-import DashboardLayout from "@/components/layout/DashboardLayout";
+import Navbar from "@/components/layout/Navbar";
+import BottomNavigation from "@/components/layout/BottomNavigation";
 import { ensureBusinessAccount } from "@/utils/seedBusinessAccount";
 
 // Pages
@@ -34,10 +34,17 @@ import NotFound from "./pages/NotFound";
 import LoginPage from "./pages/auth/LoginPage";
 import SignUpPage from "./pages/auth/SignUpPage";
 import SelectShops from "./pages/SelectShops";
-import HelpPage from "./pages/HelpPage";
-import AdminDashboard from "./pages/admin/AdminDashboard";
 
-// Dashboard pages
+// New Pages for Navigation Buttons
+import NearbyPage from "./pages/nearby";
+import TrendingPage from "./pages/trending";
+import PopularSearchesPage from "./pages/popular-searches";
+import OrderDeliveryPage from "./pages/order-delivery";
+import AffiliatePage from "./pages/affiliate";
+import AffiliateProgramPage from "./pages/affiliate-program";
+
+// Dashboard imports
+import DashboardLayout from "./components/layout/DashboardLayout";
 import DashboardHome from "./pages/dashboard/DashboardHome";
 import ProductsPage from "./pages/dashboard/ProductsPage";
 import AddEditProductPage from "./pages/dashboard/AddEditProductPage";
@@ -46,7 +53,6 @@ import CustomersPage from "./pages/dashboard/CustomersPage";
 import SettingsPage from "./pages/dashboard/SettingsPage";
 import PaymentAccountPage from "./pages/dashboard/PaymentAccountPage";
 import UserProfilePage from "./pages/profile/UserProfilePage";
-import AffiliateProgram from "./pages/affiliate-program";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -64,92 +70,106 @@ if (import.meta.env.DEV) {
 }
 
 const AppRoutes = () => {
+  const location = useLocation();
+  const { user } = useAuth();
+  
+  // Business users should only see the dashboard interface
+  const showNavbar = !user || user.role !== 'business' || 
+                    (!location.pathname.startsWith('/dashboard') && 
+                     location.pathname !== '/login' && 
+                     location.pathname !== '/signup');
+  
   return (
     <AuthMiddleware>
-      <PageLayout>
-        <Routes>
-          {/* Public routes */}
-          <Route path="/" element={<Index />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/sellers" element={<Sellers />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/signup" element={<SignUpPage />} />
-          <Route path="/shop" element={<Shop />} />
-          <Route path="/browse" element={<Browse />} />
-          <Route path="/search" element={<Search />} />
-          <Route path="/shops" element={<Shops />} />
-          <Route path="/shop/:shopId" element={<ShopDetail />} />
-          <Route path="/product/:productId" element={<ProductDetail />} />
-          <Route path="/select-shops" element={<SelectShops />} />
-          <Route path="/help" element={<HelpPage />} />
-          <Route path="/admin" element={<AdminDashboard />} />
-          <Route path="/affiliate-program" element={<AffiliateProgram />} />
-          
-          {/* Protected shopper routes - explicitly disallow business users */}
-          <Route 
-            path="/cart" 
-            element={
-              <ProtectedRoute requiredRole="shopper" businessAllowed={false}>
-                <Cart />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/checkout" 
-            element={
-              <ProtectedRoute requiredRole="shopper" businessAllowed={false}>
-                <Checkout />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/order-confirmation" 
-            element={
-              <ProtectedRoute requiredRole="shopper" businessAllowed={false}>
-                <OrderConfirmation />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/orders" 
-            element={
-              <ProtectedRoute requiredRole="shopper" businessAllowed={false}>
-                <Orders />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/profile" 
-            element={
-              <ProtectedRoute requiredRole="shopper" businessAllowed={false}>
-                <UserProfilePage />
-              </ProtectedRoute>
-            } 
-          />
-          
-          {/* Protected business owner routes */}
-          <Route 
-            path="/dashboard" 
-            element={
-              <ProtectedRoute requiredRole="business">
-                <DashboardLayout />
-              </ProtectedRoute>
-            }
-          >
-            <Route index element={<DashboardHome />} />
-            <Route path="products" element={<ProductsPage />} />
-            <Route path="products/new" element={<AddEditProductPage />} />
-            <Route path="products/edit/:id" element={<AddEditProductPage />} />
-            <Route path="orders" element={<OrdersPage />} />
-            <Route path="customers" element={<CustomersPage />} />
-            <Route path="settings" element={<SettingsPage />} />
-            <Route path="payment-account" element={<PaymentAccountPage />} />
-          </Route>
-          
-          {/* 404 route */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </PageLayout>
+      {showNavbar && <Navbar />}
+      <Routes>
+        {/* Public routes */}
+        <Route path="/" element={<Index />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/sellers" element={<Sellers />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/signup" element={<SignUpPage />} />
+        <Route path="/shop" element={<Shop />} />
+        <Route path="/browse" element={<Browse />} />
+        <Route path="/search" element={<Search />} />
+        <Route path="/shops" element={<Shops />} />
+        <Route path="/shop/:shopId" element={<ShopDetail />} />
+        <Route path="/product/:productId" element={<ProductDetail />} />
+        <Route path="/select-shops" element={<SelectShops />} />
+        
+        {/* New navigation button routes */}
+        <Route path="/nearby" element={<NearbyPage />} />
+        <Route path="/trending" element={<TrendingPage />} />
+        <Route path="/popular-searches" element={<PopularSearchesPage />} />
+        <Route path="/order-delivery" element={<OrderDeliveryPage />} />
+        <Route path="/affiliate" element={<AffiliatePage />} />
+        <Route path="/affiliate-program" element={<AffiliateProgramPage />} />
+        
+        {/* Protected shopper routes - explicitly disallow business users */}
+        <Route 
+          path="/cart" 
+          element={
+            <ProtectedRoute requiredRole="shopper" businessAllowed={false}>
+              <Cart />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/checkout" 
+          element={
+            <ProtectedRoute requiredRole="shopper" businessAllowed={false}>
+              <Checkout />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/order-confirmation" 
+          element={
+            <ProtectedRoute requiredRole="shopper" businessAllowed={false}>
+              <OrderConfirmation />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/orders" 
+          element={
+            <ProtectedRoute requiredRole="shopper" businessAllowed={false}>
+              <Orders />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/profile" 
+          element={
+            <ProtectedRoute requiredRole="shopper" businessAllowed={false}>
+              <UserProfilePage />
+            </ProtectedRoute>
+          } 
+        />
+        
+        {/* Protected business owner routes */}
+        <Route 
+          path="/dashboard" 
+          element={
+            <ProtectedRoute requiredRole="business">
+              <DashboardLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<DashboardHome />} />
+          <Route path="products" element={<ProductsPage />} />
+          <Route path="products/new" element={<AddEditProductPage />} />
+          <Route path="products/edit/:id" element={<AddEditProductPage />} />
+          <Route path="orders" element={<OrdersPage />} />
+          <Route path="customers" element={<CustomersPage />} />
+          <Route path="settings" element={<SettingsPage />} />
+          <Route path="payment-account" element={<PaymentAccountPage />} />
+        </Route>
+        
+        {/* 404 route */}
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+      {showNavbar && <BottomNavigation />}
     </AuthMiddleware>
   );
 };

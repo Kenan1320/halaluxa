@@ -25,6 +25,7 @@ export function normalizeShop(shop: any): TypesShop {
     latitude: shop.latitude || null,
     longitude: shop.longitude || null,
     distance: shop.distance || null,
+    logo: shop.logo || shop.logo_url || '',
     address: shop.address || '',
     phone: shop.phone || '',
     email: shop.email || '',
