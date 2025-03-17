@@ -49,7 +49,7 @@ const ShopDetail = () => {
           ...normalizedShop,
           products: 0, // Will be updated with the actual count
           followers: 0,
-          reviews: 0, // Changed from empty array to 0 to match the type
+          reviews: 0,
           deliveryInfo: {},
           isGroupOrderEnabled: false,
           rating: normalizedShop.rating || 0,

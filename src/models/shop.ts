@@ -16,7 +16,7 @@ export interface Shop {
   created_at: string;
   updated_at: string;
   distance?: number;
-  // Additional fields that we need to add
+  // Additional fields
   phone?: string;
   email?: string;
   website?: string;
@@ -75,9 +75,9 @@ export interface ReviewWithUser {
 }
 
 export interface ShopDetails extends Shop {
-  products: number; // Changed from any[] to number to match types/shop.ts
+  products: number; 
   followers: number;
-  reviews: number; // Changed from any[] to number to match types/shop.ts
+  reviews: number; 
   deliveryInfo: any;
   isGroupOrderEnabled: boolean;
 }

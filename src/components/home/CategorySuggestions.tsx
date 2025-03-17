@@ -56,24 +56,26 @@ const CategoryIcon = ({ category, onClick, isSelected }: {
 
 // Define local and online categories
 const localCategoryNames = [
-  'Groceries', 
-  'Restaurants', 
-  'Coffee Shops', 
-  'Bakeries', 
-  'Farmers Markets', 
-  'Local Crafts', 
-  'Service Providers'
+  'Local Halal Restaurants', 
+  'Halal Butcher Shops', 
+  'Local Halal Grocery Stores', 
+  'Halal Wellness & Therapy Centers'
+];
+
+const transitionalCategoryNames = [
+  'Home & Furniture Stores',
+  'Islamic Home Decor & Accessories',
+  'Islamic Art & Calligraphy Services',
+  'Islamic Gifts & Specialty Shops'
 ];
 
 const onlineCategoryNames = [
-  'Fashion', 
-  'Electronics', 
-  'Home Goods', 
-  'Beauty & Health', 
-  'Toys & Games',
-  'Books & Media',
-  'Digital Products',
-  'Hoodies'
+  'Halvi Marketplace', 
+  'Learn Arabic', 
+  'Modest Wear - Hijabs', 
+  'Modest Wear - Abayas & Dresses',
+  'Men\'s Islamic Wear - Thobes & Jubbas',
+  'Islamic Books & More'
 ];
 
 export default function CategorySuggestions() {
@@ -81,33 +83,54 @@ export default function CategorySuggestions() {
   const [activeTab, setActiveTab] = useState<'nearby' | 'online'>('nearby');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [nearbyCategories, setNearbyCategories] = useState<Category[]>([]);
+  const [transitionalCategories, setTransitionalCategories] = useState<Category[]>([]);
   const [onlineCategories, setOnlineCategories] = useState<Category[]>([]);
   
   useEffect(() => {
     const loadCategories = async () => {
       // Get categories from service
       const nearby = await getCategoriesByGroup('nearby');
+      const transitional = await getCategoriesByGroup('transitional');
       const online = await getCategoriesByGroup('online');
       
-      // Filter and sort categories based on predefined lists
-      const filteredNearby = nearby.filter(cat => 
-        localCategoryNames.includes(cat.name)
-      ).sort((a, b) => 
-        localCategoryNames.indexOf(a.name) - localCategoryNames.indexOf(b.name)
-      );
+      // Create categories if they don't already exist in the service
+      const createMockCategory = (name: string, group: string): Category => ({
+        id: name.toLowerCase().replace(/\s+/g, '-'),
+        name,
+        group,
+        icon: ''
+      });
       
-      const filteredOnline = online.filter(cat => 
-        onlineCategoryNames.includes(cat.name)
-      ).sort((a, b) => 
-        onlineCategoryNames.indexOf(a.name) - onlineCategoryNames.indexOf(b.name)
-      );
+      // Process local categories
+      const processedNearby = localCategoryNames.map(name => {
+        const existing = nearby.find(cat => cat.name === name);
+        return existing || createMockCategory(name, 'nearby');
+      });
       
-      setNearbyCategories(filteredNearby);
-      setOnlineCategories(filteredOnline);
+      // Process transitional categories
+      const processedTransitional = transitionalCategoryNames.map(name => {
+        const existing = transitional.find(cat => cat.name === name);
+        return existing || createMockCategory(name, 'transitional');
+      });
+      
+      // Process online categories
+      const processedOnline = onlineCategoryNames.map(name => {
+        const existing = online.find(cat => cat.name === name);
+        return existing || createMockCategory(name, 'online');
+      });
+      
+      setNearbyCategories(processedNearby);
+      setTransitionalCategories(processedTransitional);
+      setOnlineCategories(processedOnline);
     };
     
     loadCategories();
   }, []);
+  
+  // Determine which categories to show based on active tab
+  const displayedCategories = activeTab === 'nearby' 
+    ? [...nearbyCategories, ...transitionalCategories]
+    : [...onlineCategories, ...transitionalCategories];
   
   return (
     <div className="py-4">
@@ -137,7 +160,7 @@ export default function CategorySuggestions() {
       {/* Categories scroll section */}
       <div className="overflow-x-auto scrollbar-none">
         <div className="flex space-x-4 pb-4 min-w-max px-2">
-          {(activeTab === 'nearby' ? nearbyCategories : onlineCategories).map((category) => (
+          {displayedCategories.map((category) => (
             <CategoryIcon 
               key={category.id} 
               category={category}

@@ -29,6 +29,17 @@ const BusinessOnboarding = () => {
   const [guestUsername, setGuestUsername] = useState('');
   const [showGuestNameInput, setShowGuestNameInput] = useState(false);
   
+  // Check if user is a returning guest
+  useEffect(() => {
+    const storedGuestStatus = sessionStorage.getItem('isGuestBusinessUser');
+    const storedGuestUsername = sessionStorage.getItem('guestBusinessUsername');
+    
+    if (storedGuestStatus === 'true' && storedGuestUsername) {
+      setIsGuest(true);
+      setGuestUsername(storedGuestUsername);
+    }
+  }, []);
+  
   // Check if user already has a shop
   useEffect(() => {
     if (user?.shop_name) {
@@ -106,12 +117,12 @@ const BusinessOnboarding = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <Card className="shadow-lg">
-            <CardHeader>
-              <CardTitle className="text-2xl font-serif">Business Dashboard</CardTitle>
-              <CardDescription>You need to log in to access your business dashboard</CardDescription>
+          <Card className="shadow-lg bg-white dark:bg-gray-800 border dark:border-gray-700">
+            <CardHeader className="dark:border-gray-700">
+              <CardTitle className="text-2xl font-serif dark:text-white">Business Dashboard</CardTitle>
+              <CardDescription className="dark:text-gray-300">You need to log in to access your business dashboard</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 dark:text-white">
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 Want to see how the dashboard works without signing up?
               </p>
@@ -120,14 +131,14 @@ const BusinessOnboarding = () => {
                 <div className="space-y-3">
                   <Button 
                     onClick={handleGuestMode} 
-                    className="w-full bg-gradient-to-r from-[#0F1B44] to-[#183080] text-white"
+                    className="w-full bg-gradient-to-r from-[#0F1B44] to-[#183080] text-white dark:bg-gradient-to-r dark:from-indigo-800 dark:to-indigo-900"
                   >
                     Enter as Guest with Username
                   </Button>
                   <Button 
                     onClick={handleDirectGuestAccess} 
                     variant="outline"
-                    className="w-full border-[#0F1B44] text-[#0F1B44] hover:bg-[#0F1B44]/5"
+                    className="w-full border-[#0F1B44] text-[#0F1B44] hover:bg-[#0F1B44]/5 dark:border-indigo-500 dark:text-indigo-300 dark:hover:bg-indigo-900/20"
                   >
                     Quick Access (No Username)
                   </Button>
@@ -138,19 +149,19 @@ const BusinessOnboarding = () => {
                     placeholder="Enter a username to remember"
                     value={guestUsername}
                     onChange={(e) => setGuestUsername(e.target.value)}
-                    className="w-full"
+                    className="w-full bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                   />
                   <div className="flex gap-2">
                     <Button 
                       onClick={() => setShowGuestNameInput(false)} 
                       variant="outline"
-                      className="flex-1"
+                      className="flex-1 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
                     >
                       Cancel
                     </Button>
                     <Button 
                       onClick={handleGuestMode} 
-                      className="flex-1 bg-gradient-to-r from-[#0F1B44] to-[#183080] text-white"
+                      className="flex-1 bg-gradient-to-r from-[#0F1B44] to-[#183080] text-white dark:bg-gradient-to-r dark:from-indigo-800 dark:to-indigo-900"
                     >
                       Continue
                     </Button>
@@ -186,10 +197,10 @@ const BusinessOnboarding = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <Card className="shadow-lg">
-          <CardHeader>
-            <CardTitle className="text-2xl font-serif">Welcome to Haluna!</CardTitle>
-            <CardDescription>Let's set up your shop to get started selling your products.</CardDescription>
+        <Card className="shadow-lg dark:bg-gray-800 dark:border-gray-700">
+          <CardHeader className="dark:border-b dark:border-gray-700">
+            <CardTitle className="text-2xl font-serif dark:text-white">Welcome to Haluna!</CardTitle>
+            <CardDescription className="dark:text-gray-300">Let's set up your shop to get started selling your products.</CardDescription>
           </CardHeader>
           <CardContent>
             <ShopSetupForm onComplete={handleOnboardingComplete} onSkip={handleSkip} />

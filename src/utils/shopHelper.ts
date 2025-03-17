@@ -30,7 +30,7 @@ export function normalizeShop(shop: any): TypesShop {
     phone: shop.phone || '',
     email: shop.email || '',
     website: shop.website || '',
-    is_featured: shop.is_featured || false
+    is_featured: shop.is_featured ?? false
   };
 }
 
