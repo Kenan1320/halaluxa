@@ -74,11 +74,33 @@ export interface ReviewWithUser {
   user_avatar?: string;
 }
 
-export interface ShopDetails extends Shop {
-  products: number; 
+// Updated to extend Shop but with rating as Rating type
+export interface ShopDetails {
+  id: string;
+  name: string;
+  description: string;
+  location: string;
+  category: string;
+  logo_url: string;
+  cover_image?: string;
+  owner_id: string;
+  product_count: number;
+  is_verified: boolean;
+  latitude?: number;
+  longitude?: number;
+  created_at: string;
+  updated_at: string;
+  distance?: number;
+  phone?: string;
+  email?: string;
+  website?: string;
+  is_featured?: boolean;
+  address?: string;
+  // ShopDetails specific fields
+  rating: Rating;
+  products: number;
   followers: number;
-  reviews: number; // Changed from any[] to number to match the type in ShopDetail.tsx
-  rating: Rating; // Changed from number to Rating to match ShopDetails in types/shop.ts
+  reviews: number;
   deliveryInfo: any;
   isGroupOrderEnabled: boolean;
 }

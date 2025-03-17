@@ -26,7 +26,6 @@ export function normalizeShop(shop: any): TypesShop {
     longitude: shop.longitude || null,
     distance: shop.distance || null,
     address: shop.address || '',
-    // Additional fields that were causing TypeScript errors
     phone: shop.phone || '',
     email: shop.email || '',
     website: shop.website || '',

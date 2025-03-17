@@ -1,176 +1,217 @@
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { ShoppingBag, MapPin, Shirt, Globe, TrendingUp, Coffee, Book, Utensils, Home as HomeIcon, Gift, Palette, Scissors } from 'lucide-react';
 import { useTheme } from '@/context/ThemeContext';
-import { getCategoryIcon } from '../icons/CategoryIcons';
-import { getCategoriesByGroup, Category } from '@/services/categoryService';
-import { MapPin, ShoppingBag } from 'lucide-react';
 
-const TabItem = ({ isActive, onClick, icon, children }: {
-  isActive: boolean;
-  onClick: () => void;
+type CategoryType = "nearby" | "online" | "transitional" | "featured" | "popular";
+
+interface Category {
+  id: string;
+  name: string;
   icon: React.ReactNode;
-  children: React.ReactNode;
-}) => (
-  <button
-    onClick={onClick}
-    className={`flex-1 flex items-center justify-center gap-2 py-3 relative ${
-      isActive ? 'text-black dark:text-white font-bold' : 'text-gray-500 dark:text-gray-400'
-    }`}
-    style={{ fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}
-  >
-    {icon}
-    <span className="text-base font-semibold">{children}</span>
-    {isActive && (
-      <motion.div
-        className="absolute bottom-0 left-0 right-0 h-0.5 bg-black dark:bg-white"
-        layoutId="underline"
-        transition={{ duration: 0.3 }}
-      />
-    )}
-  </button>
-);
+  type: CategoryType;
+}
 
-const CategoryIcon = ({ category, onClick, isSelected }: { 
-  category: Category; 
-  onClick: () => void;
-  isSelected?: boolean;
-}) => (
-  <div 
-    onClick={onClick}
-    className="flex flex-col items-center space-y-2 min-w-[80px] cursor-pointer px-1"
-  >
-    <div className={`w-14 h-14 flex items-center justify-center ${
-      isSelected ? 'text-[#29866B]' : 'text-gray-600 dark:text-gray-300'
-    }`}>
-      {getCategoryIcon(category.name, `w-8 h-8 ${isSelected ? 'text-[#29866B]' : 'text-gray-600 dark:text-gray-300'}`)}
-    </div>
-    <span className={`text-xs text-center text-gray-600 dark:text-gray-300 whitespace-nowrap ${
-      isSelected ? 'font-bold text-[#2A866A] dark:text-[#5bbea7]' : ''
-    }`}>
-      {category.name}
-    </span>
-  </div>
-);
-
-// Define local and online categories
-const localCategoryNames = [
-  'Local Halal Restaurants', 
-  'Halal Butcher Shops', 
-  'Local Halal Grocery Stores', 
-  'Halal Wellness & Therapy Centers'
+const CATEGORIES: Category[] = [
+  // Local Categories
+  {
+    id: "local-restaurants",
+    name: "Local Halal Restaurants",
+    icon: <Utensils className="h-5 w-5" />,
+    type: "nearby"
+  },
+  {
+    id: "butcher-shops",
+    name: "Halal Butcher Shops",
+    icon: <Scissors className="h-5 w-5" />,
+    type: "nearby"
+  },
+  {
+    id: "grocery-stores",
+    name: "Local Halal Grocery Stores",
+    icon: <ShoppingBag className="h-5 w-5" />,
+    type: "nearby"
+  },
+  {
+    id: "wellness-centers",
+    name: "Halal Wellness & Therapy Centers",
+    icon: <TrendingUp className="h-5 w-5" />,
+    type: "nearby"
+  },
+  
+  // Transitioning (Could Be Local or Online)
+  {
+    id: "home-furniture",
+    name: "Home & Furniture Stores",
+    icon: <HomeIcon className="h-5 w-5" />,
+    type: "transitional"
+  },
+  {
+    id: "islamic-decor",
+    name: "Islamic Home Decor & Accessories",
+    icon: <HomeIcon className="h-5 w-5" />,
+    type: "transitional"
+  },
+  {
+    id: "islamic-art",
+    name: "Islamic Art & Calligraphy Services",
+    icon: <Palette className="h-5 w-5" />,
+    type: "transitional"
+  },
+  {
+    id: "islamic-gifts",
+    name: "Islamic Gifts & Specialty Shops",
+    icon: <Gift className="h-5 w-5" />,
+    type: "transitional"
+  },
+  
+  // Online Categories
+  {
+    id: "halvi-marketplace",
+    name: "Halvi Marketplace",
+    icon: <Globe className="h-5 w-5" />,
+    type: "online"
+  },
+  {
+    id: "learn-arabic",
+    name: "Learn Arabic",
+    icon: <Book className="h-5 w-5" />,
+    type: "online"
+  },
+  {
+    id: "modest-hijabs",
+    name: "Modest Wear - Hijabs",
+    icon: <Shirt className="h-5 w-5" />,
+    type: "online"
+  },
+  {
+    id: "modest-abayas",
+    name: "Modest Wear - Abayas & Dresses",
+    icon: <Shirt className="h-5 w-5" />,
+    type: "online"
+  },
+  {
+    id: "mens-islamic-wear",
+    name: "Men's Islamic Wear - Thobes & Jubbas",
+    icon: <Shirt className="h-5 w-5" />,
+    type: "online"
+  },
+  {
+    id: "islamic-books",
+    name: "Islamic Books & More",
+    icon: <Book className="h-5 w-5" />,
+    type: "online"
+  }
 ];
 
-const transitionalCategoryNames = [
-  'Home & Furniture Stores',
-  'Islamic Home Decor & Accessories',
-  'Islamic Art & Calligraphy Services',
-  'Islamic Gifts & Specialty Shops'
-];
+const typeLabels: Record<CategoryType, string> = {
+  "nearby": "Local",
+  "online": "Online",
+  "transitional": "Local & Online",
+  "featured": "Featured",
+  "popular": "Popular"
+};
 
-const onlineCategoryNames = [
-  'Halvi Marketplace', 
-  'Learn Arabic', 
-  'Modest Wear - Hijabs', 
-  'Modest Wear - Abayas & Dresses',
-  'Men\'s Islamic Wear - Thobes & Jubbas',
-  'Islamic Books & More'
-];
-
-export default function CategorySuggestions() {
+const CategorySuggestions = () => {
+  const [selectedType, setSelectedType] = useState<CategoryType>("nearby");
+  const [filteredCategories, setFilteredCategories] = useState<Category[]>([]);
+  const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const { mode } = useTheme();
-  const [activeTab, setActiveTab] = useState<'nearby' | 'online'>('nearby');
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [nearbyCategories, setNearbyCategories] = useState<Category[]>([]);
-  const [transitionalCategories, setTransitionalCategories] = useState<Category[]>([]);
-  const [onlineCategories, setOnlineCategories] = useState<Category[]>([]);
   
   useEffect(() => {
-    const loadCategories = async () => {
-      // Get categories from service
-      const nearby = await getCategoriesByGroup('nearby');
-      const transitional = await getCategoriesByGroup('transitional');
-      const online = await getCategoriesByGroup('online');
-      
-      // Create categories if they don't already exist in the service
-      const createMockCategory = (name: string, group: string): Category => ({
-        id: name.toLowerCase().replace(/\s+/g, '-'),
-        name,
-        // Cast group string to support group type
-        group: group as "nearby" | "online" | "featured" | "popular" | "transitional",
-        icon: ''
-      });
-      
-      // Process local categories
-      const processedNearby = localCategoryNames.map(name => {
-        const existing = nearby.find(cat => cat.name === name);
-        return existing || createMockCategory(name, 'nearby');
-      });
-      
-      // Process transitional categories
-      const processedTransitional = transitionalCategoryNames.map(name => {
-        const existing = transitional.find(cat => cat.name === name);
-        return existing || createMockCategory(name, 'transitional');
-      });
-      
-      // Process online categories
-      const processedOnline = onlineCategoryNames.map(name => {
-        const existing = online.find(cat => cat.name === name);
-        return existing || createMockCategory(name, 'online');
-      });
-      
-      setNearbyCategories(processedNearby);
-      setTransitionalCategories(processedTransitional);
-      setOnlineCategories(processedOnline);
-    };
-    
-    loadCategories();
-  }, []);
+    setFilteredCategories(CATEGORIES.filter(cat => cat.type === selectedType));
+  }, [selectedType]);
   
-  // Determine which categories to show based on active tab
-  const displayedCategories = activeTab === 'nearby' 
-    ? [...nearbyCategories, ...transitionalCategories]
-    : [...onlineCategories, ...transitionalCategories];
+  const handleCategoryClick = (categoryId: string) => {
+    // Navigate to the category page or search with this category
+    navigate(`/browse?category=${categoryId}`);
+  };
   
+  const tabColors: Record<CategoryType, string> = {
+    "nearby": "bg-emerald-500 dark:bg-emerald-600",
+    "online": "bg-blue-500 dark:bg-blue-600",
+    "transitional": "bg-purple-500 dark:bg-purple-600",
+    "featured": "bg-amber-500 dark:bg-amber-600",
+    "popular": "bg-red-500 dark:bg-red-600"
+  };
+
   return (
-    <div className="py-4">
-      <div className="flex border-b border-gray-200 dark:border-gray-800 mb-6">
-        <TabItem
-          isActive={activeTab === 'nearby'}
-          onClick={() => {
-            setActiveTab('nearby');
-            setSelectedCategory(null);
-          }}
-          icon={<MapPin className="w-5 h-5" />}
+    <div className="mt-8 mb-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-2xl mx-auto px-4">
+        <button
+          className={`py-2 px-4 rounded-full text-white text-xs md:text-sm font-medium flex items-center justify-center gap-2 transition-all ${selectedType === 'nearby' ? tabColors['nearby'] : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'}`}
+          onClick={() => setSelectedType('nearby')}
         >
-          Halvi Local
-        </TabItem>
-        <TabItem
-          isActive={activeTab === 'online'}
-          onClick={() => {
-            setActiveTab('online');
-            setSelectedCategory(null);
-          }}
-          icon={<ShoppingBag className="w-5 h-5" />}
+          <MapPin className="h-4 w-4" />
+          <span className="hidden md:inline">Local</span>
+        </button>
+        
+        <button
+          className={`py-2 px-4 rounded-full text-white text-xs md:text-sm font-medium flex items-center justify-center gap-2 transition-all ${selectedType === 'transitional' ? tabColors['transitional'] : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'}`}
+          onClick={() => setSelectedType('transitional')}
         >
-          Halvi Mall
-        </TabItem>
+          <HomeIcon className="h-4 w-4" />
+          <span className="hidden md:inline">Local & Online</span>
+        </button>
+        
+        <button
+          className={`py-2 px-4 rounded-full text-white text-xs md:text-sm font-medium flex items-center justify-center gap-2 transition-all ${selectedType === 'online' ? tabColors['online'] : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'}`}
+          onClick={() => setSelectedType('online')}
+        >
+          <Globe className="h-4 w-4" />
+          <span className="hidden md:inline">Online</span>
+        </button>
+        
+        <button
+          className={`py-2 px-4 rounded-full text-white text-xs md:text-sm font-medium flex items-center justify-center gap-2 transition-all ${selectedType === 'popular' ? tabColors['popular'] : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'}`}
+          onClick={() => setSelectedType('popular')}
+        >
+          <TrendingUp className="h-4 w-4" />
+          <span className="hidden md:inline">Popular</span>
+        </button>
       </div>
       
-      {/* Categories scroll section */}
-      <div className="overflow-x-auto scrollbar-none">
-        <div className="flex space-x-4 pb-4 min-w-max px-2">
-          {displayedCategories.map((category) => (
-            <CategoryIcon 
-              key={category.id} 
-              category={category}
-              isSelected={selectedCategory === category.id}
-              onClick={() => setSelectedCategory(selectedCategory === category.id ? null : category.id)}
-            />
+      <div className="mt-6">
+        <div className={`grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 px-4 ${
+          isMobile ? 'max-h-[300px] overflow-y-auto' : ''
+        }`}>
+          {filteredCategories.map((category, index) => (
+            <motion.div
+              key={category.id}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.05 }}
+              onClick={() => handleCategoryClick(category.id)}
+              className={`${
+                mode === 'dark' 
+                  ? 'bg-gray-800 hover:bg-gray-700 border-gray-700' 
+                  : 'bg-white hover:bg-gray-50 border-gray-100'
+              } border rounded-lg p-4 cursor-pointer transition-all shadow-sm hover:shadow`}
+            >
+              <div className="flex items-center gap-3">
+                <div className={`p-2 rounded-full ${
+                  tabColors[category.type].replace('bg-', 'bg-opacity-10 text-').replace('dark:bg-', 'dark:text-')
+                }`}>
+                  {category.icon}
+                </div>
+                <div className="flex-1">
+                  <p className={`text-sm ${
+                    mode === 'dark' ? 'text-white' : 'text-gray-700'
+                  } font-medium line-clamp-2`}>
+                    {category.name}
+                  </p>
+                </div>
+              </div>
+            </motion.div>
           ))}
         </div>
       </div>
     </div>
   );
-}
+};
+
+export default CategorySuggestions;
