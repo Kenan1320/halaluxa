@@ -11,7 +11,46 @@ export const isAdmin = async (): Promise<boolean> => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return false;
     
-    // Check if admin table exists and if the user is in it
+    // In development mode, make the current user an admin
+    if (import.meta.env.DEV) {
+      // Check if admin table exists and if the user is in it
+      const { data, error } = await supabase
+        .from('admins')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+        
+      if (error || !data) {
+        console.log("Creating admin account for development user");
+        // Create admin record for this user
+        const { data: insertData, error: insertError } = await supabase
+          .from('admins')
+          .insert({
+            user_id: user.id,
+            role: 'admin',
+            last_login: new Date().toISOString()
+          })
+          .select()
+          .single();
+          
+        if (insertError) {
+          console.error("Error creating admin account:", insertError);
+          return false;
+        }
+        
+        return true;
+      }
+      
+      // Update last login
+      await supabase
+        .from('admins')
+        .update({ last_login: new Date().toISOString() })
+        .eq('id', data.id);
+        
+      return true;
+    }
+    
+    // For production, check if user is in admins table
     const { data, error } = await supabase
       .from('admins')
       .select('*')
@@ -43,13 +82,13 @@ export const getAdminPermissions = async (): Promise<AdminPermission[]> => {
     if (!user) return [];
     
     // Get admin record
-    const { data: admin, error: adminError } = await supabase
+    const { data: adminData, error: adminError } = await supabase
       .from('admins')
       .select('*')
       .eq('user_id', user.id)
       .single();
       
-    if (adminError || !admin) {
+    if (adminError || !adminData) {
       console.error("Error getting admin record:", adminError);
       return [];
     }
@@ -58,14 +97,14 @@ export const getAdminPermissions = async (): Promise<AdminPermission[]> => {
     const { data: permissions, error: permError } = await supabase
       .from('admin_permissions')
       .select('*')
-      .eq('role', admin.role);
+      .eq('role', adminData.role);
       
     if (permError) {
       console.error("Error getting permissions:", permError);
       return [];
     }
     
-    return permissions as unknown as AdminPermission[];
+    return permissions as AdminPermission[];
   } catch (error) {
     console.error('Error getting admin permissions:', error);
     return [];
@@ -75,6 +114,11 @@ export const getAdminPermissions = async (): Promise<AdminPermission[]> => {
 // Get admin role
 export const getAdminRole = async (): Promise<AdminRole | null> => {
   try {
+    // In development, return admin role by default
+    if (import.meta.env.DEV) {
+      return 'admin';
+    }
+    
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return null;
     
@@ -118,14 +162,25 @@ export const logAdminAction = async (
       return;
     }
     
-    await supabase.from('audit_logs').insert({
+    // This will be enabled once the audit_logs table is created
+    console.log('Logging admin action:', { 
       admin_id: admin.id,
       action,
       resource,
       resource_id: resourceId,
       details,
-      ip_address: 'client-side' // We can't reliably get IP on client side
+      ip_address: 'client-side' 
     });
+    
+    // Uncomment this when the table exists
+    // await supabase.from('audit_logs').insert({
+    //   admin_id: admin.id,
+    //   action,
+    //   resource,
+    //   resource_id: resourceId,
+    //   details,
+    //   ip_address: 'client-side' // We can't reliably get IP on client side
+    // });
   } catch (error) {
     console.error('Error logging admin action:', error);
   }
@@ -338,19 +393,6 @@ export const getAllProducts = async (): Promise<Product[]> => {
   }
 };
 
-// Get audit logs
-export const getAuditLogs = async (): Promise<AuditLog[]> => {
-  try {
-    // This requires the audit_logs table to be created
-    // For now, return an empty array
-    console.log("Audit logs feature not fully implemented yet");
-    return [];
-  } catch (error) {
-    console.error('Error getting audit logs:', error);
-    return [];
-  }
-};
-
 // Check if user is admin and create admin record if needed
 export const ensureAdminUser = async (): Promise<boolean> => {
   // In development, we'll create an admin user for testing
@@ -359,33 +401,52 @@ export const ensureAdminUser = async (): Promise<boolean> => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return false;
       
-      // See if this user is already an admin
-      const { data: admin, error: adminError } = await supabase
+      console.log("Ensuring admin access for development");
+      
+      // Since we want immediate admin access, let's force create an admin record
+      const { data: adminExists } = await supabase
         .from('admins')
-        .select('*')
+        .select('id')
         .eq('user_id', user.id)
-        .single();
+        .limit(1);
+      
+      if (!adminExists || adminExists.length === 0) {
+        console.log("Creating admin record for user", user.id);
         
-      if (adminError && adminError.code === 'PGRST116') {
-        // Not found, create admin record
-        const { error: insertError } = await supabase
-          .from('admins')
-          .insert({
-            user_id: user.id,
-            role: 'admin',
-            last_login: new Date().toISOString()
+        // This will manually create the admin record - in production, this would be handled differently
+        // Create a direct query to create the admin record (bypassing RLS)
+        try {
+          // Insert admin record
+          await supabase.rpc('create_admin_user', { 
+            user_id_param: user.id,
+            role_param: 'admin'
           });
           
-        if (insertError) {
-          console.error('Error creating admin record:', insertError);
-          return false;
+          console.log('Created admin account for development user');
+          return true;
+        } catch (rpcError) {
+          console.error('RPC create_admin_user error:', rpcError);
+          
+          // Fallback attempt direct insert (might fail due to RLS)
+          const { error: insertError } = await supabase
+            .from('admins')
+            .insert({
+              user_id: user.id,
+              role: 'admin',
+              last_login: new Date().toISOString()
+            });
+            
+          if (insertError) {
+            console.error('Error creating admin record:', insertError);
+            alert('Please create the admins table and configure RLS to allow admin creation in development. See console for details.');
+            return false;
+          }
+          
+          return true;
         }
-        
-        console.log('Created admin account for development');
-        return true;
       }
       
-      return !!admin;
+      return true;
     } catch (error) {
       console.error('Error ensuring admin user:', error);
       return false;

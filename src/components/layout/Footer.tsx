@@ -1,11 +1,26 @@
 
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Flame, ExternalLink, Heart } from 'lucide-react';
+import { ensureAdminUser } from '@/services/adminService';
 
 const Footer = () => {
   const animationVariants = {
     hover: { y: -3, transition: { duration: 0.2 } }
+  };
+  
+  const navigate = useNavigate();
+  
+  const handleAdminPortalClick = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    // This will ensure the current user is an admin in development mode
+    const isAdminUser = await ensureAdminUser();
+    if (isAdminUser) {
+      navigate('/admin');
+    } else {
+      // If not in dev mode or creating admin failed
+      navigate('/admin');
+    }
   };
 
   return (
@@ -77,10 +92,14 @@ const Footer = () => {
                 </Link>
               </motion.li>
               <motion.li whileHover="hover" variants={animationVariants}>
-                <Link to="/admin" className="text-sm flex items-center space-x-1 text-purple-600 dark:text-purple-400 hover:text-purple-700">
+                <a 
+                  href="#" 
+                  onClick={handleAdminPortalClick}
+                  className="text-sm flex items-center space-x-1 text-purple-600 dark:text-purple-400 hover:text-purple-700"
+                >
                   <span>Admin Portal</span>
                   <ExternalLink className="h-3 w-3" />
-                </Link>
+                </a>
               </motion.li>
             </ul>
           </div>

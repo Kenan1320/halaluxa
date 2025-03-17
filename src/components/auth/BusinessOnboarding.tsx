@@ -28,6 +28,7 @@ const BusinessOnboarding = () => {
   const [isGuest, setIsGuest] = useState(false);
   const [guestUsername, setGuestUsername] = useState('');
   const [showGuestNameInput, setShowGuestNameInput] = useState(false);
+  const [skipOnboarding, setSkipOnboarding] = useState(false);
   
   // Check if user is a returning guest
   useEffect(() => {
@@ -47,12 +48,15 @@ const BusinessOnboarding = () => {
     }
   }, [user]);
   
-  // If user completes onboarding or skips, redirect them
+  // Auto-redirect to dashboard
   useEffect(() => {
-    if (onboardingComplete || isGuest) {
-      navigate('/dashboard');
+    // If user is a business user, immediately go to dashboard
+    if (isLoggedIn && user?.role === 'business') {
+      if (skipOnboarding || onboardingComplete || isGuest) {
+        navigate('/dashboard');
+      }
     }
-  }, [onboardingComplete, isGuest, navigate]);
+  }, [isLoggedIn, user, skipOnboarding, onboardingComplete, isGuest, navigate]);
   
   const handleOnboardingComplete = () => {
     toast({
@@ -67,7 +71,8 @@ const BusinessOnboarding = () => {
       title: "Onboarding Skipped",
       description: "You can set up your shop later in Settings.",
     });
-    setOnboardingComplete(true);
+    setSkipOnboarding(true);
+    navigate('/dashboard');
   };
   
   const handleGuestMode = () => {
@@ -185,37 +190,55 @@ const BusinessOnboarding = () => {
     return null;
   }
   
-  // Check if user is a business account
-  if (user?.role !== 'business' && !isGuest) {
-    return null;
+  // If user is already logged in as a business user, auto-redirect to dashboard
+  if (isLoggedIn && user?.role === 'business' && !onboardingComplete && !skipOnboarding) {
+    return (
+      <div className="container mx-auto max-w-4xl px-4 py-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <Card className="shadow-lg dark:bg-gray-800 dark:border-gray-700">
+            <CardHeader className="dark:border-b dark:border-gray-700">
+              <CardTitle className="text-2xl font-serif dark:text-white">Welcome to Haluna!</CardTitle>
+              <CardDescription className="dark:text-gray-300">As a business account, you can set up your shop now or later.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col md:flex-row gap-4 mb-6">
+                <Button 
+                  onClick={handleSkip}
+                  variant="outline" 
+                  className="flex-1"
+                >
+                  Skip & Go to Dashboard
+                </Button>
+                <Button 
+                  className="flex-1 bg-gradient-to-r from-[#0F1B44] to-[#183080]"
+                  onClick={() => setOnboardingStep(1)}
+                >
+                  Start Shop Setup
+                </Button>
+              </div>
+              
+              {onboardingStep === 1 && (
+                <ShopSetupForm onComplete={handleOnboardingComplete} onSkip={handleSkip} />
+              )}
+            </CardContent>
+            {isGuest && (
+              <CardFooter className="bg-amber-50 dark:bg-amber-900/20 rounded-b-lg border-t border-amber-200 dark:border-amber-800">
+                <div className="text-xs text-amber-700 dark:text-amber-400">
+                  <strong>Guest Mode:</strong> You're currently in guest mode as {sessionStorage.getItem('guestBusinessUsername')}. Changes won't be permanently saved.
+                </div>
+              </CardFooter>
+            )}
+          </Card>
+        </motion.div>
+      </div>
+    );
   }
   
-  return (
-    <div className="container mx-auto max-w-4xl px-4 py-8">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        <Card className="shadow-lg dark:bg-gray-800 dark:border-gray-700">
-          <CardHeader className="dark:border-b dark:border-gray-700">
-            <CardTitle className="text-2xl font-serif dark:text-white">Welcome to Haluna!</CardTitle>
-            <CardDescription className="dark:text-gray-300">Let's set up your shop to get started selling your products.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ShopSetupForm onComplete={handleOnboardingComplete} onSkip={handleSkip} />
-          </CardContent>
-          {isGuest && (
-            <CardFooter className="bg-amber-50 dark:bg-amber-900/20 rounded-b-lg border-t border-amber-200 dark:border-amber-800">
-              <div className="text-xs text-amber-700 dark:text-amber-400">
-                <strong>Guest Mode:</strong> You're currently in guest mode as {sessionStorage.getItem('guestBusinessUsername')}. Changes won't be permanently saved.
-              </div>
-            </CardFooter>
-          )}
-        </Card>
-      </motion.div>
-    </div>
-  );
+  return null;
 };
 
 export default BusinessOnboarding;
