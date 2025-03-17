@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Shop } from '@/types/database';
 import { Product } from '@/models/product';
@@ -30,21 +29,16 @@ export interface AdminPermission {
 
 // Function to get admin role for the current user
 export const getAdminRole = async (): Promise<string> => {
-  try {
-    // In development mode, always return super_admin
-    if (import.meta.env.DEV) {
-      return 'super_admin';
-    }
-    
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return 'not_authenticated';
-    
-    // For production, this would query the admins table
-    return 'admin'; // Default fallback
-  } catch (error) {
-    console.error('Error getting admin role:', error);
-    return 'unknown';
+  // In development mode, always return super_admin
+  if (import.meta.env.DEV) {
+    return 'super_admin';
   }
+  
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return 'not_authenticated';
+  
+  // For production, this would query the admins table
+  return 'admin'; // Default fallback
 };
 
 // Create a function to ensure an admin exists in development mode
@@ -299,6 +293,138 @@ export const getAdminUser = async (): Promise<Admin | null> => {
   }
   
   return null;
+};
+
+// Add the missing functions that are imported in AdminDashboard.tsx
+export const getAdminStats = async () => {
+  // In development mode, return mock data
+  if (import.meta.env.DEV) {
+    return {
+      totalUsers: 1250,
+      totalShops: 76,
+      totalOrders: 5643,
+      totalRevenue: 125680,
+      pendingApprovals: 12,
+      activeUsers: 834
+    };
+  }
+  
+  try {
+    // For production, this would fetch actual stats from the database
+    // This is a placeholder implementation
+    const { data: users } = await supabase.from('profiles').select('id');
+    const { data: shops } = await supabase.from('shops').select('id');
+    const { data: orders } = await supabase.from('orders').select('id, total');
+    
+    const totalRevenue = orders 
+      ? orders.reduce((sum, order) => sum + (parseFloat(order.total) || 0), 0) 
+      : 0;
+    
+    return {
+      totalUsers: users?.length || 0,
+      totalShops: shops?.length || 0,
+      totalOrders: orders?.length || 0,
+      totalRevenue: totalRevenue,
+      pendingApprovals: 0, // This would be calculated in production
+      activeUsers: users?.length || 0 // This would be calculated in production
+    };
+  } catch (error) {
+    console.error('Error fetching admin stats:', error);
+    return {
+      totalUsers: 0,
+      totalShops: 0,
+      totalOrders: 0,
+      totalRevenue: 0,
+      pendingApprovals: 0,
+      activeUsers: 0
+    };
+  }
+};
+
+export const getDashboardUsers = async (limit = 5) => {
+  // In development mode, return mock data
+  if (import.meta.env.DEV) {
+    return [
+      {
+        id: '1',
+        name: 'John Smith',
+        email: 'john@example.com',
+        role: 'shopper',
+        created_at: new Date().toISOString()
+      },
+      {
+        id: '2',
+        name: 'Jane Doe',
+        email: 'jane@example.com',
+        role: 'business',
+        created_at: new Date().toISOString()
+      },
+      {
+        id: '3',
+        name: 'Bob Johnson',
+        email: 'bob@example.com',
+        role: 'shopper',
+        created_at: new Date().toISOString()
+      }
+    ];
+  }
+  
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(limit);
+      
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Error fetching dashboard users:', error);
+    return [];
+  }
+};
+
+export const getRecentOrders = async (limit = 5) => {
+  // In development mode, return mock data
+  if (import.meta.env.DEV) {
+    return [
+      {
+        id: '101',
+        user_id: '1',
+        total: 125.99,
+        status: 'completed',
+        created_at: new Date().toISOString()
+      },
+      {
+        id: '102',
+        user_id: '2',
+        total: 76.50,
+        status: 'processing',
+        created_at: new Date().toISOString()
+      },
+      {
+        id: '103',
+        user_id: '3',
+        total: 42.25,
+        status: 'completed',
+        created_at: new Date().toISOString()
+      }
+    ];
+  }
+  
+  try {
+    const { data, error } = await supabase
+      .from('orders')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(limit);
+      
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Error fetching recent orders:', error);
+    return [];
+  }
 };
 
 export interface DatabaseProfile {

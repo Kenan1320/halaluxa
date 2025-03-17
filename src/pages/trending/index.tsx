@@ -74,7 +74,7 @@ export default function TrendingPage() {
                   category: shop.category,
                   rating: typeof shop.rating === 'object' 
                     ? shop.rating.average 
-                    : (shop.rating || 0), // Use 0 as fallback if rating is null
+                    : (shop.rating ?? 0), // Using nullish coalescing to handle null values
                   image: shop.cover_image || '',
                   location: shop.location,
                   isVerified: shop.is_verified
