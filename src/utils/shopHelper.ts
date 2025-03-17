@@ -26,7 +26,11 @@ export function normalizeShop(shop: any): TypesShop {
     longitude: shop.longitude || null,
     distance: shop.distance || null,
     logo: shop.logo || shop.logo_url || '',
-    address: shop.address || ''
+    address: shop.address || '',
+    phone: shop.phone || '',
+    email: shop.email || '',
+    website: shop.website || '',
+    is_featured: shop.is_featured || false
   };
 }
 

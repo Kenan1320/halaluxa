@@ -50,8 +50,9 @@ const ShopDetail = () => {
           reviews: [],
           deliveryInfo: {},
           isGroupOrderEnabled: false,
-          rating: normalizedShop.rating || 0, // Ensure rating is always set
-          product_count: normalizedShop.product_count || 0 // Ensure product_count is set
+          rating: normalizedShop.rating || 0,
+          product_count: normalizedShop.product_count || 0,
+          is_verified: normalizedShop.is_verified || false
         };
         
         setShop(shopDetails);
