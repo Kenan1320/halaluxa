@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
@@ -8,7 +9,8 @@ import { Shop } from '@/types/shop';
 import { adaptShopType } from '@/utils/typeAdapters';
 
 const Navbar = () => {
-  const { user, isAuthenticated, logout, isLoading } = useAuth();
+  const { user, logout, isLoading } = useAuth();
+  const isAuthenticated = user !== null && !isLoading;
   const { selectedShop, setSelectedShop } = useShopContext();
   const [showMobileMenu, setShowMobileMenu] = useState(false);
 

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -70,12 +71,12 @@ const SettingsPage = () => {
   })
 
   useEffect(() => {
-    if (user?.shop_id) {
+    if (user) {
       form.reset({
         shopName: user.shop_name || '',
         description: user.shop_description || '',
         category: user.shop_category || '',
-        address: user.address || '',
+        address: typeof user.address === 'string' ? user.address : '',
         location: user.shop_location || '',
         phone: user.phone || '',
         email: user.email || '',

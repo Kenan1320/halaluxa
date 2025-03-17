@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { getShopById } from '@/services/shopService';
@@ -39,7 +40,8 @@ const ShopDetailPage = () => {
           );
           
           setProducts(processedProducts);
-          setReviews(shopReviews);
+          // Explicitly cast to ShopReview[] since we know these are shop reviews
+          setReviews(shopReviews as ShopReview[]);
           
           // Create shop details object
           setShopDetails({
@@ -123,19 +125,23 @@ const ShopDetailPage = () => {
           </div>
           <div className="mt-4 border rounded-md p-4">
             <h2 className="text-lg font-semibold mb-2">Reviews</h2>
-            {reviews.map(review => (
-              <div key={review.id} className="mb-4">
-                <p className="font-medium">{review.user_name}</p>
-                <p className="text-gray-600">{review.comment}</p>
-                <div className="flex items-center mt-1">
-                  {[...Array(review.rating)].map((_, i) => (
-                    <span key={i} className="text-yellow-500">
-                      ★
-                    </span>
-                  ))}
+            {reviews.length > 0 ? (
+              reviews.map(review => (
+                <div key={review.id} className="mb-4">
+                  <p className="font-medium">{review.user_name}</p>
+                  <p className="text-gray-600">{review.comment}</p>
+                  <div className="flex items-center mt-1">
+                    {[...Array(review.rating)].map((_, i) => (
+                      <span key={i} className="text-yellow-500">
+                        ★
+                      </span>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))
+            ) : (
+              <p>No reviews yet</p>
+            )}
           </div>
         </div>
       </div>

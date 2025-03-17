@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -31,7 +30,7 @@ const AdminDashboard = () => {
         ]);
 
         // Convert shop and product types to match the expected types in the component
-        const adaptedShops = adaptShopArray(allShops, 'models') as Shop[];
+        const adaptedShops = adaptShopArray(allShops, 'models');
         const adaptedProducts = allProducts.map(p => adaptProductType(p)) as Product[];
         
         setShops(adaptedShops);

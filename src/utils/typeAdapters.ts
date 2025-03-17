@@ -50,6 +50,8 @@ export function adaptProductType(product: any): any {
     seller_id: product.seller_id || product.sellerId || '',
     seller_name: product.seller_name || product.sellerName || '',
     image_url: product.image_url || (product.images && product.images.length > 0 ? product.images[0] : ''),
+    in_stock: product.in_stock !== undefined ? product.in_stock : true,
+    pickup_options: product.pickup_options || { store: true, curbside: false },
   };
 }
 
@@ -57,5 +59,14 @@ export function adaptProductType(product: any): any {
  * Convert an array of shops to the target type
  */
 export function adaptShopArray(shops: any[], targetType: 'types' | 'database' | 'models'): any[] {
+  if (!shops || !Array.isArray(shops)) return [];
   return shops.map(shop => adaptShopType(shop, targetType));
+}
+
+/**
+ * Convert an array of products to use consistent properties
+ */
+export function adaptProductArray(products: any[]): any[] {
+  if (!products || !Array.isArray(products)) return [];
+  return products.map(product => adaptProductType(product));
 }

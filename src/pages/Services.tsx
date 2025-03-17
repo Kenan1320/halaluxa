@@ -1,208 +1,152 @@
 
-import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { Search, Map, Filter, ArrowRight } from 'lucide-react';
+import React from 'react';
+import { Container } from '@/components/ui/container';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent } from '@/components/ui/card';
-import { CategoryIcon } from '@/components/icons/CategoryIcons';
-import { useNavigate } from 'react-router-dom';
-import { getAllCategories } from '@/services/categoryService';
+import { ArrowRight, MapPin, Package, Phone, CircleDollarSign, Users, Clock } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { getCategoryIcon } from '@/components/icons/CategoryIcons';
 
-const Services = () => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [categories, setCategories] = useState<any[]>([]);
-  const [featuredServices, setFeaturedServices] = useState<any[]>([]);
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    // Load categories
-    const loadCategories = async () => {
-      const allCategories = await getAllCategories();
-      setCategories(allCategories.slice(0, 8)); // Top 8 categories
-      
-      // For demo purposes, create featured services
-      setFeaturedServices([
-        {
-          id: 'grocery-delivery',
-          title: 'Grocery Delivery',
-          description: 'Fresh groceries delivered to your doorstep',
-          icon: 'Grocery',
-          color: 'bg-green-500'
-        },
-        {
-          id: 'food-delivery',
-          title: 'Food Delivery',
-          description: 'Your favorite restaurants at your fingertips',
-          icon: 'Restaurant',
-          color: 'bg-orange-500'
-        },
-        {
-          id: 'pharmacy',
-          title: 'Pharmacy',
-          description: 'Order medicine and healthcare products',
-          icon: 'Pharmacy',
-          color: 'bg-blue-500'
-        },
-        {
-          id: 'ride-sharing',
-          title: 'Ride Sharing',
-          description: 'Book a ride to your destination',
-          icon: 'Transportation',
-          color: 'bg-purple-500'
-        }
-      ]);
-    };
-    
-    loadCategories();
-  }, []);
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
-    }
-  };
-
-  const container = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1
-      }
-    }
-  };
-
-  const item = {
-    hidden: { y: 20, opacity: 0 },
-    show: { y: 0, opacity: 1 }
-  };
-
+const ServicesPage = () => {
   return (
-    <div className="container mx-auto px-4 pt-6 pb-24">
-      <motion.div 
-        className="space-y-6"
-        initial="hidden"
-        animate="show"
-        variants={container}
-      >
-        <motion.div variants={item}>
-          <h1 className="text-2xl font-bold">Services</h1>
-          <p className="text-gray-500 mt-1">Discover and explore available services</p>
-        </motion.div>
+    <Container className="py-12">
+      <div className="text-center mb-16">
+        <h1 className="text-3xl md:text-4xl font-bold mb-4 tracking-tight">Our Services</h1>
+        <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+          Discover how Halvi can help connect you with the best halal products and services in your area.
+        </p>
+      </div>
 
-        <motion.form 
-          onSubmit={handleSearch}
-          className="relative"
-          variants={item}
-        >
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-          <Input
-            type="text"
-            placeholder="Search for services..."
-            className="pl-10 pr-16 py-6 rounded-xl"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-          <Button 
-            type="submit" 
-            size="sm"
-            className="absolute right-2 top-1/2 transform -translate-y-1/2"
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
+        <div className="rounded-lg border bg-card shadow-sm p-6 flex flex-col h-full">
+          <div className="mb-4 flex items-center">
+            <div className="bg-primary/10 p-3 rounded-full mr-4">
+              <MapPin className="h-6 w-6 text-primary" />
+            </div>
+            <h2 className="text-2xl font-bold">Local Discovery</h2>
+          </div>
+          <p className="text-gray-600 dark:text-gray-400 mb-6 flex-grow">
+            Find halal shops, restaurants, and services near you. Support local businesses with confidence.
+          </p>
+          <Link to="/nearby">
+            <Button className="w-full mt-auto">
+              Explore Nearby Shops <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </Link>
+        </div>
+
+        <div className="rounded-lg border bg-card shadow-sm p-6 flex flex-col h-full">
+          <div className="mb-4 flex items-center">
+            <div className="bg-primary/10 p-3 rounded-full mr-4">
+              <Package className="h-6 w-6 text-primary" />
+            </div>
+            <h2 className="text-2xl font-bold">Halvi Mall</h2>
+          </div>
+          <p className="text-gray-600 dark:text-gray-400 mb-6 flex-grow">
+            Shop online from verified halal stores. Discover unique products from around the world.
+          </p>
+          <Link to="/shops?type=online">
+            <Button className="w-full mt-auto">
+              Shop Online <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </Link>
+        </div>
+      </div>
+
+      <h2 className="text-2xl font-bold mb-6 text-center">Categories</h2>
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4 mb-16">
+        {[
+          { name: 'Restaurants', icon: 'Restaurants' },
+          { name: 'Groceries', icon: 'Groceries' },
+          { name: 'Halal Meat', icon: 'Halal Meat' },
+          { name: 'Modest Wear', icon: 'Modest Wear' },
+          { name: 'Home', icon: 'Home' },
+          { name: 'Beauty', icon: 'Beauty' },
+        ].map((category) => (
+          <Link 
+            key={category.name} 
+            to={`/category/${category.name.toLowerCase().replace(/\s+/g, '-')}`}
+            className="flex flex-col items-center p-4 border rounded-lg hover:border-primary transition-colors"
           >
-            Search
-          </Button>
-        </motion.form>
+            <div className="p-3 bg-gray-100 dark:bg-gray-800 rounded-full mb-2">
+              {getCategoryIcon(category.icon, "w-6 h-6")}
+            </div>
+            <span className="text-sm font-medium text-center">{category.name}</span>
+          </Link>
+        ))}
+      </div>
 
-        <motion.div variants={item}>
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold">Featured Services</h2>
-            <Button variant="ghost" size="sm" className="text-haluna-primary">
-              View All
-              <ArrowRight className="ml-1 h-4 w-4" />
-            </Button>
+      <h2 className="text-2xl font-bold mb-6 text-center">How It Works</h2>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+        <div className="text-center">
+          <div className="bg-primary/10 p-4 rounded-full inline-flex justify-center mb-4">
+            <MapPin className="h-8 w-8 text-primary" />
           </div>
-          
-          <div className="grid grid-cols-2 gap-4">
-            {featuredServices.map((service) => (
-              <motion.div 
-                key={service.id}
-                whileHover={{ y: -5 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <Card className="h-full overflow-hidden hover:shadow-lg transition-shadow">
-                  <CardContent className="p-0">
-                    <div className={`${service.color} h-24 flex items-center justify-center`}>
-                      <CategoryIcon name={service.icon} className="text-white h-12 w-12" />
-                    </div>
-                    <div className="p-4">
-                      <h3 className="font-semibold">{service.title}</h3>
-                      <p className="text-sm text-gray-500 mt-1">{service.description}</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
+          <h3 className="text-xl font-semibold mb-2">Discover</h3>
+          <p className="text-gray-600 dark:text-gray-400">
+            Find halal shops and products near you or browse online options
+          </p>
+        </div>
+        
+        <div className="text-center">
+          <div className="bg-primary/10 p-4 rounded-full inline-flex justify-center mb-4">
+            <Users className="h-8 w-8 text-primary" />
           </div>
-        </motion.div>
+          <h3 className="text-xl font-semibold mb-2">Connect</h3>
+          <p className="text-gray-600 dark:text-gray-400">
+            Follow your favorite shops and get notifications about new products
+          </p>
+        </div>
+        
+        <div className="text-center">
+          <div className="bg-primary/10 p-4 rounded-full inline-flex justify-center mb-4">
+            <CircleDollarSign className="h-8 w-8 text-primary" />
+          </div>
+          <h3 className="text-xl font-semibold mb-2">Support</h3>
+          <p className="text-gray-600 dark:text-gray-400">
+            Buy with confidence and support halal businesses in your community
+          </p>
+        </div>
+      </div>
 
-        <motion.div variants={item}>
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold">Categories</h2>
-            <Button variant="ghost" size="sm" className="text-haluna-primary" onClick={() => navigate('/shops')}>
-              All Shops
-              <ArrowRight className="ml-1 h-4 w-4" />
-            </Button>
-          </div>
-          
-          <div className="grid grid-cols-4 gap-4">
-            {categories.map((category) => (
-              <motion.div 
-                key={category.id}
-                className="flex flex-col items-center"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => navigate(`/browse?category=${category.name}`)}
-              >
-                <div className="bg-haluna-primary/10 dark:bg-haluna-primary/20 rounded-full p-3">
-                  <CategoryIcon name={category.icon} className="text-haluna-primary h-6 w-6" />
+      <div className="bg-primary/5 rounded-xl p-8 mb-16">
+        <h2 className="text-2xl font-bold mb-6 text-center">Featured Services</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[
+            { name: 'Delivery', icon: 'Delivery', description: 'Get halal food delivered directly to your door' },
+            { name: 'Shop Tours', icon: 'Shop', description: 'Virtual tours of halal shops and businesses' },
+            { name: 'Halal Verification', icon: 'CheckCircle', description: 'Verified halal certification information' },
+          ].map((service) => (
+            <div key={service.name} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+              <div className="flex items-center mb-4">
+                <div className="bg-primary/10 p-2 rounded-full mr-3">
+                  {getCategoryIcon(service.icon, "w-5 h-5")}
                 </div>
-                <span className="text-xs mt-2 text-center">{category.name}</span>
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
+                <h3 className="font-medium">{service.name}</h3>
+              </div>
+              <p className="text-gray-600 dark:text-gray-400 text-sm">
+                {service.description}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
 
-        <motion.div variants={item}>
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold">Explore Nearby</h2>
-            <Button variant="ghost" size="sm" className="text-haluna-primary" onClick={() => navigate('/nearby')}>
-              See Map
-              <Map className="ml-1 h-4 w-4" />
-            </Button>
-          </div>
-          
-          <Card>
-            <CardContent className="p-4">
-              <div className="aspect-video bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center">
-                <p className="text-gray-400">Map view of nearby services</p>
-              </div>
-              <div className="flex gap-2 mt-4 overflow-x-auto pb-2">
-                <Button size="sm" variant="outline" className="whitespace-nowrap">
-                  <Filter className="mr-1 h-4 w-4" />
-                  All
-                </Button>
-                <Button size="sm" variant="outline" className="whitespace-nowrap">Restaurants</Button>
-                <Button size="sm" variant="outline" className="whitespace-nowrap">Grocery</Button>
-                <Button size="sm" variant="outline" className="whitespace-nowrap">Pharmacy</Button>
-                <Button size="sm" variant="outline" className="whitespace-nowrap">More</Button>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-      </motion.div>
-    </div>
+      <div className="text-center bg-gray-100 dark:bg-gray-800 rounded-xl p-8">
+        <h2 className="text-2xl font-bold mb-4">Need Help?</h2>
+        <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-2xl mx-auto">
+          Our customer support team is available to assist you with any questions or issues you might have.
+        </p>
+        <div className="flex flex-col sm:flex-row justify-center gap-4">
+          <Button className="flex items-center justify-center">
+            <Phone className="mr-2 h-4 w-4" /> Contact Support
+          </Button>
+          <Button variant="outline" className="flex items-center justify-center">
+            <Clock className="mr-2 h-4 w-4" /> View FAQ
+          </Button>
+        </div>
+      </div>
+    </Container>
   );
 };
 
-export default Services;
+export default ServicesPage;

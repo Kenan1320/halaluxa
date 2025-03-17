@@ -1,7 +1,6 @@
 
-import { supabase } from '@/integrations/supabase/client';
+import { db } from '@/integrations/supabase/client';
 
-// Define and export the Category type
 export interface Category {
   id: string;
   name: string;
@@ -13,107 +12,53 @@ export interface Category {
   group?: 'featured' | 'nearby' | 'online' | 'popular' | 'transitional';
 }
 
-// Mock categories for development
-const mockCategories: Category[] = [
-  {
-    id: '1',
-    name: 'Groceries',
-    slug: 'groceries',
-    icon: 'shopping-basket',
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    group: 'featured'
-  },
-  {
-    id: '2',
-    name: 'Restaurants',
-    slug: 'restaurants',
-    icon: 'utensils',
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    group: 'popular'
-  },
-  {
-    id: '3',
-    name: 'Pharmacy',
-    slug: 'pharmacy',
-    icon: 'first-aid',
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    group: 'nearby'
-  },
-  {
-    id: '4',
-    name: 'Home Services',
-    slug: 'home-services',
-    icon: 'home',
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    group: 'online'
-  },
-  {
-    id: '5',
-    name: 'Electronics',
-    slug: 'electronics',
-    icon: 'tv',
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    group: 'transitional'
-  }
-];
-
-// Get all categories
-export const getAllCategories = async (): Promise<Category[]> => {
+export const getCategories = async (): Promise<Category[]> => {
   try {
-    // For development, return mock data
-    return mockCategories;
+    // For development, return mock categories
+    return getMockCategories();
   } catch (error) {
     console.error('Error fetching categories:', error);
     return [];
   }
 };
 
-// Get categories by group
 export const getCategoriesByGroup = async (group: 'featured' | 'nearby' | 'online' | 'popular' | 'transitional'): Promise<Category[]> => {
   try {
-    return mockCategories.filter(category => category.group === group);
+    // For development, filter mock categories by group
+    const allCategories = getMockCategories();
+    return allCategories.filter(cat => cat.group === group);
   } catch (error) {
     console.error(`Error fetching ${group} categories:`, error);
     return [];
   }
 };
 
-// Get a single category by ID
-export const getCategoryById = async (id: string): Promise<Category | null> => {
-  try {
-    const category = mockCategories.find(cat => cat.id === id);
-    return category || null;
-  } catch (error) {
-    console.error('Error fetching category:', error);
-    return null;
-  }
+// Mock categories for development
+const getMockCategories = (): Category[] => {
+  return [
+    { id: 'groceries', name: 'Groceries', group: 'nearby', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: 'restaurants', name: 'Restaurants', group: 'nearby', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: 'halal-meat', name: 'Halal Meat', group: 'nearby', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: 'coffee-shops', name: 'Coffee Shops', group: 'nearby', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: 'therapists', name: 'Therapists', group: 'nearby', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: 'furniture', name: 'Furniture', group: 'nearby', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    
+    { id: 'arabic-calligraphy', name: 'Arabic Calligraphy', group: 'transitional', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: 'decorations', name: 'Decorations', group: 'transitional', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: 'gifts', name: 'Gifts', group: 'transitional', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: 'modest-wear', name: 'Modest Wear', group: 'transitional', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: 'online-stores', name: 'Online Stores', group: 'transitional', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: 'others', name: 'Others', group: 'transitional', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    
+    { id: 'hoodies', name: 'Hoodies', group: 'online', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: 'thobes', name: 'Thobes', group: 'online', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: 'abaya', name: 'Abaya', group: 'online', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: 'books', name: 'Books', group: 'online', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: 'fragrance', name: 'Fragrance', group: 'online', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: 'jewelry', name: 'Jewelry', group: 'online', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    
+    { id: 'featured-products', name: 'Featured Products', group: 'featured', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: 'popular-items', name: 'Popular Items', group: 'popular', created_at: new Date().toISOString(), updated_at: new Date().toISOString() }
+  ];
 };
 
-// Get a single category by slug
-export const getCategoryBySlug = async (slug: string): Promise<Category | null> => {
-  try {
-    const category = mockCategories.find(cat => cat.slug === slug);
-    return category || null;
-  } catch (error) {
-    console.error('Error fetching category by slug:', error);
-    return null;
-  }
-};
-
-// Search categories
-export const searchCategories = async (query: string): Promise<Category[]> => {
-  try {
-    const normalizedQuery = query.toLowerCase();
-    return mockCategories.filter(category => 
-      category.name.toLowerCase().includes(normalizedQuery)
-    );
-  } catch (error) {
-    console.error('Error searching categories:', error);
-    return [];
-  }
-};
