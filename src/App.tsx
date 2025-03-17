@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -34,25 +33,8 @@ import NotFound from "./pages/NotFound";
 import LoginPage from "./pages/auth/LoginPage";
 import SignUpPage from "./pages/auth/SignUpPage";
 import SelectShops from "./pages/SelectShops";
-
-// New Pages for Navigation Buttons
-import NearbyPage from "./pages/nearby";
-import TrendingPage from "./pages/trending";
-import PopularSearchesPage from "./pages/popular-searches";
-import OrderDeliveryPage from "./pages/order-delivery";
-import AffiliatePage from "./pages/affiliate";
-import AffiliateProgramPage from "./pages/affiliate-program";
-
-// Dashboard imports
-import DashboardLayout from "./components/layout/DashboardLayout";
-import DashboardHome from "./pages/dashboard/DashboardHome";
-import ProductsPage from "./pages/dashboard/ProductsPage";
-import AddEditProductPage from "./pages/dashboard/AddEditProductPage";
-import OrdersPage from "./pages/dashboard/OrdersPage";
-import CustomersPage from "./pages/dashboard/CustomersPage";
-import SettingsPage from "./pages/dashboard/SettingsPage";
-import PaymentAccountPage from "./pages/dashboard/PaymentAccountPage";
-import UserProfilePage from "./pages/profile/UserProfilePage";
+import Help from "./pages/Help";
+import AdminDashboard from "./pages/admin/AdminDashboard";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -77,7 +59,8 @@ const AppRoutes = () => {
   const showNavbar = !user || user.role !== 'business' || 
                     (!location.pathname.startsWith('/dashboard') && 
                      location.pathname !== '/login' && 
-                     location.pathname !== '/signup');
+                     location.pathname !== '/signup' &&
+                     !location.pathname.startsWith('/admin'));
   
   return (
     <AuthMiddleware>
@@ -96,14 +79,8 @@ const AppRoutes = () => {
         <Route path="/shop/:shopId" element={<ShopDetail />} />
         <Route path="/product/:productId" element={<ProductDetail />} />
         <Route path="/select-shops" element={<SelectShops />} />
-        
-        {/* New navigation button routes */}
-        <Route path="/nearby" element={<NearbyPage />} />
-        <Route path="/trending" element={<TrendingPage />} />
-        <Route path="/popular-searches" element={<PopularSearchesPage />} />
-        <Route path="/order-delivery" element={<OrderDeliveryPage />} />
-        <Route path="/affiliate" element={<AffiliatePage />} />
-        <Route path="/affiliate-program" element={<AffiliateProgramPage />} />
+        <Route path="/help" element={<Help />} />
+        <Route path="/admin" element={<AdminDashboard />} />
         
         {/* Protected shopper routes - explicitly disallow business users */}
         <Route 

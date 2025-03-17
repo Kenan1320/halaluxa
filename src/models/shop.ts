@@ -77,7 +77,7 @@ export interface ReviewWithUser {
 export interface ShopDetails extends Shop {
   products: number; 
   followers: number;
-  reviews: number; 
+  reviews: number; // Changed from any[] to number to match the type in ShopDetail.tsx
   deliveryInfo: any;
   isGroupOrderEnabled: boolean;
 }
