@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS public.categories (
   description TEXT,
   image TEXT,
   parent_id UUID REFERENCES public.categories(id),
-  group TEXT CHECK (group IN ('featured', 'nearby', 'online', 'popular')),
+  group TEXT CHECK (group IN ('featured', 'nearby', 'online', 'popular', 'transitional')),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 );

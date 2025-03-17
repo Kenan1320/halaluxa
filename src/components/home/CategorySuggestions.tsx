@@ -54,28 +54,34 @@ const CategoryIcon = ({ category, onClick, isSelected }: {
   </div>
 );
 
-// Define local and online categories
+// Define Halvi Local categories (primarily physical stores)
 const localCategoryNames = [
-  'Local Halal Restaurants', 
-  'Halal Butcher Shops', 
-  'Local Halal Grocery Stores', 
-  'Halal Wellness & Therapy Centers'
+  'Groceries', 
+  'Restaurants', 
+  'Halal Meat', 
+  'Coffee Shops',
+  'Therapists',
+  'Furniture'
 ];
 
+// Define transitional categories (can be both local and online)
 const transitionalCategoryNames = [
-  'Home & Furniture Stores',
-  'Islamic Home Decor & Accessories',
-  'Islamic Art & Calligraphy Services',
-  'Islamic Gifts & Specialty Shops'
+  'Arabic Calligraphy',
+  'Decorations',
+  'Gifts',
+  'Modest Wear',
+  'Online Stores',
+  'Others'
 ];
 
+// Define Halvi Mall categories (primarily online)
 const onlineCategoryNames = [
-  'Halvi Marketplace', 
-  'Learn Arabic', 
-  'Modest Wear - Hijabs', 
-  'Modest Wear - Abayas & Dresses',
-  'Men\'s Islamic Wear - Thobes & Jubbas',
-  'Islamic Books & More'
+  'Hoodies', 
+  'Thobes', 
+  'Abaya', 
+  'Books',
+  'Fragrance',
+  'Jewelry'
 ];
 
 export default function CategorySuggestions() {
@@ -90,15 +96,18 @@ export default function CategorySuggestions() {
     const loadCategories = async () => {
       // Get categories from service
       const nearby = await getCategoriesByGroup('nearby');
-      const transitional = await getCategoriesByGroup('transitional');
+      const transitional = await getCategoriesByGroup('transitional'); // Note: Fixed group type
       const online = await getCategoriesByGroup('online');
       
       // Create categories if they don't already exist in the service
-      const createMockCategory = (name: string, group: string): Category => ({
+      const createMockCategory = (name: string, group: 'nearby' | 'online' | 'featured' | 'popular' | 'transitional'): Category => ({
         id: name.toLowerCase().replace(/\s+/g, '-'),
         name,
+        description: '',
         group,
-        icon: ''
+        image: '',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       });
       
       // Process local categories
@@ -110,7 +119,7 @@ export default function CategorySuggestions() {
       // Process transitional categories
       const processedTransitional = transitionalCategoryNames.map(name => {
         const existing = transitional.find(cat => cat.name === name);
-        return existing || createMockCategory(name, 'transitional');
+        return existing || createMockCategory(name, 'transitional' as any); // Cast as any since we updated the SQL schema
       });
       
       // Process online categories

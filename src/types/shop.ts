@@ -1,4 +1,3 @@
-import { type } from "os";
 
 export interface Shop {
   id: string;
@@ -19,6 +18,11 @@ export interface Shop {
   longitude?: number;
   distance?: number;
   logo?: string;
+  // Additional fields
+  phone?: string;
+  email?: string;
+  website?: string;
+  is_featured?: boolean;
 }
 
 export interface ShopDetails extends Omit<Shop, 'rating'> {

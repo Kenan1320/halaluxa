@@ -186,13 +186,24 @@ const Index = () => {
       </div>
       
       <div className="container mx-auto px-4 pt-5 bg-white dark:bg-gray-900">
-        {/* Top headers without flowing logos */}
+        {/* Opened Nearby Section */}
         <div className="my-4">
           <FlowTitle>Opened Nearby</FlowTitle>
+          
+          {/* Add flowing shop logos for nearby shops */}
+          <div className="mt-2">
+            <ShopLogoScroller shops={nearbyShops} backgroundMode="green" />
+          </div>
         </div>
         
+        {/* Trusted Online Section */}
         <div className="my-4">
           <FlowTitle>Trusted Online</FlowTitle>
+          
+          {/* Add flowing shop logos for online shops */}
+          <div className="mt-2">
+            <ShopLogoScroller shops={onlineShops} backgroundMode="blue" />
+          </div>
         </div>
         
         <section className="mt-4 mb-6">
@@ -205,15 +216,6 @@ const Index = () => {
           </SectionHeading>
           
           <NearbyShops />
-          
-          {/* Moving ShopLogoScroller here */}
-          <div className="mt-6">
-            <ShopLogoScroller shops={nearbyShops} backgroundMode="blue" />
-          </div>
-          
-          <div className="mt-6">
-            <ShopLogoScroller shops={onlineShops} backgroundMode="orange" />
-          </div>
         </section>
         
         {/* Featured Products section */}

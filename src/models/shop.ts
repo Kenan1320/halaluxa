@@ -78,6 +78,7 @@ export interface ShopDetails extends Shop {
   products: number; 
   followers: number;
   reviews: number; 
+  rating: { average: number; count: number; }; // Fixed to match type in types/shop.ts
   deliveryInfo: any;
   isGroupOrderEnabled: boolean;
 }

@@ -4,34 +4,174 @@ import { Category } from '@/types/database';
 
 export type { Category };
 
-// Mock categories until the categories table is created
+// Mock categories based on our new organization
 const mockCategories: Category[] = [
+  // Halvi Local Categories (Physical Stores)
   {
-    id: '1',
-    name: 'Electronics',
-    description: 'Electronic devices and accessories',
-    image: '/categories/electronics.jpg',
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    group: 'featured'
-  },
-  {
-    id: '2',
-    name: 'Clothing',
-    description: 'Fashion and apparel',
-    image: '/categories/clothing.jpg',
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    group: 'popular'
-  },
-  {
-    id: '3',
-    name: 'Food',
-    description: 'Groceries and prepared meals',
-    image: '/categories/food.jpg',
+    id: 'groceries',
+    name: 'Groceries',
+    description: 'Local halal grocery stores',
+    image: '/categories/groceries.jpg',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
     group: 'nearby'
+  },
+  {
+    id: 'restaurants',
+    name: 'Restaurants',
+    description: 'Local halal restaurants & eateries',
+    image: '/categories/restaurants.jpg',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    group: 'nearby'
+  },
+  {
+    id: 'halal-meat',
+    name: 'Halal Meat',
+    description: 'Local halal butcher shops',
+    image: '/categories/meat.jpg',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    group: 'nearby'
+  },
+  {
+    id: 'coffee-shops',
+    name: 'Coffee Shops',
+    description: 'Local halal cafés & coffee houses',
+    image: '/categories/coffee.jpg',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    group: 'nearby'
+  },
+  {
+    id: 'therapists',
+    name: 'Therapists',
+    description: 'Halal wellness & therapy centers',
+    image: '/categories/therapy.jpg',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    group: 'nearby'
+  },
+  {
+    id: 'furniture',
+    name: 'Furniture',
+    description: 'Physical stores with furniture showrooms',
+    image: '/categories/furniture.jpg',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    group: 'nearby'
+  },
+  
+  // Halvi Mall Categories (Online Stores)
+  {
+    id: 'hoodies',
+    name: 'Hoodies',
+    description: 'Islamic & modest fashion brands online',
+    image: '/categories/hoodies.jpg',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    group: 'online'
+  },
+  {
+    id: 'thobes',
+    name: 'Thobes',
+    description: 'Online Islamic clothing stores',
+    image: '/categories/thobes.jpg',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    group: 'online'
+  },
+  {
+    id: 'abaya',
+    name: 'Abaya',
+    description: 'Online modest wear stores',
+    image: '/categories/abaya.jpg',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    group: 'online'
+  },
+  {
+    id: 'books',
+    name: 'Books',
+    description: 'Online Islamic bookshops & digital bookstores',
+    image: '/categories/books.jpg',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    group: 'online'
+  },
+  {
+    id: 'fragrance',
+    name: 'Fragrance',
+    description: 'Perfumes & attars, often sold online',
+    image: '/categories/fragrance.jpg',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    group: 'online'
+  },
+  {
+    id: 'jewelry',
+    name: 'Jewelry',
+    description: 'Islamic jewelry, often found in online marketplaces',
+    image: '/categories/jewelry.jpg',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    group: 'online'
+  },
+  
+  // Both (Transitional Categories)
+  {
+    id: 'arabic-calligraphy',
+    name: 'Arabic Calligraphy',
+    description: 'Local artists & online art commissions',
+    image: '/categories/calligraphy.jpg',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    group: 'transitional'
+  },
+  {
+    id: 'decorations',
+    name: 'Decorations',
+    description: 'Islamic home decor can be both local & online',
+    image: '/categories/decorations.jpg',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    group: 'transitional'
+  },
+  {
+    id: 'gifts',
+    name: 'Gifts',
+    description: 'Local flower shops & online Islamic gift stores',
+    image: '/categories/gifts.jpg',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    group: 'transitional'
+  },
+  {
+    id: 'modest-wear',
+    name: 'Modest Wear',
+    description: 'Can be found in local boutiques or online stores',
+    image: '/categories/modest-wear.jpg',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    group: 'transitional'
+  },
+  {
+    id: 'online-stores',
+    name: 'Online Stores',
+    description: 'Some might be local businesses with an online presence',
+    image: '/categories/online-stores.jpg',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    group: 'transitional'
+  },
+  {
+    id: 'others',
+    name: 'Others',
+    description: 'Catch-all category for businesses that could be either local or online',
+    image: '/categories/others.jpg',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    group: 'transitional'
   }
 ];
 
