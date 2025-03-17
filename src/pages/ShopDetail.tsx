@@ -49,7 +49,7 @@ const ShopDetail = () => {
           ...normalizedShop,
           products: 0, // Will be updated with the actual count
           followers: 0,
-          reviews: [],
+          reviews: 0, // Changed from empty array to 0 to match the type
           deliveryInfo: {},
           isGroupOrderEnabled: false,
           rating: normalizedShop.rating || 0,
@@ -69,6 +69,11 @@ const ShopDetail = () => {
         // Fetch reviews for the shop
         const reviewsData = await getReviews();
         setReviews(reviewsData);
+        
+        // Update reviews count in shop details
+        if (reviewsData && Array.isArray(reviewsData)) {
+          shopDetails.reviews = reviewsData.length;
+        }
       } catch (err: any) {
         setError(err.message || 'Failed to load shop details.');
       } finally {
