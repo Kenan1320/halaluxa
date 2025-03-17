@@ -12,8 +12,8 @@ import { LocationProvider } from "@/context/LocationContext";
 import { ThemeProvider } from "@/context/ThemeContext";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import AuthMiddleware from "@/components/auth/AuthMiddleware";
-import Navbar from "@/components/layout/Navbar";
-import BottomNavigation from "@/components/layout/BottomNavigation";
+import PageLayout from "@/components/layout/PageLayout";
+import { ComingSoon } from "@/components/ui/ComingSoon";
 import { ensureBusinessAccount } from "@/utils/seedBusinessAccount";
 
 // Pages
@@ -69,48 +69,54 @@ if (import.meta.env.DEV) {
   ensureBusinessAccount();
 }
 
+// Coming Soon route component
+const ComingSoonPage = ({ title }: { title: string }) => (
+  <PageLayout>
+    <ComingSoon title={title} />
+  </PageLayout>
+);
+
 const AppRoutes = () => {
   const location = useLocation();
   const { user } = useAuth();
   
   // Business users should only see the dashboard interface
-  const showNavbar = !user || user.role !== 'business' || 
+  const showBottomNav = !user || user.role !== 'business' || 
                     (!location.pathname.startsWith('/dashboard') && 
                      location.pathname !== '/login' && 
                      location.pathname !== '/signup');
   
   return (
     <AuthMiddleware>
-      {showNavbar && <Navbar />}
       <Routes>
         {/* Public routes */}
-        <Route path="/" element={<Index />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/sellers" element={<Sellers />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/signup" element={<SignUpPage />} />
-        <Route path="/shop" element={<Shop />} />
-        <Route path="/browse" element={<Browse />} />
-        <Route path="/search" element={<Search />} />
-        <Route path="/shops" element={<Shops />} />
-        <Route path="/shop/:shopId" element={<ShopDetail />} />
-        <Route path="/product/:productId" element={<ProductDetail />} />
-        <Route path="/select-shops" element={<SelectShops />} />
+        <Route path="/" element={<PageLayout><Index /></PageLayout>} />
+        <Route path="/about" element={<PageLayout><About /></PageLayout>} />
+        <Route path="/sellers" element={<PageLayout><Sellers /></PageLayout>} />
+        <Route path="/login" element={<PageLayout showFooter={false}><LoginPage /></PageLayout>} />
+        <Route path="/signup" element={<PageLayout showFooter={false}><SignUpPage /></PageLayout>} />
+        <Route path="/shop" element={<PageLayout><Shop /></PageLayout>} />
+        <Route path="/browse" element={<PageLayout><Browse /></PageLayout>} />
+        <Route path="/search" element={<PageLayout><Search /></PageLayout>} />
+        <Route path="/shops" element={<PageLayout><Shops /></PageLayout>} />
+        <Route path="/shop/:shopId" element={<PageLayout><ShopDetail /></PageLayout>} />
+        <Route path="/product/:productId" element={<PageLayout><ProductDetail /></PageLayout>} />
+        <Route path="/select-shops" element={<PageLayout><SelectShops /></PageLayout>} />
         
         {/* New navigation button routes */}
-        <Route path="/nearby" element={<NearbyPage />} />
-        <Route path="/trending" element={<TrendingPage />} />
-        <Route path="/popular-searches" element={<PopularSearchesPage />} />
-        <Route path="/order-delivery" element={<OrderDeliveryPage />} />
-        <Route path="/affiliate" element={<AffiliatePage />} />
-        <Route path="/affiliate-program" element={<AffiliateProgramPage />} />
+        <Route path="/nearby" element={<PageLayout><NearbyPage /></PageLayout>} />
+        <Route path="/trending" element={<PageLayout><TrendingPage /></PageLayout>} />
+        <Route path="/popular-searches" element={<PageLayout><PopularSearchesPage /></PageLayout>} />
+        <Route path="/order-delivery" element={<PageLayout><OrderDeliveryPage /></PageLayout>} />
+        <Route path="/affiliate" element={<PageLayout><AffiliatePage /></PageLayout>} />
+        <Route path="/affiliate-program" element={<PageLayout><AffiliateProgramPage /></PageLayout>} />
         
         {/* Protected shopper routes - explicitly disallow business users */}
         <Route 
           path="/cart" 
           element={
             <ProtectedRoute requiredRole="shopper" businessAllowed={false}>
-              <Cart />
+              <PageLayout><Cart /></PageLayout>
             </ProtectedRoute>
           } 
         />
@@ -118,7 +124,7 @@ const AppRoutes = () => {
           path="/checkout" 
           element={
             <ProtectedRoute requiredRole="shopper" businessAllowed={false}>
-              <Checkout />
+              <PageLayout><Checkout /></PageLayout>
             </ProtectedRoute>
           } 
         />
@@ -126,7 +132,7 @@ const AppRoutes = () => {
           path="/order-confirmation" 
           element={
             <ProtectedRoute requiredRole="shopper" businessAllowed={false}>
-              <OrderConfirmation />
+              <PageLayout><OrderConfirmation /></PageLayout>
             </ProtectedRoute>
           } 
         />
@@ -134,7 +140,7 @@ const AppRoutes = () => {
           path="/orders" 
           element={
             <ProtectedRoute requiredRole="shopper" businessAllowed={false}>
-              <Orders />
+              <PageLayout><Orders /></PageLayout>
             </ProtectedRoute>
           } 
         />
@@ -142,7 +148,7 @@ const AppRoutes = () => {
           path="/profile" 
           element={
             <ProtectedRoute requiredRole="shopper" businessAllowed={false}>
-              <UserProfilePage />
+              <PageLayout><UserProfilePage /></PageLayout>
             </ProtectedRoute>
           } 
         />
@@ -166,10 +172,16 @@ const AppRoutes = () => {
           <Route path="payment-account" element={<PaymentAccountPage />} />
         </Route>
         
+        {/* Coming Soon routes for footer links */}
+        <Route path="/help" element={<ComingSoonPage title="Help Center" />} />
+        <Route path="/faq" element={<ComingSoonPage title="Frequently Asked Questions" />} />
+        <Route path="/contact" element={<ComingSoonPage title="Contact Us" />} />
+        <Route path="/terms" element={<ComingSoonPage title="Terms of Service" />} />
+        <Route path="/privacy" element={<ComingSoonPage title="Privacy Policy" />} />
+        
         {/* 404 route */}
-        <Route path="*" element={<NotFound />} />
+        <Route path="*" element={<PageLayout><NotFound /></PageLayout>} />
       </Routes>
-      {showNavbar && <BottomNavigation />}
     </AuthMiddleware>
   );
 };

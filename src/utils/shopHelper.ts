@@ -27,10 +27,11 @@ export function normalizeShop(shop: any): TypesShop {
     distance: shop.distance || null,
     logo: shop.logo || shop.logo_url || '',
     address: shop.address || '',
-    phone: shop.phone || '',
-    email: shop.email || '',
-    website: shop.website || '',
-    is_featured: shop.is_featured ?? false
+    // Only include these fields if they exist on the incoming shop object
+    ...(shop.phone && { phone: shop.phone }),
+    ...(shop.email && { email: shop.email }),
+    ...(shop.website && { website: shop.website }),
+    ...(shop.is_featured !== undefined && { is_featured: shop.is_featured })
   };
 }
 

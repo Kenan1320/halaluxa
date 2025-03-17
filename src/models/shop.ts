@@ -11,11 +11,11 @@ export interface Shop {
   rating: number;
   product_count: number;
   is_verified: boolean;
-  latitude?: number;
-  longitude?: number;
+  latitude?: number | null;
+  longitude?: number | null;
   created_at: string;
   updated_at: string;
-  distance?: number;
+  distance?: number | null;
   // Additional fields
   phone?: string;
   email?: string;
@@ -57,11 +57,11 @@ export interface ShopProduct {
   updatedAt?: string; // Alias for updated_at
 }
 
-export type Rating = {
+export interface Rating {
   total: number;
   count: number;
   average: number;
-};
+}
 
 export interface ReviewWithUser {
   id: string;
