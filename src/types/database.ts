@@ -1,4 +1,3 @@
-
 import { Json } from '@/integrations/supabase/types';
 
 export interface User {
@@ -36,20 +35,26 @@ export interface Shop {
   id: string;
   name: string;
   description: string;
+  logo_url: string;
+  cover_image: string;
+  address: string;
   location: string;
-  address?: string;
-  logo_url?: string;
-  cover_image?: string;
+  latitude: number;
+  longitude: number;
+  category: string;
   owner_id: string;
+  status: 'pending' | 'approved' | 'rejected' | 'suspended';
+  is_verified: boolean;
   created_at: string;
   updated_at: string;
-  category: string;
-  is_verified?: boolean;
-  rating?: number;
-  product_count?: number;
-  latitude?: number;
-  longitude?: number;
-  distance?: number;
+  phone?: string;
+  email?: string;
+  website?: string;
+  is_featured?: boolean;
+  rating?: {
+    average: number;
+    count: number;
+  };
 }
 
 export interface Product {
@@ -192,3 +197,26 @@ export interface SellerAccount {
   applepay_merchant_id?: string;
   routing_number?: string;
 }
+
+export interface Admin {
+  id: string;
+  user_id: string;
+  role: 'super_admin' | 'admin' | 'moderator';
+  created_at: string;
+  last_login: string | null;
+  permissions: AdminPermission[];
+}
+
+export interface AdminPermission {
+  id: string;
+  admin_id: string;
+  role: string;
+  resource: 'shops' | 'products' | 'users' | 'orders' | 'system';
+  can_create: boolean;
+  can_read: boolean;
+  can_update: boolean;
+  can_delete: boolean;
+  created_at: string;
+}
+
+export type ShopGroup = "online" | "featured" | "nearby" | "popular" | "transitional";

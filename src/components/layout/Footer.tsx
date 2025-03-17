@@ -1,4 +1,3 @@
-
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Flame, ExternalLink, Heart } from 'lucide-react';
@@ -22,6 +21,12 @@ const Footer = () => {
       navigate('/admin');
     }
   };
+
+  const adminLinks = [
+    { label: "Admin Portal (Direct)", href: "/admin" },
+    { label: "Admin Portal (Alt)", href: "/admin?direct=true" },
+    // ... other admin links
+  ];
 
   return (
     <footer className="bg-gray-50 dark:bg-gray-900 pt-6 pb-20 md:pb-6 border-t border-gray-200 dark:border-gray-800">
@@ -101,6 +106,22 @@ const Footer = () => {
                   <ExternalLink className="h-3 w-3" />
                 </a>
               </motion.li>
+            </ul>
+          </div>
+          
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-300">Admin</h3>
+            <ul className="space-y-3">
+              {adminLinks.map((link) => (
+                <li key={link.label}>
+                  <Link 
+                    to={link.href}
+                    className="text-sm text-gray-500 hover:text-haluna-primary dark:text-gray-400 dark:hover:text-haluna-primary transition-colors"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
           

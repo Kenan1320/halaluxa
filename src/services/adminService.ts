@@ -1,73 +1,97 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { AdminUser, AdminPermission, AuditLog, AdminRole } from '@/types/shop';
-import { Shop } from '@/models/shop';
-import { DatabaseProfile } from '@/types/database';
-import { Product } from '@/models/product';
+import { Admin, AdminPermission, Shop, Product, DatabaseProfile } from '@/types/database';
+import { toast } from '@/hooks/use-toast';
 
-// Check if current user is an admin
-export const isAdmin = async (): Promise<boolean> => {
+// Create a function to ensure an admin exists in development mode
+export const ensureAdminUser = async () => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return false;
-    
-    // In development mode, make the current user an admin
     if (import.meta.env.DEV) {
-      // Check if admin table exists and if the user is in it
-      const { data, error } = await supabase
-        .from('admins')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
-        
-      if (error || !data) {
-        console.log("Creating admin account for development user");
-        // Create admin record for this user
-        const { data: insertData, error: insertError } = await supabase
+      // Check if the current user exists and make them an admin in dev mode
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user) {
+        // Check if already an admin
+        const { data: adminData, error: adminError } = await supabase
           .from('admins')
-          .insert({
-            user_id: user.id,
-            role: 'admin',
-            last_login: new Date().toISOString()
-          })
-          .select()
+          .select('*')
+          .eq('user_id', user.id)
           .single();
           
-        if (insertError) {
-          console.error("Error creating admin account:", insertError);
-          return false;
+        if (adminError && adminError.code !== 'PGRST116') {
+          console.error('Error checking admin status:', adminError);
+        }
+        
+        // If not an admin, make them an admin in dev mode
+        if (!adminData) {
+          const { error: insertError } = await supabase
+            .from('admins')
+            .insert({
+              user_id: user.id,
+              role: 'super_admin',
+              last_login: new Date().toISOString()
+            });
+            
+          if (insertError) {
+            if (insertError.code === '42P01') {
+              console.warn('Admin tables not created yet. Please run the SQL to create them first.');
+              return false;
+            }
+            console.error('Error creating admin user:', insertError);
+            return false;
+          }
+          
+          console.log('Created admin user in dev mode');
+          return true;
         }
         
         return true;
       }
-      
-      // Update last login
-      await supabase
-        .from('admins')
-        .update({ last_login: new Date().toISOString() })
-        .eq('id', data.id);
-        
+    }
+    return false;
+  } catch (error) {
+    console.error('Error ensuring admin user:', error);
+    return false;
+  }
+};
+
+// Check if a user is an admin
+export const isAdmin = async (): Promise<boolean> => {
+  try {
+    // In development mode, always grant admin access
+    if (import.meta.env.DEV) {
       return true;
     }
     
-    // For production, check if user is in admins table
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return false;
+    
     const { data, error } = await supabase
       .from('admins')
       .select('*')
       .eq('user_id', user.id)
       .single();
       
-    if (error || !data) {
-      console.error("Error checking admin status:", error);
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return false; // No admin found
+      }
+      console.error('Error checking admin status:', error);
       return false;
     }
     
     // Update last login
-    await supabase
+    const { error: updateError } = await supabase
       .from('admins')
-      .update({ last_login: new Date().toISOString() })
+      .update({ 
+        last_login: new Date().toISOString() 
+      })
       .eq('id', data.id);
       
+    if (updateError) {
+      console.error('Error updating last login:', updateError);
+    }
+    
     return true;
   } catch (error) {
     console.error('Error checking admin status:', error);
@@ -81,6 +105,41 @@ export const getAdminPermissions = async (): Promise<AdminPermission[]> => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return [];
     
+    // In development mode, grant all permissions
+    if (import.meta.env.DEV) {
+      const allPermissions: AdminPermission[] = [
+        {
+          id: '1',
+          admin_id: '1',
+          role: 'super_admin',
+          resource: 'shops',
+          can_create: true,
+          can_read: true,
+          can_update: true,
+          can_delete: true,
+          created_at: new Date().toISOString()
+        },
+        // ... repeat for all resources
+      ];
+      
+      // Add permissions for all resources
+      ['products', 'users', 'orders', 'system'].forEach((resource, index) => {
+        allPermissions.push({
+          id: String(index + 2),
+          admin_id: '1',
+          role: 'super_admin',
+          resource: resource as any,
+          can_create: true,
+          can_read: true,
+          can_update: true,
+          can_delete: true,
+          created_at: new Date().toISOString()
+        });
+      });
+      
+      return allPermissions;
+    }
+    
     // Get admin record
     const { data: adminData, error: adminError } = await supabase
       .from('admins')
@@ -88,20 +147,43 @@ export const getAdminPermissions = async (): Promise<AdminPermission[]> => {
       .eq('user_id', user.id)
       .single();
       
-    if (adminError || !adminData) {
-      console.error("Error getting admin record:", adminError);
+    if (adminError) {
+      console.error('Error fetching admin:', adminError);
       return [];
     }
     
-    // Get permissions for that role
-    const { data: permissions, error: permError } = await supabase
+    if (!adminData) return [];
+    
+    // Get permissions
+    const { data: permissions, error: permissionsError } = await supabase
       .from('admin_permissions')
       .select('*')
-      .eq('role', adminData.role);
+      .eq('admin_id', adminData.id);
       
-    if (permError) {
-      console.error("Error getting permissions:", permError);
+    if (permissionsError) {
+      console.error('Error fetching permissions:', permissionsError);
       return [];
+    }
+    
+    // If permissions are empty but user is admin, grant default permissions
+    if (!permissions || permissions.length === 0) {
+      if (adminData.role === 'super_admin') {
+        // Return default super admin permissions
+        return [
+          {
+            id: '1',
+            admin_id: adminData.id,
+            role: 'super_admin',
+            resource: 'shops',
+            can_create: true,
+            can_read: true,
+            can_update: true,
+            can_delete: true,
+            created_at: new Date().toISOString()
+          },
+          // ... add more default permissions
+        ];
+      }
     }
     
     return permissions as AdminPermission[];
@@ -111,212 +193,94 @@ export const getAdminPermissions = async (): Promise<AdminPermission[]> => {
   }
 };
 
-// Get admin role
-export const getAdminRole = async (): Promise<AdminRole | null> => {
+// Check if user has specific permission
+export const hasPermission = async (
+  resource: 'shops' | 'products' | 'users' | 'orders' | 'system',
+  action: 'create' | 'read' | 'update' | 'delete'
+): Promise<boolean> => {
   try {
-    // In development, return admin role by default
+    // In development mode, always grant permission
     if (import.meta.env.DEV) {
-      return 'admin';
+      return true;
     }
     
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return null;
+    if (!user) return false;
     
     const { data, error } = await supabase
       .from('admins')
-      .select('role')
+      .select('*')
       .eq('user_id', user.id)
       .single();
       
-    if (error || !data) {
-      console.error("Error getting admin role:", error);
-      return null;
-    }
-    
-    return data.role as AdminRole;
-  } catch (error) {
-    console.error('Error getting admin role:', error);
-    return null;
-  }
-};
-
-// Log admin action
-export const logAdminAction = async (
-  action: string,
-  resource: string,
-  resourceId: string,
-  details: any
-): Promise<void> => {
-  try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-    
-    const { data: admin } = await supabase
-      .from('admins')
-      .select('id')
-      .eq('user_id', user.id)
-      .single();
-      
-    if (!admin) {
-      console.error("Admin record not found");
-      return;
-    }
-    
-    // This will be enabled once the audit_logs table is created
-    console.log('Logging admin action:', { 
-      admin_id: admin.id,
-      action,
-      resource,
-      resource_id: resourceId,
-      details,
-      ip_address: 'client-side' 
-    });
-    
-    // Uncomment this when the table exists
-    // await supabase.from('audit_logs').insert({
-    //   admin_id: admin.id,
-    //   action,
-    //   resource,
-    //   resource_id: resourceId,
-    //   details,
-    //   ip_address: 'client-side' // We can't reliably get IP on client side
-    // });
-  } catch (error) {
-    console.error('Error logging admin action:', error);
-  }
-};
-
-// Get all shops (with filters for admin)
-export const getAllShops = async (
-  status?: 'pending' | 'approved' | 'rejected' | 'suspended'
-): Promise<Shop[]> => {
-  try {
-    let query = supabase
-      .from('shops')
-      .select('*');
-      
-    if (status) {
-      query = query.eq('status', status);
-    }
-    
-    const { data, error } = await query;
-    
     if (error) {
-      console.error("Error getting shops:", error);
-      throw error;
+      console.error('Error checking admin permissions:', error);
+      return false;
     }
     
-    return data as Shop[];
-  } catch (error) {
-    console.error('Error getting shops:', error);
-    return [];
-  }
-};
-
-// Update shop status
-export const updateShopStatus = async (
-  shopId: string,
-  status: 'pending' | 'approved' | 'rejected' | 'suspended'
-): Promise<boolean> => {
-  try {
-    const { error } = await supabase
-      .from('shops')
-      .update({ status, updated_at: new Date().toISOString() })
-      .eq('id', shopId);
-      
-    if (error) {
-      console.error("Error updating shop status:", error);
-      throw error;
+    if (!data) return false;
+    
+    // Super admin has all permissions
+    if (data.role === 'super_admin') return true;
+    
+    // Check specific permission
+    const permissions = await getAdminPermissions();
+    const permission = permissions.find(p => p.resource === resource);
+    
+    if (!permission) return false;
+    
+    switch (action) {
+      case 'create': return permission.can_create;
+      case 'read': return permission.can_read;
+      case 'update': return permission.can_update;
+      case 'delete': return permission.can_delete;
+      default: return false;
     }
-    
-    // Log this action
-    await logAdminAction(
-      'update_status',
-      'shops',
-      shopId,
-      { status }
-    );
-    
-    return true;
   } catch (error) {
-    console.error('Error updating shop status:', error);
+    console.error('Error checking permission:', error);
     return false;
   }
 };
 
-// Create a shop for a user (admin function)
-export const createShopForUser = async (
-  userEmail: string,
-  shopData: Partial<Shop>
-): Promise<{ success: boolean; message: string; shop?: Shop }> => {
+// Get all shops for admin
+export const getAllShops = async (): Promise<Shop[]> => {
   try {
-    // Check if user exists
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('email', userEmail)
-      .single();
+    const { data, error } = await supabase
+      .from('shops')
+      .select('*');
       
-    if (profileError) {
-      // User doesn't exist, create new user
-      const tempPassword = `Temp${Math.random().toString(36).substring(2, 10)}!`;
-      
-      // This would require admin privileges or a server function
-      // For now, return an error suggesting to create the user first
-      return { 
-        success: false, 
-        message: "Cannot create users from the client. Please create the user account first." 
-      };
-    } else {
-      // User exists, create shop for existing user
-      const { data: shop, error: shopError } = await supabase
-        .from('shops')
-        .insert({
-          name: shopData.name,
-          description: shopData.description || `${shopData.name} shop`,
-          location: shopData.location || 'TBD',
-          category: shopData.category || 'Others',
-          logo_url: shopData.logo_url || '/placeholder.svg',
-          owner_id: profile.id,
-          status: 'approved', // Admin created shops are pre-approved
-          is_verified: true, // Admin created shops are verified
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        })
-        .select()
-        .single();
-        
-      if (shopError) {
-        console.error("Error creating shop:", shopError);
-        return { 
-          success: false, 
-          message: `Failed to create shop: ${shopError.message}` 
-        };
-      }
-      
-      await logAdminAction(
-        'create_shop',
-        'shops',
-        shop.id,
-        { shop, existing_user: true }
-      );
-      
-      return { 
-        success: true, 
-        message: `Shop created successfully for existing user`,
-        shop 
-      };
+    if (error) {
+      console.error('Error fetching shops:', error);
+      return [];
     }
-  } catch (error: any) {
-    console.error('Error creating shop for user:', error);
-    return { 
-      success: false, 
-      message: `Error: ${error.message}` 
-    };
+    
+    return data as Shop[];
+  } catch (error) {
+    console.error('Error fetching shops:', error);
+    return [];
   }
 };
 
-// Get all users (for admin)
+// Get all products for admin
+export const getAllProducts = async (): Promise<Product[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('products')
+      .select('*');
+      
+    if (error) {
+      console.error('Error fetching products:', error);
+      return [];
+    }
+    
+    return data as Product[];
+  } catch (error) {
+    console.error('Error fetching products:', error);
+    return [];
+  }
+};
+
+// Get all users for admin
 export const getAllUsers = async (): Promise<DatabaseProfile[]> => {
   try {
     const { data, error } = await supabase
@@ -324,134 +288,219 @@ export const getAllUsers = async (): Promise<DatabaseProfile[]> => {
       .select('*');
       
     if (error) {
-      console.error("Error getting users:", error);
-      throw error;
+      console.error('Error fetching users:', error);
+      return [];
     }
     
     return data as DatabaseProfile[];
   } catch (error) {
-    console.error('Error getting users:', error);
+    console.error('Error fetching users:', error);
     return [];
   }
 };
 
-// Manage product status (enable/disable)
-export const updateProductStatus = async (
-  productId: string,
-  isPublished: boolean
+// Update shop status
+export const updateShopStatus = async (
+  shopId: string, 
+  status: 'pending' | 'approved' | 'rejected' | 'suspended'
 ): Promise<boolean> => {
   try {
-    const { error } = await supabase
-      .from('products')
-      .update({ 
-        is_published: isPublished,
-        updated_at: new Date().toISOString() 
-      })
-      .eq('id', productId);
-      
-    if (error) {
-      console.error("Error updating product status:", error);
-      throw error;
+    if (!await hasPermission('shops', 'update')) {
+      toast({
+        title: "Permission Denied",
+        description: "You don't have permission to update shop status",
+        variant: "destructive"
+      });
+      return false;
     }
     
-    await logAdminAction(
-      isPublished ? 'enable_product' : 'disable_product',
-      'products',
-      productId,
-      { is_published: isPublished }
-    );
+    const { error } = await supabase
+      .from('shops')
+      .update({ status })
+      .eq('id', shopId);
+      
+    if (error) {
+      console.error('Error updating shop status:', error);
+      toast({
+        title: "Update Failed",
+        description: "Failed to update shop status",
+        variant: "destructive"
+      });
+      return false;
+    }
+    
+    toast({
+      title: "Status Updated",
+      description: `Shop status updated to ${status}`
+    });
     
     return true;
   } catch (error) {
-    console.error('Error updating product status:', error);
+    console.error('Error updating shop status:', error);
+    toast({
+      title: "Update Failed",
+      description: "An error occurred while updating shop status",
+      variant: "destructive"
+    });
     return false;
   }
 };
 
-// Get all products (admin view)
-export const getAllProducts = async (): Promise<Product[]> => {
+// Create a new shop as admin
+export const createShopAsAdmin = async (shopData: Partial<Shop>): Promise<boolean> => {
   try {
-    const { data, error } = await supabase
-      .from('products')
-      .select(`
-        *,
-        shops:shop_id (name)
-      `);
-      
-    if (error) {
-      console.error("Error getting products:", error);
-      throw error;
+    if (!await hasPermission('shops', 'create')) {
+      toast({
+        title: "Permission Denied",
+        description: "You don't have permission to create shops",
+        variant: "destructive"
+      });
+      return false;
     }
     
-    return data.map(product => ({
-      ...product,
-      seller_name: product.shops?.name
-    })) as unknown as Product[];
+    // Ensure required fields
+    if (!shopData.name || !shopData.owner_id) {
+      toast({
+        title: "Missing Data",
+        description: "Shop name and owner ID are required",
+        variant: "destructive"
+      });
+      return false;
+    }
+    
+    // Set defaults
+    const newShop = {
+      ...shopData,
+      status: 'approved' as const, // Admin-created shops are approved by default
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    
+    const { error } = await supabase
+      .from('shops')
+      .insert(newShop);
+      
+    if (error) {
+      console.error('Error creating shop:', error);
+      toast({
+        title: "Creation Failed",
+        description: "Failed to create shop",
+        variant: "destructive"
+      });
+      return false;
+    }
+    
+    toast({
+      title: "Shop Created",
+      description: "New shop created successfully"
+    });
+    
+    return true;
   } catch (error) {
-    console.error('Error getting all products:', error);
-    return [];
+    console.error('Error creating shop:', error);
+    toast({
+      title: "Creation Failed",
+      description: "An error occurred while creating the shop",
+      variant: "destructive"
+    });
+    return false;
   }
 };
 
-// Check if user is admin and create admin record if needed
-export const ensureAdminUser = async (): Promise<boolean> => {
-  // In development, we'll create an admin user for testing
-  if (import.meta.env.DEV) {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return false;
-      
-      console.log("Ensuring admin access for development");
-      
-      // Since we want immediate admin access, let's force create an admin record
-      const { data: adminExists } = await supabase
+// Make a user an admin
+export const makeUserAdmin = async (
+  userId: string, 
+  role: 'super_admin' | 'admin' | 'moderator' = 'admin'
+): Promise<boolean> => {
+  try {
+    // Only in dev mode or if already super admin
+    if (import.meta.env.DEV || (await getAdminUser())?.role === 'super_admin') {
+      // Check if already an admin
+      const { data, error: checkError } = await supabase
         .from('admins')
-        .select('id')
-        .eq('user_id', user.id)
-        .limit(1);
-      
-      if (!adminExists || adminExists.length === 0) {
-        console.log("Creating admin record for user", user.id);
+        .select('*')
+        .eq('user_id', userId)
+        .single();
         
-        // This will manually create the admin record - in production, this would be handled differently
-        // Create a direct query to create the admin record (bypassing RLS)
-        try {
-          // Insert admin record
-          await supabase.rpc('create_admin_user', { 
-            user_id_param: user.id,
-            role_param: 'admin'
+      if (checkError && checkError.code !== 'PGRST116') {
+        console.error('Error checking admin status:', checkError);
+        return false;
+      }
+      
+      if (data) {
+        // Update role if already admin
+        const { error: updateError } = await supabase
+          .from('admins')
+          .update({ role })
+          .eq('id', data.id);
+          
+        if (updateError) {
+          console.error('Error updating admin role:', updateError);
+          return false;
+        }
+      } else {
+        // Create new admin
+        const { error: insertError } = await supabase
+          .from('admins')
+          .insert({
+            user_id: userId,
+            role,
+            last_login: new Date().toISOString()
           });
           
-          console.log('Created admin account for development user');
-          return true;
-        } catch (rpcError) {
-          console.error('RPC create_admin_user error:', rpcError);
-          
-          // Fallback attempt direct insert (might fail due to RLS)
-          const { error: insertError } = await supabase
-            .from('admins')
-            .insert({
-              user_id: user.id,
-              role: 'admin',
-              last_login: new Date().toISOString()
-            });
-            
-          if (insertError) {
-            console.error('Error creating admin record:', insertError);
-            alert('Please create the admins table and configure RLS to allow admin creation in development. See console for details.');
-            return false;
-          }
-          
-          return true;
+        if (insertError) {
+          console.error('Error creating admin:', insertError);
+          return false;
         }
       }
       
       return true;
-    } catch (error) {
-      console.error('Error ensuring admin user:', error);
+    } else {
+      toast({
+        title: "Permission Denied",
+        description: "Only super admins can grant admin privileges",
+        variant: "destructive"
+      });
       return false;
     }
+  } catch (error) {
+    console.error('Error making user admin:', error);
+    return false;
   }
-  
-  return false;
+};
+
+// Get current admin user
+export const getAdminUser = async (): Promise<Admin | null> => {
+  try {
+    // In development mode, return mock super admin
+    if (import.meta.env.DEV) {
+      return {
+        id: '1',
+        user_id: 'dev-user',
+        role: 'super_admin',
+        created_at: new Date().toISOString(),
+        last_login: new Date().toISOString(),
+        permissions: []
+      };
+    }
+    
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
+    
+    const { data, error } = await supabase
+      .from('admins')
+      .select('*')
+      .eq('user_id', user.id)
+      .single();
+      
+    if (error) {
+      console.error('Error fetching admin user:', error);
+      return null;
+    }
+    
+    return data as Admin;
+  } catch (error) {
+    console.error('Error getting admin user:', error);
+    return null;
+  }
 };

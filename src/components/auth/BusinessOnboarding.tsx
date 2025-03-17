@@ -48,15 +48,13 @@ const BusinessOnboarding = () => {
     }
   }, [user]);
   
-  // Auto-redirect to dashboard
+  // Auto-redirect to dashboard for logged-in business users
   useEffect(() => {
-    // If user is a business user, immediately go to dashboard
     if (isLoggedIn && user?.role === 'business') {
-      if (skipOnboarding || onboardingComplete || isGuest) {
-        navigate('/dashboard');
-      }
+      // Always redirect to dashboard immediately
+      navigate('/dashboard');
     }
-  }, [isLoggedIn, user, skipOnboarding, onboardingComplete, isGuest, navigate]);
+  }, [isLoggedIn, user, navigate]);
   
   const handleOnboardingComplete = () => {
     toast({
@@ -64,6 +62,7 @@ const BusinessOnboarding = () => {
       description: "Your shop has been created successfully.",
     });
     setOnboardingComplete(true);
+    navigate('/dashboard');
   };
   
   const handleSkip = () => {
@@ -87,6 +86,7 @@ const BusinessOnboarding = () => {
           description: `Welcome, ${guestUsername}! You're now viewing the dashboard as a guest. Your username has been saved for this session.`,
         });
         setIsGuest(true);
+        navigate('/dashboard');
       } else {
         toast({
           title: "Username Required",
@@ -112,6 +112,7 @@ const BusinessOnboarding = () => {
       description: `Welcome, ${autoUsername}! You're now viewing the dashboard as a guest. Remember your username: ${autoUsername} to manage your content.`,
     });
     setIsGuest(true);
+    navigate('/dashboard');
   };
   
   if (!isLoggedIn && !isGuest) {
@@ -186,58 +187,7 @@ const BusinessOnboarding = () => {
     );
   }
   
-  if (!user && !isGuest) {
-    return null;
-  }
-  
-  // If user is already logged in as a business user, auto-redirect to dashboard
-  if (isLoggedIn && user?.role === 'business' && !onboardingComplete && !skipOnboarding) {
-    return (
-      <div className="container mx-auto max-w-4xl px-4 py-8">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <Card className="shadow-lg dark:bg-gray-800 dark:border-gray-700">
-            <CardHeader className="dark:border-b dark:border-gray-700">
-              <CardTitle className="text-2xl font-serif dark:text-white">Welcome to Haluna!</CardTitle>
-              <CardDescription className="dark:text-gray-300">As a business account, you can set up your shop now or later.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-col md:flex-row gap-4 mb-6">
-                <Button 
-                  onClick={handleSkip}
-                  variant="outline" 
-                  className="flex-1"
-                >
-                  Skip & Go to Dashboard
-                </Button>
-                <Button 
-                  className="flex-1 bg-gradient-to-r from-[#0F1B44] to-[#183080]"
-                  onClick={() => setOnboardingStep(1)}
-                >
-                  Start Shop Setup
-                </Button>
-              </div>
-              
-              {onboardingStep === 1 && (
-                <ShopSetupForm onComplete={handleOnboardingComplete} onSkip={handleSkip} />
-              )}
-            </CardContent>
-            {isGuest && (
-              <CardFooter className="bg-amber-50 dark:bg-amber-900/20 rounded-b-lg border-t border-amber-200 dark:border-amber-800">
-                <div className="text-xs text-amber-700 dark:text-amber-400">
-                  <strong>Guest Mode:</strong> You're currently in guest mode as {sessionStorage.getItem('guestBusinessUsername')}. Changes won't be permanently saved.
-                </div>
-              </CardFooter>
-            )}
-          </Card>
-        </motion.div>
-      </div>
-    );
-  }
-  
+  // Business users automatically go to dashboard now
   return null;
 };
 

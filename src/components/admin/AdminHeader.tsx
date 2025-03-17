@@ -1,117 +1,183 @@
 
-import { useNavigate } from 'react-router-dom';
-import { Bell, Search, Settings, User, Menu, X, LogOut, ChevronDown } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/context/AuthContext';
-import { getAdminRole } from '@/services/adminService';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useNavigate, Link } from 'react-router-dom';
+import { Bell, Menu, X, Settings, Search, User, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { getAdminUser } from '@/services/adminService';
+import { useAuth } from '@/context/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { useIsMobile } from '@/hooks/use-mobile';
-import { useTheme } from '@/context/ThemeContext';
 
 const AdminHeader = () => {
+  const [admin, setAdmin] = useState<any>(null);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
   const { user, logout } = useAuth();
+  const { toast } = useToast();
   const navigate = useNavigate();
-  const [role, setRole] = useState<string | null>(null);
-  const isMobile = useIsMobile();
-  const { mode } = useTheme();
 
   useEffect(() => {
-    const fetchRole = async () => {
-      const adminRole = await getAdminRole();
-      setRole(adminRole);
+    const loadAdmin = async () => {
+      const adminData = await getAdminUser();
+      setAdmin(adminData);
     };
-
-    fetchRole();
+    
+    loadAdmin();
   }, []);
 
   const handleLogout = async () => {
     await logout();
     navigate('/login');
+    toast({
+      title: "Logged out",
+      description: "You have been logged out of the admin portal",
+    });
   };
 
   return (
-    <header className={cn(
-      "p-4 border-b flex items-center justify-between",
-      mode === 'dark' ? 'bg-gray-900 border-gray-800 text-white' : 'bg-white border-gray-100'
-    )}>
-      <div className="flex items-center">
-        <div className="flex items-center gap-1">
-          <Avatar className="h-8 w-8">
-            <AvatarImage src={user?.avatar_url || undefined} alt={user?.name || 'Admin'} />
-            <AvatarFallback className="bg-violet-700 text-white">
-              {user?.name?.charAt(0) || 'A'}
-            </AvatarFallback>
-          </Avatar>
+    <header className="bg-haluna-primary/95 backdrop-blur-sm border-b border-white/10 sticky top-0 z-30 shadow-md">
+      <div className="px-4 h-16 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Button 
+            variant="ghost" 
+            size="icon"
+            className="lg:hidden text-white hover:bg-white/20"
+            onClick={() => setShowMobileMenu(!showMobileMenu)}
+          >
+            {showMobileMenu ? (
+              <X className="h-5 w-5" />
+            ) : (
+              <Menu className="h-5 w-5" />
+            )}
+          </Button>
           
-          <div className="ml-2">
-            <p className="text-sm font-medium">{user?.name || 'Admin'}</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              {role ? `${role.charAt(0).toUpperCase() + role.slice(1)}` : 'Loading...'}
-            </p>
+          <Link to="/admin" className="flex items-center">
+            <h1 className="text-xl font-bold tracking-tight text-white">
+              <span className="hidden md:inline">Haluna</span> 
+              <span className="font-light ml-1">Admin</span>
+            </h1>
+          </Link>
+        </div>
+        
+        <div className="hidden md:flex items-center max-w-md flex-1 mx-6">
+          <div className="relative w-full">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-white/50" />
+            <Input 
+              type="search" 
+              placeholder="Search..." 
+              className="pl-8 bg-white/10 border-white/10 text-white placeholder:text-white/50 focus-visible:ring-white/30"
+            />
           </div>
         </div>
-      </div>
-
-      <div className="flex-1 max-w-md mx-auto px-4">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search..."
-            className={cn(
-              "w-full pl-10 pr-4 py-2 rounded-lg text-sm",
-              mode === 'dark' 
-                ? 'bg-gray-800 border-gray-700 text-white focus:border-violet-500 focus:ring-violet-500' 
-                : 'bg-gray-50 border-gray-200 focus:border-violet-500 focus:ring-violet-500'
-            )}
-          />
+        
+        <div className="flex items-center gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="icon"
+                className="relative text-white hover:bg-white/20"
+              >
+                <Bell className="h-5 w-5" />
+                <span className="absolute top-0 right-0 h-2 w-2 rounded-full bg-red-500" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-80">
+              <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <div className="py-2 px-4 text-sm text-gray-500">
+                No new notifications
+              </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="icon"
+                className="text-white hover:bg-white/20"
+              >
+                <Settings className="h-5 w-5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Settings</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem>
+                <Link to="/admin/settings" className="flex w-full">Admin Settings</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <Link to="/admin/permissions" className="flex w-full">User Permissions</Link>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                variant="ghost" 
+                className="gap-2 text-white hover:bg-white/20"
+              >
+                <div className="h-6 w-6 rounded-full bg-white/20 flex items-center justify-center overflow-hidden">
+                  {user?.avatar_url ? (
+                    <img 
+                      src={user.avatar_url} 
+                      alt={user?.name || 'User'} 
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <User className="h-4 w-4" />
+                  )}
+                </div>
+                <span className="hidden md:inline text-sm font-medium">
+                  {admin?.role === 'super_admin' ? 'Super Admin' : 
+                   admin?.role === 'admin' ? 'Admin' : 
+                   admin?.role === 'moderator' ? 'Moderator' : 'Administrator'}
+                </span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>
+                {user?.name || 'Administrator'}
+                <div className="text-xs font-normal text-gray-500">
+                  {user?.email || admin?.role || 'Administrator'}
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem>
+                <Link to="/profile" className="flex w-full">My Profile</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleLogout}>
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Log out</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
-
-      <div className="flex items-center space-x-2">
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button variant="ghost" size="icon" className="relative">
-              <Bell className="h-5 w-5" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-80" align="end">
-            <div className="space-y-2">
-              <h3 className="font-medium text-lg">Notifications</h3>
-              <div className="divide-y">
-                <div className="py-2">
-                  <p className="text-sm">No new notifications</p>
-                </div>
-              </div>
-            </div>
-          </PopoverContent>
-        </Popover>
-
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon">
-              <Settings className="h-5 w-5" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem className="cursor-pointer" onClick={() => navigate('/admin/settings')}>
-              Settings
-            </DropdownMenuItem>
-            <DropdownMenuItem className="cursor-pointer" onClick={() => navigate('/admin/profile')}>
-              Profile
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem className="cursor-pointer text-red-500" onClick={handleLogout}>
-              <LogOut className="mr-2 h-4 w-4" />
-              <span>Logout</span>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+      
+      {/* Mobile search bar (only visible on small screens) */}
+      <div className={cn(
+        "md:hidden px-4 pb-3", 
+        showMobileMenu ? "block" : "hidden"
+      )}>
+        <div className="relative w-full">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-white/50" />
+          <Input 
+            type="search" 
+            placeholder="Search..." 
+            className="pl-8 bg-white/10 border-white/10 text-white placeholder:text-white/50 focus-visible:ring-white/30"
+          />
+        </div>
       </div>
     </header>
   );
