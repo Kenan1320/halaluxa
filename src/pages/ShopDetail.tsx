@@ -50,7 +50,8 @@ const ShopDetail = () => {
           reviews: [],
           deliveryInfo: {},
           isGroupOrderEnabled: false,
-          rating: normalizedShop.rating || 0 // Ensure rating is always set
+          rating: normalizedShop.rating || 0, // Ensure rating is always set
+          product_count: normalizedShop.product_count || 0 // Ensure product_count is set
         };
         
         setShop(shopDetails);
@@ -59,7 +60,7 @@ const ShopDetail = () => {
         const productsData = await getProducts({ shop_id: shopId });
         setProducts(productsData.data);
 
-        // Fetch reviews for the shop
+        // Fetch reviews for the shop - no need to pass an argument if it's not required
         const reviewsData = await getReviews();
         setReviews(reviewsData);
       } catch (err: any) {

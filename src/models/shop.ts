@@ -16,11 +16,12 @@ export interface Shop {
   created_at: string;
   updated_at: string;
   distance?: number;
-  // Additional fields that need to be added
+  // Additional fields that were missing
   phone?: string;
   email?: string;
   website?: string;
   is_featured?: boolean;
+  address?: string;
   // Frontend aliases
   logo?: string; // Alias for logo_url
   coverImage?: string; // Alias for cover_image
