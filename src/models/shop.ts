@@ -22,6 +22,7 @@ export interface Shop {
   website?: string;
   is_featured?: boolean;
   address?: string;
+  status?: 'pending' | 'approved' | 'rejected' | 'suspended';
   // Frontend aliases
   logo?: string; // Alias for logo_url
   coverImage?: string; // Alias for cover_image
@@ -74,11 +75,46 @@ export interface ReviewWithUser {
   user_avatar?: string;
 }
 
-export interface ShopDetails extends Shop {
+export interface ShopDetails extends Omit<Shop, 'rating'> {
   products: number; 
   followers: number;
   reviews: number; 
-  rating: { average: number; count: number; }; // Fixed to match type in types/shop.ts
+  rating: { average: number; count: number; }; 
   deliveryInfo: any;
   isGroupOrderEnabled: boolean;
+}
+
+// Admin types for the dashboard
+export type AdminRole = 'admin' | 'support' | 'moderator' | 'viewer';
+
+export interface AdminPermission {
+  id: string;
+  role: AdminRole;
+  can_create: boolean;
+  can_read: boolean;
+  can_update: boolean;
+  can_delete: boolean;
+  resource: 'shops' | 'products' | 'users' | 'orders' | 'settings';
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AdminUser {
+  id: string;
+  user_id: string;
+  role: AdminRole;
+  created_at: string;
+  updated_at: string;
+  last_login?: string;
+}
+
+export interface AuditLog {
+  id: string;
+  admin_id: string;
+  action: string;
+  resource: string;
+  resource_id: string;
+  details: any;
+  ip_address?: string;
+  created_at: string;
 }
