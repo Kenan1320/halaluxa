@@ -19,6 +19,7 @@ import {
 import { Store, MapPin, Tag, FileText, Upload, X } from 'lucide-react';
 import ShopSetupForm from './ShopSetupForm';
 import { toast } from "sonner";
+import BusinessOnboardingDemo from './BusinessOnboardingDemo';
 
 const BusinessOnboarding = () => {
   const { user, isLoggedIn } = useAuth();
@@ -31,6 +32,7 @@ const BusinessOnboarding = () => {
   const [guestRole, setGuestRole] = useState<'business' | 'shopper' | 'admin'>('business');
   const [showGuestNameInput, setShowGuestNameInput] = useState(false);
   const [skipOnboarding, setSkipOnboarding] = useState(false);
+  const [showOnboardingDemo, setShowOnboardingDemo] = useState(false);
   
   // Check if user is a returning guest
   useEffect(() => {
@@ -71,11 +73,14 @@ const BusinessOnboarding = () => {
   }, [isLoggedIn, user, navigate]);
   
   const handleOnboardingComplete = () => {
-    hookToast({
-      title: "Shop Created!",
-      description: "Your shop has been created successfully.",
-    });
+    // Show the features demo
+    setShowOnboardingDemo(true);
     setOnboardingComplete(true);
+  };
+  
+  const handleDemoClose = () => {
+    setShowOnboardingDemo(false);
+    // Navigate to dashboard after demo is closed
     navigate('/dashboard');
   };
   
@@ -241,6 +246,11 @@ const BusinessOnboarding = () => {
         </motion.div>
       </div>
     );
+  }
+  
+  // If onboarding is complete, show the features demo
+  if (onboardingComplete && showOnboardingDemo) {
+    return <BusinessOnboardingDemo onClose={handleDemoClose} />;
   }
   
   // Business users automatically go to dashboard now

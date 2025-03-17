@@ -8,6 +8,7 @@ import { Shop as ModelsShop } from '@/models/shop';
  * This is needed because we have multiple Shop interfaces in the codebase
  */
 export function normalizeShop(shop: any): TypesShop {
+  const now = new Date().toISOString();
   return {
     id: shop.id,
     name: shop.name,
@@ -20,13 +21,14 @@ export function normalizeShop(shop: any): TypesShop {
     is_verified: shop.is_verified ?? shop.isVerified ?? false,
     rating: shop.rating || 0,
     product_count: shop.product_count ?? shop.productCount ?? 0,
-    created_at: shop.created_at || new Date().toISOString(),
-    updated_at: shop.updated_at || new Date().toISOString(),
+    created_at: shop.created_at || now,
+    updated_at: shop.updated_at || now,
     latitude: shop.latitude || null,
     longitude: shop.longitude || null,
     distance: shop.distance || null,
     logo: shop.logo || shop.logo_url || '',
     address: shop.address || '',
+    status: shop.status || 'pending',
     // Only include these fields if they exist on the incoming shop object
     ...(shop.phone && { phone: shop.phone }),
     ...(shop.email && { email: shop.email }),

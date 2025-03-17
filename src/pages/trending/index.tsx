@@ -72,7 +72,7 @@ export default function TrendingPage() {
                 shop={{
                   name: shop.name,
                   category: shop.category,
-                  rating: shop.rating !== null ? 
+                  rating: shop.rating !== null && shop.rating !== undefined ? 
                     (typeof shop.rating === 'object' ? shop.rating.average : shop.rating) 
                     : 0,
                   image: shop.cover_image || '',
