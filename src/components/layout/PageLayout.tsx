@@ -37,7 +37,7 @@ const PageLayout = ({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -15 }}
             transition={{ duration: 0.3 }}
-            className="h-full w-full"
+            className="h-full w-full -mt-px" // Added negative margin to connect to navbar
           >
             {children}
           </motion.div>

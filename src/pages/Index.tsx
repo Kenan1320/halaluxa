@@ -22,6 +22,7 @@ const Index = () => {
   const [selectedShops, setSelectedShops] = useState<Shop[]>([]);
   const [nearbyShops, setNearbyShops] = useState<Shop[]>([]);
   const [onlineShops, setOnlineShops] = useState<Shop[]>([]);
+  const [trendingShops, setTrendingShops] = useState<Shop[]>([]);
   const [isLoadingShops, setIsLoadingShops] = useState(false);
   const [activeTab, setActiveTab] = useState('online');
   const { mode } = useTheme();
@@ -58,7 +59,7 @@ const Index = () => {
         const allShops = await getShops();
         const normalizedShops = normalizeShopArray(allShops);
         
-        // Split shops into nearby and online
+        // Split shops into nearby, online, and trending
         const nearby = normalizedShops.filter(shop => 
           shop.distance !== null && shop.distance < 10
         ).slice(0, 10);
@@ -66,9 +67,15 @@ const Index = () => {
         const online = normalizedShops.filter(shop => 
           shop.distance === null || shop.location === 'Online'
         ).slice(0, 10);
+
+        // Create a trending shops list - sort by product count as a proxy for popularity
+        const trending = [...normalizedShops].sort((a, b) => 
+          (b.product_count || 0) - (a.product_count || 0)
+        ).slice(0, 10);
         
         setNearbyShops(nearby);
         setOnlineShops(online);
+        setTrendingShops(trending);
         
         if ((!localStorage.getItem('selectedShops') || 
              JSON.parse(localStorage.getItem('selectedShops') || '[]').length === 0) && 
@@ -91,7 +98,7 @@ const Index = () => {
     const channel = subscribeToShops((shops) => {
       const normalizedShops = normalizeShopArray(shops);
       
-      // Split shops into nearby and online
+      // Split shops into nearby, online, and trending
       const nearby = normalizedShops.filter(shop => 
         shop.distance !== null && shop.distance < 10
       ).slice(0, 10);
@@ -100,8 +107,13 @@ const Index = () => {
         shop.distance === null || shop.location === 'Online'
       ).slice(0, 10);
       
+      const trending = [...normalizedShops].sort((a, b) => 
+        (b.product_count || 0) - (a.product_count || 0)
+      ).slice(0, 10);
+      
       setNearbyShops(nearby);
       setOnlineShops(online);
+      setTrendingShops(trending);
       
       if (normalizedShops.length > 0 && selectedShops.length === 0) {
         const sortedShops = [...normalizedShops].sort((a, b) => (b.product_count || 0) - (a.product_count || 0));
@@ -187,23 +199,33 @@ const Index = () => {
       </div>
       
       <div className="container mx-auto px-4 pt-5 bg-white dark:bg-gray-900">
-        {/* Opened Nearby Section */}
+        {/* Opened Nearby Section with TWO rows of flowing logos */}
         <div className="my-4">
           <FlowTitle>Opened Nearby</FlowTitle>
           
-          {/* Add flowing shop logos for nearby shops */}
+          {/* First row of shop logos */}
           <div className="mt-2">
-            <ShopLogoScroller shops={nearbyShops} backgroundMode="green" />
+            <ShopLogoScroller shops={nearbyShops} direction="left" />
+          </div>
+          
+          {/* Second row of shop logos (same shops, different direction) */}
+          <div className="mt-2 -my-4">
+            <ShopLogoScroller shops={nearbyShops.slice(0).reverse()} direction="right" />
           </div>
         </div>
         
-        {/* Trusted Online Section */}
+        {/* Trusted Online Section with TWO rows of flowing logos */}
         <div className="my-4">
           <FlowTitle>Trusted Online</FlowTitle>
           
-          {/* Add flowing shop logos for online shops */}
+          {/* First row of shop logos */}
           <div className="mt-2">
-            <ShopLogoScroller shops={onlineShops} backgroundMode="blue" />
+            <ShopLogoScroller shops={onlineShops} direction="left" />
+          </div>
+          
+          {/* Second row of shop logos (same shops, different direction) */}
+          <div className="mt-2 -my-4">
+            <ShopLogoScroller shops={onlineShops.slice(0).reverse()} direction="right" />
           </div>
         </div>
         

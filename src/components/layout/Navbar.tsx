@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { useShop } from '@/context/ShopContext';
 import { Button } from '@/components/ui/button';
@@ -8,12 +8,14 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { ShoppingCart, User, Menu, MapPin, ChevronDown, Settings } from 'lucide-react';
 import { Shop } from '@/types/shop';
 import { getShopById } from '@/services/shopService';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { 
   Sheet, 
   SheetContent, 
   SheetHeader, 
   SheetTitle, 
-  SheetTrigger 
+  SheetTrigger,
+  SheetClose
 } from '@/components/ui/sheet';
 import {
   NavigationMenu,
@@ -30,6 +32,7 @@ const Navbar = () => {
   const isAuthenticated = user !== null && !isLoading;
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [currentShop, setCurrentShop] = useState<Shop | null>(null);
+  const navigate = useNavigate();
   
   useEffect(() => {
     // Load the main shop from localStorage if available
@@ -72,25 +75,50 @@ const Navbar = () => {
                   <SheetTitle className="text-white">Halvi</SheetTitle>
                 </SheetHeader>
                 <div className="flex flex-col space-y-4 mt-6">
-                  <Link to="/shops" className="flex items-center px-4 py-3 rounded-lg hover:bg-[#132054] transition-colors">
-                    <span className="text-lg">Select Your Shops</span>
-                  </Link>
-                  <Link to="/explore" className="flex items-center px-4 py-3 rounded-lg hover:bg-[#132054] transition-colors">
-                    <span className="text-lg">Explore</span>
-                  </Link>
-                  <Link to="/digital-mall" className="flex items-center px-4 py-3 rounded-lg hover:bg-[#132054] transition-colors">
-                    <span className="text-lg">Digital Mall</span>
-                  </Link>
-                  <Link to="/nearby" className="flex items-center px-4 py-3 rounded-lg hover:bg-[#132054] transition-colors">
-                    <span className="text-lg">Nearby Shops</span>
-                  </Link>
+                  {/* Dark mode toggle in menu */}
+                  <div className="flex items-center justify-between px-4 py-3">
+                    <span>Dark Mode</span>
+                    <ThemeToggle />
+                  </div>
+                  
+                  <SheetClose asChild>
+                    <Link to="/shops" className="flex items-center px-4 py-3 rounded-lg hover:bg-[#132054] transition-colors">
+                      <span className="text-lg">Select Your Shops</span>
+                    </Link>
+                  </SheetClose>
+                  
+                  <SheetClose asChild>
+                    <Link to="/explore" className="flex items-center px-4 py-3 rounded-lg hover:bg-[#132054] transition-colors">
+                      <span className="text-lg">Explore</span>
+                    </Link>
+                  </SheetClose>
+                  
+                  <SheetClose asChild>
+                    <Link to="/digital-mall" className="flex items-center px-4 py-3 rounded-lg hover:bg-[#132054] transition-colors">
+                      <span className="text-lg">Digital Mall</span>
+                    </Link>
+                  </SheetClose>
+                  
+                  <SheetClose asChild>
+                    <Link to="/nearby" className="flex items-center px-4 py-3 rounded-lg hover:bg-[#132054] transition-colors">
+                      <span className="text-lg">Nearby Shops</span>
+                    </Link>
+                  </SheetClose>
+                  
+                  <SheetClose asChild>
+                    <Link to="/admin" className="flex items-center px-4 py-3 rounded-lg hover:bg-[#132054] transition-colors text-purple-400">
+                      <span className="text-lg">Admin Portal</span>
+                    </Link>
+                  </SheetClose>
                   
                   {!isAuthenticated ? (
-                    <Link to="/login" className="mt-4">
-                      <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">
-                        Login
-                      </Button>
-                    </Link>
+                    <SheetClose asChild>
+                      <Link to="/login" className="mt-4">
+                        <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">
+                          Login
+                        </Button>
+                      </Link>
+                    </SheetClose>
                   ) : (
                     <NavigationMenu>
                       <NavigationMenuList>
@@ -99,28 +127,34 @@ const Navbar = () => {
                           <NavigationMenuContent className="bg-[#0F1B44] text-white border border-gray-800 min-w-[250px]">
                             <ul className="p-2 space-y-1">
                               <li>
-                                <Link to="/settings/account" className="block px-4 py-2 hover:bg-[#132054] rounded-md">
-                                  <span className="flex items-center">
-                                    <User className="mr-2 h-4 w-4" />
-                                    Account Settings
-                                  </span>
-                                </Link>
+                                <SheetClose asChild>
+                                  <Link to="/settings/account" className="block px-4 py-2 hover:bg-[#132054] rounded-md">
+                                    <span className="flex items-center">
+                                      <User className="mr-2 h-4 w-4" />
+                                      Account Settings
+                                    </span>
+                                  </Link>
+                                </SheetClose>
                               </li>
                               <li>
-                                <Link to="/settings/orders" className="block px-4 py-2 hover:bg-[#132054] rounded-md">
-                                  <span className="flex items-center">
-                                    <ShoppingCart className="mr-2 h-4 w-4" />
-                                    Orders & Shopping
-                                  </span>
-                                </Link>
+                                <SheetClose asChild>
+                                  <Link to="/settings/orders" className="block px-4 py-2 hover:bg-[#132054] rounded-md">
+                                    <span className="flex items-center">
+                                      <ShoppingCart className="mr-2 h-4 w-4" />
+                                      Orders & Shopping
+                                    </span>
+                                  </Link>
+                                </SheetClose>
                               </li>
                               <li>
-                                <Link to="/settings/security" className="block px-4 py-2 hover:bg-[#132054] rounded-md">
-                                  <span className="flex items-center">
-                                    <Settings className="mr-2 h-4 w-4" />
-                                    Security & Privacy
-                                  </span>
-                                </Link>
+                                <SheetClose asChild>
+                                  <Link to="/settings/security" className="block px-4 py-2 hover:bg-[#132054] rounded-md">
+                                    <span className="flex items-center">
+                                      <Settings className="mr-2 h-4 w-4" />
+                                      Security & Privacy
+                                    </span>
+                                  </Link>
+                                </SheetClose>
                               </li>
                             </ul>
                           </NavigationMenuContent>
@@ -128,6 +162,21 @@ const Navbar = () => {
                       </NavigationMenuList>
                     </NavigationMenu>
                   )}
+                  
+                  {/* Guest sign in options */}
+                  <div className="border-t border-gray-700 pt-4 mt-4">
+                    <h3 className="px-4 text-sm font-medium mb-2">Quick Access Options:</h3>
+                    <SheetClose asChild>
+                      <Link to="/dashboard" className="flex items-center px-4 py-2 rounded-lg hover:bg-[#132054] transition-colors text-yellow-400">
+                        <span>Business Dashboard (Guest)</span>
+                      </Link>
+                    </SheetClose>
+                    <SheetClose asChild>
+                      <Link to="/admin" className="flex items-center px-4 py-2 rounded-lg hover:bg-[#132054] transition-colors text-purple-400">
+                        <span>Admin Portal (Guest)</span>
+                      </Link>
+                    </SheetClose>
+                  </div>
                 </div>
               </SheetContent>
             </Sheet>
@@ -148,6 +197,9 @@ const Navbar = () => {
 
           {/* Right side - Main Shop, Cart and Auth */}
           <div className="flex items-center space-x-4">
+            {/* Dark mode toggle button */}
+            <ThemeToggle className="hidden md:flex" />
+            
             {/* Main Shop */}
             {currentShop && (
               <Link 

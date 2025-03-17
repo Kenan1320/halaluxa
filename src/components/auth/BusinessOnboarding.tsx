@@ -27,6 +27,7 @@ const BusinessOnboarding = () => {
   const [onboardingComplete, setOnboardingComplete] = useState(false);
   const [isGuest, setIsGuest] = useState(false);
   const [guestUsername, setGuestUsername] = useState('');
+  const [guestRole, setGuestRole] = useState<'business' | 'shopper' | 'admin'>('business');
   const [showGuestNameInput, setShowGuestNameInput] = useState(false);
   const [skipOnboarding, setSkipOnboarding] = useState(false);
   
@@ -74,19 +75,28 @@ const BusinessOnboarding = () => {
     navigate('/dashboard');
   };
   
-  const handleGuestMode = () => {
+  const handleGuestMode = (role: 'business' | 'shopper' | 'admin') => {
+    setGuestRole(role);
     if (showGuestNameInput) {
       if (guestUsername.trim().length > 0) {
         // Save the guest username to session storage
         sessionStorage.setItem('guestBusinessUsername', guestUsername);
         sessionStorage.setItem('isGuestBusinessUser', 'true');
+        sessionStorage.setItem('guestRole', role);
         
         toast({
           title: "Guest Mode Activated",
-          description: `Welcome, ${guestUsername}! You're now viewing the dashboard as a guest. Your username has been saved for this session.`,
+          description: `Welcome, ${guestUsername}! You're now viewing as a guest ${role}. Your username has been saved for this session.`,
         });
         setIsGuest(true);
-        navigate('/dashboard');
+        
+        if (role === 'business') {
+          navigate('/dashboard');
+        } else if (role === 'admin') {
+          navigate('/admin');
+        } else {
+          navigate('/');
+        }
       } else {
         toast({
           title: "Username Required",
@@ -99,20 +109,28 @@ const BusinessOnboarding = () => {
     }
   };
   
-  const handleDirectGuestAccess = () => {
+  const handleDirectGuestAccess = (role: 'business' | 'shopper' | 'admin') => {
     // Generate a random guest username
     const randomId = Math.floor(Math.random() * 10000);
     const autoUsername = `Guest${randomId}`;
     
     sessionStorage.setItem('guestBusinessUsername', autoUsername);
     sessionStorage.setItem('isGuestBusinessUser', 'true');
+    sessionStorage.setItem('guestRole', role);
     
     toast({
       title: "Guest Mode Activated",
-      description: `Welcome, ${autoUsername}! You're now viewing the dashboard as a guest. Remember your username: ${autoUsername} to manage your content.`,
+      description: `Welcome, ${autoUsername}! You're now viewing as a guest ${role}.`,
     });
     setIsGuest(true);
-    navigate('/dashboard');
+    
+    if (role === 'business') {
+      navigate('/dashboard');
+    } else if (role === 'admin') {
+      navigate('/admin');
+    } else {
+      navigate('/');
+    }
   };
   
   if (!isLoggedIn && !isGuest) {
@@ -125,32 +143,59 @@ const BusinessOnboarding = () => {
         >
           <Card className="shadow-lg bg-white dark:bg-gray-800 border dark:border-gray-700">
             <CardHeader className="dark:border-gray-700">
-              <CardTitle className="text-2xl font-serif dark:text-white">Business Dashboard</CardTitle>
-              <CardDescription className="dark:text-gray-300">You need to log in to access your business dashboard</CardDescription>
+              <CardTitle className="text-2xl font-serif dark:text-white">Quick Access Portal</CardTitle>
+              <CardDescription className="dark:text-gray-300">Access any part of the application as a guest</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4 dark:text-white">
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Want to see how the dashboard works without signing up?
-              </p>
-              
-              {!showGuestNameInput ? (
-                <div className="space-y-3">
-                  <Button 
-                    onClick={handleGuestMode} 
-                    className="w-full bg-gradient-to-r from-[#0F1B44] to-[#183080] text-white dark:bg-gradient-to-r dark:from-indigo-800 dark:to-indigo-900"
-                  >
-                    Enter as Guest with Username
-                  </Button>
-                  <Button 
-                    onClick={handleDirectGuestAccess} 
-                    variant="outline"
-                    className="w-full border-[#0F1B44] text-[#0F1B44] hover:bg-[#0F1B44]/5 dark:border-indigo-500 dark:text-indigo-300 dark:hover:bg-indigo-900/20"
-                  >
-                    Quick Access (No Username)
-                  </Button>
+              <div className="grid grid-cols-1 gap-4">
+                <div className="border rounded-lg p-4 dark:border-gray-700">
+                  <h3 className="font-medium text-lg mb-2">Business Dashboard</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
+                    Access the seller dashboard to manage products, orders, and store settings.
+                  </p>
+                  <div className="flex gap-2">
+                    <Button 
+                      onClick={() => handleDirectGuestAccess('business')} 
+                      className="flex-1 bg-gradient-to-r from-[#0F1B44] to-[#183080] text-white"
+                    >
+                      Quick Access
+                    </Button>
+                  </div>
                 </div>
-              ) : (
-                <div className="space-y-3">
+
+                <div className="border rounded-lg p-4 dark:border-gray-700">
+                  <h3 className="font-medium text-lg mb-2">Admin Portal</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
+                    Access the admin dashboard to manage all aspects of the application.
+                  </p>
+                  <div className="flex gap-2">
+                    <Button 
+                      onClick={() => handleDirectGuestAccess('admin')} 
+                      className="flex-1 bg-purple-600 text-white"
+                    >
+                      Quick Access
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="border rounded-lg p-4 dark:border-gray-700">
+                  <h3 className="font-medium text-lg mb-2">Shopper Experience</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
+                    Browse products, add to cart, and experience the buyer flow.
+                  </p>
+                  <div className="flex gap-2">
+                    <Button 
+                      onClick={() => handleDirectGuestAccess('shopper')} 
+                      className="flex-1 bg-green-600 text-white"
+                    >
+                      Quick Access
+                    </Button>
+                  </div>
+                </div>
+              </div>
+              
+              {showGuestNameInput && (
+                <div className="mt-4 space-y-3">
                   <Input
                     placeholder="Enter a username to remember"
                     value={guestUsername}
@@ -166,8 +211,8 @@ const BusinessOnboarding = () => {
                       Cancel
                     </Button>
                     <Button 
-                      onClick={handleGuestMode} 
-                      className="flex-1 bg-gradient-to-r from-[#0F1B44] to-[#183080] text-white dark:bg-gradient-to-r dark:from-indigo-800 dark:to-indigo-900"
+                      onClick={() => handleGuestMode(guestRole)} 
+                      className="flex-1 bg-gradient-to-r from-[#0F1B44] to-[#183080] text-white"
                     >
                       Continue
                     </Button>

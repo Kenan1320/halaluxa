@@ -81,6 +81,10 @@ const AppRoutes = () => {
   const location = useLocation();
   const { user } = useAuth();
   
+  // Check if the user is a guest user
+  const isGuest = sessionStorage.getItem('isGuestBusinessUser') === 'true';
+  const guestRole = sessionStorage.getItem('guestRole');
+  
   // Business users should only see the dashboard interface
   const showBottomNav = !user || user.role !== 'business' || 
                     (!location.pathname.startsWith('/dashboard') && 
@@ -114,10 +118,12 @@ const AppRoutes = () => {
         <Route path="/affiliate" element={<PageLayout><AffiliatePage /></PageLayout>} />
         <Route path="/affiliate-program" element={<PageLayout><AffiliateProgramPage /></PageLayout>} />
         
-        {/* Protected shopper routes - explicitly disallow business users */}
+        {/* Guest shopper access or protected shopper routes */}
         <Route 
           path="/cart" 
           element={
+            isGuest && guestRole === 'shopper' ? 
+            <PageLayout><Cart /></PageLayout> :
             <ProtectedRoute requiredRole="shopper" businessAllowed={false}>
               <PageLayout><Cart /></PageLayout>
             </ProtectedRoute>
@@ -126,6 +132,8 @@ const AppRoutes = () => {
         <Route 
           path="/checkout" 
           element={
+            isGuest && guestRole === 'shopper' ? 
+            <PageLayout><Checkout /></PageLayout> :
             <ProtectedRoute requiredRole="shopper" businessAllowed={false}>
               <PageLayout><Checkout /></PageLayout>
             </ProtectedRoute>
@@ -134,6 +142,8 @@ const AppRoutes = () => {
         <Route 
           path="/order-confirmation" 
           element={
+            isGuest && guestRole === 'shopper' ? 
+            <PageLayout><OrderConfirmation /></PageLayout> :
             <ProtectedRoute requiredRole="shopper" businessAllowed={false}>
               <PageLayout><OrderConfirmation /></PageLayout>
             </ProtectedRoute>
@@ -142,6 +152,8 @@ const AppRoutes = () => {
         <Route 
           path="/orders" 
           element={
+            isGuest && guestRole === 'shopper' ? 
+            <PageLayout><Orders /></PageLayout> :
             <ProtectedRoute requiredRole="shopper" businessAllowed={false}>
               <PageLayout><Orders /></PageLayout>
             </ProtectedRoute>
@@ -150,16 +162,20 @@ const AppRoutes = () => {
         <Route 
           path="/profile" 
           element={
+            isGuest && guestRole === 'shopper' ? 
+            <PageLayout><UserProfilePage /></PageLayout> :
             <ProtectedRoute requiredRole="shopper" businessAllowed={false}>
               <PageLayout><UserProfilePage /></PageLayout>
             </ProtectedRoute>
           } 
         />
         
-        {/* Protected business owner routes */}
+        {/* Guest business access or protected business owner routes */}
         <Route 
           path="/dashboard" 
           element={
+            isGuest && guestRole === 'business' ? 
+            <DashboardLayout /> :
             <ProtectedRoute requiredRole="business">
               <DashboardLayout />
             </ProtectedRoute>
@@ -175,7 +191,7 @@ const AppRoutes = () => {
           <Route path="payment-account" element={<PaymentAccountPage />} />
         </Route>
         
-        {/* Admin routes - No authentication in dev mode */}
+        {/* Admin routes - Allow guest access */}
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<AdminDashboard />} />
           <Route path="shops" element={<ComingSoon title="Shop Management" />} />
@@ -206,7 +222,7 @@ const AppRoutes = () => {
         <Route path="*" element={<PageLayout><NotFound /></PageLayout>} />
       </Routes>
       
-      {/* Only show the AdvancedBottomNav, removing BottomNavigation */}
+      {/* Only show the AdvancedBottomNav, no vertical navigation */}
       {showBottomNav && <AdvancedBottomNav />}
     </AuthMiddleware>
   );

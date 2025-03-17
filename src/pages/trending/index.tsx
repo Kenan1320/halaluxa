@@ -66,7 +66,7 @@ export default function TrendingPage() {
       ) : shops.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {shops.map((shop, index) => (
-            <div key={shop.id} onClick={() => navigate(`/shops/${shop.id}`)} className="cursor-pointer">
+            <div key={shop.id || index} onClick={() => navigate(`/shops/${shop.id}`)} className="cursor-pointer">
               <ShopCard
                 index={index}
                 shop={{
@@ -74,7 +74,7 @@ export default function TrendingPage() {
                   category: shop.category,
                   rating: typeof shop.rating === 'object' 
                     ? shop.rating.average 
-                    : (shop.rating ?? 0), // Using nullish coalescing to ensure null ratings become 0
+                    : (shop.rating !== null ? shop.rating : 0),
                   image: shop.cover_image || '',
                   location: shop.location,
                   isVerified: shop.is_verified
