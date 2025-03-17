@@ -23,8 +23,8 @@ export default function TrendingPage() {
         
         // Sort by rating (highest first)
         const sortedShops = [...adaptedShops].sort((a, b) => {
-          const ratingA = typeof a.rating === 'object' ? a.rating.average : (a.rating || 0);
-          const ratingB = typeof b.rating === 'object' ? b.rating.average : (b.rating || 0);
+          const ratingA = typeof a.rating === 'object' ? a.rating.average : (a.rating ?? 0);
+          const ratingB = typeof b.rating === 'object' ? b.rating.average : (b.rating ?? 0);
           return ratingB - ratingA;
         });
         setShops(sortedShops);

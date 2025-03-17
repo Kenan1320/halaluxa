@@ -54,7 +54,7 @@ const PageLayout = ({
       )}
       
       {/* Page content */}
-      <main className="flex-1 pt-2 md:pt-4 pb-24 md:pb-6">
+      <main className="flex-1 pb-24 md:pb-6">
         <AnimatePresence mode="wait">
           <motion.div
             key={window.location.pathname}

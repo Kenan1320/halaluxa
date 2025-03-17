@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Shop } from '@/types/database';
 import { Product } from '@/models/product';
@@ -295,7 +296,7 @@ export const getAdminUser = async (): Promise<Admin | null> => {
   return null;
 };
 
-// Add the missing functions that are imported in AdminDashboard.tsx
+// Admin dashboard statistics
 export const getAdminStats = async () => {
   // In development mode, return mock data
   if (import.meta.env.DEV) {
@@ -317,7 +318,7 @@ export const getAdminStats = async () => {
     const { data: orders } = await supabase.from('orders').select('id, total');
     
     const totalRevenue = orders 
-      ? orders.reduce((sum, order) => sum + (parseFloat(order.total) || 0), 0) 
+      ? orders.reduce((sum, order) => sum + (parseFloat(order.total || '0')), 0) 
       : 0;
     
     return {
@@ -341,6 +342,7 @@ export const getAdminStats = async () => {
   }
 };
 
+// Get recent users for admin dashboard
 export const getDashboardUsers = async (limit = 5) => {
   // In development mode, return mock data
   if (import.meta.env.DEV) {
@@ -384,6 +386,7 @@ export const getDashboardUsers = async (limit = 5) => {
   }
 };
 
+// Get recent orders for admin dashboard
 export const getRecentOrders = async (limit = 5) => {
   // In development mode, return mock data
   if (import.meta.env.DEV) {
@@ -450,6 +453,10 @@ export interface DatabaseProfile {
   state?: string;
   zip?: string;
   website?: string;
+  // Additional fields for SettingsPage.tsx
+  shop_address?: string;
+  website_url?: string;
+  phone_number?: string;
 }
 
 interface UserAddress {
