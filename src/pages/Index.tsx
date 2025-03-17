@@ -15,7 +15,6 @@ import { getShopById, subscribeToShops, getShops, Shop } from '@/services/shopSe
 import { useTheme } from '@/context/ThemeContext';
 import { normalizeShop, normalizeShopArray } from '@/utils/shopHelper';
 import ShopLogoScroller from '@/components/home/ShopLogoScroller';
-import { Store, ShoppingBag } from 'lucide-react';
 
 const Index = () => {
   const { isLoggedIn, user } = useAuth();
@@ -148,11 +147,10 @@ const Index = () => {
     </h2>
   );
 
-  const FlowTitle = ({ children, icon }: { children: React.ReactNode, icon?: React.ReactNode }) => (
+  const FlowTitle = ({ children }: { children: React.ReactNode }) => (
     <h2 className={`text-lg font-bold ${
       mode === 'dark' ? 'text-white' : 'text-gray-800'
     } pl-4 mb-2 flex items-center gap-2`}>
-      {icon}
       {children}
     </h2>
   );
@@ -188,14 +186,14 @@ const Index = () => {
       </div>
       
       <div className="container mx-auto px-4 pt-5 bg-white dark:bg-gray-900">
-        {/* Top Sections with Opened Nearby and Trusted Online */}
+        {/* Top Sections with "Opened Nearby" and "Trusted Online" headings - but without icons */}
         <section className="mt-4 mb-6 relative">
-          <FlowTitle icon={<Store className="h-5 w-5 text-[#2A866A]" />}>Opened Nearby</FlowTitle>
+          <FlowTitle>Opened Nearby</FlowTitle>
           <ShopLogoScroller shops={nearbyShops} backgroundMode="blue" />
         </section>
         
         <section className="mt-6 mb-8 relative">
-          <FlowTitle icon={<ShoppingBag className="h-5 w-5 text-[#FF7A45]" />}>Trusted Online</FlowTitle>
+          <FlowTitle>Trusted Online</FlowTitle>
           <ShopLogoScroller shops={onlineShops} backgroundMode="orange" />
         </section>
         

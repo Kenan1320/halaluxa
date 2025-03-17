@@ -72,7 +72,8 @@ const onlineCategoryNames = [
   'Beauty & Health', 
   'Toys & Games',
   'Books & Media',
-  'Digital Products'
+  'Digital Products',
+  'Hoodies'
 ];
 
 export default function CategorySuggestions() {

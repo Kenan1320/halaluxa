@@ -43,9 +43,11 @@ const ShopDetail = () => {
 
         // Convert normal Shop to ShopDetails
         const normalizedShop = normalizeShop(shopData);
+        
+        // Create compatible ShopDetails with proper types
         const shopDetails: ShopDetails = {
           ...normalizedShop,
-          products: [],
+          products: 0, // Will be updated with the actual count
           followers: 0,
           reviews: [],
           deliveryInfo: {},
@@ -60,8 +62,11 @@ const ShopDetail = () => {
         // Fetch products for the shop
         const productsData = await getProducts({ shop_id: shopId });
         setProducts(productsData.data);
+        
+        // Update products count in shop details
+        shopDetails.products = productsData.data.length;
 
-        // Fetch reviews for the shop - no need to pass an argument if it's not required
+        // Fetch reviews for the shop
         const reviewsData = await getReviews();
         setReviews(reviewsData);
       } catch (err: any) {

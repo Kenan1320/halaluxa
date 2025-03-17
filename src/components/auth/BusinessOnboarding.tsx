@@ -26,6 +26,8 @@ const BusinessOnboarding = () => {
   const [onboardingStep, setOnboardingStep] = useState(0);
   const [onboardingComplete, setOnboardingComplete] = useState(false);
   const [isGuest, setIsGuest] = useState(false);
+  const [guestUsername, setGuestUsername] = useState('');
+  const [showGuestNameInput, setShowGuestNameInput] = useState(false);
   
   // Check if user already has a shop
   useEffect(() => {
@@ -58,13 +60,42 @@ const BusinessOnboarding = () => {
   };
   
   const handleGuestMode = () => {
+    if (showGuestNameInput) {
+      if (guestUsername.trim().length > 0) {
+        // Save the guest username to session storage
+        sessionStorage.setItem('guestBusinessUsername', guestUsername);
+        sessionStorage.setItem('isGuestBusinessUser', 'true');
+        
+        toast({
+          title: "Guest Mode Activated",
+          description: `Welcome, ${guestUsername}! You're now viewing the dashboard as a guest. Your username has been saved for this session.`,
+        });
+        setIsGuest(true);
+      } else {
+        toast({
+          title: "Username Required",
+          description: "Please enter a username to continue as a guest.",
+          variant: "destructive"
+        });
+      }
+    } else {
+      setShowGuestNameInput(true);
+    }
+  };
+  
+  const handleDirectGuestAccess = () => {
+    // Generate a random guest username
+    const randomId = Math.floor(Math.random() * 10000);
+    const autoUsername = `Guest${randomId}`;
+    
+    sessionStorage.setItem('guestBusinessUsername', autoUsername);
+    sessionStorage.setItem('isGuestBusinessUser', 'true');
+    
     toast({
       title: "Guest Mode Activated",
-      description: "You're now viewing the dashboard as a guest. Any changes won't be saved permanently.",
+      description: `Welcome, ${autoUsername}! You're now viewing the dashboard as a guest. Remember your username: ${autoUsername} to manage your content.`,
     });
     setIsGuest(true);
-    // Store guest status in sessionStorage
-    sessionStorage.setItem('isGuestBusinessUser', 'true');
   };
   
   if (!isLoggedIn && !isGuest) {
@@ -84,12 +115,49 @@ const BusinessOnboarding = () => {
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 Want to see how the dashboard works without signing up?
               </p>
-              <Button 
-                onClick={handleGuestMode} 
-                className="w-full bg-gradient-to-r from-[#0F1B44] to-[#183080] text-white"
-              >
-                Enter as Guest
-              </Button>
+              
+              {!showGuestNameInput ? (
+                <div className="space-y-3">
+                  <Button 
+                    onClick={handleGuestMode} 
+                    className="w-full bg-gradient-to-r from-[#0F1B44] to-[#183080] text-white"
+                  >
+                    Enter as Guest with Username
+                  </Button>
+                  <Button 
+                    onClick={handleDirectGuestAccess} 
+                    variant="outline"
+                    className="w-full border-[#0F1B44] text-[#0F1B44] hover:bg-[#0F1B44]/5"
+                  >
+                    Quick Access (No Username)
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <Input
+                    placeholder="Enter a username to remember"
+                    value={guestUsername}
+                    onChange={(e) => setGuestUsername(e.target.value)}
+                    className="w-full"
+                  />
+                  <div className="flex gap-2">
+                    <Button 
+                      onClick={() => setShowGuestNameInput(false)} 
+                      variant="outline"
+                      className="flex-1"
+                    >
+                      Cancel
+                    </Button>
+                    <Button 
+                      onClick={handleGuestMode} 
+                      className="flex-1 bg-gradient-to-r from-[#0F1B44] to-[#183080] text-white"
+                    >
+                      Continue
+                    </Button>
+                  </div>
+                </div>
+              )}
+              
               <div className="text-center pt-2">
                 <Link to="/auth/login" className="text-sm text-blue-600 dark:text-blue-400 hover:underline">
                   Sign in to your account
@@ -129,7 +197,7 @@ const BusinessOnboarding = () => {
           {isGuest && (
             <CardFooter className="bg-amber-50 dark:bg-amber-900/20 rounded-b-lg border-t border-amber-200 dark:border-amber-800">
               <div className="text-xs text-amber-700 dark:text-amber-400">
-                <strong>Guest Mode:</strong> You're currently in guest mode. Changes won't be permanently saved.
+                <strong>Guest Mode:</strong> You're currently in guest mode as {sessionStorage.getItem('guestBusinessUsername')}. Changes won't be permanently saved.
               </div>
             </CardFooter>
           )}
