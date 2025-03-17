@@ -53,16 +53,17 @@ export function StylizedLogo({ className = "", size = 'md' }: StylizedLogoProps)
       gradient.addColorStop(1, `hsl(${(baseHue + 60) % 360}, 80%, 35%)`); // Deep green
       
       // Text styling
-      ctx.fillStyle = mode === 'dark' ? 'white' : gradient;
+      if (mode === 'dark') {
+        ctx.fillStyle = 'white';
+        ctx.shadowColor = gradient.toString(); // Convert gradient to string representation for shadow
+        ctx.shadowBlur = 8;
+      } else {
+        // Use the gradient directly for light mode
+        ctx.fillStyle = gradient;
+      }
       ctx.font = `${fontWeight} ${fontSize} ${fontFamily}`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      
-      // Apply subtle shadow in dark mode
-      if (mode === 'dark') {
-        ctx.shadowColor = gradient;
-        ctx.shadowBlur = 8;
-      }
       
       // Draw text
       ctx.fillText("HALVI", canvas.width / (2 * dpr), canvas.height / (2 * dpr));

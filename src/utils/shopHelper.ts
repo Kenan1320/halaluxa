@@ -17,6 +17,8 @@ export const normalizeShop = (shop: any): Shop => {
     longitude: shop.longitude || null,
     product_count: shop.product_count || 0,
     address: shop.address || '',
+    created_at: shop.created_at || new Date().toISOString(),
+    updated_at: shop.updated_at || new Date().toISOString(),
     // Handle any other properties needed
   };
 };

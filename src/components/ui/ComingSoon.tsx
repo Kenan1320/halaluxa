@@ -57,7 +57,7 @@ export function ComingSoon({
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5, duration: 0.5 }}
           >
-            <Button asChild size="lg">
+            <Button to="/" size="lg">
               <Link to="/" className="inline-flex items-center">
                 <Home className="mr-2 h-4 w-4" />
                 Back to Home
