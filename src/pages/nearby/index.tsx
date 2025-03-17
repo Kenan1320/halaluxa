@@ -7,8 +7,9 @@ import { useLocation } from '@/context/LocationContext';
 import { useToast } from '@/hooks/use-toast';
 import ProductGrid from '@/components/home/ProductGrid';
 import { Button } from '@/components/ui/button';
-import { Shop } from '@/types/database';
+import { Shop } from '@/types/shop';
 import { MapPin, ArrowRight } from 'lucide-react';
+import { adaptShopArray } from '@/utils/typeAdapters';
 
 const NearbyPage: React.FC = () => {
   const [shops, setShops] = useState<Shop[]>([]);
@@ -21,18 +22,21 @@ const NearbyPage: React.FC = () => {
     const fetchNearbyShops = async () => {
       setLoading(true);
       try {
+        let fetchedShops;
         // Get user's location 
         if (currentLocation && 'coords' in currentLocation) {
-          const nearbyShops = await getNearbyShops(
+          fetchedShops = await getNearbyShops(
             currentLocation.coords.latitude,
             currentLocation.coords.longitude
           );
-          setShops(nearbyShops);
         } else {
           // Fallback if location not available
-          const shops = await getNearbyShops();
-          setShops(shops);
+          fetchedShops = await getNearbyShops();
         }
+        
+        // Convert to the correct Shop type
+        const adaptedShops = adaptShopArray(fetchedShops, 'types');
+        setShops(adaptedShops);
       } catch (error) {
         console.error('Error fetching nearby shops:', error);
         toast({

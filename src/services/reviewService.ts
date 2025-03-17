@@ -1,14 +1,5 @@
 
-interface Review {
-  id: string;
-  productId: string;
-  userId: string;
-  username: string;
-  rating: number;
-  comment: string;
-  createdAt: string;
-  shopId?: string;
-}
+import { Review, ShopReview } from '@/models/review';
 
 // Get all reviews from localStorage
 export const getReviews = (): Review[] => {
@@ -22,23 +13,24 @@ export const getReviews = (): Review[] => {
 // Get reviews for a specific product
 export const getReviewsForProduct = (productId: string): Review[] => {
   const reviews = getReviews();
-  return reviews.filter(review => review.productId === productId);
+  return reviews.filter(review => review.product_id === productId);
 };
 
 // Get reviews for a specific shop
-export const getShopReviews = (shopId: string): Review[] => {
+export const getShopReviews = (shopId: string): ShopReview[] => {
   const reviews = getReviews();
-  return reviews.filter(review => review.shopId === shopId);
+  return reviews.filter(review => review.shop_id === shopId) as ShopReview[];
 };
 
 // Add a new review
-export const addReview = (reviewData: Omit<Review, 'id' | 'createdAt'>): Review => {
+export const addReview = (reviewData: Omit<Review, 'id' | 'created_at' | 'updated_at'>): Review => {
   const reviews = getReviews();
   
   const newReview: Review = {
     ...reviewData,
     id: `review-${Date.now()}`,
-    createdAt: new Date().toISOString(),
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
   };
   
   const updatedReviews = [...reviews, newReview];
@@ -55,7 +47,7 @@ export const deleteReview = (reviewId: string): void => {
 };
 
 // Update a review
-export const updateReview = (reviewId: string, updates: Partial<Omit<Review, 'id' | 'createdAt'>>): Review | null => {
+export const updateReview = (reviewId: string, updates: Partial<Omit<Review, 'id' | 'created_at'>>): Review | null => {
   const reviews = getReviews();
   const reviewIndex = reviews.findIndex(r => r.id === reviewId);
   
@@ -63,7 +55,11 @@ export const updateReview = (reviewId: string, updates: Partial<Omit<Review, 'id
     return null;
   }
   
-  const updatedReview = { ...reviews[reviewIndex], ...updates };
+  const updatedReview = { 
+    ...reviews[reviewIndex], 
+    ...updates,
+    updated_at: new Date().toISOString()
+  };
   reviews[reviewIndex] = updatedReview;
   
   localStorage.setItem('reviews', JSON.stringify(reviews));

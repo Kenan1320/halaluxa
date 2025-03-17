@@ -7,7 +7,8 @@ import { useToast } from '@/hooks/use-toast';
 import ProductGrid from '@/components/home/ProductGrid';
 import { Button } from '@/components/ui/button';
 import { TrendingUp, ArrowRight } from 'lucide-react';
-import { Shop } from '@/types/database';
+import { Shop } from '@/types/shop';
+import { adaptShopArray } from '@/utils/typeAdapters';
 
 const TrendingPage: React.FC = () => {
   const [shops, setShops] = useState<Shop[]>([]);
@@ -21,8 +22,11 @@ const TrendingPage: React.FC = () => {
       try {
         // Get trending shops (in a real app, this would be sorted by popularity metrics)
         const trendingShops = await getShops();
+        // Convert shops to the expected type
+        const adaptedShops = adaptShopArray(trendingShops, 'types');
+        
         // Sort by rating for demo purposes
-        const sortedShops = [...trendingShops].sort((a, b) => 
+        const sortedShops = [...adaptedShops].sort((a, b) => 
           ((b.rating as number) || 0) - ((a.rating as number) || 0)
         );
         setShops(sortedShops);

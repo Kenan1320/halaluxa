@@ -2,11 +2,12 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useLocation } from '@/context/LocationContext';
-import { Shop } from '@/types/database';
+import { Shop } from '@/types/shop';
 import { Truck, Filter, Store } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { adaptShopArray } from '@/utils/typeAdapters';
 
 const OrderDeliveryPage = () => {
   const { isLocationEnabled, requestLocation, getNearbyShops } = useLocation();
@@ -36,7 +37,10 @@ const OrderDeliveryPage = () => {
           // Simulate filtering for shops that offer delivery
           // In a real app, this would be a property on the shop
           const deliveryEnabled = shops.filter((_, index) => index % 3 !== 0);
-          setDeliveryShops(deliveryEnabled);
+          
+          // Convert to the correct Shop type
+          const adaptedShops = adaptShopArray(deliveryEnabled, 'types');
+          setDeliveryShops(adaptedShops);
         }
         setIsLoading(false);
       } catch (error) {

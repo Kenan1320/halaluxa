@@ -9,6 +9,7 @@ import { DatabaseProfile } from '@/types/database';
 import { Product } from '@/models/product';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
+import { adaptShopArray, adaptProductType } from '@/utils/typeAdapters';
 
 const AdminDashboard = () => {
   const [shops, setShops] = useState<Shop[]>([]);
@@ -29,9 +30,13 @@ const AdminDashboard = () => {
           getAllUsers()
         ]);
 
-        setShops(allShops);
-        setPendingShops(allShops.filter(shop => shop.status === 'pending'));
-        setProducts(allProducts);
+        // Convert shop and product types to match the expected types in the component
+        const adaptedShops = adaptShopArray(allShops, 'models') as Shop[];
+        const adaptedProducts = allProducts.map(p => adaptProductType(p)) as Product[];
+        
+        setShops(adaptedShops);
+        setPendingShops(adaptedShops.filter(shop => shop.status === 'pending'));
+        setProducts(adaptedProducts);
         setUsers(allUsers);
       } catch (error) {
         console.error('Error fetching dashboard data:', error);

@@ -2,6 +2,7 @@
 import { Product, ProductFilter, ProductResponse } from '@/models/product';
 import { supabase } from '@/integrations/supabase/client';
 import { normalizeProduct } from '@/lib/normalizeData';
+import { adaptProductType } from '@/utils/typeAdapters';
 
 // Mock product data for development until database is fully set up
 const mockProducts: Product[] = [

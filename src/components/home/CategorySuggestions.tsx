@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
@@ -96,16 +95,14 @@ export default function CategorySuggestions() {
     const loadCategories = async () => {
       // Get categories from service
       const nearby = await getCategoriesByGroup('nearby');
-      const transitional = await getCategoriesByGroup('transitional'); // Note: Fixed group type
+      const transitional = await getCategoriesByGroup('transitional');
       const online = await getCategoriesByGroup('online');
       
       // Create categories if they don't already exist in the service
       const createMockCategory = (name: string, group: 'nearby' | 'online' | 'featured' | 'popular' | 'transitional'): Category => ({
         id: name.toLowerCase().replace(/\s+/g, '-'),
         name,
-        description: '',
         group,
-        image: '',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       });
@@ -119,7 +116,7 @@ export default function CategorySuggestions() {
       // Process transitional categories
       const processedTransitional = transitionalCategoryNames.map(name => {
         const existing = transitional.find(cat => cat.name === name);
-        return existing || createMockCategory(name, 'transitional' as any); // Cast as any since we updated the SQL schema
+        return existing || createMockCategory(name, 'transitional');
       });
       
       // Process online categories

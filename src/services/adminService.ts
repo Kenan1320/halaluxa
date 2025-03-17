@@ -1,11 +1,9 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { Admin, AdminPermission, Shop, Product, DatabaseProfile } from '@/types/database';
+import { Shop, DatabaseProfile } from '@/types/database';
+import { Product } from '@/models/product';
 import { toast } from '@/hooks/use-toast';
-
-// Mock tables for development since real tables are not created yet
-const MOCK_ADMIN_TABLE = 'mock_admins';
-const MOCK_PERMISSIONS_TABLE = 'mock_permissions';
+import { adaptShopArray, adaptProductType } from '@/utils/typeAdapters';
 
 // Function to get admin role for the current user
 export const getAdminRole = async (): Promise<string> => {
@@ -55,10 +53,10 @@ export const isAdmin = async (): Promise<boolean> => {
 };
 
 // Get admin permissions
-export const getAdminPermissions = async (): Promise<AdminPermission[]> => {
+export const getAdminPermissions = async (): Promise<any[]> => {
   // In development mode, grant all permissions
   if (import.meta.env.DEV) {
-    const allPermissions: AdminPermission[] = [
+    const allPermissions = [
       {
         id: '1',
         admin_id: '1',
@@ -78,7 +76,7 @@ export const getAdminPermissions = async (): Promise<AdminPermission[]> => {
         id: String(index + 2),
         admin_id: '1',
         role: 'super_admin',
-        resource: resource as any,
+        resource: resource,
         can_create: true,
         can_read: true,
         can_update: true,
@@ -120,18 +118,23 @@ export const getAllShops = async (): Promise<Shop[]> => {
       return [];
     }
     
-    // Add missing properties required by the Shop type
-    const shops = data.map(shop => ({
-      ...shop,
-      status: shop.status || 'pending',
-      is_featured: shop.is_featured || false,
-      product_count: shop.product_count || 0,
-      email: shop.email || '',
-      phone: shop.phone || '',
-      website: shop.website || '',
-    })) as Shop[];
+    // Process each shop to ensure it has all required fields
+    const processedShops = data.map(shop => {
+      return {
+        ...shop,
+        // Ensure required fields
+        status: shop.status || 'pending',
+        is_featured: shop.is_featured || false,
+        product_count: shop.product_count || 0,
+        email: shop.email || '',
+        phone: shop.phone || '',
+        website: shop.website || '',
+        rating: shop.rating || 0
+      };
+    });
     
-    return shops;
+    // Use adaptShopArray to convert to the correct Shop type
+    return adaptShopArray(processedShops, 'database') as Shop[];
   } catch (error) {
     console.error('Error fetching shops:', error);
     return [];
@@ -151,10 +154,13 @@ export const getAllProducts = async (): Promise<Product[]> => {
     }
     
     // Add missing properties required by the Product type
-    const products = data.map(product => ({
+    const products = data.map(product => adaptProductType({
       ...product,
       in_stock: true,
-      pickup_options: { store: true, curbside: false }
+      pickup_options: { store: true, curbside: false },
+      seller_id: product.shop_id, // Default seller_id to shop_id if not present
+      seller_name: 'Shop Owner', // Default seller name
+      image_url: product.images && product.images.length > 0 ? product.images[0] : ''
     })) as Product[];
     
     return products;
@@ -198,9 +204,13 @@ export const updateShopStatus = async (
       return false;
     }
     
+    // Add the status field to the update
     const { error } = await supabase
       .from('shops')
-      .update({ status })
+      .update({ 
+        status: status,
+        updated_at: new Date().toISOString() 
+      })
       .eq('id', shopId);
       
     if (error) {

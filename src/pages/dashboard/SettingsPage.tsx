@@ -5,7 +5,6 @@ import { useNavigate } from 'react-router-dom';
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
-
 import { Button } from "@/components/ui/button"
 import {
   Form,
@@ -71,35 +70,31 @@ const SettingsPage = () => {
   })
 
   useEffect(() => {
-    if (user?.shop_data) {
+    if (user?.shop_id) {
       form.reset({
-        shopName: user.shop_data.name || '',
-        description: user.shop_data.description || '',
-        category: user.shop_data.category || '',
-        address: user.shop_data.address || '',
-        location: user.shop_data.location || '',
-        // Use optional chaining or nullish coalescing for the new properties
-        phone: user.shop_data.phone || '',
-        email: user.shop_data.email || '',
-        website: user.shop_data.website || '',
-        isFeatured: user.shop_data.is_featured || false,
+        shopName: user.shop_name || '',
+        description: user.shop_description || '',
+        category: user.shop_category || '',
+        address: user.address || '',
+        location: user.shop_location || '',
+        phone: user.phone || '',
+        email: user.email || '',
+        website: user.website || '',
+        isFeatured: false,
       });
     }
   }, [form, user]);
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     const success = await updateUserProfile({
-      shop_data: {
-        name: values.shopName,
-        description: values.description,
-        category: values.category,
-        address: values.address,
-        location: values.location,
-        phone: values.phone,
-        email: values.email,
-        website: values.website,
-        is_featured: values.isFeatured,
-      },
+      shop_name: values.shopName,
+      shop_description: values.description,
+      shop_category: values.category,
+      address: values.address,
+      shop_location: values.location,
+      phone: values.phone,
+      email: values.email,
+      website: values.website,
     });
 
     if (success) {

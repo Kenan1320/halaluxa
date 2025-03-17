@@ -1,4 +1,3 @@
-
 export interface Product {
   id: string;
   name: string;
@@ -23,6 +22,7 @@ export interface Product {
     store: boolean;
     curbside: boolean;
   };
+  image_url?: string;
 }
 
 export interface ProductFilter {
@@ -43,7 +43,6 @@ export interface ProductResponse {
   filter: (predicate: (product: Product) => boolean) => Product[];
 }
 
-// Adding productCategories for use in multiple components
 export const productCategories = [
   'Clothing',
   'Electronics',
