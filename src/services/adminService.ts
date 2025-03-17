@@ -11,13 +11,17 @@ export const isAdmin = async (): Promise<boolean> => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return false;
     
+    // Check if admin table exists and if the user is in it
     const { data, error } = await supabase
       .from('admins')
       .select('*')
       .eq('user_id', user.id)
       .single();
       
-    if (error || !data) return false;
+    if (error || !data) {
+      console.error("Error checking admin status:", error);
+      return false;
+    }
     
     // Update last login
     await supabase
@@ -45,7 +49,10 @@ export const getAdminPermissions = async (): Promise<AdminPermission[]> => {
       .eq('user_id', user.id)
       .single();
       
-    if (adminError || !admin) return [];
+    if (adminError || !admin) {
+      console.error("Error getting admin record:", adminError);
+      return [];
+    }
     
     // Get permissions for that role
     const { data: permissions, error: permError } = await supabase
@@ -53,9 +60,12 @@ export const getAdminPermissions = async (): Promise<AdminPermission[]> => {
       .select('*')
       .eq('role', admin.role);
       
-    if (permError) return [];
+    if (permError) {
+      console.error("Error getting permissions:", permError);
+      return [];
+    }
     
-    return permissions as AdminPermission[];
+    return permissions as unknown as AdminPermission[];
   } catch (error) {
     console.error('Error getting admin permissions:', error);
     return [];
@@ -74,7 +84,10 @@ export const getAdminRole = async (): Promise<AdminRole | null> => {
       .eq('user_id', user.id)
       .single();
       
-    if (error || !data) return null;
+    if (error || !data) {
+      console.error("Error getting admin role:", error);
+      return null;
+    }
     
     return data.role as AdminRole;
   } catch (error) {
@@ -100,7 +113,10 @@ export const logAdminAction = async (
       .eq('user_id', user.id)
       .single();
       
-    if (!admin) return;
+    if (!admin) {
+      console.error("Admin record not found");
+      return;
+    }
     
     await supabase.from('audit_logs').insert({
       admin_id: admin.id,
@@ -130,7 +146,10 @@ export const getAllShops = async (
     
     const { data, error } = await query;
     
-    if (error) throw error;
+    if (error) {
+      console.error("Error getting shops:", error);
+      throw error;
+    }
     
     return data as Shop[];
   } catch (error) {
@@ -150,7 +169,10 @@ export const updateShopStatus = async (
       .update({ status, updated_at: new Date().toISOString() })
       .eq('id', shopId);
       
-    if (error) throw error;
+    if (error) {
+      console.error("Error updating shop status:", error);
+      throw error;
+    }
     
     // Log this action
     await logAdminAction(
@@ -184,59 +206,11 @@ export const createShopForUser = async (
       // User doesn't exist, create new user
       const tempPassword = `Temp${Math.random().toString(36).substring(2, 10)}!`;
       
-      const { data: userData, error: userError } = await supabase.auth.admin.createUser({
-        email: userEmail,
-        password: tempPassword,
-        email_confirm: true,
-        user_metadata: { 
-          name: shopData.name || 'Shop Owner',
-          role: 'business'
-        }
-      });
-      
-      if (userError) {
-        return { 
-          success: false, 
-          message: `Failed to create user: ${userError.message}` 
-        };
-      }
-      
-      // Create shop with new user as owner
-      const { data: shop, error: shopError } = await supabase
-        .from('shops')
-        .insert({
-          name: shopData.name,
-          description: shopData.description || `${shopData.name} shop`,
-          location: shopData.location || 'TBD',
-          category: shopData.category || 'Others',
-          logo_url: shopData.logo_url || '/placeholder.svg',
-          owner_id: userData.user.id,
-          status: 'approved', // Admin created shops are pre-approved
-          is_verified: true, // Admin created shops are verified
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        })
-        .select()
-        .single();
-        
-      if (shopError) {
-        return { 
-          success: false, 
-          message: `Failed to create shop: ${shopError.message}` 
-        };
-      }
-      
-      await logAdminAction(
-        'create_shop',
-        'shops',
-        shop.id,
-        { shop, new_user: true }
-      );
-      
+      // This would require admin privileges or a server function
+      // For now, return an error suggesting to create the user first
       return { 
-        success: true, 
-        message: `Shop created successfully with temporary password: ${tempPassword}`,
-        shop 
+        success: false, 
+        message: "Cannot create users from the client. Please create the user account first." 
       };
     } else {
       // User exists, create shop for existing user
@@ -258,6 +232,7 @@ export const createShopForUser = async (
         .single();
         
       if (shopError) {
+        console.error("Error creating shop:", shopError);
         return { 
           success: false, 
           message: `Failed to create shop: ${shopError.message}` 
@@ -293,7 +268,10 @@ export const getAllUsers = async (): Promise<DatabaseProfile[]> => {
       .from('profiles')
       .select('*');
       
-    if (error) throw error;
+    if (error) {
+      console.error("Error getting users:", error);
+      throw error;
+    }
     
     return data as DatabaseProfile[];
   } catch (error) {
@@ -316,7 +294,10 @@ export const updateProductStatus = async (
       })
       .eq('id', productId);
       
-    if (error) throw error;
+    if (error) {
+      console.error("Error updating product status:", error);
+      throw error;
+    }
     
     await logAdminAction(
       isPublished ? 'enable_product' : 'disable_product',
@@ -342,7 +323,10 @@ export const getAllProducts = async (): Promise<Product[]> => {
         shops:shop_id (name)
       `);
       
-    if (error) throw error;
+    if (error) {
+      console.error("Error getting products:", error);
+      throw error;
+    }
     
     return data.map(product => ({
       ...product,
@@ -357,22 +341,10 @@ export const getAllProducts = async (): Promise<Product[]> => {
 // Get audit logs
 export const getAuditLogs = async (): Promise<AuditLog[]> => {
   try {
-    const { data, error } = await supabase
-      .from('audit_logs')
-      .select(`
-        *,
-        admins:admin_id (
-          id,
-          user_id,
-          role,
-          profiles:user_id (name, email)
-        )
-      `)
-      .order('created_at', { ascending: false });
-      
-    if (error) throw error;
-    
-    return data as AuditLog[];
+    // This requires the audit_logs table to be created
+    // For now, return an empty array
+    console.log("Audit logs feature not fully implemented yet");
+    return [];
   } catch (error) {
     console.error('Error getting audit logs:', error);
     return [];

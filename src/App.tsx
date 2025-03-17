@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -54,6 +53,10 @@ import SettingsPage from "./pages/dashboard/SettingsPage";
 import PaymentAccountPage from "./pages/dashboard/PaymentAccountPage";
 import UserProfilePage from "./pages/profile/UserProfilePage";
 
+// Admin imports
+import AdminLayout from "./components/admin/AdminLayout";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -83,6 +86,7 @@ const AppRoutes = () => {
   // Business users should only see the dashboard interface
   const showBottomNav = !user || user.role !== 'business' || 
                     (!location.pathname.startsWith('/dashboard') && 
+                     !location.pathname.startsWith('/admin') &&
                      location.pathname !== '/login' && 
                      location.pathname !== '/signup');
   
@@ -170,6 +174,33 @@ const AppRoutes = () => {
           <Route path="customers" element={<CustomersPage />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="payment-account" element={<PaymentAccountPage />} />
+        </Route>
+        
+        {/* Admin routes */}
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute requiredRole="any">
+              <AdminLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<AdminDashboard />} />
+          <Route path="shops" element={<ComingSoon title="Shop Management" />} />
+          <Route path="shops/pending" element={<ComingSoon title="Pending Shops" />} />
+          <Route path="shops/create" element={<ComingSoon title="Create Shop" />} />
+          <Route path="products" element={<ComingSoon title="Product Management" />} />
+          <Route path="products/moderation" element={<ComingSoon title="Product Moderation" />} />
+          <Route path="users" element={<ComingSoon title="User Management" />} />
+          <Route path="users/business" element={<ComingSoon title="Business Users" />} />
+          <Route path="users/shoppers" element={<ComingSoon title="Shoppers" />} />
+          <Route path="orders" element={<ComingSoon title="Order Management" />} />
+          <Route path="notifications" element={<ComingSoon title="Notifications" />} />
+          <Route path="analytics" element={<ComingSoon title="Analytics" />} />
+          <Route path="permissions" element={<ComingSoon title="Access Control" />} />
+          <Route path="reports" element={<ComingSoon title="Reports" />} />
+          <Route path="activity" element={<ComingSoon title="Activity Log" />} />
+          <Route path="settings" element={<ComingSoon title="Admin Settings" />} />
         </Route>
         
         {/* Coming Soon routes for footer links */}

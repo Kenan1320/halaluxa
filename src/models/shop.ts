@@ -90,11 +90,11 @@ export type AdminRole = 'admin' | 'support' | 'moderator' | 'viewer';
 export interface AdminPermission {
   id: string;
   role: AdminRole;
+  resource: 'shops' | 'products' | 'users' | 'orders' | 'settings';
   can_create: boolean;
   can_read: boolean;
   can_update: boolean;
   can_delete: boolean;
-  resource: 'shops' | 'products' | 'users' | 'orders' | 'settings';
   created_at: string;
   updated_at: string;
 }

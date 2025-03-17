@@ -1,276 +1,315 @@
 
-import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { 
-  Users, ShoppingBag, Store, Package, 
-  TrendingUp, AlertCircle, CheckCircle,
-  Clock, ArrowUpRight, DollarSign
-} from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-
-const StatCard = ({ 
-  title, 
-  value, 
-  icon, 
-  change, 
-  changeType = 'positive',
-  isLoading = false 
-}: { 
-  title: string; 
-  value: string | number; 
-  icon: React.ReactNode; 
-  change?: string;
-  changeType?: 'positive' | 'negative' | 'neutral';
-  isLoading?: boolean;
-}) => {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700"
-    >
-      <div className="flex justify-between items-start">
-        <div>
-          <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{title}</p>
-          {isLoading ? (
-            <div className="h-8 w-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mt-1"></div>
-          ) : (
-            <h3 className="text-2xl font-bold mt-1 dark:text-white">{value}</h3>
-          )}
-          {change && (
-            <p className={`text-xs mt-2 flex items-center ${
-              changeType === 'positive' ? 'text-green-600 dark:text-green-400' : 
-              changeType === 'negative' ? 'text-red-600 dark:text-red-400' : 
-              'text-gray-500 dark:text-gray-400'
-            }`}>
-              {changeType === 'positive' ? '↑' : changeType === 'negative' ? '↓' : '•'} {change}
-            </p>
-          )}
-        </div>
-        <div className="p-3 bg-violet-50 dark:bg-violet-900/20 rounded-lg">
-          <div className="text-violet-600 dark:text-violet-400">
-            {icon}
-          </div>
-        </div>
-      </div>
-    </motion.div>
-  );
-};
-
-const RecentActivity = ({ isLoading = false }) => {
-  const activities = [
-    { 
-      id: 1, 
-      title: 'New shop registered', 
-      description: 'Halal Fresh Market has requested approval',
-      time: '5 minutes ago',
-      status: 'pending'
-    },
-    { 
-      id: 2, 
-      title: 'Order #12345 completed', 
-      description: 'Order from Halal Meats was delivered successfully',
-      time: '1 hour ago',
-      status: 'completed'
-    },
-    { 
-      id: 3, 
-      title: 'New product added', 
-      description: 'Islamic Bookstore added "Essential Fiqh Guide"',
-      time: '3 hours ago',
-      status: 'normal'
-    },
-    { 
-      id: 4, 
-      title: 'User support request', 
-      description: 'Customer requested help with order refund',
-      time: 'Yesterday',
-      status: 'alert'
-    }
-  ];
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay: 0.1 }}
-      className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700"
-    >
-      <h3 className="text-lg font-semibold mb-4 dark:text-white">Recent Activity</h3>
-      
-      {isLoading ? (
-        Array(4).fill(0).map((_, i) => (
-          <div key={i} className="mb-4">
-            <div className="h-5 w-3/4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
-            <div className="h-4 w-full bg-gray-200 dark:bg-gray-700 rounded animate-pulse mt-2"></div>
-            <div className="h-3 w-1/4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mt-2"></div>
-          </div>
-        ))
-      ) : (
-        <div className="space-y-4">
-          {activities.map(activity => (
-            <div key={activity.id} className="flex items-start gap-3 pb-4 border-b dark:border-gray-700 last:border-0 last:pb-0">
-              <div className={`mt-0.5 p-1.5 rounded-full ${
-                activity.status === 'pending' ? 'bg-amber-100 dark:bg-amber-900/30' : 
-                activity.status === 'completed' ? 'bg-green-100 dark:bg-green-900/30' :
-                activity.status === 'alert' ? 'bg-red-100 dark:bg-red-900/30' :
-                'bg-blue-100 dark:bg-blue-900/30'
-              }`}>
-                {activity.status === 'pending' ? (
-                  <Clock className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                ) : activity.status === 'completed' ? (
-                  <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
-                ) : activity.status === 'alert' ? (
-                  <AlertCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
-                ) : (
-                  <ArrowUpRight className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                )}
-              </div>
-              <div className="flex-1">
-                <h4 className="text-sm font-medium dark:text-white">{activity.title}</h4>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{activity.description}</p>
-                <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{activity.time}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-      
-      <button className="mt-4 text-sm text-violet-600 dark:text-violet-400 font-medium hover:text-violet-700 dark:hover:text-violet-300 transition-colors">
-        View all activity
-      </button>
-    </motion.div>
-  );
-};
+import { useEffect, useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Users, ShoppingBag, Store, Activity, TrendingUp, LineChart, Clock, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
+import { getAllShops, getAllProducts, getAllUsers } from '@/services/adminService';
+import { Shop } from '@/models/shop';
+import { DatabaseProfile } from '@/types/database';
+import { Product } from '@/models/product';
+import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
 
 const AdminDashboard = () => {
-  const [stats, setStats] = useState({
-    totalShops: '...',
-    pendingShops: '...',
-    totalProducts: '...',
-    totalUsers: '...',
-    totalOrders: '...',
-    revenue: '...'
-  });
+  const [shops, setShops] = useState<Shop[]>([]);
+  const [pendingShops, setPendingShops] = useState<Shop[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [users, setUsers] = useState<DatabaseProfile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  
+  const navigate = useNavigate();
+
   useEffect(() => {
-    const fetchStats = async () => {
+    const fetchData = async () => {
       setIsLoading(true);
       try {
-        // In a real app, this would fetch actual data from Supabase
-        // For now, we'll simulate a delay and use mock data
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        
-        // Mock data
-        setStats({
-          totalShops: '236',
-          pendingShops: '12',
-          totalProducts: '1,893',
-          totalUsers: '5,428',
-          totalOrders: '843',
-          revenue: '$24,389'
-        });
+        // Fetch all data in parallel
+        const [allShops, allProducts, allUsers] = await Promise.all([
+          getAllShops(),
+          getAllProducts(),
+          getAllUsers()
+        ]);
+
+        setShops(allShops);
+        setPendingShops(allShops.filter(shop => shop.status === 'pending'));
+        setProducts(allProducts);
+        setUsers(allUsers);
       } catch (error) {
-        console.error('Error fetching admin stats:', error);
+        console.error('Error fetching dashboard data:', error);
       } finally {
         setIsLoading(false);
       }
     };
-    
-    fetchStats();
+
+    fetchData();
   }, []);
-  
+
+  // Count shops by status
+  const approvedShops = shops.filter(shop => shop.status === 'approved').length;
+  const rejectedShops = shops.filter(shop => shop.status === 'rejected').length;
+  const suspendedShops = shops.filter(shop => shop.status === 'suspended').length;
+
+  // Count users by role
+  const businessUsers = users.filter(user => user.role === 'business').length;
+  const shopperUsers = users.filter(user => user.role === 'shopper').length;
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold dark:text-white">Admin Dashboard</h1>
-        <div className="text-sm text-gray-500 dark:text-gray-400">
-          Last updated: {new Date().toLocaleString()}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Admin Dashboard</h1>
+          <p className="text-muted-foreground">Overview of platform activity and management tools.</p>
+        </div>
+        <div className="flex gap-2">
+          <Button onClick={() => navigate('/admin/shops/create')} variant="default" size="sm">
+            Create Shop
+          </Button>
+          <Button onClick={() => navigate('/admin/products')} variant="outline" size="sm">
+            View Products
+          </Button>
         </div>
       </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <StatCard 
-          title="Total Shops" 
-          value={stats.totalShops} 
-          icon={<Store className="h-5 w-5" />}
-          change="12% this month"
-          isLoading={isLoading}
-        />
-        <StatCard 
-          title="Products" 
-          value={stats.totalProducts} 
-          icon={<Package className="h-5 w-5" />}
-          change="8% this month"
-          isLoading={isLoading}
-        />
-        <StatCard 
-          title="Shops Pending" 
-          value={stats.pendingShops} 
-          icon={<Clock className="h-5 w-5" />}
-          isLoading={isLoading}
-        />
-        <StatCard 
-          title="Registered Users" 
-          value={stats.totalUsers} 
-          icon={<Users className="h-5 w-5" />}
-          change="4% this month"
-          isLoading={isLoading}
-        />
-        <StatCard 
-          title="Total Orders" 
-          value={stats.totalOrders} 
-          icon={<ShoppingBag className="h-5 w-5" />}
-          change="9% this month"
-          isLoading={isLoading}
-        />
-        <StatCard 
-          title="Total Revenue" 
-          value={stats.revenue} 
-          icon={<DollarSign className="h-5 w-5" />}
-          change="15% this month"
-          isLoading={isLoading}
-        />
-      </div>
-      
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.1 }}
-            className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700 h-full"
-          >
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold dark:text-white">Revenue Overview</h3>
-              <select className="text-sm border rounded-md px-2 py-1 bg-transparent dark:border-gray-700 dark:text-white">
-                <option>Last 7 days</option>
-                <option>Last 30 days</option>
-                <option>Last 90 days</option>
-              </select>
-            </div>
-            
-            {isLoading ? (
-              <div className="h-64 flex items-center justify-center">
-                <div className="w-12 h-12 border-t-4 border-b-4 border-violet-500 rounded-full animate-spin"></div>
-              </div>
-            ) : (
-              <div className="h-64 flex items-center justify-center">
-                <div className="text-center">
-                  <TrendingUp className="h-16 w-16 mx-auto text-violet-500 opacity-20" />
-                  <p className="mt-4 text-gray-500 dark:text-gray-400">
-                    Revenue chart will be displayed here
-                  </p>
+
+      {isLoading ? (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {[...Array(6)].map((_, i) => (
+            <Card key={i} className="animate-pulse">
+              <CardHeader className="pb-2">
+                <div className="h-6 bg-gray-200 rounded w-1/2"></div>
+                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+              </CardHeader>
+              <CardContent>
+                <div className="h-12 bg-gray-200 rounded"></div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium">Total Shops</CardTitle>
+                <CardDescription>All registered shops</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between">
+                  <div className="text-3xl font-bold">{shops.length}</div>
+                  <Store className="h-8 w-8 text-blue-500 opacity-75" />
                 </div>
-              </div>
-            )}
-          </motion.div>
-        </div>
-        
-        <RecentActivity isLoading={isLoading} />
-      </div>
+                <div className="mt-2 text-xs text-muted-foreground">
+                  <span className="text-green-500 font-medium">{approvedShops} approved</span> • {pendingShops.length} pending
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium">Total Products</CardTitle>
+                <CardDescription>All listed products</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between">
+                  <div className="text-3xl font-bold">{products.length}</div>
+                  <ShoppingBag className="h-8 w-8 text-purple-500 opacity-75" />
+                </div>
+                <div className="mt-2 text-xs text-muted-foreground">
+                  From {shops.length} different shops
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+                <CardDescription>Registered user accounts</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between">
+                  <div className="text-3xl font-bold">{users.length}</div>
+                  <Users className="h-8 w-8 text-green-500 opacity-75" />
+                </div>
+                <div className="mt-2 text-xs text-muted-foreground">
+                  {businessUsers} business • {shopperUsers} shoppers
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium">Platform Activity</CardTitle>
+                <CardDescription>Recent admin actions</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between">
+                  <div className="text-3xl font-bold">-</div>
+                  <Activity className="h-8 w-8 text-orange-500 opacity-75" />
+                </div>
+                <div className="mt-2 text-xs text-muted-foreground">
+                  View activity logs for details
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Tabs defaultValue="pending">
+            <TabsList>
+              <TabsTrigger value="pending">Pending Approvals</TabsTrigger>
+              <TabsTrigger value="recent">Recent Shops</TabsTrigger>
+              <TabsTrigger value="stats">Platform Stats</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="pending" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Pending Shop Approvals</CardTitle>
+                  <CardDescription>Shops waiting for admin approval</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {pendingShops.length > 0 ? (
+                    <div className="space-y-4">
+                      {pendingShops.slice(0, 5).map(shop => (
+                        <div key={shop.id} className="flex items-center justify-between border-b pb-3">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden">
+                              {shop.logo_url ? (
+                                <img src={shop.logo_url} alt={shop.name} className="w-full h-full object-cover" />
+                              ) : (
+                                <Store className="h-5 w-5 text-gray-400" />
+                              )}
+                            </div>
+                            <div>
+                              <h3 className="font-medium">{shop.name}</h3>
+                              <p className="text-xs text-muted-foreground">{shop.category} • Created on {new Date(shop.created_at).toLocaleDateString()}</p>
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button size="sm" variant="outline" className="text-green-500 border-green-500">
+                              <CheckCircle className="h-4 w-4 mr-1" />
+                              Approve
+                            </Button>
+                            <Button size="sm" variant="outline" className="text-red-500 border-red-500">
+                              <XCircle className="h-4 w-4 mr-1" />
+                              Reject
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                      
+                      {pendingShops.length > 5 && (
+                        <Button 
+                          variant="link" 
+                          className="w-full" 
+                          onClick={() => navigate('/admin/shops/pending')}
+                        >
+                          View all {pendingShops.length} pending shops
+                        </Button>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-8 text-center">
+                      <CheckCircle className="h-12 w-12 text-green-500 mb-3" />
+                      <h3 className="font-medium text-lg">No Pending Approvals</h3>
+                      <p className="text-muted-foreground mt-1">All shops have been reviewed</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+            
+            <TabsContent value="recent" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Recently Added Shops</CardTitle>
+                  <CardDescription>Newest shops on the platform</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {shops.length > 0 ? (
+                    <div className="space-y-4">
+                      {shops
+                        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+                        .slice(0, 5)
+                        .map(shop => (
+                          <div key={shop.id} className="flex items-center justify-between border-b pb-3">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden">
+                                {shop.logo_url ? (
+                                  <img src={shop.logo_url} alt={shop.name} className="w-full h-full object-cover" />
+                                ) : (
+                                  <Store className="h-5 w-5 text-gray-400" />
+                                )}
+                              </div>
+                              <div>
+                                <h3 className="font-medium">{shop.name}</h3>
+                                <p className="text-xs text-muted-foreground">
+                                  {shop.category} • Created {new Date(shop.created_at).toLocaleDateString()}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center">
+                              {shop.status === 'approved' && (
+                                <span className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full flex items-center">
+                                  <CheckCircle className="h-3 w-3 mr-1" />
+                                  Approved
+                                </span>
+                              )}
+                              {shop.status === 'pending' && (
+                                <span className="px-2 py-1 text-xs bg-yellow-100 text-yellow-800 rounded-full flex items-center">
+                                  <Clock className="h-3 w-3 mr-1" />
+                                  Pending
+                                </span>
+                              )}
+                              {shop.status === 'rejected' && (
+                                <span className="px-2 py-1 text-xs bg-red-100 text-red-800 rounded-full flex items-center">
+                                  <XCircle className="h-3 w-3 mr-1" />
+                                  Rejected
+                                </span>
+                              )}
+                              {shop.status === 'suspended' && (
+                                <span className="px-2 py-1 text-xs bg-gray-100 text-gray-800 rounded-full flex items-center">
+                                  <AlertTriangle className="h-3 w-3 mr-1" />
+                                  Suspended
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        ))
+                      }
+                      <Button 
+                        variant="link" 
+                        className="w-full" 
+                        onClick={() => navigate('/admin/shops')}
+                      >
+                        View all {shops.length} shops
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-8 text-center">
+                      <Store className="h-12 w-12 text-gray-300 mb-3" />
+                      <h3 className="font-medium text-lg">No Shops Found</h3>
+                      <p className="text-muted-foreground mt-1">There are no shops registered yet</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+            
+            <TabsContent value="stats" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Platform Statistics</CardTitle>
+                  <CardDescription>Overview of platform performance</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center justify-center py-8">
+                    <LineChart className="h-16 w-16 text-gray-300" />
+                    <p className="text-center text-muted-foreground mt-2">Detailed analytics coming soon</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </>
+      )}
     </div>
   );
 };

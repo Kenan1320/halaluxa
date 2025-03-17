@@ -77,7 +77,7 @@ const Footer = () => {
                 </Link>
               </motion.li>
               <motion.li whileHover="hover" variants={animationVariants}>
-                <Link to="/help" className="text-sm flex items-center space-x-1 text-purple-600 dark:text-purple-400 hover:text-purple-700">
+                <Link to="/admin" className="text-sm flex items-center space-x-1 text-purple-600 dark:text-purple-400 hover:text-purple-700">
                   <span>Admin Portal</span>
                   <ExternalLink className="h-3 w-3" />
                 </Link>
