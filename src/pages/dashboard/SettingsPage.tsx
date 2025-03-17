@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
@@ -49,10 +48,10 @@ const SettingsPage = () => {
       setValue('name', user.shop_name || '');
       setValue('description', user.shop_description || '');
       setValue('category', user.shop_category || '');
-      setValue('address', user.shop_address || '');
+      setValue('address', user.address || '');
       setValue('location', user.shop_location || '');
-      setValue('website_url', user.website_url || '');
-      setValue('phone', user.phone_number || '');
+      setValue('website_url', user.website || '');
+      setValue('phone', user.phone || '');
       setValue('email', user.email || '');
     }
   }, [user, setValue]);
@@ -67,10 +66,10 @@ const SettingsPage = () => {
         shop_name: data.name,
         shop_description: data.description,
         shop_category: data.category,
-        shop_address: data.address,
+        address: data.address,
         shop_location: data.location,
-        website_url: data.website_url,
-        phone_number: data.phone,
+        website: data.website_url,
+        phone: data.phone,
         email: data.email,
       });
       

@@ -4,6 +4,7 @@ import { normalizeShop } from '@/lib/utils';
 import { getDistance } from 'geolib';
 import { Product } from '@/models/product';
 import { normalizeProduct } from '@/lib/productUtils';
+import { DatabaseProfile } from '@/types/database';
 
 export type { Shop };
 
@@ -197,3 +198,23 @@ export const getShopProducts = async (shopId: string): Promise<Product[]> => {
 };
 
 export const convertToModelProduct = normalizeProduct;
+
+// Update user profile
+export const updateProfile = async (userId: string, updates: Partial<DatabaseProfile>): Promise<boolean> => {
+  try {
+    const { data, error } = await db
+      .from('profiles')
+      .update({
+        ...updates,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', userId);
+    
+    if (error) throw error;
+    
+    return true;
+  } catch (error) {
+    console.error('Error updating profile:', error);
+    return false;
+  }
+};

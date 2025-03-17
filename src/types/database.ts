@@ -160,7 +160,7 @@ export interface DatabaseProfile {
   name?: string;
   role: 'shopper' | 'business' | 'admin';
   avatar_url?: string;
-  address?: string | UserAddress; // Allow both string and UserAddress for flexibility
+  address?: string;
   phone?: string;
   preferences?: UserPreferences;
   // Shop-related fields
@@ -170,6 +170,7 @@ export interface DatabaseProfile {
   shop_category?: string;
   shop_location?: string;
   shop_logo?: string;
+  website?: string;
   // Simple address fields
   city?: string;
   state?: string;
