@@ -15,7 +15,7 @@ const Navbar = () => {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
 
   const handleShopSelect = (shop: Shop) => {
-    // Convert to expected Shop type
+    // Convert to expected Shop type and set it
     const adaptedShop = adaptShopType(shop, 'types');
     setSelectedShop(adaptedShop);
   };

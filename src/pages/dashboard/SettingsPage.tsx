@@ -1,265 +1,160 @@
-
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { useToast } from '@/hooks/use-toast';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { toast } from '@/components/ui/use-toast';
 import { useNavigate } from 'react-router-dom';
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
-import * as z from "zod"
-import { Button } from "@/components/ui/button"
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Switch } from "@/components/ui/switch"
-import { Label } from "@/components/ui/label"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-
-const formSchema = z.object({
-  shopName: z.string().min(2, {
-    message: "Shop name must be at least 2 characters.",
-  }),
-  description: z.string().min(10, {
-    message: "Description must be at least 10 characters.",
-  }),
-  category: z.string().min(3, {
-    message: "Category must be at least 3 characters.",
-  }),
-  address: z.string().min(5, {
-    message: "Address must be at least 5 characters.",
-  }),
-  location: z.string().min(3, {
-    message: "Location must be at least 3 characters.",
-  }),
-  phone: z.string().optional(),
-  email: z.string().email().optional(),
-  website: z.string().url().optional(),
-  isFeatured: z.boolean().default(false),
-})
 
 const SettingsPage = () => {
-  const { user, updateUserProfile } = useAuth();
-  const { toast } = useToast();
+  const { user, updateUser } = useAuth();
+  const [formValues, setFormValues] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    website: '',
+    address: '',
+    city: '',
+    state: '',
+    zip: ''
+  });
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      shopName: "",
-      description: "",
-      category: "",
-      address: "",
-      location: "",
-      phone: "",
-      email: "",
-      website: "",
-      isFeatured: false,
-    },
-  })
 
   useEffect(() => {
     if (user) {
-      form.reset({
-        shopName: user.shop_name || '',
-        description: user.shop_description || '',
-        category: user.shop_category || '',
-        address: typeof user.address === 'string' ? user.address : '',
-        location: user.shop_location || '',
-        phone: user.phone || '',
+      // If we have user data, set the form values
+      setFormValues({
+        name: user.name || '',
         email: user.email || '',
+        phone: user.phone || '',
         website: user.website || '',
-        isFeatured: false,
+        address: user.address || '',
+        city: user.city || '',
+        state: user.state || '',
+        zip: user.zip || ''
       });
     }
-  }, [form, user]);
+  }, [user]);
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    const success = await updateUserProfile({
-      shop_name: values.shopName,
-      shop_description: values.description,
-      shop_category: values.category,
-      address: values.address,
-      shop_location: values.location,
-      phone: values.phone,
-      email: values.email,
-      website: values.website,
-    });
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormValues(prevValues => ({
+      ...prevValues,
+      [name]: value
+    }));
+  };
 
-    if (success) {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    try {
+      if (!user) {
+        throw new Error('User not authenticated.');
+      }
+
+      // Prepare the update object
+      const updateData: {
+        name: string;
+        email: string;
+        phone?: string;
+        website?: string;
+        address?: string;
+        city?: string;
+        state?: string;
+        zip?: string;
+      } = {
+        name: formValues.name,
+        email: formValues.email,
+      };
+
+      // Conditionally add fields if they have values
+      if (formValues.phone) updateData.phone = formValues.phone;
+      if (formValues.website) updateData.website = formValues.website;
+      if (formValues.address) updateData.address = formValues.address;
+      if (formValues.city) updateData.city = formValues.city;
+      if (formValues.state) updateData.state = formValues.state;
+      if (formValues.zip) updateData.zip = formValues.zip;
+
+      // Call the updateUser function
+      await updateUser(user.id, updateData);
+
       toast({
-        title: "Profile updated successfully!",
-        description: "Your shop settings have been saved.",
+        title: "Success",
+        description: "Profile updated successfully.",
       });
       navigate('/dashboard');
-    } else {
+    } catch (error: any) {
+      console.error('Profile update failed:', error);
       toast({
-        title: "Failed to update profile",
-        description: "There was an error updating your shop settings.",
+        title: "Error",
+        description: error.message || 'Failed to update profile. Please try again.',
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <div className="container mx-auto py-10">
       <Card>
         <CardHeader>
-          <CardTitle>Shop Settings</CardTitle>
-          <CardDescription>
-            Manage your shop details and preferences here.
-          </CardDescription>
+          <CardTitle>Settings</CardTitle>
+          <CardDescription>Update your profile settings.</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-              <FormField
-                control={form.control}
-                name="shopName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Shop Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Your Shop Name" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Description</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Describe your shop"
-                        className="resize-none"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="category"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Category</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Shop Category" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="address"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Address</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Shop Address" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="location"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Location</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Shop Location" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="phone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Phone Number</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Shop Phone Number" type="tel" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Shop Email" type="email" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="website"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Website</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Shop Website" type="url" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="isFeatured"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                    <div className="space-y-0.5">
-                      <FormLabel>Featured Shop</FormLabel>
-                      <FormDescription>
-                        Mark this shop as featured.
-                      </FormDescription>
-                    </div>
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              <Button type="submit">Update Settings</Button>
-            </form>
-          </Form>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="grid gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="name">Name</Label>
+                <Input type="text" id="name" name="name" value={formValues.name} onChange={handleChange} />
+              </div>
+              <div>
+                <Label htmlFor="email">Email</Label>
+                <Input type="email" id="email" name="email" value={formValues.email} onChange={handleChange} />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="phone">Phone</Label>
+                <Input type="tel" id="phone" name="phone" value={formValues.phone} onChange={handleChange} />
+              </div>
+              <div>
+                <Label htmlFor="website">Website</Label>
+                <Input type="url" id="website" name="website" value={formValues.website} onChange={handleChange} />
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="address">Address</Label>
+              <Input type="text" id="address" name="address" value={formValues.address} onChange={handleChange} />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <Label htmlFor="city">City</Label>
+                <Input type="text" id="city" name="city" value={formValues.city} onChange={handleChange} />
+              </div>
+              <div>
+                <Label htmlFor="state">State</Label>
+                <Input type="text" id="state" name="state" value={formValues.state} onChange={handleChange} />
+              </div>
+              <div>
+                <Label htmlFor="zip">Zip Code</Label>
+                <Input type="text" id="zip" name="zip" value={formValues.zip} onChange={handleChange} />
+              </div>
+            </div>
+            <CardFooter>
+              <Button disabled={isLoading} type="submit">
+                {isLoading ? 'Updating...' : 'Update Profile'}
+              </Button>
+            </CardFooter>
+          </form>
         </CardContent>
       </Card>
     </div>
-  )
-}
+  );
+};
 
 export default SettingsPage;

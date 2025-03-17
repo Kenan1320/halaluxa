@@ -26,4 +26,3 @@ export const useShopContext = () => {
   }
   return context;
 };
-

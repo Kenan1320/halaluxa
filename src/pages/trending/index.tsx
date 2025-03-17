@@ -64,12 +64,14 @@ export default function TrendingPage() {
           {shops.map(shop => (
             <div key={shop.id} onClick={() => navigate(`/shops/${shop.id}`)} className="cursor-pointer">
               <ShopCard
-                name={shop.name}
-                category={shop.category}
-                rating={typeof shop.rating === 'object' ? shop.rating.average : shop.rating || 0}
-                image={shop.cover_image || ''}
-                location={shop.location}
-                isVerified={shop.is_verified}
+                shop={{
+                  name: shop.name,
+                  category: shop.category,
+                  rating: typeof shop.rating === 'object' ? shop.rating.average : (shop.rating ?? 0),
+                  image: shop.cover_image || '',
+                  location: shop.location,
+                  isVerified: shop.is_verified
+                }}
               />
             </div>
           ))}

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -10,6 +9,7 @@ import { CartProvider } from "@/context/CartContext";
 import { LanguageProvider } from "@/context/LanguageContext";
 import { LocationProvider } from "@/context/LocationContext";
 import { ThemeProvider } from "@/context/ThemeContext";
+import { ShopProvider } from "@/context/ShopContext";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import AuthMiddleware from "@/components/auth/AuthMiddleware";
 import PageLayout from "@/components/layout/PageLayout";
@@ -221,11 +221,13 @@ function App() {
           <ThemeProvider>
             <LanguageProvider>
               <AuthProvider>
-                <CartProvider>
-                  <LocationProvider>
-                    <AppRoutes />
-                  </LocationProvider>
-                </CartProvider>
+                <ShopProvider>
+                  <CartProvider>
+                    <LocationProvider>
+                      <AppRoutes />
+                    </LocationProvider>
+                  </CartProvider>
+                </ShopProvider>
               </AuthProvider>
             </LanguageProvider>
           </ThemeProvider>
