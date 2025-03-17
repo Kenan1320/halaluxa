@@ -22,7 +22,11 @@ export default function TrendingPage() {
         const adaptedShops = allShops.map(shop => adaptShopType(shop, 'types'));
         
         // Sort by rating (highest first)
-        const sortedShops = [...adaptedShops].sort((a, b) => (b.rating || 0) - (a.rating || 0));
+        const sortedShops = [...adaptedShops].sort((a, b) => {
+          const ratingA = typeof a.rating === 'object' ? a.rating.average : (a.rating || 0);
+          const ratingB = typeof b.rating === 'object' ? b.rating.average : (b.rating || 0);
+          return ratingB - ratingA;
+        });
         setShops(sortedShops);
       } catch (error) {
         console.error('Error loading trending shops:', error);
@@ -61,9 +65,10 @@ export default function TrendingPage() {
         </div>
       ) : shops.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {shops.map(shop => (
+          {shops.map((shop, index) => (
             <div key={shop.id} onClick={() => navigate(`/shops/${shop.id}`)} className="cursor-pointer">
               <ShopCard
+                index={index}
                 shop={{
                   name: shop.name,
                   category: shop.category,

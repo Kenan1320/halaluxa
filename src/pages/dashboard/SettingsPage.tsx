@@ -1,96 +1,91 @@
+
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '@/context/AuthContext';
+import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { toast } from '@/components/ui/use-toast';
+import { Label } from '@/components/ui/label';
+import { useAuth } from '@/context/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+import { updateProfile } from '@/services/shopService';
+import { adaptShopType } from '@/utils/typeAdapters';
+
+// Assuming these types are correctly defined in your project
+type FormValues = {
+  name: string;
+  description: string;
+  category: string;
+  address: string;
+  location: string;
+  website_url?: string;
+  phone?: string;
+  email?: string;
+};
 
 const SettingsPage = () => {
-  const { user, updateUser } = useAuth();
-  const [formValues, setFormValues] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    website: '',
-    address: '',
-    city: '',
-    state: '',
-    zip: ''
-  });
-  const [isLoading, setIsLoading] = useState(false);
+  const { user, refreshUser } = useAuth();
+  const { toast } = useToast();
   const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
+
+  const { register, handleSubmit, setValue, formState: { errors } } = useForm<FormValues>({
+    defaultValues: {
+      name: '',
+      description: '',
+      category: '',
+      address: '',
+      location: '',
+      website_url: '',
+      phone: '',
+      email: '',
+    }
+  });
 
   useEffect(() => {
     if (user) {
-      // If we have user data, set the form values
-      setFormValues({
-        name: user.name || '',
-        email: user.email || '',
-        phone: user.phone || '',
-        website: user.website || '',
-        address: user.address || '',
-        city: user.city || '',
-        state: user.state || '',
-        zip: user.zip || ''
-      });
+      // Set values directly from user properties
+      setValue('name', user.shop_name || '');
+      setValue('description', user.shop_description || '');
+      setValue('category', user.shop_category || '');
+      setValue('address', user.shop_address || '');
+      setValue('location', user.shop_location || '');
+      setValue('website_url', user.website_url || '');
+      setValue('phone', user.phone_number || '');
+      setValue('email', user.email || '');
     }
-  }, [user]);
+  }, [user, setValue]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormValues(prevValues => ({
-      ...prevValues,
-      [name]: value
-    }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = async (data: FormValues) => {
+    if (!user) return;
+    
     setIsLoading(true);
-
     try {
-      if (!user) {
-        throw new Error('User not authenticated.');
-      }
-
-      // Prepare the update object
-      const updateData: {
-        name: string;
-        email: string;
-        phone?: string;
-        website?: string;
-        address?: string;
-        city?: string;
-        state?: string;
-        zip?: string;
-      } = {
-        name: formValues.name,
-        email: formValues.email,
-      };
-
-      // Conditionally add fields if they have values
-      if (formValues.phone) updateData.phone = formValues.phone;
-      if (formValues.website) updateData.website = formValues.website;
-      if (formValues.address) updateData.address = formValues.address;
-      if (formValues.city) updateData.city = formValues.city;
-      if (formValues.state) updateData.state = formValues.state;
-      if (formValues.zip) updateData.zip = formValues.zip;
-
-      // Call the updateUser function
-      await updateUser(user.id, updateData);
-
-      toast({
-        title: "Success",
-        description: "Profile updated successfully.",
+      // Update user profile with shop data
+      await updateProfile(user.id, {
+        shop_name: data.name,
+        shop_description: data.description,
+        shop_category: data.category,
+        shop_address: data.address,
+        shop_location: data.location,
+        website_url: data.website_url,
+        phone_number: data.phone,
+        email: data.email,
       });
-      navigate('/dashboard');
-    } catch (error: any) {
-      console.error('Profile update failed:', error);
+      
       toast({
-        title: "Error",
-        description: error.message || 'Failed to update profile. Please try again.',
+        title: "Settings updated",
+        description: "Your business settings have been successfully updated.",
+      });
+      
+      // Refresh user data
+      refreshUser();
+    } catch (error) {
+      console.error('Error updating settings:', error);
+      toast({
+        title: "Update failed",
+        description: "There was an error updating your settings. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -99,60 +94,89 @@ const SettingsPage = () => {
   };
 
   return (
-    <div className="container mx-auto py-10">
-      <Card>
-        <CardHeader>
-          <CardTitle>Settings</CardTitle>
-          <CardDescription>Update your profile settings.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="grid gap-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="name">Name</Label>
-                <Input type="text" id="name" name="name" value={formValues.name} onChange={handleChange} />
+    <div className="container mx-auto py-6">
+      <h1 className="text-2xl font-bold mb-6">Business Settings</h1>
+      
+      <form onSubmit={handleSubmit(onSubmit)}>
+        <div className="grid grid-cols-1 gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Basic Information</CardTitle>
+              <CardDescription>Update your business details</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Business Name</Label>
+                <Input id="name" {...register('name', { required: true })} />
+                {errors.name && <p className="text-red-500 text-sm">Business name is required</p>}
               </div>
-              <div>
-                <Label htmlFor="email">Email</Label>
-                <Input type="email" id="email" name="email" value={formValues.email} onChange={handleChange} />
+              
+              <div className="space-y-2">
+                <Label htmlFor="description">Description</Label>
+                <Textarea 
+                  id="description" 
+                  {...register('description', { required: true })}
+                  className="min-h-[100px]"
+                />
+                {errors.description && <p className="text-red-500 text-sm">Description is required</p>}
               </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="category">Category</Label>
+                <Input id="category" {...register('category', { required: true })} />
+                {errors.category && <p className="text-red-500 text-sm">Category is required</p>}
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle>Contact Information</CardTitle>
+              <CardDescription>How customers can reach you</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="address">Address</Label>
+                <Input id="address" {...register('address')} />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="location">Location</Label>
+                <Input id="location" {...register('location')} />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="website_url">Website</Label>
+                <Input id="website_url" type="url" {...register('website_url')} />
+              </div>
+              
+              <div className="space-y-2">
                 <Label htmlFor="phone">Phone</Label>
-                <Input type="tel" id="phone" name="phone" value={formValues.phone} onChange={handleChange} />
+                <Input id="phone" type="tel" {...register('phone')} />
               </div>
-              <div>
-                <Label htmlFor="website">Website</Label>
-                <Input type="url" id="website" name="website" value={formValues.website} onChange={handleChange} />
+              
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input id="email" type="email" {...register('email')} />
               </div>
-            </div>
-            <div>
-              <Label htmlFor="address">Address</Label>
-              <Input type="text" id="address" name="address" value={formValues.address} onChange={handleChange} />
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <Label htmlFor="city">City</Label>
-                <Input type="text" id="city" name="city" value={formValues.city} onChange={handleChange} />
-              </div>
-              <div>
-                <Label htmlFor="state">State</Label>
-                <Input type="text" id="state" name="state" value={formValues.state} onChange={handleChange} />
-              </div>
-              <div>
-                <Label htmlFor="zip">Zip Code</Label>
-                <Input type="text" id="zip" name="zip" value={formValues.zip} onChange={handleChange} />
-              </div>
-            </div>
-            <CardFooter>
-              <Button disabled={isLoading} type="submit">
-                {isLoading ? 'Updating...' : 'Update Profile'}
-              </Button>
-            </CardFooter>
-          </form>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+          
+          <CardFooter className="flex justify-end space-x-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => navigate('/dashboard')}
+              disabled={isLoading}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? 'Saving...' : 'Save Changes'}
+            </Button>
+          </CardFooter>
+        </div>
+      </form>
     </div>
   );
 };

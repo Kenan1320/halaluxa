@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Search, ShoppingBag, User, Package } from 'lucide-react';
+import { Home, Search, Activity, User, Package } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
@@ -54,10 +54,10 @@ const AdvancedBottomNav = () => {
       match: ['/services', '/shops', '/shop/']
     },
     {
-      label: 'Cart',
-      icon: <ShoppingBag className="h-5 w-5" />,
-      path: isLoggedIn && user?.role !== 'business' ? '/cart' : '/login',
-      match: ['/cart', '/checkout', '/orders', '/order-confirmation'],
+      label: 'Activity',
+      icon: <Activity className="h-5 w-5" />,
+      path: isLoggedIn && user?.role !== 'business' ? '/orders' : '/login',
+      match: ['/orders', '/order-confirmation'],
       badge: cart.items.length > 0 ? cart.items.length : undefined,
       hideForBusiness: true
     },
@@ -69,7 +69,7 @@ const AdvancedBottomNav = () => {
     }
   ];
 
-  // Filter out cart for business users
+  // Filter out activity for business users
   const filteredNavItems = navItems.filter(item => 
     !(user?.role === 'business' && item.hideForBusiness)
   );
@@ -94,7 +94,7 @@ const AdvancedBottomNav = () => {
           transition={{ duration: 0.3 }}
         >
           <div 
-            className={`grid grid-cols-${filteredNavItems.length} ${
+            className={`flex justify-around ${
               mode === 'dark' 
                 ? 'bg-gray-900/90 backdrop-blur-lg border-t border-gray-800' 
                 : 'bg-white/95 backdrop-blur-lg border-t border-gray-100'
@@ -112,7 +112,7 @@ const AdvancedBottomNav = () => {
                 <Link
                   key={item.label}
                   to={item.path}
-                  className="relative flex flex-col items-center justify-center py-3"
+                  className="relative flex flex-col items-center justify-center py-3 flex-1"
                 >
                   <motion.div 
                     className={`flex flex-col items-center justify-center p-2 ${
