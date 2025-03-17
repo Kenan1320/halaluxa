@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -205,7 +206,7 @@ const AppRoutes = () => {
         <Route path="*" element={<PageLayout><NotFound /></PageLayout>} />
       </Routes>
       
-      {/* Add the new Advanced Bottom Nav */}
+      {/* Only show the AdvancedBottomNav, removing BottomNavigation */}
       {showBottomNav && <AdvancedBottomNav />}
     </AuthMiddleware>
   );

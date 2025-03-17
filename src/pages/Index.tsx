@@ -10,7 +10,7 @@ import ScrollableNavigation from '@/components/home/ScrollableNavigation';
 import ProductGrid from '@/components/home/ProductGrid';
 import NearbyShops from '@/components/home/NearbyShops';
 import CategorySuggestions from '@/components/home/CategorySuggestions';
-import { motion, useAnimationControls } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { getShopById, subscribeToShops, getShops, Shop } from '@/services/shopService';
 import { useTheme } from '@/context/ThemeContext';
 import { normalizeShop, normalizeShopArray } from '@/utils/shopHelper';
@@ -156,7 +156,8 @@ const Index = () => {
   );
 
   return (
-    <div className="min-h-screen pt-16 pb-20 bg-white dark:bg-gray-900">
+    <div className="min-h-screen bg-white dark:bg-gray-900">
+      {/* Deep blue gradient header section with search and categories */}
       <div className="deep-night-blue-gradient text-white pt-3 pb-4">
         <div className="container mx-auto px-4">
           <div className="mb-3">
@@ -224,8 +225,6 @@ const Index = () => {
           <ProductGrid />
         </section>
       </div>
-      
-      <Footer />
     </div>
   );
 };

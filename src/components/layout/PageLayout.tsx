@@ -21,14 +21,14 @@ const PageLayout = ({
   
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900 overflow-x-hidden">
-      {/* Header - now connected directly to content without whitespace */}
+      {/* Header directly connected to content */}
       {showHeader && (
         <div className="sticky top-0 z-50">
           <Navbar />
         </div>
       )}
       
-      {/* Page content - removed top padding to eliminate the gap */}
+      {/* Main content area - no top padding */}
       <main className="flex-1 pb-24 md:pb-6">
         <AnimatePresence mode="wait">
           <motion.div
@@ -44,9 +44,7 @@ const PageLayout = ({
         </AnimatePresence>
       </main>
       
-      {/* Bottom navigation for mobile */}
-      {isMobile && <BottomNavigation />}
-      
+      {/* Only use the Advanced Bottom Navigation, not both */}
       {/* Footer (hidden on mobile) */}
       {showFooter && !isMobile && <Footer />}
     </div>
