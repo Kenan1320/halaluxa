@@ -25,7 +25,8 @@ const mockProducts: Product[] = [
     is_published: true,
     long_description: 'Premium quality organic halal chicken raised without antibiotics and with care for animal welfare.',
     delivery_mode: 'pickup',
-    pickup_options: { store: true, curbside: false }
+    pickup_options: { store: true, curbside: false },
+    image_url: '/lovable-uploads/8d386384-3944-48e3-922c-2edb81fa1631.png'
   },
   {
     id: '2',
@@ -47,7 +48,8 @@ const mockProducts: Product[] = [
     is_published: true,
     long_description: 'Premium quality halal beef from grass-fed cows, processed according to Islamic standards.',
     delivery_mode: 'pickup',
-    pickup_options: { store: true, curbside: true }
+    pickup_options: { store: true, curbside: true },
+    image_url: '/lovable-uploads/756f142d-1390-4a6b-8968-d373b1969765.png'
   }
 ];
 
@@ -89,6 +91,17 @@ export const getProductById = async (id: string): Promise<Product | undefined> =
   } catch (error) {
     console.error('Error fetching product:', error);
     return undefined;
+  }
+};
+
+// Get products by shop ID
+export const getProductsByShopId = async (shopId: string): Promise<Product[]> => {
+  try {
+    // For development, filter mock products by shop_id
+    return mockProducts.filter(product => product.shop_id === shopId);
+  } catch (error) {
+    console.error('Error fetching products by shop:', error);
+    return [];
   }
 };
 
@@ -154,7 +167,8 @@ export const createProduct = async (product: Partial<Product>): Promise<Product 
       is_published: product.is_published !== undefined ? product.is_published : false,
       long_description: product.long_description || '',
       delivery_mode: product.delivery_mode || 'pickup',
-      pickup_options: product.pickup_options || { store: true, curbside: false }
+      pickup_options: product.pickup_options || { store: true, curbside: false },
+      image_url: product.images && product.images.length > 0 ? product.images[0] : ''
     };
     
     // In a real app, we would save to Supabase

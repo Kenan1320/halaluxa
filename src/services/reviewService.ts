@@ -7,6 +7,7 @@ interface Review {
   rating: number;
   comment: string;
   createdAt: string;
+  shopId?: string;
 }
 
 // Get all reviews from localStorage
@@ -22,6 +23,12 @@ export const getReviews = (): Review[] => {
 export const getReviewsForProduct = (productId: string): Review[] => {
   const reviews = getReviews();
   return reviews.filter(review => review.productId === productId);
+};
+
+// Get reviews for a specific shop
+export const getShopReviews = (shopId: string): Review[] => {
+  const reviews = getReviews();
+  return reviews.filter(review => review.shopId === shopId);
 };
 
 // Add a new review

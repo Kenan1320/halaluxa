@@ -1,7 +1,7 @@
 
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { AdminPanelSettings, Lock } from 'lucide-react';
+import { Shield, Key, Lock } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 export const DirectAdminAccess = ({ variant = 'default', size = 'default', className = '' }) => {
@@ -27,11 +27,11 @@ export const DirectAdminAccess = ({ variant = 'default', size = 'default', class
   return (
     <Button 
       onClick={accessAdminPanel} 
-      variant={variant} 
-      size={size}
+      variant={variant as "default" | "destructive" | "outline" | "secondary" | "ghost" | "link"} 
+      size={size as "default" | "sm" | "lg" | "icon"}
       className={`relative ${className}`}
     >
-      <AdminPanelSettings className="h-4 w-4 mr-2" />
+      <Shield className="h-4 w-4 mr-2" />
       <span>Admin Access</span>
       {!import.meta.env.DEV && (
         <div className="absolute right-2 top-1/2 transform -translate-y-1/2">

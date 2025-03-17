@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Shield, Key, Lock, AdminPanelSettings, ExternalLink } from 'lucide-react';
+import { Shield, Key, Lock, ExternalLink } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { AdminAccessCode } from './DirectAdminAccess';
 
@@ -41,7 +41,7 @@ const AdminDirectAccess = () => {
               Direct admin access in development mode
             </CardDescription>
           </div>
-          <AdminPanelSettings className="h-8 w-8 text-orange-100" />
+          <Shield className="h-8 w-8 text-orange-100" />
         </div>
       </CardHeader>
       
@@ -58,7 +58,7 @@ const AdminDirectAccess = () => {
               onClick={accessAdminPanel}
               className="bg-orange-500 hover:bg-orange-600 text-white flex items-center gap-2"
             >
-              <AdminPanelSettings className="h-4 w-4" />
+              <Shield className="h-4 w-4" />
               Access Admin
               <ExternalLink className="h-3 w-3 ml-1" />
             </Button>
