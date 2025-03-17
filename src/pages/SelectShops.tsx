@@ -7,14 +7,31 @@ import { Button } from '@/components/ui/button';
 import { Shop } from '@/types/shop';
 import { getShops } from '@/services/shopService';
 import { normalizeShopArray } from '@/utils/shopHelper';
+import { useAuth } from '@/context/AuthContext';
+import { toast } from 'sonner';
+
+const STORAGE_KEY = 'halvi-selected-shops';
 
 const SelectShops = () => {
   const navigate = useNavigate();
+  const { user, isLoggedIn } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [shops, setShops] = useState<Shop[]>([]);
   const [filteredShops, setFilteredShops] = useState<Shop[]>([]);
   const [selectedShops, setSelectedShops] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Load saved selections or previously saved shops
+  useEffect(() => {
+    const savedSelections = localStorage.getItem(STORAGE_KEY);
+    if (savedSelections) {
+      try {
+        setSelectedShops(JSON.parse(savedSelections));
+      } catch (error) {
+        console.error('Failed to parse saved selections:', error);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     const loadShops = async () => {
@@ -50,16 +67,25 @@ const SelectShops = () => {
   }, [searchTerm, shops]);
 
   const toggleShopSelection = (shopId: string) => {
-    if (selectedShops.includes(shopId)) {
-      setSelectedShops(selectedShops.filter(id => id !== shopId));
-    } else {
-      setSelectedShops([...selectedShops, shopId]);
-    }
+    const newSelection = selectedShops.includes(shopId)
+      ? selectedShops.filter(id => id !== shopId)
+      : [...selectedShops, shopId];
+    
+    setSelectedShops(newSelection);
+    
+    // Save to localStorage for non-authenticated users or temporary storage
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(newSelection));
   };
 
   const handleContinue = () => {
-    // In a real app, this would save the user's shop preferences to the backend
-    // For now, just navigate to the home page
+    // Save selections (already done on toggle)
+    // In a real app, this would also save to a backend for logged-in users
+    
+    toast.success('Your shop selections have been saved!', {
+      description: 'These shops will now appear in your home feed.'
+    });
+    
+    // Navigate to the home page
     navigate('/');
   };
 
@@ -67,7 +93,7 @@ const SelectShops = () => {
     <div className="container mx-auto max-w-4xl px-4 py-8">
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold tracking-tight">Select Your Favorite Shops</h1>
-        <p className="text-gray-600 mt-2">
+        <p className="text-gray-600 dark:text-gray-400 mt-2">
           Choose the shops you want to follow to see their products in your feed
         </p>
       </div>
@@ -85,12 +111,12 @@ const SelectShops = () => {
       {isLoading ? (
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="bg-white rounded-lg shadow-sm p-4 animate-pulse">
+            <div key={i} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 animate-pulse">
               <div className="flex items-center gap-3">
-                <div className="w-16 h-16 bg-gray-200 rounded-full"></div>
+                <div className="w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
                 <div className="flex-1">
-                  <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                  <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-2"></div>
+                  <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
                 </div>
               </div>
             </div>
@@ -100,27 +126,27 @@ const SelectShops = () => {
         <>
           {filteredShops.length === 0 ? (
             <div className="text-center py-8">
-              <p className="text-gray-600">No shops found matching your search criteria.</p>
+              <p className="text-gray-600 dark:text-gray-400">No shops found matching your search criteria.</p>
             </div>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               {filteredShops.map((shop) => (
                 <div
                   key={shop.id}
-                  className={`bg-white rounded-lg shadow-sm p-4 cursor-pointer transition-colors border-2 
+                  className={`bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 cursor-pointer transition-colors border-2 
                     ${selectedShops.includes(shop.id) 
-                      ? 'border-green-500 bg-green-50' 
-                      : 'border-transparent hover:bg-gray-50'}`}
+                      ? 'border-green-500 bg-green-50 dark:bg-green-900/20' 
+                      : 'border-transparent hover:bg-gray-50 dark:hover:bg-gray-700/50'}`}
                   onClick={() => toggleShopSelection(shop.id)}
                 >
                   <div className="flex items-center gap-3">
                     <div className="relative">
-                      <div className="w-16 h-16 bg-gray-100 rounded-full overflow-hidden">
+                      <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
                         {shop.logo_url ? (
                           <img src={shop.logo_url} alt={shop.name} className="w-full h-full object-cover" />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-gray-200">
-                            <span className="text-xl font-bold text-gray-400">
+                          <div className="w-full h-full flex items-center justify-center bg-gray-200 dark:bg-gray-600">
+                            <span className="text-xl font-bold text-gray-400 dark:text-gray-300">
                               {shop.name.substring(0, 2).toUpperCase()}
                             </span>
                           </div>
@@ -134,9 +160,9 @@ const SelectShops = () => {
                     </div>
                     
                     <div>
-                      <h3 className="font-semibold text-gray-900 line-clamp-1">{shop.name}</h3>
-                      <p className="text-sm text-gray-500">{shop.category}</p>
-                      <p className="text-xs text-gray-400 mt-1">{shop.location}</p>
+                      <h3 className="font-semibold text-gray-900 dark:text-gray-100 line-clamp-1">{shop.name}</h3>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">{shop.category}</p>
+                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{shop.location}</p>
                     </div>
                   </div>
                 </div>
@@ -148,13 +174,13 @@ const SelectShops = () => {
 
       <div className="mt-8 flex justify-between items-center">
         <Button variant="outline" onClick={() => navigate('/')}>Skip</Button>
-        <div className="text-sm text-gray-600">
+        <div className="text-sm text-gray-600 dark:text-gray-400">
           {selectedShops.length} shops selected
         </div>
         <Button 
           onClick={handleContinue}
           disabled={selectedShops.length === 0}
-          className="bg-green-600 hover:bg-green-700"
+          className="bg-green-600 hover:bg-green-700 text-white"
         >
           Continue
         </Button>

@@ -29,7 +29,12 @@ const PageLayout = ({
       '/help',
       '/settings/account',
       '/settings/orders',
-      '/settings/security'
+      '/settings/security',
+      '/affiliates',
+      '/faq',
+      '/contact',
+      '/terms',
+      '/privacy'
     ];
     return incompletePaths.some(path => pathname === path);
   };
