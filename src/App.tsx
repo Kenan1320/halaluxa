@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -16,6 +17,42 @@ import { ComingSoon } from "@/components/ui/ComingSoon";
 import { ensureBusinessAccount } from "@/utils/seedBusinessAccount";
 import AdvancedBottomNav from "@/components/layout/AdvancedBottomNav";
 import Services from "@/pages/Services";
+
+// Import pages - to fix build errors
+import Index from "@/pages/Index";
+import About from "@/pages/About";
+import Sellers from "@/pages/Sellers";
+import LoginPage from "@/pages/auth/LoginPage";
+import SignUpPage from "@/pages/auth/SignUpPage";
+import Shop from "@/pages/Shop";
+import Browse from "@/pages/Browse";
+import Search from "@/pages/Search";
+import Shops from "@/pages/Shops";
+import ShopDetail from "@/pages/ShopDetail";
+import ProductDetail from "@/pages/ProductDetail";
+import SelectShops from "@/pages/SelectShops";
+import NearbyPage from "@/pages/nearby";
+import TrendingPage from "@/pages/trending";
+import PopularSearchesPage from "@/pages/popular-searches";
+import OrderDeliveryPage from "@/pages/order-delivery";
+import AffiliatePage from "@/pages/affiliate";
+import AffiliateProgramPage from "@/pages/affiliate-program";
+import Cart from "@/pages/Cart";
+import Checkout from "@/pages/Checkout";
+import OrderConfirmation from "@/pages/OrderConfirmation";
+import Orders from "@/pages/Orders";
+import UserProfilePage from "@/pages/profile/UserProfilePage";
+import DashboardLayout from "@/components/layout/DashboardLayout";
+import DashboardHome from "@/pages/dashboard/DashboardHome";
+import ProductsPage from "@/pages/dashboard/ProductsPage";
+import AddEditProductPage from "@/pages/dashboard/AddEditProductPage";
+import OrdersPage from "@/pages/dashboard/OrdersPage";
+import CustomersPage from "@/pages/dashboard/CustomersPage";
+import SettingsPage from "@/pages/dashboard/SettingsPage";
+import PaymentAccountPage from "@/pages/dashboard/PaymentAccountPage";
+import AdminLayout from "@/components/admin/AdminLayout";
+import AdminDashboard from "@/pages/admin/AdminDashboard";
+import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -137,11 +174,8 @@ const AppRoutes = () => {
           <Route path="payment-account" element={<PaymentAccountPage />} />
         </Route>
         
-        {/* Admin routes - Ensure these work without authentication in dev mode */}
-        <Route
-          path="/admin"
-          element={<AdminLayout />}
-        >
+        {/* Admin routes - No authentication in dev mode */}
+        <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<AdminDashboard />} />
           <Route path="shops" element={<ComingSoon title="Shop Management" />} />
           <Route path="shops/pending" element={<ComingSoon title="Pending Shops" />} />

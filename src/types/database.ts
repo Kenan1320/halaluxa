@@ -55,6 +55,8 @@ export interface Shop {
     average: number;
     count: number;
   };
+  distance?: number;
+  product_count?: number;
 }
 
 export interface Product {
@@ -78,6 +80,7 @@ export interface Product {
     store: boolean;
     curbside: boolean;
   };
+  image_url?: string;
 }
 
 export interface Order {
@@ -128,7 +131,7 @@ export interface Category {
   parent_id?: string;
   created_at: string;
   updated_at: string;
-  group?: 'featured' | 'nearby' | 'online' | 'popular';
+  group?: ShopGroup;
 }
 
 export interface PaymentMethod {
@@ -177,7 +180,7 @@ export interface SellerAccount {
   id: string;
   user_id: string;
   shop_id: string;
-  account_type: 'individual' | 'business' | 'bank' | 'paypal' | 'stripe' | 'applepay'; // Extended account types
+  account_type: 'individual' | 'business' | 'bank' | 'paypal' | 'stripe' | 'applepay'; 
   account_status: 'pending' | 'active' | 'suspended';
   payout_details: {
     bank_name?: string;

@@ -1,11 +1,12 @@
 
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ShoppingBag, Store, User, LogOut, MapPin, Search } from 'lucide-react';
+import { ShoppingBag, Store, User, LogOut, MapPin, Search, Settings } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useLocation } from '@/context/LocationContext';
 import CartDropdown from '@/components/shop/CartDropdown';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { DirectAdminAccess } from '@/components/admin/DirectAdminAccess';
 
 const AuthNavItems = () => {
   const { isLoggedIn, user, logout } = useAuth();
@@ -46,6 +47,11 @@ const AuthNavItems = () => {
         >
           Sign Up
         </Button>
+        
+        {/* Direct Admin Access Button */}
+        {import.meta.env.DEV && (
+          <DirectAdminAccess variant="outline" size="sm" />
+        )}
       </div>
     );
   }
@@ -63,6 +69,11 @@ const AuthNavItems = () => {
           <Store className="h-4 w-4" />
           <span className="hidden md:inline">Dashboard</span>
         </Button>
+        
+        {/* Direct Admin Access Button for business users */}
+        {import.meta.env.DEV && (
+          <DirectAdminAccess variant="outline" size="sm" />
+        )}
         
         <div className="relative group">
           <button className="flex items-center gap-2 text-haluna-text hover:text-haluna-primary transition">
@@ -82,6 +93,15 @@ const AuthNavItems = () => {
                 <Store className="h-4 w-4" />
                 <span>Dashboard</span>
               </Link>
+              
+              {/* Admin access in dropdown */}
+              {import.meta.env.DEV && (
+                <Link to="/admin" className="block w-full text-left p-2 rounded-md flex items-center gap-2 hover:bg-haluna-primary-light">
+                  <Settings className="h-4 w-4" />
+                  <span>Admin Access</span>
+                </Link>
+              )}
+              
               <button 
                 onClick={logout}
                 className="w-full text-left p-2 rounded-md flex items-center gap-2 hover:bg-haluna-primary-light text-red-500"
@@ -122,18 +142,25 @@ const AuthNavItems = () => {
       
       <div className="flex items-center gap-4">
         {!isMobile && (
-          <Button 
-            href="/browse" 
-            size="sm" 
-            variant="ghost" 
-            className="flex items-center gap-2 text-haluna-text hover:text-haluna-primary"
-          >
-            <ShoppingBag className="h-4 w-4" />
-            <span className="hidden md:inline">Browse</span>
-          </Button>
+          <>
+            <Button 
+              href="/browse" 
+              size="sm" 
+              variant="ghost" 
+              className="flex items-center gap-2 text-haluna-text hover:text-haluna-primary"
+            >
+              <ShoppingBag className="h-4 w-4" />
+              <span className="hidden md:inline">Browse</span>
+            </Button>
+            
+            <CartDropdown />
+            
+            {/* Direct Admin Access Button */}
+            {import.meta.env.DEV && (
+              <DirectAdminAccess variant="outline" size="sm" />
+            )}
+          </>
         )}
-        
-        {!isMobile && <CartDropdown />}
       </div>
       
       <div className="relative group">
@@ -158,6 +185,15 @@ const AuthNavItems = () => {
               <ShoppingBag className="h-4 w-4" />
               <span>Orders</span>
             </Link>
+            
+            {/* Admin access in dropdown */}
+            {import.meta.env.DEV && (
+              <Link to="/admin" className="block w-full text-left p-2 rounded-md flex items-center gap-2 hover:bg-haluna-primary-light">
+                <Settings className="h-4 w-4" />
+                <span>Admin Access</span>
+              </Link>
+            )}
+            
             <button 
               onClick={logout}
               className="w-full text-left p-2 rounded-md flex items-center gap-2 hover:bg-haluna-primary-light text-red-500"

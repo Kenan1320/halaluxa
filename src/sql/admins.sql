@@ -137,11 +137,42 @@ CREATE POLICY "Super admins can manage permissions"
         )
     );
 
+-- Create a function to check if running in dev mode for testing
+-- This is not secure and should only be used in development
+CREATE OR REPLACE FUNCTION is_development()
+RETURNS BOOLEAN AS $$
+BEGIN
+    -- Always return false in production
+    -- In development, you would modify this to return true
+    RETURN FALSE;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Create a function to auto-grant admin access to any authenticated user in dev mode
+CREATE OR REPLACE FUNCTION dev_mode_admin_access()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- Only run in dev mode
+    IF is_development() THEN
+        -- Auto-create admin entry for any new user
+        PERFORM create_admin_user(NEW.id, 'super_admin');
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Add a trigger to automatically create admin users in dev mode
+DROP TRIGGER IF EXISTS auto_admin_dev_mode ON auth.users;
+CREATE TRIGGER auto_admin_dev_mode
+    AFTER INSERT ON auth.users
+    FOR EACH ROW
+    EXECUTE FUNCTION dev_mode_admin_access();
+
 -- Create a default super admin in development mode
 -- This is just for development, don't use in production
 DO $$
 BEGIN
-    IF current_setting('request.jwt.claims', true)::json->>'role' = 'service_role' THEN
+    IF is_development() THEN
         PERFORM create_admin_user(
             '00000000-0000-0000-0000-000000000000', -- Replace with a real user ID
             'super_admin'
