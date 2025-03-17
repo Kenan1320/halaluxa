@@ -75,8 +75,13 @@ const BottomNavigation = () => {
   );
 
   const isActive = (item: typeof navItems[0]) => {
-    return item.match.includes(location.pathname);
+    return item.match.some(path => location.pathname.startsWith(path));
   };
+
+  // Don't show bottom nav on admin or dashboard pages
+  if (location.pathname.startsWith('/admin') || location.pathname.startsWith('/dashboard')) {
+    return null;
+  }
 
   return (
     <AnimatePresence>

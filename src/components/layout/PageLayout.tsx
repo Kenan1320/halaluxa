@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from './Navbar';
 import Footer from './Footer';
@@ -21,14 +21,14 @@ const PageLayout = ({
   
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900 overflow-x-hidden">
-      {/* Header - now always visible without animation */}
+      {/* Header - now connected directly to content without whitespace */}
       {showHeader && (
         <div className="sticky top-0 z-50">
           <Navbar />
         </div>
       )}
       
-      {/* Page content */}
+      {/* Page content - removed top padding to eliminate the gap */}
       <main className="flex-1 pb-24 md:pb-6">
         <AnimatePresence mode="wait">
           <motion.div
