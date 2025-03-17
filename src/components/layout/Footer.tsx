@@ -115,7 +115,7 @@ const Footer = () => {
               <span>|</span>
               <Link to="/contact" className="hover:text-gray-900 dark:hover:text-white">Contact</Link>
               <span>|</span>
-              <Link to="/help" className="hover:text-gray-900 dark:hover:text-white">Help</span>
+              <Link to="/help" className="hover:text-gray-900 dark:hover:text-white">Help</Link>
               <span>|</span>
               <Link to="/admin" className="text-purple-600 dark:text-purple-400 hover:underline">Admin Access</Link>
             </div>
