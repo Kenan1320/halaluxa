@@ -4,84 +4,132 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { useShopContext } from '@/context/ShopContext';
+import { ShoppingCart, User, Menu, MapPin } from 'lucide-react';
 import { Shop } from '@/types/shop';
-import { adaptShopType } from '@/utils/typeAdapters';
 
 const Navbar = () => {
   const { user, logout, isLoading } = useAuth();
   const isAuthenticated = user !== null && !isLoading;
-  const { selectedShop, setSelectedShop } = useShopContext();
   const [showMobileMenu, setShowMobileMenu] = useState(false);
 
-  const handleShopSelect = (shop: Shop) => {
-    // Convert to expected Shop type and set it
-    const adaptedShop = adaptShopType(shop, 'types');
-    setSelectedShop(adaptedShop);
-  };
-
   return (
-    <nav className="bg-white dark:bg-gray-800 shadow">
+    <nav className="bg-haluna-primary text-white shadow">
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-        <Link to="/" className="text-xl font-bold text-gray-800 dark:text-white">
-          Halvi
-        </Link>
+        {/* Left side - Logo and menu */}
+        <div className="flex items-center space-x-4">
+          <button 
+            onClick={() => setShowMobileMenu(!showMobileMenu)}
+            className="text-white hover:text-white/80 focus:outline-none"
+          >
+            <Menu className="h-6 w-6" />
+          </button>
+          
+          <Link to="/" className="text-xl font-bold text-white">
+            Halvi
+          </Link>
+        </div>
+        
+        {/* Center - Location */}
+        <div className="hidden md:flex items-center">
+          <button className="flex items-center text-white hover:text-white/80">
+            <MapPin className="h-5 w-5 mr-1" />
+            <span className="text-sm">New York</span>
+          </button>
+        </div>
 
-        <div className="hidden md:flex items-center space-x-4">
+        {/* Right side - Cart and Auth */}
+        <div className="flex items-center space-x-4">
+          {/* Cart icon with orange background */}
+          <Link 
+            to="/cart" 
+            className="relative flex items-center justify-center w-8 h-8 bg-orange-500 rounded-full text-white hover:bg-orange-600 transition-colors"
+          >
+            <ShoppingCart className="h-4 w-4" />
+            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full">3</span>
+          </Link>
+          
           {isAuthenticated ? (
-            <>
-              {user && user.avatar_url && (
-                <Avatar className="h-8 w-8">
+            <div className="flex items-center space-x-2">
+              {user && user.avatar_url ? (
+                <Avatar className="h-8 w-8 border border-white/20">
                   <AvatarImage src={user.avatar_url} alt={user.name || 'Avatar'} />
                   <AvatarFallback>{user.name?.charAt(0).toUpperCase() || '?'}</AvatarFallback>
                 </Avatar>
+              ) : (
+                <div className="h-8 w-8 bg-white/20 rounded-full flex items-center justify-center">
+                  <User className="h-4 w-4 text-white" />
+                </div>
               )}
-              <Link to="/dashboard" className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">
-                Dashboard
-              </Link>
-              <Button variant="outline" size="sm" onClick={logout}>
+              
+              <div className="hidden md:block">
+                <Link 
+                  to="/dashboard" 
+                  className="text-white hover:text-white/80"
+                >
+                  Dashboard
+                </Link>
+              </div>
+              
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={logout}
+                className="hidden md:inline-flex text-white hover:bg-white/20 hover:text-white"
+              >
                 Logout
               </Button>
-            </>
+            </div>
           ) : (
-            <>
-              <Link to="/login" className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">
+            <div className="hidden md:flex items-center space-x-4">
+              <Link to="/login" className="text-white hover:text-white/80">
                 Login
               </Link>
-              <Link to="/register" className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">
+              <Link to="/register" className="text-white hover:text-white/80">
                 Register
               </Link>
-            </>
+            </div>
           )}
-        </div>
-
-        <div className="md:hidden">
-          <button onClick={() => setShowMobileMenu(!showMobileMenu)} className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white focus:outline-none">
-            <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"></path>
-            </svg>
-          </button>
         </div>
       </div>
 
+      {/* Mobile menu */}
       {showMobileMenu && (
-        <div className="bg-gray-100 dark:bg-gray-700 py-2">
-          <div className="container mx-auto px-4 flex flex-col items-center space-y-2">
+        <div className="bg-haluna-primary/90 py-3 border-t border-white/10">
+          <div className="container mx-auto px-4 flex flex-col items-center space-y-3">
+            <button className="flex items-center text-white hover:text-white/80 w-full justify-center py-2">
+              <MapPin className="h-5 w-5 mr-2" />
+              <span>New York</span>
+            </button>
+            
             {isAuthenticated ? (
               <>
-                <Link to="/dashboard" className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">
+                <Link 
+                  to="/dashboard" 
+                  className="text-white hover:text-white/80 w-full text-center py-2"
+                >
                   Dashboard
                 </Link>
-                <Button variant="outline" size="sm" onClick={logout}>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={logout}
+                  className="text-white hover:bg-white/20 hover:text-white w-full"
+                >
                   Logout
                 </Button>
               </>
             ) : (
               <>
-                <Link to="/login" className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">
+                <Link 
+                  to="/login" 
+                  className="text-white hover:text-white/80 w-full text-center py-2"
+                >
                   Login
                 </Link>
-                <Link to="/register" className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">
+                <Link 
+                  to="/register" 
+                  className="text-white hover:text-white/80 w-full text-center py-2"
+                >
                   Register
                 </Link>
               </>
