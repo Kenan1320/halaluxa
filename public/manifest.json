@@ -1,0 +1,26 @@
+
+{
+  "name": "Halvi",
+  "short_name": "Halvi",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1C2526",
+  "icons": [
+    {
+      "src": "/icons/halvi_ios_icon_new.png",
+      "type": "image/png",
+      "sizes": "180x180"
+    },
+    {
+      "src": "/icons/icon-192x192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ]
+}
