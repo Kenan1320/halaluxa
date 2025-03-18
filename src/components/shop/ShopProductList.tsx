@@ -2,8 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { ShoppingCart, Heart, ChevronRight, ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { getShopProducts, convertToModelProduct } from '@/services/shopService';
-import { Product } from '@/models/product';
+import { getShopProducts } from '@/services/shopService';
+import { Product } from '@/types/database';
 import { useCart } from '@/context/CartContext';
 import { Link } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -34,8 +34,7 @@ const ShopProductList = ({ shopId, products: initialProducts }: ShopProductListP
       try {
         setIsLoading(true);
         const shopProducts = await getShopProducts(shopId);
-        const modelProducts = shopProducts.map(convertToModelProduct);
-        setProducts(modelProducts);
+        setProducts(shopProducts);
       } catch (error) {
         console.error('Error loading shop products:', error);
       } finally {

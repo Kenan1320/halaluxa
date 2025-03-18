@@ -1,6 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { Shop } from '@/types/shop';
 import { Product } from '@/types/database';
+import { normalizeShop, normalizeShopArray } from '@/lib/normalizeData';
 
 // Function to get shops by user id
 export const getShopsByUserId = async (userId: string): Promise<Shop[]> => {
@@ -32,15 +33,15 @@ export const getShopById = async (id: string): Promise<Shop | null> => {
 };
 
 // Function to create a new shop
-export const createShop = async (shopData: Partial<Shop>, userId: string): Promise<Shop> => {
+export const createShop = async (shopData: Partial<Shop>): Promise<Shop> => {
   const { data, error } = await supabase
     .from('shops')
     .insert({
       name: shopData.name || 'New Shop',
       description: shopData.description || 'Shop description',
       location: shopData.location || 'Unknown location',
-      category: 'general',
-      owner_id: userId,
+      category: shopData.category || 'general',
+      owner_id: shopData.owner_id,
       is_verified: false
     })
     .select()
@@ -79,10 +80,17 @@ export const getProductsByShopId = async (shopId: string): Promise<Product[]> =>
     price: item.price,
     category: item.category,
     images: item.images || [],
+    shop_id: item.shop_id,
+    is_halal_certified: item.is_halal_certified || false,
     in_stock: item.is_published || false,
-    seller_id: item.shop_id,
-    seller_name: '',
-    // Add any other required fields
+    created_at: item.created_at || new Date().toISOString(),
+    updated_at: item.updated_at || new Date().toISOString(),
+    long_description: item.long_description || '',
+    stock: item.stock || 0,
+    details: item.details || {},
+    is_published: item.is_published || false,
+    delivery_mode: item.delivery_mode || 'pickup',
+    pickup_options: item.pickup_options || { store: true, curbside: false }
   })) || [];
 };
 
@@ -124,8 +132,6 @@ export const searchShops = async (query: string): Promise<Shop[]> => {
 
 // Get shops by location
 export const getShopsByLocation = async (latitude: number, longitude: number, radius: number = 10): Promise<Shop[]> => {
-  // For demo purposes, we'll just return all shops
-  // In a real application, you would use PostGIS or a third-party service
   const { data, error } = await supabase
     .from('shops')
     .select('*')
@@ -133,43 +139,26 @@ export const getShopsByLocation = async (latitude: number, longitude: number, ra
     
   if (error) throw error;
   
-  // Filter shops within radius using Haversine formula
-  // This is just a simple example, in production you'd want to do this in the database
-  const shops = data?.map(shop => normalizeShop(shop)) || [];
-  
-  return shops.filter(shop => {
-    if (!shop.latitude || !shop.longitude) return false;
-    
-    // Simple radius check (very basic)
-    const latDiff = Math.abs(shop.latitude - latitude);
-    const lngDiff = Math.abs(shop.longitude - longitude);
-    
-    // Rough approximation (not accurate for large distances)
-    return Math.sqrt(latDiff * latDiff + lngDiff * lngDiff) * 111 <= radius;
-  });
+  return data?.map(shop => normalizeShop(shop)) || [];
 };
 
 // Add shop to favorites - temporarily disabled due to table issues
 export const addShopToFavorites = async (userId: string, shopId: string) => {
-  // Simplified stub for now
   return { user_id: userId, shop_id: shopId };
 };
 
 // Remove shop from favorites
 export const removeShopFromFavorites = async (userId: string, shopId: string) => {
-  // Simplified stub for now
   return { success: true };
 };
 
 // Get user's favorite shops
 export const getFavoriteShops = async (userId: string): Promise<Shop[]> => {
-  // Simplified stub for now
   return [];
 };
 
 // Check if shop is favorited by user
 export const isShopFavorited = async (userId: string, shopId: string): Promise<boolean> => {
-  // Simplified stub for now
   return false;
 };
 
@@ -191,8 +180,9 @@ export const convertToModelProduct = (dbProduct: any): Product => {
 };
 
 export const subscribeToShops = (callback: (shops: Shop[]) => void) => {
+  const unsubscribe = () => {};
   getAllShops().then(shops => callback(shops));
-  return () => {}; // Return unsubscribe function
+  return unsubscribe;
 };
 
 export const getMainShop = async (userId: string): Promise<Shop | null> => {
@@ -230,3 +220,6 @@ export const getProducts = async (shopId: string): Promise<Product[]> => {
     updated_at: product.updated_at || new Date().toISOString()
   })) || [];
 };
+
+export type { Shop };
+export { getShops, getShopProducts, convertToModelProduct };

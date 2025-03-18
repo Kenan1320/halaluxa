@@ -1,6 +1,5 @@
-
 import { Shop } from '@/types/shop';
-import { Product } from '@/models/product';
+import { Product } from '@/types/database';
 
 /**
  * Normalizes shop data to ensure it has consistent property names
@@ -32,31 +31,30 @@ export const normalizeShop = (shop: any): Shop => {
 /**
  * Normalizes product data to ensure it has consistent property names
  */
-export const normalizeProduct = (product: any): Product => {
+export function normalizeProduct(product: any): Product {
   if (!product) return {} as Product;
   
   const normalized: Product = {
     id: product.id,
     name: product.name,
     description: product.description,
+    long_description: product.long_description || '',
     price: product.price,
+    shop_id: product.shop_id,
     images: product.images || [],
     category: product.category,
-    shop_id: product.shop_id || product.shopId,
-    is_halal_certified: product.is_halal_certified || product.isHalalCertified,
-    in_stock: product.in_stock ?? product.inStock ?? true,
-    created_at: product.created_at || product.createdAt,
-    updated_at: product.updated_at || product.updatedAt,
+    stock: product.stock || 0,
+    created_at: product.created_at || new Date().toISOString(),
+    updated_at: product.updated_at || new Date().toISOString(),
+    is_published: product.is_published || false,
+    is_halal_certified: product.is_halal_certified || false,
     details: product.details || {},
-    seller_id: product.seller_id || product.sellerId,
-    seller_name: product.seller_name || product.sellerName,
-    rating: product.rating,
-    long_description: product.long_description,
-    is_published: product.is_published,
-    stock: product.stock,
-    pickup_options: product.pickup_options || { store: true, curbside: false },
+    in_stock: product.in_stock || false,
     delivery_mode: product.delivery_mode || 'pickup',
+    pickup_options: product.pickup_options || { store: true, curbside: false }
   };
   
   return normalized;
-};
+}
+
+export { normalizeShop, normalizeShopArray };
