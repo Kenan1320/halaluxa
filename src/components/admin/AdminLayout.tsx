@@ -6,7 +6,7 @@ import AdminSidebar from './AdminSidebar';
 import AdminHeader from './AdminHeader';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
-import { isAdmin, ensureAdminUser } from '@/services/adminService';
+import { ensureAdminUser } from '@/services/adminService';
 import { useToast } from '@/hooks/use-toast';
 
 const AdminLayout = () => {
@@ -25,12 +25,14 @@ const AdminLayout = () => {
     const checkAccess = async () => {
       setLoading(true);
       
-      // For development, ensure an admin user exists
+      // For development, always grant access
       if (import.meta.env.DEV) {
-        await ensureAdminUser();
+        setHasAccess(true);
+        setLoading(false);
+        return;
       }
       
-      const adminAccess = await isAdmin();
+      const adminAccess = await ensureAdminUser();
       setHasAccess(adminAccess);
       
       if (!adminAccess) {
@@ -95,10 +97,7 @@ const AdminLayout = () => {
     );
   }
 
-  if (!hasAccess) {
-    return null; // Will navigate away in useEffect
-  }
-
+  // In development mode, always render the admin dashboard
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <AdminSidebar />

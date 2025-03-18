@@ -197,7 +197,14 @@ export const getRecentOrders = async () => {
 };
 
 // Function to check if a user is an admin
-export const isAdmin = async (userId: string): Promise<boolean> => {
+export const isAdmin = async (userId: string | undefined = undefined): Promise<boolean> => {
+  // Allow direct access in development mode
+  if (import.meta.env.DEV) {
+    return true;
+  }
+  
+  if (!userId) return false;
+  
   const { data, error } = await supabase
     .from('profiles')
     .select('role')
@@ -209,16 +216,32 @@ export const isAdmin = async (userId: string): Promise<boolean> => {
 };
 
 // Function to ensure the current user is an admin
-export const ensureAdminUser = async (userId: string): Promise<boolean> => {
+export const ensureAdminUser = async (userId: string | undefined = undefined): Promise<boolean> => {
+  // Allow direct access in development mode
+  if (import.meta.env.DEV) {
+    return true;
+  }
+  
   return await isAdmin(userId);
 };
 
 // Function to get admin user details
-export const getAdminUser = async (userId: string) => {
+export const getAdminUser = async (userId: string | undefined = undefined) => {
+  if (import.meta.env.DEV && !userId) {
+    // Return mock admin data in development mode
+    return {
+      id: 'dev-admin',
+      name: 'Development Admin',
+      email: 'admin@halvi.dev',
+      role: 'admin',
+      avatar_url: null
+    };
+  }
+  
   const { data, error } = await supabase
     .from('profiles')
     .select('*')
-    .eq('id', userId)
+    .eq('id', userId || '')
     .eq('role', 'admin')
     .single();
 
@@ -227,7 +250,14 @@ export const getAdminUser = async (userId: string) => {
 };
 
 // Function to get admin role
-export const getAdminRole = async (userId: string): Promise<string> => {
+export const getAdminRole = async (userId: string | undefined = undefined): Promise<string> => {
+  // In development mode, return admin role
+  if (import.meta.env.DEV) {
+    return 'admin';
+  }
+  
+  if (!userId) return 'none';
+  
   const { data, error } = await supabase
     .from('profiles')
     .select('role')

@@ -6,21 +6,48 @@
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#1C2526",
+  "prefer_related_applications": false,
+  "scope": "/",
+  "description": "Connect with local and online shops",
+  "orientation": "portrait-primary",
   "icons": [
     {
       "src": "/icons/halvi_ios_icon_new.png",
       "type": "image/png",
-      "sizes": "180x180"
+      "sizes": "180x180",
+      "purpose": "any maskable"
     },
     {
       "src": "/icons/icon-192x192.png",
       "type": "image/png",
-      "sizes": "192x192"
+      "sizes": "192x192",
+      "purpose": "any"
     },
     {
       "src": "/icons/icon-512x512.png",
       "type": "image/png",
-      "sizes": "512x512"
+      "sizes": "512x512",
+      "purpose": "any"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshot-1.png",
+      "sizes": "1280x720",
+      "type": "image/png"
+    }
+  ],
+  "related_applications": [],
+  "shortcuts": [
+    {
+      "name": "Trending Shops",
+      "url": "/trending",
+      "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Nearby Shops",
+      "url": "/nearby",
+      "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192" }]
     }
   ]
 }

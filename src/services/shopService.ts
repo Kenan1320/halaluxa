@@ -199,6 +199,19 @@ export const getShopProducts = async (shopId: string): Promise<Product[]> => {
 
 export const convertToModelProduct = normalizeProduct;
 
+// Function to get trending shops
+export const getTrendingShops = async (): Promise<Shop[]> => {
+  const { data, error } = await supabase
+    .from('shops')
+    .select('*')
+    .eq('is_verified', true)
+    .order('rating', { ascending: false })
+    .limit(9);
+    
+  if (error) throw error;
+  return data?.map(shop => normalizeShop(shop)) || [];
+};
+
 // Update user profile
 export const updateProfile = async (userId: string, updates: Partial<DatabaseProfile>): Promise<boolean> => {
   try {

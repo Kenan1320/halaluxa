@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Shop } from '@/types/shop';
-import { getTrendingShops } from '@/services/shopService';
+import { getAllShops } from '@/services/adminService';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Star, MapPin, Store } from 'lucide-react';
@@ -17,7 +17,16 @@ const TrendingPage = () => {
     const fetchTrendingShops = async () => {
       try {
         setLoading(true);
-        const trendingShops = await getTrendingShops();
+        // Use getAllShops and then sort by rating
+        const allShops = await getAllShops();
+        const trendingShops = allShops
+          .filter(shop => shop.is_verified)
+          .sort((a, b) => {
+            const ratingA = a.rating !== undefined && a.rating !== null ? a.rating : 0;
+            const ratingB = b.rating !== undefined && b.rating !== null ? b.rating : 0;
+            return ratingB - ratingA;
+          })
+          .slice(0, 9);
         setShops(trendingShops);
       } catch (error) {
         console.error('Error fetching trending shops:', error);

@@ -3,7 +3,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>Halvi</title>
     <meta name="description" content="Halvi - Connect with local and online shops" />
     <meta name="author" content="Halvi" />
@@ -12,12 +12,26 @@
     <!-- PWA Meta Tags -->
     <link rel="manifest" href="/manifest.json" />
     <meta name="theme-color" content="#1C2526" />
+    <meta name="mobile-web-app-capable" content="yes" />
     
     <!-- iOS specific meta tags -->
+    <link rel="apple-touch-icon" href="/icons/halvi_ios_icon_new.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/icons/halvi_ios_icon_new.png" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Halvi" />
+    
+    <!-- iPhone X Notch support -->
+    <meta name="viewport" content="initial-scale=1, viewport-fit=cover" />
+    
+    <!-- iOS splash screens -->
+    <link rel="apple-touch-startup-image" href="/icons/splash-640x1136.png" media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2)" />
+    <link rel="apple-touch-startup-image" href="/icons/splash-750x1334.png" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)" />
+    <link rel="apple-touch-startup-image" href="/icons/splash-1242x2208.png" media="(device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3)" />
+    <link rel="apple-touch-startup-image" href="/icons/splash-1125x2436.png" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)" />
+    <link rel="apple-touch-startup-image" href="/icons/splash-1536x2048.png" media="(min-device-width: 768px) and (max-device-width: 1024px) and (-webkit-min-device-pixel-ratio: 2)" />
+    <link rel="apple-touch-startup-image" href="/icons/splash-1668x2224.png" media="(min-device-width: 834px) and (max-device-width: 834px) and (-webkit-min-device-pixel-ratio: 2)" />
+    <link rel="apple-touch-startup-image" href="/icons/splash-2048x2732.png" media="(min-device-width: 1024px) and (max-device-width: 1024px) and (-webkit-min-device-pixel-ratio: 2)" />
   </head>
 
   <body>
@@ -57,17 +71,22 @@
         installButtonContainer.style.left = '50%';
         installButtonContainer.style.transform = 'translateX(-50%)';
         installButtonContainer.style.zIndex = '1000';
+        installButtonContainer.style.padding = '10px';
+        installButtonContainer.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
+        installButtonContainer.style.borderRadius = '8px';
+        installButtonContainer.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
         
         const installButton = document.createElement('button');
         installButton.id = 'install-button';
         installButton.textContent = 'Install Halvi App';
         installButton.style.padding = '12px 24px';
-        installButton.style.backgroundColor = '#1C2526';
+        installButton.style.backgroundColor = '#0F1B44';
         installButton.style.color = 'white';
         installButton.style.border = 'none';
         installButton.style.borderRadius = '8px';
-        installButton.style.boxShadow = '0 4px 12px rgba(0,0,0,0.2)';
+        installButton.style.boxShadow = '0 2px 8px rgba(0,0,0,0.2)';
         installButton.style.fontWeight = 'bold';
+        installButton.style.cursor = 'pointer';
         
         installButtonContainer.appendChild(installButton);
         document.body.appendChild(installButtonContainer);
@@ -85,6 +104,10 @@
               console.log('User accepted the install prompt');
             } else {
               console.log('User dismissed the install prompt');
+              // Show the button again if dismissed
+              setTimeout(() => {
+                installButtonContainer.style.display = 'block';
+              }, 3000);
             }
             deferredPrompt = null;
           });

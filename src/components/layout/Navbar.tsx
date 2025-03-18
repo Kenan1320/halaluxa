@@ -124,10 +124,13 @@ const Navbar = () => {
               </SheetContent>
             </Sheet>
             
-            <Link to="/" className="text-xl font-bold italic">
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-white via-orange-200 to-white animate-pulse">
-                Halvi
-              </span>
+            <Link to="/" className="flex items-center">
+              <div className="relative">
+                <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white via-blue-200 to-white font-serif relative z-10 tracking-wide">
+                  Halvi<span className="text-orange-400 absolute -right-2.5 top-0">.</span>
+                </span>
+                <div className="absolute -inset-1 blur-sm bg-gradient-to-r from-transparent via-blue-400/20 to-transparent opacity-50 rounded-full"></div>
+              </div>
             </Link>
           </div>
           
