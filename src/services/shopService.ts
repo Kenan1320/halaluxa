@@ -1,8 +1,6 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Shop } from '@/types/shop';
-import { Product } from '@/models/product';
-import { normalizeShop } from '@/utils/shopHelper';
+import { Product } from '@/types/database';
 
 // Function to get shops by user id
 export const getShopsByUserId = async (userId: string): Promise<Shop[]> => {
@@ -74,7 +72,6 @@ export const getProductsByShopId = async (shopId: string): Promise<Product[]> =>
     
   if (error) throw error;
   
-  // Convert database products to Product model
   return data?.map(item => ({
     id: item.id,
     name: item.name,
@@ -215,4 +212,21 @@ export const updateProfile = async (userId: string, data: any) => {
 
 export const getNearbyShops = async (latitude: number, longitude: number, radius: number = 10): Promise<Shop[]> => {
   return getShopsByLocation(latitude, longitude, radius);
+};
+
+export const getProducts = async (shopId: string): Promise<Product[]> => {
+  const { data, error } = await supabase
+    .from('products')
+    .select('*')
+    .eq('shop_id', shopId);
+    
+  if (error) throw error;
+  
+  return data?.map(product => ({
+    ...product,
+    shop_id: shopId,
+    is_halal_certified: product.is_halal_certified || false,
+    created_at: product.created_at || new Date().toISOString(),
+    updated_at: product.updated_at || new Date().toISOString()
+  })) || [];
 };
