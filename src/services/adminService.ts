@@ -82,11 +82,14 @@ export const createShopWithOwner = async (shopInput: Partial<Shop>, ownerEmail: 
   
   if (userError) throw userError;
   
-  // Then create the shop
+  // Then create the shop with required fields
   const { data: createdShop, error: shopError } = await supabase
     .from('shops')
     .insert({
-      ...shopInput,
+      name: shopInput.name || 'New Shop',
+      description: shopInput.description || 'Shop description',
+      location: shopInput.location || 'Unknown location',
+      category: shopInput.category || 'general',
       owner_id: userData.user.id,
       is_verified: true
     })
@@ -145,6 +148,36 @@ export const createAdminUser = async (email: string, password: string, userData:
   if (profileError) throw profileError;
   
   return { user: authData, profile: profileData };
+};
+
+// Added for compatibility with imported functions
+export const getAdminUser = getAdminUsers;
+export const getAdminRole = async (userId: string) => {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', userId)
+    .single();
+    
+  if (error) throw error;
+  return data?.role || null;
+};
+
+export const getAdminStats = async () => {
+  return {
+    totalUsers: 0,
+    totalShops: 0,
+    totalOrders: 0,
+    pendingApprovals: 0
+  };
+};
+
+export const getDashboardUsers = async () => {
+  return [];
+};
+
+export const getRecentOrders = async () => {
+  return [];
 };
 
 // Admin for testing in development

@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Search, Activity, User, Package } from 'lucide-react';
+import { Home, Search, Package, Activity, User } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
@@ -51,7 +51,7 @@ const AdvancedBottomNav = () => {
       label: 'Services',
       icon: <Package className="h-5 w-5" />,
       path: '/services',
-      match: ['/services', '/shops', '/shop/']
+      match: ['/services']
     },
     {
       label: 'Activity',
@@ -75,7 +75,7 @@ const AdvancedBottomNav = () => {
   );
 
   const isActive = (item: typeof navItems[0]) => {
-    return item.match.some(path => location.pathname.startsWith(path));
+    return item.match.some(path => location.pathname === path);
   };
 
   // Don't show nav on admin pages or dashboard
@@ -118,8 +118,8 @@ const AdvancedBottomNav = () => {
                     className={`flex flex-col items-center justify-center p-2 ${
                       active ? (
                         mode === 'dark' 
-                          ? 'text-white bg-haluna-primary/20 rounded-xl' 
-                          : 'text-haluna-primary bg-haluna-primary/10 rounded-xl'
+                          ? 'text-white bg-green-600/20 rounded-xl' 
+                          : 'text-green-600 bg-green-600/10 rounded-xl'
                       ) : (
                         mode === 'dark' 
                           ? 'text-gray-500' 
@@ -152,7 +152,7 @@ const AdvancedBottomNav = () => {
                     <motion.span 
                       className={`mt-1 text-[10px] font-medium ${
                         active 
-                          ? (mode === 'dark' ? 'text-white' : 'text-haluna-primary') 
+                          ? (mode === 'dark' ? 'text-white' : 'text-green-600') 
                           : (mode === 'dark' ? 'text-gray-500' : 'text-gray-500')
                       }`}
                       animate={active ? { y: [0, -2, 0] } : {}}

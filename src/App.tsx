@@ -108,7 +108,7 @@ const AppRoutes = () => {
         <Route path="/shop/:shopId" element={<PageLayout><ShopDetail /></PageLayout>} />
         <Route path="/product/:productId" element={<PageLayout><ProductDetail /></PageLayout>} />
         <Route path="/select-shops" element={<PageLayout><SelectShops /></PageLayout>} />
-        <Route path="/services" element={<PageLayout><Services /></PageLayout>} />
+        <Route path="/services" element={<Services />} />
         
         {/* New navigation button routes */}
         <Route path="/nearby" element={<PageLayout><NearbyPage /></PageLayout>} />
