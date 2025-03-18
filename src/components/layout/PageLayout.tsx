@@ -1,6 +1,7 @@
 
 import { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import Header from './Header';
 import Navbar from './Navbar';
 import Footer from './Footer';
 import HomescreenPrompt from '../onboarding/HomescreenPrompt';
@@ -32,13 +33,20 @@ const PageLayout = ({
     ];
     return incompletePaths.some(path => pathname === path);
   };
+
+  const isDashboardPage = (pathname: string) => {
+    return pathname.startsWith('/dashboard') || pathname.startsWith('/admin');
+  };
   
   const pathname = window.location.pathname;
   const isIncomplete = isPageUnderConstruction(pathname);
+  const isDashboard = isDashboardPage(pathname);
   
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900 overflow-x-hidden">
-      {showHeader && <Navbar />}
+      {showHeader && (
+        isDashboard ? <Navbar /> : <Header />
+      )}
       
       <main className="flex-1 pb-24 md:pb-6">
         <AnimatePresence mode="wait">
