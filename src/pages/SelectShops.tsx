@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CheckIcon } from 'lucide-react';
@@ -118,6 +119,42 @@ const SelectShops = () => {
                             <img src={shop.logo_url} alt={shop.name} className="w-full h-full object-cover" />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center bg-gray-200">
-                              <
+                              <span className="text-xl font-bold text-gray-400">
+                                {shop.name.charAt(0).toUpperCase()}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                        {selectedShops.includes(shop.id) && (
+                          <div className="absolute -top-1 -right-1 bg-green-500 rounded-full p-1">
+                            <CheckIcon className="w-3 h-3 text-white" />
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <h3 className="font-medium text-sm">{shop.name}</h3>
+                        <p className="text-xs text-muted-foreground">{shop.category}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        )}
 
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-background border-t">
+          <Button
+            onClick={handleContinue}
+            className="w-full"
+            disabled={selectedShops.length === 0}
+          >
+            Continue
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
+export default SelectShops;
