@@ -1,151 +1,144 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Container } from '@/components/ui/container';
-import { Button } from '@/components/ui/button';
-import { ArrowRight, MapPin, Package, Phone, CircleDollarSign, Users, Clock } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { getCategoryIcon } from '@/components/icons/CategoryIcons';
+import { 
+  Home, 
+  Grid3X3, 
+  Clock, 
+  User, 
+  Car, 
+  Ticket, 
+  Utensils, 
+  ShoppingBag, 
+  Package, 
+  GraduationCap, 
+  Briefcase, 
+  Wrench, 
+  Scissors, 
+  HeartPulse, 
+  BookOpen 
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { useTheme } from '@/context/ThemeContext';
+
+interface ServiceCardProps {
+  icon: React.ReactNode;
+  title: string;
+  comingSoon?: boolean;
+  promo?: boolean;
+}
+
+function ServiceCard({ icon, title, comingSoon = false, promo = false }: ServiceCardProps) {
+  const { mode } = useTheme();
+  const isDark = mode === 'dark';
+  
+  return (
+    <div
+      className={cn(
+        "relative rounded-xl p-3 flex flex-col items-center justify-center aspect-square transition-all duration-200 hover:scale-105 active:scale-95",
+        isDark
+          ? "bg-gradient-to-br from-[#2A3132] to-[#232A2B] shadow-lg border border-gray-700/30"
+          : "bg-gradient-to-br from-white to-gray-50 shadow-sm border border-gray-200/50",
+      )}
+    >
+      {promo && (
+        <div className="absolute top-1.5 right-1.5 bg-green-600 text-white text-[10px] px-1.5 py-0.5 rounded-full font-medium">
+          Promo
+        </div>
+      )}
+      <div className={cn("mb-2 p-2 rounded-full", isDark ? "bg-gray-800/50" : "bg-gray-100/80")}>{icon}</div>
+      <p className="text-center text-sm font-medium">{title}</p>
+      {comingSoon && (
+        <span
+          className={cn(
+            "text-[10px] mt-1 px-1.5 py-0.5 rounded-full",
+            isDark ? "bg-green-900/50 text-green-400" : "bg-green-100 text-green-700",
+          )}
+        >
+          Coming Soon
+        </span>
+      )}
+    </div>
+  );
+}
+
+interface NavItemProps {
+  icon: React.ReactNode;
+  label: string;
+  active?: boolean;
+}
+
+function NavItem({ icon, label, active = false }: NavItemProps) {
+  return (
+    <div
+      className={cn(
+        "flex flex-col items-center justify-center",
+        active
+          ? "text-green-500 font-medium"
+          : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors",
+      )}
+    >
+      {icon}
+      <span className="text-xs mt-1">{label}</span>
+      {active && <div className="h-1 w-1 rounded-full bg-green-500 mt-1"></div>}
+    </div>
+  );
+}
 
 const ServicesPage = () => {
+  const { mode } = useTheme();
+  const isDark = mode === 'dark';
+
   return (
-    <Container className="py-12">
-      <div className="text-center mb-16">
-        <h1 className="text-3xl md:text-4xl font-bold mb-4 tracking-tight">Our Services</h1>
-        <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-          Discover how Halvi can help connect you with the best halal products and services in your area.
-        </p>
-      </div>
+    <div className={cn("min-h-screen pb-20", isDark ? "bg-[#1C2526] text-white" : "bg-[#F8F8F8] text-[#1C1C1C]")}>
+      <header className="sticky top-0 z-10 px-6 py-4 backdrop-blur-md bg-opacity-90 border-b border-gray-800/10 dark:border-gray-100/10">
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-green-500 to-teal-600 bg-clip-text text-transparent">Halvi Services</h1>
+        </div>
+      </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
-        <div className="rounded-lg border bg-card shadow-sm p-6 flex flex-col h-full">
-          <div className="mb-4 flex items-center">
-            <div className="bg-primary/10 p-3 rounded-full mr-4">
-              <MapPin className="h-6 w-6 text-primary" />
-            </div>
-            <h2 className="text-2xl font-bold">Local Discovery</h2>
+      <main className="container mx-auto px-4 py-6">
+        {/* Go Anywhere Section */}
+        <section className="mb-8 animate-fade-in">
+          <h2 className="text-xl font-bold mb-4 tracking-tight">Go anywhere</h2>
+          <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+            <ServiceCard icon={<Car className="h-6 w-6" />} title="Halvi Rides" comingSoon />
+            <ServiceCard icon={<Utensils className="h-6 w-6" />} title="Halvi Eats" comingSoon promo />
+            <ServiceCard icon={<Car className="h-6 w-6" />} title="Car Rentals" comingSoon promo />
+            <ServiceCard icon={<Ticket className="h-6 w-6" />} title="Event Tickets" comingSoon />
           </div>
-          <p className="text-gray-600 dark:text-gray-400 mb-6 flex-grow">
-            Find halal shops, restaurants, and services near you. Support local businesses with confidence.
-          </p>
-          <Link to="/nearby">
-            <Button className="w-full mt-auto">
-              Explore Nearby Shops <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          </Link>
-        </div>
+        </section>
 
-        <div className="rounded-lg border bg-card shadow-sm p-6 flex flex-col h-full">
-          <div className="mb-4 flex items-center">
-            <div className="bg-primary/10 p-3 rounded-full mr-4">
-              <Package className="h-6 w-6 text-primary" />
-            </div>
-            <h2 className="text-2xl font-bold">Halvi Mall</h2>
+        {/* Get Anything Delivered Section */}
+        <section className="mb-8 animate-fade-in" style={{ animationDelay: '0.1s' }}>
+          <h2 className="text-xl font-bold mb-4 tracking-tight">Get anything delivered</h2>
+          <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+            <ServiceCard icon={<ShoppingBag className="h-6 w-6" />} title="Groceries" comingSoon promo />
+            <ServiceCard icon={<Package className="h-6 w-6" />} title="Essentials" promo />
+            <ServiceCard icon={<Briefcase className="h-6 w-6" />} title="Business" comingSoon />
           </div>
-          <p className="text-gray-600 dark:text-gray-400 mb-6 flex-grow">
-            Shop online from verified halal stores. Discover unique products from around the world.
-          </p>
-          <Link to="/shops?type=online">
-            <Button className="w-full mt-auto">
-              Shop Online <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          </Link>
-        </div>
-      </div>
+        </section>
 
-      <h2 className="text-2xl font-bold mb-6 text-center">Categories</h2>
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4 mb-16">
-        {[
-          { name: 'Restaurants', icon: 'Restaurants' },
-          { name: 'Groceries', icon: 'Groceries' },
-          { name: 'Halal Meat', icon: 'Halal Meat' },
-          { name: 'Modest Wear', icon: 'Modest Wear' },
-          { name: 'Home', icon: 'Home' },
-          { name: 'Beauty', icon: 'Beauty' },
-        ].map((category) => (
-          <Link 
-            key={category.name} 
-            to={`/category/${category.name.toLowerCase().replace(/\s+/g, '-')}`}
-            className="flex flex-col items-center p-4 border rounded-lg hover:border-primary transition-colors"
-          >
-            <div className="p-3 bg-gray-100 dark:bg-gray-800 rounded-full mb-2">
-              {getCategoryIcon(category.icon, "w-6 h-6")}
-            </div>
-            <span className="text-sm font-medium text-center">{category.name}</span>
-          </Link>
-        ))}
-      </div>
-
-      <h2 className="text-2xl font-bold mb-6 text-center">How It Works</h2>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
-        <div className="text-center">
-          <div className="bg-primary/10 p-4 rounded-full inline-flex justify-center mb-4">
-            <MapPin className="h-8 w-8 text-primary" />
+        {/* Book Experts & Professionals Section */}
+        <section className="mb-8 animate-fade-in" style={{ animationDelay: '0.2s' }}>
+          <h2 className="text-xl font-bold mb-4 tracking-tight">Book Experts & Professionals</h2>
+          <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+            <ServiceCard icon={<GraduationCap className="h-6 w-6" />} title="Halvi Tutors" comingSoon />
+            <ServiceCard icon={<BookOpen className="h-6 w-6" />} title="Enroll with Teachers" comingSoon />
+            <ServiceCard icon={<HeartPulse className="h-6 w-6" />} title="Book a Therapist" comingSoon />
           </div>
-          <h3 className="text-xl font-semibold mb-2">Discover</h3>
-          <p className="text-gray-600 dark:text-gray-400">
-            Find halal shops and products near you or browse online options
-          </p>
-        </div>
-        
-        <div className="text-center">
-          <div className="bg-primary/10 p-4 rounded-full inline-flex justify-center mb-4">
-            <Users className="h-8 w-8 text-primary" />
-          </div>
-          <h3 className="text-xl font-semibold mb-2">Connect</h3>
-          <p className="text-gray-600 dark:text-gray-400">
-            Follow your favorite shops and get notifications about new products
-          </p>
-        </div>
-        
-        <div className="text-center">
-          <div className="bg-primary/10 p-4 rounded-full inline-flex justify-center mb-4">
-            <CircleDollarSign className="h-8 w-8 text-primary" />
-          </div>
-          <h3 className="text-xl font-semibold mb-2">Support</h3>
-          <p className="text-gray-600 dark:text-gray-400">
-            Buy with confidence and support halal businesses in your community
-          </p>
-        </div>
-      </div>
+        </section>
 
-      <div className="bg-primary/5 rounded-xl p-8 mb-16">
-        <h2 className="text-2xl font-bold mb-6 text-center">Featured Services</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[
-            { name: 'Delivery', icon: 'Delivery', description: 'Get halal food delivered directly to your door' },
-            { name: 'Shop Tours', icon: 'Shop', description: 'Virtual tours of halal shops and businesses' },
-            { name: 'Halal Verification', icon: 'CheckCircle', description: 'Verified halal certification information' },
-          ].map((service) => (
-            <div key={service.name} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-              <div className="flex items-center mb-4">
-                <div className="bg-primary/10 p-2 rounded-full mr-3">
-                  {getCategoryIcon(service.icon, "w-5 h-5")}
-                </div>
-                <h3 className="font-medium">{service.name}</h3>
-              </div>
-              <p className="text-gray-600 dark:text-gray-400 text-sm">
-                {service.description}
-              </p>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="text-center bg-gray-100 dark:bg-gray-800 rounded-xl p-8">
-        <h2 className="text-2xl font-bold mb-4">Need Help?</h2>
-        <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-2xl mx-auto">
-          Our customer support team is available to assist you with any questions or issues you might have.
-        </p>
-        <div className="flex flex-col sm:flex-row justify-center gap-4">
-          <Button className="flex items-center justify-center">
-            <Phone className="mr-2 h-4 w-4" /> Contact Support
-          </Button>
-          <Button variant="outline" className="flex items-center justify-center">
-            <Clock className="mr-2 h-4 w-4" /> View FAQ
-          </Button>
-        </div>
-      </div>
-    </Container>
+        {/* More Services Section */}
+        <section className="mb-8 animate-fade-in" style={{ animationDelay: '0.3s' }}>
+          <h2 className="text-xl font-bold mb-4 tracking-tight">More Services</h2>
+          <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+            <ServiceCard icon={<Wrench className="h-6 w-6" />} title="Home Services" comingSoon />
+            <ServiceCard icon={<Scissors className="h-6 w-6" />} title="Wellness" comingSoon />
+          </div>
+        </section>
+      </main>
+    </div>
   );
 };
 
