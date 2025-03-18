@@ -145,7 +145,7 @@ const AddEditProductPage = () => {
   useEffect(() => {
     const loadShop = async () => {
       try {
-        const shopData = await getMainShop();
+        const shopData = await getMainShop(localStorage.getItem('userId') || '');
         setShop(shopData);
       } catch (error) {
         console.error('Error loading shop:', error);

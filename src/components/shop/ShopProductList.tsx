@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { ShoppingCart, Heart, ChevronRight, ChevronLeft } from 'lucide-react';
@@ -34,7 +35,13 @@ const ShopProductList = ({ shopId, products: initialProducts }: ShopProductListP
       try {
         setIsLoading(true);
         const shopProducts = await getShopProducts(shopId);
-        setProducts(shopProducts);
+        // Ensure the products match the expected type
+        setProducts(shopProducts.map(p => ({
+          ...p,
+          // Add any missing properties needed by the cart system
+          seller_id: p.shop_id,
+          seller_name: ''
+        } as any)));
       } catch (error) {
         console.error('Error loading shop products:', error);
       } finally {
@@ -47,7 +54,15 @@ const ShopProductList = ({ shopId, products: initialProducts }: ShopProductListP
   
   const handleAddToCart = (product: Product, e?: React.MouseEvent) => {
     e?.stopPropagation();
-    addToCart(product, 1);
+    
+    // Create a compatible product for the cart
+    const cartProduct = {
+      ...product,
+      seller_id: product.shop_id,
+      seller_name: ''
+    };
+    
+    addToCart(cartProduct as any, 1);
     toast({
       title: "Added to cart",
       description: `${product.name} has been added to your cart`,

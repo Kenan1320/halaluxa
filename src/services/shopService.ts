@@ -1,7 +1,8 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Shop } from '@/types/shop';
 import { Product } from '@/types/database';
-import { normalizeShop, normalizeShopArray } from '@/lib/normalizeData';
+import { normalizeShop, normalizeShopArray, normalizeProduct } from '@/lib/normalizeData';
 
 // Function to get shops by user id
 export const getShopsByUserId = async (userId: string): Promise<Shop[]> => {
@@ -73,25 +74,16 @@ export const getProductsByShopId = async (shopId: string): Promise<Product[]> =>
     
   if (error) throw error;
   
-  return data?.map(item => ({
-    id: item.id,
-    name: item.name,
-    description: item.description,
-    price: item.price,
-    category: item.category,
-    images: item.images || [],
-    shop_id: item.shop_id,
-    is_halal_certified: item.is_halal_certified || false,
-    in_stock: item.is_published || false,
-    created_at: item.created_at || new Date().toISOString(),
-    updated_at: item.updated_at || new Date().toISOString(),
-    long_description: item.long_description || '',
-    stock: item.stock || 0,
-    details: item.details || {},
-    is_published: item.is_published || false,
-    delivery_mode: item.delivery_mode || 'pickup',
-    pickup_options: item.pickup_options || { store: true, curbside: false }
-  })) || [];
+  return data?.map(item => {
+    const normalizedProduct = normalizeProduct(item);
+    // Add default values for missing properties
+    return {
+      ...normalizedProduct,
+      in_stock: normalizedProduct.in_stock !== undefined ? normalizedProduct.in_stock : true,
+      delivery_mode: normalizedProduct.delivery_mode || 'pickup',
+      pickup_options: normalizedProduct.pickup_options || { store: true, curbside: false }
+    };
+  }) || [];
 };
 
 // Function to get all shops
@@ -162,10 +154,13 @@ export const isShopFavorited = async (userId: string, shopId: string): Promise<b
   return false;
 };
 
-// Added these functions for compatibility with imports
+// Alias for getAllShops for compatibility
 export const getShops = getAllShops;
+// Alias for getProductsByShopId for compatibility
 export const getShopProducts = getProductsByShopId;
-export const convertToModelProduct = (dbProduct: any): Product => {
+
+// Convert database product to model product
+export const convertToModelProduct = (dbProduct: any): any => {
   return {
     id: dbProduct.id,
     name: dbProduct.name,
@@ -174,15 +169,17 @@ export const convertToModelProduct = (dbProduct: any): Product => {
     category: dbProduct.category,
     images: dbProduct.images || [],
     in_stock: dbProduct.is_published || false,
-    seller_id: dbProduct.shop_id,
-    seller_name: ''
+    shop_id: dbProduct.shop_id,
+    // Add model-specific fields
+    seller_name: '',
+    seller_id: ''
   };
 };
 
 export const subscribeToShops = (callback: (shops: Shop[]) => void) => {
-  const unsubscribe = () => {};
   getAllShops().then(shops => callback(shops));
-  return unsubscribe;
+  // Return an unsubscribe function with the expected interface
+  return function unsubscribe() {};
 };
 
 export const getMainShop = async (userId: string): Promise<Shop | null> => {
@@ -200,26 +197,15 @@ export const updateProfile = async (userId: string, data: any) => {
   return { success: true };
 };
 
-export const getNearbyShops = async (latitude: number, longitude: number, radius: number = 10): Promise<Shop[]> => {
-  return getShopsByLocation(latitude, longitude, radius);
+export const getNearbyShops = async (latitude?: number, longitude?: number, radius: number = 10): Promise<Shop[]> => {
+  if (latitude && longitude) {
+    return getShopsByLocation(latitude, longitude, radius);
+  }
+  return getAllShops();
 };
 
 export const getProducts = async (shopId: string): Promise<Product[]> => {
-  const { data, error } = await supabase
-    .from('products')
-    .select('*')
-    .eq('shop_id', shopId);
-    
-  if (error) throw error;
-  
-  return data?.map(product => ({
-    ...product,
-    shop_id: shopId,
-    is_halal_certified: product.is_halal_certified || false,
-    created_at: product.created_at || new Date().toISOString(),
-    updated_at: product.updated_at || new Date().toISOString()
-  })) || [];
+  return getProductsByShopId(shopId);
 };
 
-export type { Shop };
-export { getShops, getShopProducts, convertToModelProduct };
+export { type Shop };

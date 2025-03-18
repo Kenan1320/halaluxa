@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useLocation } from '@/context/LocationContext';
@@ -11,7 +10,8 @@ import ProductGrid from '@/components/home/ProductGrid';
 import NearbyShops from '@/components/home/NearbyShops';
 import CategorySuggestions from '@/components/home/CategorySuggestions';
 import { motion } from 'framer-motion';
-import { getShopById, subscribeToShops, getShops, Shop } from '@/services/shopService';
+import { getShopById, subscribeToShops, getShops } from '@/services/shopService';
+import { Shop } from '@/types/shop';
 import { useTheme } from '@/context/ThemeContext';
 import { normalizeShop, normalizeShopArray } from '@/utils/shopHelper';
 import ShopLogoScroller from '@/components/home/ShopLogoScroller';
@@ -59,7 +59,6 @@ const Index = () => {
         const allShops = await getShops();
         const normalizedShops = normalizeShopArray(allShops);
         
-        // Split shops into nearby, online, and trending
         const nearby = normalizedShops.filter(shop => 
           shop.distance !== null && shop.distance < 10
         ).slice(0, 10);
@@ -67,8 +66,7 @@ const Index = () => {
         const online = normalizedShops.filter(shop => 
           shop.distance === null || shop.location === 'Online'
         ).slice(0, 10);
-
-        // Create a trending shops list - sort by product count as a proxy for popularity
+        
         const trending = [...normalizedShops].sort((a, b) => 
           (b.product_count || 0) - (a.product_count || 0)
         ).slice(0, 10);
@@ -95,10 +93,9 @@ const Index = () => {
       }
     };
     
-    const channel = subscribeToShops((shops) => {
+    const unsubscribeFunc = subscribeToShops((shops) => {
       const normalizedShops = normalizeShopArray(shops);
       
-      // Split shops into nearby, online, and trending
       const nearby = normalizedShops.filter(shop => 
         shop.distance !== null && shop.distance < 10
       ).slice(0, 10);
@@ -137,7 +134,9 @@ const Index = () => {
     initialLoad();
     
     return () => {
-      channel.unsubscribe();
+      if (typeof unsubscribeFunc === 'function') {
+        unsubscribeFunc();
+      }
     };
   }, [loadSelectedShops]);
 
@@ -161,7 +160,6 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900">
-      {/* Deep blue gradient header section with search and categories */}
       <div className="deep-night-blue-gradient text-white pt-3 pb-4">
         <div className="container mx-auto px-4">
           <div className="mb-3">
@@ -191,26 +189,21 @@ const Index = () => {
       </div>
       
       <div className="container mx-auto px-4 pt-5 bg-white dark:bg-gray-900">
-        {/* Flowing logo sections - two rows of each type with minimal spacing */}
         <div className="my-3">
-          {/* First row of nearby shop logos */}
           <div className="mt-1">
             <ShopLogoScroller shops={nearbyShops} direction="left" />
           </div>
           
-          {/* Second row of nearby shop logos (same shops, different direction) */}
           <div className="mt-1">
             <ShopLogoScroller shops={nearbyShops.slice(0).reverse()} direction="right" />
           </div>
         </div>
         
         <div className="my-3">
-          {/* First row of online shop logos */}
           <div className="mt-1">
             <ShopLogoScroller shops={onlineShops} direction="left" />
           </div>
           
-          {/* Second row of online shop logos (same shops, different direction) */}
           <div className="mt-1">
             <ShopLogoScroller shops={onlineShops.slice(0).reverse()} direction="right" />
           </div>
@@ -228,7 +221,6 @@ const Index = () => {
           <NearbyShops />
         </section>
         
-        {/* Featured Products section */}
         <section className="mt-8">
           <SectionHeading>Featured Products</SectionHeading>
           <ProductGrid />

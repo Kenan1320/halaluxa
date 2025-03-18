@@ -1,3 +1,4 @@
+
 import { Shop } from '@/types/shop';
 import { Product } from '@/types/database';
 
@@ -29,6 +30,14 @@ export const normalizeShop = (shop: any): Shop => {
 };
 
 /**
+ * Normalizes an array of shop data
+ */
+export const normalizeShopArray = (shops: any[]): Shop[] => {
+  if (!shops) return [];
+  return shops.map(shop => normalizeShop(shop));
+};
+
+/**
  * Normalizes product data to ensure it has consistent property names
  */
 export function normalizeProduct(product: any): Product {
@@ -56,5 +65,3 @@ export function normalizeProduct(product: any): Product {
   
   return normalized;
 }
-
-export { normalizeShop, normalizeShopArray };

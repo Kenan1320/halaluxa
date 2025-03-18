@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Container } from '@/components/ui/container';
@@ -27,11 +26,12 @@ const NearbyPage: React.FC = () => {
         if (currentLocation && 'coords' in currentLocation) {
           fetchedShops = await getNearbyShops(
             currentLocation.coords.latitude,
-            currentLocation.coords.longitude
+            currentLocation.coords.longitude,
+            10 // Provide default radius
           );
         } else {
-          // Fallback if location not available
-          fetchedShops = await getNearbyShops();
+          // Fixed: Pass default params to getNearbyShops
+          fetchedShops = await getNearbyShops(undefined, undefined, 10);
         }
         
         // Convert to the correct Shop type
