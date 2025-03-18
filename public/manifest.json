@@ -12,13 +12,13 @@
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "/lovable-uploads/ce9b1312-bf08-4876-89b6-fc0d79d32c99.png",
+      "src": "/lovable-uploads/256c0ffd-bafb-4348-94a6-074e92d4b6e3.png",
       "type": "image/png",
       "sizes": "192x192",
       "purpose": "any maskable"
     },
     {
-      "src": "/lovable-uploads/a81c7471-4bca-462c-b73c-9f888db61269.png",
+      "src": "/lovable-uploads/256c0ffd-bafb-4348-94a6-074e92d4b6e3.png",
       "type": "image/png",
       "sizes": "512x512",
       "purpose": "any"
@@ -35,12 +35,12 @@
     {
       "name": "Trending Shops",
       "url": "/trending",
-      "icons": [{ "src": "/lovable-uploads/ce9b1312-bf08-4876-89b6-fc0d79d32c99.png", "sizes": "192x192" }]
+      "icons": [{ "src": "/lovable-uploads/256c0ffd-bafb-4348-94a6-074e92d4b6e3.png", "sizes": "192x192" }]
     },
     {
       "name": "Nearby Shops",
       "url": "/nearby",
-      "icons": [{ "src": "/lovable-uploads/ce9b1312-bf08-4876-89b6-fc0d79d32c99.png", "sizes": "192x192" }]
+      "icons": [{ "src": "/lovable-uploads/256c0ffd-bafb-4348-94a6-074e92d4b6e3.png", "sizes": "192x192" }]
     }
   ]
 }

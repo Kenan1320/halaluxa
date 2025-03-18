@@ -1,11 +1,11 @@
+
 const CACHE_NAME = 'halvi-cache-v2';
 const urlsToCache = [
   '/',
   '/index.html',
   '/src/index.css',
   '/src/styles/globals.css',
-  '/lovable-uploads/ce9b1312-bf08-4876-89b6-fc0d79d32c99.png',
-  '/lovable-uploads/a81c7471-4bca-462c-b73c-9f888db61269.png',
+  '/lovable-uploads/256c0ffd-bafb-4348-94a6-074e92d4b6e3.png',
   '/placeholder.svg',
   '/favicon.ico'
 ];
@@ -94,8 +94,8 @@ self.addEventListener('push', event => {
   const title = 'Halvi';
   const options = {
     body: event.data ? event.data.text() : 'New update from Halvi!',
-    icon: '/lovable-uploads/ce9b1312-bf08-4876-89b6-fc0d79d32c99.png',
-    badge: '/lovable-uploads/ce9b1312-bf08-4876-89b6-fc0d79d32c99.png'
+    icon: '/lovable-uploads/256c0ffd-bafb-4348-94a6-074e92d4b6e3.png',
+    badge: '/lovable-uploads/256c0ffd-bafb-4348-94a6-074e92d4b6e3.png'
   };
 
   event.waitUntil(self.registration.showNotification(title, options));
