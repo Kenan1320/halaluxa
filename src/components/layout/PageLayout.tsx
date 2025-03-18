@@ -1,9 +1,8 @@
-
 import { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from './Navbar';
 import Footer from './Footer';
-import BottomNavigation from './BottomNavigation';
+import HomescreenPrompt from '../onboarding/HomescreenPrompt';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { ComingSoon } from '@/components/ui/ComingSoon';
 
@@ -20,7 +19,6 @@ const PageLayout = ({
 }: PageLayoutProps) => {
   const isMobile = useIsMobile();
   
-  // Check if the page is under construction
   const isPageUnderConstruction = (pathname: string) => {
     const incompletePaths = [
       '/services', 
@@ -39,10 +37,8 @@ const PageLayout = ({
   
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900 overflow-x-hidden">
-      {/* Header directly connected to content without gap */}
       {showHeader && <Navbar />}
       
-      {/* Main content area with no top padding to connect directly to navbar */}
       <main className="flex-1 pb-24 md:pb-6">
         <AnimatePresence mode="wait">
           <motion.div
@@ -66,7 +62,8 @@ const PageLayout = ({
         </AnimatePresence>
       </main>
       
-      {/* Footer (always show on all screens) */}
+      <HomescreenPrompt />
+      
       {showFooter && <Footer />}
     </div>
   );

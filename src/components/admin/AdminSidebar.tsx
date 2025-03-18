@@ -1,4 +1,3 @@
-
 import { NavLink } from 'react-router-dom';
 import { 
   LayoutDashboard, ShoppingBag, Users, Settings, 
@@ -94,6 +93,12 @@ const AdminSidebar = () => {
   const closeSidebar = () => {
     if (isMobile) {
       setIsMobileSidebarOpen(false);
+    }
+  };
+  
+  const handleToggleSidebar = (event: React.MouseEvent) => {
+    if (isMobile) {
+      setIsMobileSidebarOpen(!isMobileSidebarOpen);
     }
   };
   
