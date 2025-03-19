@@ -17,7 +17,7 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
   }, [onComplete]);
   
   return (
-    <div className="fixed inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-teal-500 via-blue-500 to-indigo-700 z-50">
+    <div className="fixed inset-0 flex flex-col items-center justify-center bg-gradient-to-r from-[#1e3a5f] to-[#111d42] z-50">
       <motion.div 
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ 

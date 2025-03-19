@@ -38,7 +38,7 @@ function ServiceCard({ icon, title, comingSoon = false, promo = false }: Service
       )}
     >
       {promo && (
-        <div className="absolute top-1.5 right-1.5 bg-green-600 text-white text-[10px] px-1.5 py-0.5 rounded-full font-medium">
+        <div className="absolute top-1.5 right-1.5 bg-orange-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-medium">
           Promo
         </div>
       )}
@@ -50,7 +50,7 @@ function ServiceCard({ icon, title, comingSoon = false, promo = false }: Service
         <span
           className={cn(
             "text-[10px] px-1.5 py-0.5 rounded-full",
-            isDark ? "bg-green-900/30 text-green-400" : "bg-green-100 text-green-700",
+            isDark ? "bg-[#1e3a5f]/30 text-blue-400" : "bg-blue-100 text-[#1e3a5f]",
           )}
         >
           Coming Soon
@@ -66,9 +66,9 @@ const ServicesPage = () => {
 
   return (
     <div className={cn("min-h-screen pb-20", isDark ? "bg-[#0F1B44] text-white" : "bg-[#F8F8F8] text-[#1C1C1C]")}>
-      <header className="sticky top-0 z-10 px-6 py-3 backdrop-blur-md bg-opacity-90 border-b border-gray-800/10 dark:border-gray-100/10">
+      <header className="sticky top-0 z-10 px-6 py-3 backdrop-blur-md bg-gradient-to-r from-[#1e3a5f] to-[#111d42] bg-opacity-90 border-b border-gray-800/10 dark:border-gray-100/10">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold tracking-tight">Halvi Services</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-white">Halvi Services</h1>
         </div>
       </header>
 

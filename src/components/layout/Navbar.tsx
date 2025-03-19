@@ -65,7 +65,7 @@ const Navbar = () => {
   };
   
   return (
-    <div className="bg-[#0F1B44]">
+    <div className="bg-gradient-to-r from-[#1e3a5f] to-[#111d42]">
       <nav className="text-white">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           {/* Left side - Logo and menu */}
