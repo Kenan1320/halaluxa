@@ -11,8 +11,9 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Main company info */}
           <div>
-            <h3 className="text-xl font-bold mb-4">
-              HALVI<span className="text-orange-500">.</span>
+            <h3 className="relative inline-block text-xl font-bold mb-4">
+              <span className="text-white">Halvi</span>
+              <span className="text-orange-400 absolute -right-2.5 top-0">.</span>
             </h3>
             <p className="text-gray-300 mb-4">
               The Halal Village - Your one-stop platform for all Halal products and services.

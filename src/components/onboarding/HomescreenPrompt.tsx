@@ -35,11 +35,11 @@ const HomescreenPrompt = () => {
             <CardContent className="pt-6">
               <div className="text-center space-y-4">
                 <div className="flex justify-center">
-                  <img 
-                    src="/lovable-uploads/256c0ffd-bafb-4348-94a6-074e92d4b6e3.png" 
-                    alt="Halvi Logo" 
-                    className="h-16 w-16 mb-2" 
-                  />
+                  <div className="relative">
+                    <span className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#1e3a5f] via-[#304e73] to-[#1e3a5f] font-serif relative z-10 tracking-wide">
+                      Halvi<span className="text-orange-400 absolute -right-2.5 top-0">.</span>
+                    </span>
+                  </div>
                 </div>
                 <h3 className="text-xl font-semibold">Install Halvi App</h3>
                 <p className="text-muted-foreground">

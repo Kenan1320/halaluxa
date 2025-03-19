@@ -148,30 +148,14 @@ const Navbar = () => {
             {/* Dark mode toggle button */}
             <ThemeToggle className="hidden md:flex" />
             
-            {/* Main Shop - Don't auto-select, show empty shop icon with red pulse */}
+            {/* Modern Minimalist Shop button */}
             <Link 
               to="/shops"
-              className="relative flex items-center justify-center"
+              className="relative h-10 w-10 rounded-full flex items-center justify-center bg-white/10 backdrop-blur-sm border border-white/20 transition-all hover:bg-white/20"
             >
-              {currentShop ? (
-                <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center overflow-hidden">
-                  {currentShop.logo || currentShop.cover_image ? (
-                    <img 
-                      src={currentShop.logo || currentShop.cover_image} 
-                      alt={currentShop.name} 
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-blue-100 flex items-center justify-center text-blue-500 font-bold">
-                      {currentShop.name.charAt(0)}
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center relative">
-                  <Store className="h-6 w-6 text-gray-700" />
-                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full animate-pulse"></span>
-                </div>
+              <Store className="h-5 w-5 text-white" />
+              {!currentShop && (
+                <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse"></span>
               )}
             </Link>
             

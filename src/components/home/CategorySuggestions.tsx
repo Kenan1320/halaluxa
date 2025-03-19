@@ -1,181 +1,68 @@
-import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+
+import React from 'react';
 import { Link } from 'react-router-dom';
-import { useTheme } from '@/context/ThemeContext';
-import { getCategoryIcon } from '../icons/CategoryIcons';
-import { getCategoriesByGroup, Category } from '@/services/categoryService';
-import { MapPin, ShoppingBag } from 'lucide-react';
+import { getCategoryIcon } from '@/components/icons/CategoryIcons';
+import { motion } from 'framer-motion';
 
-const TabItem = ({ isActive, onClick, icon, children }: {
-  isActive: boolean;
-  onClick: () => void;
-  icon: React.ReactNode;
-  children: React.ReactNode;
-}) => (
-  <button
-    onClick={onClick}
-    className={`flex-1 flex items-center justify-center gap-2 py-3 relative ${
-      isActive ? 'text-black dark:text-white font-bold' : 'text-gray-500 dark:text-gray-400'
-    }`}
-    style={{ fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}
-  >
-    {icon}
-    <span className="text-base font-semibold">{children}</span>
-    {isActive && (
-      <motion.div
-        className="absolute bottom-0 left-0 right-0 h-0.5 bg-black dark:bg-white"
-        layoutId="underline"
-        transition={{ duration: 0.3 }}
-      />
-    )}
-  </button>
-);
-
-const CategoryIcon = ({ category, onClick, isSelected }: { 
-  category: Category; 
-  onClick: () => void;
-  isSelected?: boolean;
-}) => (
-  <div 
-    onClick={onClick}
-    className="flex flex-col items-center space-y-2 min-w-[80px] cursor-pointer px-1"
-  >
-    <div className={`w-14 h-14 flex items-center justify-center ${
-      isSelected ? 'text-[#29866B]' : 'text-gray-600 dark:text-gray-300'
-    }`}>
-      {getCategoryIcon(category.name, `w-8 h-8 ${isSelected ? 'text-[#29866B]' : 'text-gray-600 dark:text-gray-300'}`)}
-    </div>
-    <span className={`text-xs text-center text-gray-600 dark:text-gray-300 whitespace-nowrap ${
-      isSelected ? 'font-bold text-[#2A866A] dark:text-[#5bbea7]' : ''
-    }`}>
-      {category.name}
-    </span>
-  </div>
-);
-
-// Define Halvi Local categories (primarily physical stores)
-const localCategoryNames = [
-  'Groceries', 
-  'Restaurants', 
-  'Halal Meat', 
-  'Coffee Shops',
-  'Therapists',
-  'Furniture'
+// Standard categories to be used across the platform
+const categories = [
+  { id: 'groceries', name: 'Groceries' },
+  { id: 'halal-meat', name: 'Halal Meat' },
+  { id: 'restaurants', name: 'Restaurants' },
+  { id: 'thobes', name: 'Thobes' },
+  { id: 'abayas', name: 'Abayas' },
+  { id: 'hijabs', name: 'Hijabs' },
+  { id: 'furniture', name: 'Furniture' },
+  { id: 'decorations', name: 'Decorations' },
+  { id: 'books', name: 'Books' }
 ];
 
-// Define transitional categories (can be both local and online)
-const transitionalCategoryNames = [
-  'Arabic Calligraphy',
-  'Decorations',
-  'Gifts',
-  'Modest Wear',
-  'Online Stores',
-  'Others'
-];
+// Only show a subset of categories in the suggestions
+const displayCategories = categories.slice(0, 6);
 
-// Define Halvi Mall categories (primarily online)
-const onlineCategoryNames = [
-  'Hoodies', 
-  'Thobes', 
-  'Abaya', 
-  'Books',
-  'Fragrance',
-  'Jewelry'
-];
+const CategorySuggestions = () => {
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+  
+  const item = {
+    hidden: { y: 20, opacity: 0 },
+    show: { y: 0, opacity: 1 }
+  };
 
-export default function CategorySuggestions() {
-  const { mode } = useTheme();
-  const [activeTab, setActiveTab] = useState<'nearby' | 'online'>('nearby');
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [nearbyCategories, setNearbyCategories] = useState<Category[]>([]);
-  const [transitionalCategories, setTransitionalCategories] = useState<Category[]>([]);
-  const [onlineCategories, setOnlineCategories] = useState<Category[]>([]);
-  
-  useEffect(() => {
-    const loadCategories = async () => {
-      // Get categories from service
-      const nearby = await getCategoriesByGroup('nearby');
-      const transitional = await getCategoriesByGroup('transitional');
-      const online = await getCategoriesByGroup('online');
-      
-      // Create categories if they don't already exist in the service
-      const createMockCategory = (name: string, group: 'nearby' | 'online' | 'featured' | 'popular' | 'transitional'): Category => ({
-        id: name.toLowerCase().replace(/\s+/g, '-'),
-        name,
-        group,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      });
-      
-      // Process local categories
-      const processedNearby = localCategoryNames.map(name => {
-        const existing = nearby.find(cat => cat.name === name);
-        return existing || createMockCategory(name, 'nearby');
-      });
-      
-      // Process transitional categories
-      const processedTransitional = transitionalCategoryNames.map(name => {
-        const existing = transitional.find(cat => cat.name === name);
-        return existing || createMockCategory(name, 'transitional');
-      });
-      
-      // Process online categories
-      const processedOnline = onlineCategoryNames.map(name => {
-        const existing = online.find(cat => cat.name === name);
-        return existing || createMockCategory(name, 'online');
-      });
-      
-      setNearbyCategories(processedNearby);
-      setTransitionalCategories(processedTransitional);
-      setOnlineCategories(processedOnline);
-    };
-    
-    loadCategories();
-  }, []);
-  
-  // Determine which categories to show based on active tab
-  const displayedCategories = activeTab === 'nearby' 
-    ? [...nearbyCategories, ...transitionalCategories]
-    : [...onlineCategories, ...transitionalCategories];
-  
   return (
-    <div className="py-4">
-      <div className="flex border-b border-gray-200 dark:border-gray-800 mb-6">
-        <TabItem
-          isActive={activeTab === 'nearby'}
-          onClick={() => {
-            setActiveTab('nearby');
-            setSelectedCategory(null);
-          }}
-          icon={<MapPin className="w-5 h-5" />}
-        >
-          Halvi Local
-        </TabItem>
-        <TabItem
-          isActive={activeTab === 'online'}
-          onClick={() => {
-            setActiveTab('online');
-            setSelectedCategory(null);
-          }}
-          icon={<ShoppingBag className="w-5 h-5" />}
-        >
-          Halvi Mall
-        </TabItem>
-      </div>
-      
-      {/* Categories scroll section */}
-      <div className="overflow-x-auto scrollbar-none">
-        <div className="flex space-x-4 pb-4 min-w-max px-2">
-          {displayedCategories.map((category) => (
-            <CategoryIcon 
-              key={category.id} 
-              category={category}
-              isSelected={selectedCategory === category.id}
-              onClick={() => setSelectedCategory(selectedCategory === category.id ? null : category.id)}
-            />
-          ))}
-        </div>
-      </div>
+    <div className="my-6">
+      <motion.div
+        variants={container}
+        initial="hidden"
+        whileInView="show"
+        viewport={{ once: true }}
+        className="grid grid-cols-3 gap-3"
+      >
+        {displayCategories.map((category, index) => (
+          <motion.div key={category.id} variants={item}>
+            <Link
+              to={`/category/${category.id}`}
+              className="flex flex-col items-center bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 rounded-xl p-4 transition-all"
+            >
+              <div className="text-gray-600 dark:text-gray-300">
+                {getCategoryIcon(category.name)}
+              </div>
+              <span className="mt-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                {category.name}
+              </span>
+            </Link>
+          </motion.div>
+        ))}
+      </motion.div>
     </div>
   );
-}
+};
+
+export default CategorySuggestions;
