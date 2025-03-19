@@ -54,6 +54,7 @@ import PaymentAccountPage from "@/pages/dashboard/PaymentAccountPage";
 import AdminLayout from "@/components/admin/AdminLayout";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
 import NotFound from "@/pages/NotFound";
+import DigitalMallPage from "@/pages/digital-mall";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -109,6 +110,7 @@ const AppRoutes = () => {
         <Route path="/product/:productId" element={<PageLayout><ProductDetail /></PageLayout>} />
         <Route path="/select-shops" element={<PageLayout><SelectShops /></PageLayout>} />
         <Route path="/services" element={<Services />} />
+        <Route path="/digital-mall" element={<DigitalMallPage />} />
         
         {/* New navigation button routes */}
         <Route path="/nearby" element={<PageLayout><NearbyPage /></PageLayout>} />
@@ -192,8 +194,7 @@ const AppRoutes = () => {
         </Route>
         
         {/* Admin routes - Allow guest access */}
-        <Route path="/admin" element={<AdminLayout />}>
-          <Route index element={<AdminDashboard />} />
+        <Route path="/admin" element={<AdminLayout><AdminDashboard /></AdminLayout>}>
           <Route path="shops" element={<ComingSoon title="Shop Management" />} />
           <Route path="shops/pending" element={<ComingSoon title="Pending Shops" />} />
           <Route path="shops/create" element={<ComingSoon title="Create Shop" />} />

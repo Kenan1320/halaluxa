@@ -14,7 +14,12 @@ const categories = [
   { id: 'hijabs', name: 'Hijabs' },
   { id: 'furniture', name: 'Furniture' },
   { id: 'decorations', name: 'Decorations' },
-  { id: 'books', name: 'Books' }
+  { id: 'books', name: 'Books' },
+  { id: 'arabic-language', name: 'Arabic Language' },
+  { id: 'arabic-calligraphy', name: 'Arabic Calligraphy' },
+  { id: 'muslim-therapists', name: 'Muslim Therapists' },
+  { id: 'online-stores', name: 'Online Stores' },
+  { id: 'gifts', name: 'Gifts' }
 ];
 
 // Only show a subset of categories in the suggestions
@@ -61,6 +66,9 @@ const CategorySuggestions = () => {
           </motion.div>
         ))}
       </motion.div>
+      <style>
+        {`.scrollbar-hide::-webkit-scrollbar { display: none; }`}
+      </style>
     </div>
   );
 };
